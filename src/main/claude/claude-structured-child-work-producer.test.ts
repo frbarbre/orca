@@ -70,7 +70,7 @@ function toolResult(
   })
 }
 
-type Delivery = { kind: 'journal' | 'legacy' | 'evidence'; detail: string }
+type Delivery = { kind: 'journal' | 'publish' | 'evidence'; detail: string }
 
 /** With `host`, evidence goes through the host's own ingest instead of straight to reconciliation. */
 async function producer(host?: AgentHookServer) {
@@ -103,8 +103,6 @@ async function producer(host?: AgentHookServer) {
     readProcessStartTime: async () => 1_700_000_000_000,
     now: () => 1_700_000_000_500,
     persistHandle: async () => {},
-    onBackgroundTasksChanged: (_sessionId, state) =>
-      deliveries.push({ kind: 'legacy', detail: String(state?.tasks?.length ?? 0) }),
     onChildWorkEvidence: (sessionId, evidence) => {
       expect(sessionId).toBe('session-1')
       deliveries.push({ kind: 'evidence', detail: evidence.map((edge) => edge.type).join(',') })
@@ -124,7 +122,8 @@ async function producer(host?: AgentHookServer) {
       }
     },
     appendTombstone: () => {},
-    publish: () => {}
+    // Production's journal publication is what republishes the parent's own row.
+    publish: () => deliveries.push({ kind: 'publish', detail: '' })
   }
   await adapter.acquire({
     identity: identityFor(),
@@ -145,7 +144,7 @@ async function producer(host?: AgentHookServer) {
 }
 
 describe('Claude structured child-work producer', () => {
-  it('delivers evidence only after the journal wrote the frame and the legacy row republished', async () => {
+  it('delivers evidence only after the journal wrote and published the frame', async () => {
     const { send, records } = await producer()
     send(toolUse('toolu_bg', 'Agent', { description: 'Audit the build' }))
     const deliveries = send(
@@ -161,7 +160,9 @@ describe('Claude structured child-work producer', () => {
     const kinds = deliveries.map((delivery) => delivery.kind)
     // The frame's own rows, then the parent's republished row, and only then its children.
     expect(kinds.filter((kind) => kind === 'journal').length).toBeGreaterThan(0)
-    expect(kinds.slice(kinds.indexOf('legacy'))).toEqual(['legacy', 'evidence'])
+    expect(kinds.lastIndexOf('publish')).toBeGreaterThan(kinds.lastIndexOf('journal'))
+    expect(kinds.at(-1)).toBe('evidence')
+    expect(kinds.filter((kind) => kind === 'evidence')).toHaveLength(1)
     expect(records()).toEqual([
       expect.objectContaining({ description: 'Audit the build', membership: 'live' })
     ])

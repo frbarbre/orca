@@ -14,7 +14,6 @@ import {
 import type { ClaudeStreamJsonConnection } from './claude-stream-json-connection'
 import type { ClaudeJournalTranslator } from './claude-structured-journal-translation'
 import type { ClaudePromptRegistry } from './claude-structured-prompt-replies'
-import type { AgentSessionBackgroundTaskState } from '../../shared/agent-session-wire'
 import { closeProcessRegistry } from '../../shared/child-process/close-process-registry'
 import { retireClaudeDispatchWaiters } from './claude-structured-dispatch'
 import { settledClaudeTurnEndLeaf } from './claude-structured-resume-point'
@@ -84,10 +83,6 @@ type CloseClaudePublishedSessionInput = {
     fence: number
   }) => Promise<void>
   onEvent?: (event: ClaudeStructuredSessionEvent) => void
-  onBackgroundTasksChanged?: (
-    sessionId: string,
-    state: AgentSessionBackgroundTaskState | null
-  ) => void
 }
 
 async function finalizeClaudePublishedSession(
@@ -113,9 +108,8 @@ async function finalizeClaudePublishedSession(
     }
     return false
   }
-  if (session.backgroundTasks.clear()) {
-    input.onBackgroundTasksChanged?.(input.sessionId, null)
-  }
+  // Queues the session's ending for the host's child records; the adapter delivers it after close.
+  session.backgroundTasks.clear()
   const leafUuid = await settledClaudeTurnEndLeaf(session)
   const persistence =
     session.closePersistence ??
@@ -224,10 +218,6 @@ export function closeClaudePublishedSessionForDeps(
       fence: number
     }) => Promise<void>
     onEvent?: (event: ClaudeStructuredSessionEvent) => void
-    onBackgroundTasksChanged?: (
-      sessionId: string,
-      state: AgentSessionBackgroundTaskState | null
-    ) => void
   }
 ): Promise<boolean> {
   return closeClaudePublishedSession({ sessions, sessionId, ...deps })
@@ -244,10 +234,6 @@ export async function closeClaudeSession(input: {
     fence: number
   }) => Promise<void>
   onEvent?: (event: ClaudeStructuredSessionEvent) => void
-  onBackgroundTasksChanged?: (
-    sessionId: string,
-    state: AgentSessionBackgroundTaskState | null
-  ) => void
 }): Promise<boolean> {
   const attempt = input.acquisitions.get(input.sessionId)
   if (!(await cancelClaudeAcquisitionAttempt(attempt))) {

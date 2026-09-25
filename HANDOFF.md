@@ -91,6 +91,12 @@ first.
 - **Keyboard defaults are `Alt+F7` / `Alt+Shift+F7`, not Shift+Arrow.** Shift+Arrow is Monaco's
   text-selection chord. Both actions set `allowBareKeybindings` and `allowShiftOnlyKeybindings`, so
   the owner can bind Shift+Arrow in `~/.orca/keybindings.json`.
+- **No CI, deliberately.** Nothing runs `lint`/`typecheck`/`test` on push, and the release workflow
+  does not gate on them — upstream's `pr.yml` only fires on `pull_request`, and work here goes
+  straight to `main`. The owner chose speed over stability: every release stays on the releases page,
+  so a bad build is recovered by installing the previous DMG. Do not add CI or make releases depend
+  on tests without being asked. **Still run the suite locally before cutting a release** — the point
+  is that nothing blocks you, not that checks are worthless.
 - **Fork env vars are read per call, never at module scope.** ES imports are evaluated before the
   importing module's body, so a module-level read of `ORCA_RELEASES_REPO_URL` resolved before
   `armForkUpdateChannel()` could arm it — the shipped build silently checked upstream's releases and
@@ -179,6 +185,8 @@ after a release — a 200 with the expected version is the only real proof the c
   use "Check for Updates" in the menu. Expected behaviour is a notice whose action opens the release
   page, never a download.
 - **The daily upstream-merge agent does not exist yet.** `FORK.md` was written for it.
+- **A broken `main` is only caught by whoever runs the tests.** That is the accepted trade (see
+  Decisions); the recovery is installing an older release, so never delete old releases.
 - **The keybindings have not been exercised by hand**, only by calling `stepToChangedFile` directly.
 - **Nothing is upstreamed.** The two editor features were deliberately kept upstreamable and would
   be better as PRs to `stablyai/orca` than as a fork maintained forever; the updater changes never

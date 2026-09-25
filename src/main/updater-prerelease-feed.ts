@@ -5,9 +5,19 @@ import { compareVersions, isPrereleaseVersion, isValidVersion } from './updater-
 // Fork: every release URL here derives from one base so a fork only overrides the slug, and the
 // default stays upstream so this module and its tests behave exactly as written. Left hardcoded,
 // the atom and fallback paths would hand a fork's build a stock Orca artifact.
-const REPO_BASE = process.env.ORCA_RELEASES_REPO_URL ?? 'https://github.com/stablyai/orca'
-const ATOM_FEED_URL = `${REPO_BASE}/releases.atom`
-const RELEASES_DOWNLOAD_BASE = `${REPO_BASE}/releases/download`
+//
+// Why functions and not consts: ES imports are evaluated before the importing module's body, so a
+// module-level read of this env var runs before the app entry can arm it — the fork then silently
+// resolved updates against upstream's releases. Read it per call instead.
+function repoBase(): string {
+  return process.env.ORCA_RELEASES_REPO_URL ?? 'https://github.com/stablyai/orca'
+}
+function atomFeedUrl(): string {
+  return `${repoBase()}/releases.atom`
+}
+function releasesDownloadBase(): string {
+  return `${repoBase()}/releases/download`
+}
 const FETCH_TIMEOUT_MS = 5000
 const MAX_MANIFEST_PROBE_CANDIDATES = 6
 
@@ -17,10 +27,12 @@ const MAX_MANIFEST_PROBE_CANDIDATES = 6
 function escapeForRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }
-const TAG_HREF_RE = new RegExp(`href="${escapeForRegExp(REPO_BASE)}/releases/tag/([^"]+)"`, 'g')
+function tagHrefPattern(): RegExp {
+  return new RegExp(`href="${escapeForRegExp(repoBase())}/releases/tag/([^"]+)"`, 'g')
+}
 
 export function getReleaseDownloadUrl(tag: string): string {
-  return `${RELEASES_DOWNLOAD_BASE}/${encodeURIComponent(tag)}`
+  return `${releasesDownloadBase()}/${encodeURIComponent(tag)}`
 }
 
 function getPlatformManifestName(): string {
@@ -64,14 +76,14 @@ export function isPerfPrereleaseTag(tag: string): boolean {
 
 async function fetchReleaseFeedTags(): Promise<ReleaseFeedTag[] | null> {
   try {
-    const res = await net.fetch(ATOM_FEED_URL, { signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) })
+    const res = await net.fetch(atomFeedUrl(), { signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) })
     if (!res.ok) {
       return null
     }
     const body = await res.text()
     const tags: ReleaseFeedTag[] = []
 
-    for (const match of body.matchAll(TAG_HREF_RE)) {
+    for (const match of body.matchAll(tagHrefPattern())) {
       const tag = match[1]
       const version = normalizeTagToVersion(tag)
       if (isValidVersion(version)) {
@@ -160,7 +172,7 @@ async function getReleaseAssetReadiness(tag: string, assetName: string): Promise
   const isGitHubReleaseAsset =
     process.platform === 'win32' &&
     (isRelativeAsset ||
-      new RegExp(`^${escapeForRegExp(RELEASES_DOWNLOAD_BASE)}/`, 'i').test(assetName))
+      new RegExp(`^${escapeForRegExp(releasesDownloadBase())}/`, 'i').test(assetName))
   const assetUrl = isRelativeAsset
     ? getReleaseAssetUrl(tag, assetName.split('/').findLast(Boolean) ?? assetName)
     : assetName

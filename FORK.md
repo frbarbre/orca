@@ -50,7 +50,10 @@ Every release URL in the updater reads an env var and **falls back to upstream's
 const REPO_BASE = process.env.ORCA_RELEASES_REPO_URL ?? 'https://github.com/stablyai/orca'
 ```
 
-That default must stay `stablyai`. The fork is selected at runtime by `armForkUpdateChannel()`,
+That default must stay `stablyai`, and it must be read **per call, never at module scope** — ES
+imports are evaluated before the importing module's body, so a module-level `const` resolves before
+`armForkUpdateChannel()` can arm it, and the fork silently checks upstream's releases.
+`src/main/updater-fork-feed-lazy.test.ts` guards this; do not "simplify" those functions to consts. The fork is selected at runtime by `armForkUpdateChannel()`,
 which sets the env vars for packaged builds only. Keeping the defaults upstream is what lets every
 updater module and all 330 of its tests stay exactly as upstream wrote them. Re-pointing the
 literals instead means editing nine test files and re-resolving them on every single merge.

@@ -81,6 +81,12 @@ describe('stepChangedFile', () => {
     expect(stepChangedFile(order, 'unstaged::a.ts', 'previous')).toBe('branch::b.ts')
   })
 
+  it('stops at both ends when wrapping is off, as a held shortcut asks', () => {
+    expect(stepChangedFile(order, 'branch::b.ts', 'next', { wrap: false })).toBeNull()
+    expect(stepChangedFile(order, 'unstaged::a.ts', 'previous', { wrap: false })).toBeNull()
+    expect(stepChangedFile(order, 'branch::a.ts', 'next', { wrap: false })).toBe('branch::b.ts')
+  })
+
   it('enters the list from the matching end when the open tab is not a changed file', () => {
     expect(stepChangedFile(order, 'edit::elsewhere.ts', 'next')).toBe('unstaged::a.ts')
     expect(stepChangedFile(order, null, 'previous')).toBe('branch::b.ts')

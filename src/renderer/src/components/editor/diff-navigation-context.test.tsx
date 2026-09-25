@@ -13,6 +13,7 @@ import {
 
 type FakeDiffEditor = editor.IStandaloneDiffEditor & {
   setLineChanges: (count: number) => void
+  setCursorLine: (line: number) => void
   fireUpdate: () => void
   goToDiff: ReturnType<typeof vi.fn>
   disposeUpdate: ReturnType<typeof vi.fn>
@@ -21,13 +22,24 @@ type FakeDiffEditor = editor.IStandaloneDiffEditor & {
 
 function createFakeEditor(initialCount: number): FakeDiffEditor {
   let count = initialCount
+  // Why: changes sit on lines 10, 20, 30…, and the cursor starts between the first two so both
+  // directions have somewhere to go; no-wrap stepping reads both.
+  let cursorLine = 15
   let updateCallback: (() => void) | null = null
   const disposeUpdate = vi.fn(() => {
     updateCallback = null
   })
   const containerNode = document.createElement('div')
   const editor = {
-    getLineChanges: () => (count > 0 ? Array.from({ length: count }, () => ({})) : []),
+    getLineChanges: () =>
+      Array.from({ length: count }, (_, index) => ({
+        modifiedStartLineNumber: (index + 1) * 10,
+        modifiedEndLineNumber: (index + 1) * 10
+      })),
+    getModifiedEditor: () => ({
+      getPosition: () => ({ lineNumber: cursorLine }),
+      getModel: () => ({ getLineCount: () => 1000 })
+    }),
     goToDiff: vi.fn(),
     getContainerDomNode: () => containerNode,
     onDidUpdateDiff: (cb: () => void) => {
@@ -38,6 +50,9 @@ function createFakeEditor(initialCount: number): FakeDiffEditor {
     },
     setLineChanges: (next: number) => {
       count = next
+    },
+    setCursorLine: (line: number) => {
+      cursorLine = line
     },
     fireUpdate: () => updateCallback?.(),
     disposeUpdate,
@@ -103,6 +118,19 @@ describe('DiffNavigationProvider', () => {
 
     act(() => captured?.goToPreviousDiff())
     expect(editor.goToDiff).toHaveBeenCalledWith('previous')
+  })
+
+  it('does not wrap past the last or first change', () => {
+    mount()
+    const editor = createFakeEditor(3)
+    act(() => registration?.registerDiffEditor(editor))
+
+    editor.setCursorLine(30)
+    act(() => captured?.goToNextDiff())
+    editor.setCursorLine(10)
+    act(() => captured?.goToPreviousDiff())
+
+    expect(editor.goToDiff).not.toHaveBeenCalled()
   })
 
   it('re-renders when onDidUpdateDiff flips the count 0 -> N (count is state)', () => {

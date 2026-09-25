@@ -4,6 +4,7 @@ import {
   installChangedFileNavigationShortcut,
   installMonacoDiffChangeNavigationShortcut
 } from './editor-shortcuts'
+import { goToDiffWithoutWrap } from './diff-change-step'
 import { useAppStore } from '@/store'
 
 export type DiffEditorRegistrationContextValue = {
@@ -70,10 +71,15 @@ export function DiffNavigationProvider({
     })
     // Hold at most one keyboard listener; replace any prior editor's.
     shortcutCleanupRef.current?.()
-    shortcutCleanupRef.current = installMonacoDiffChangeNavigationShortcut(diffEditor)
+    // Why the adapter: the shortcut stops at the first/last change instead of Monaco's wrap.
+    shortcutCleanupRef.current = installMonacoDiffChangeNavigationShortcut({
+      getContainerDomNode: () => diffEditor.getContainerDomNode(),
+      goToDiff: (direction) => goToDiffWithoutWrap(diffEditor, direction)
+    })
     fileShortcutCleanupRef.current?.()
-    fileShortcutCleanupRef.current = installChangedFileNavigationShortcut(diffEditor, (direction) =>
-      stepToChangedFileRef.current(direction)
+    fileShortcutCleanupRef.current = installChangedFileNavigationShortcut(
+      diffEditor,
+      (direction, options) => stepToChangedFileRef.current(direction, options)
     )
     setChangeCount(countChanges(diffEditor))
   }, [])
@@ -94,12 +100,17 @@ export function DiffNavigationProvider({
     setChangeCount(0)
   }, [])
 
+  // Why no-wrap here too: the header buttons and the shortcut must agree at the ends.
   const goToPreviousDiff = useCallback(() => {
-    editorRef.current?.goToDiff('previous')
+    if (editorRef.current) {
+      goToDiffWithoutWrap(editorRef.current, 'previous')
+    }
   }, [])
 
   const goToNextDiff = useCallback(() => {
-    editorRef.current?.goToDiff('next')
+    if (editorRef.current) {
+      goToDiffWithoutWrap(editorRef.current, 'next')
+    }
   }, [])
 
   useEffect(() => {

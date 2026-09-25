@@ -3,6 +3,14 @@ import type { GitStatusEntry } from '../../../../../../shared/git-status-types'
 
 export type ChangedFileStepDirection = 'next' | 'previous'
 
+export type ChangedFileStepOptions = {
+  /**
+   * Defaults to true. A held shortcut passes false so it stops at the last file instead of racing
+   * back round to the first.
+   */
+  wrap?: boolean
+}
+
 /** Which section of the Source Control panel a row belongs to. */
 export type ChangedFileArea = 'branch' | 'working-tree'
 
@@ -80,7 +88,8 @@ export function buildChangedFileOrder(
 export function stepChangedFile(
   order: readonly string[],
   currentKey: string | null,
-  direction: ChangedFileStepDirection
+  direction: ChangedFileStepDirection,
+  options: ChangedFileStepOptions = {}
 ): string | null {
   if (order.length === 0) {
     return null
@@ -93,6 +102,9 @@ export function stepChangedFile(
     return null
   }
   const delta = direction === 'next' ? 1 : -1
+  if (options.wrap === false) {
+    return order[currentIndex + delta] ?? null
+  }
   const nextIndex = (currentIndex + delta + order.length) % order.length
   return order[nextIndex]
 }

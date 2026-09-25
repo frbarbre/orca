@@ -1,4 +1,8 @@
-import type { ChangedFileArea, ChangedFileStepDirection } from '../actions/changed-file-order'
+import type {
+  ChangedFileArea,
+  ChangedFileStepDirection,
+  ChangedFileStepOptions
+} from '../actions/changed-file-order'
 import type { HttpLinkSourceOwner } from '@/lib/http-link-routing'
 import type {
   CheckRunDetailsTabPatch,
@@ -122,7 +126,7 @@ export type EditorFilesSlice = {
     /** Which section owns this row; 'branch' skips the working-tree lookup for the same path. */
     area?: ChangedFileArea
   }) => void
-  stepToChangedFile: (direction: ChangedFileStepDirection) => void
+  stepToChangedFile: (direction: ChangedFileStepDirection, options?: ChangedFileStepOptions) => void
   openCommitDiff: (
     worktreeId: string,
     worktreePath: string,

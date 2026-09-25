@@ -28,7 +28,7 @@ these with `git checkout --theirs` without reading the diff:
   version; releases are cut at whatever version upstream is on.
 - `src/i18n/locales/**` and any other generated or extracted file.
 - Every workflow in `.github/workflows/` except `fork-release.yml`.
-- `docs/**`, and every test file except the three named below.
+- `docs/**`, and every test file except the four named below.
 - Any file where our only "change" is formatting from a pre-commit hook.
 
 If a conflict is in a file this document does not mention, that is the answer: take upstream's.
@@ -96,6 +96,10 @@ New files (no conflict unless upstream adds the same path):
 - `src/renderer/src/lib/source-control-review-order.ts`
 - `src/renderer/src/components/editor/useDiffViewerPendingRevealScroll.ts`
 - `src/renderer/src/components/right-sidebar/checks-panel/use-comment-location-opening.ts`
+- `src/renderer/src/components/editor/changed-file-hold-navigation.ts` — the window-level session
+  that keeps a held file-nav chord stepping across diff remounts
+  (+ `changed-file-navigation-shortcut.test.ts`)
+- `src/renderer/src/components/editor/diff-change-step.ts` (+ its test) — no-wrap change stepping
 
 Modified files, and what to re-apply:
 
@@ -103,8 +107,9 @@ Modified files, and what to re-apply:
 | --- | --- |
 | `src/shared/keybindings/types.ts` | `editor.previousFile` / `editor.nextFile` in the action union. |
 | `src/shared/keybindings/definitions-core-4.ts` | The two definitions. **These files have a 300-line ESLint cap** — if upstream has grown this one, move ours to whichever `definitions-core-*.ts` has room. |
-| `src/renderer/src/components/editor/editor-shortcuts.ts` | `installChangedFileNavigationShortcut`. |
-| `src/renderer/src/components/editor/diff-navigation-context.tsx` | The file-nav listener, installed and torn down on the same seam as the change-nav one. |
+| `src/renderer/src/components/editor/editor-shortcuts.ts` | `installChangedFileNavigationShortcut`, including the `beginChangedFileHold` call on a fresh press. `installMonacoDiffChangeNavigationShortcut` stays upstream's. |
+| `src/renderer/src/components/editor/diff-navigation-context.tsx` | The file-nav listener, installed and torn down on the same seam as the change-nav one. The change-nav shortcut is handed an adapter whose `goToDiff` is `goToDiffWithoutWrap`, and the header buttons call `goToDiffWithoutWrap` too — this is what stops Monaco wrapping from the last change to the first. |
+| `src/renderer/.../store/slices/editor/types/editor-files-slice.ts` | `stepToChangedFile` and its `options?: ChangedFileStepOptions` (`wrap: false` for a held chord). |
 | `src/renderer/src/components/editor/DiffViewer.tsx` | `useDiffViewerPendingRevealScroll` + the `hasPendingReveal` argument. |
 | `src/renderer/src/components/editor/useDiffViewerFirstChangeAutoScroll.ts` | The `hasPendingReveal` input that makes the auto-scroll stand down. |
 | `src/renderer/src/components/editor/monaco-reveal.ts`, `use-monaco-reveal-scheduler.ts` | Type widened from `IStandaloneCodeEditor` to `ICodeEditor` so the diff editor can reuse the scheduler. |
@@ -114,11 +119,13 @@ Modified files, and what to re-apply:
 | `src/renderer/.../source-control/panel/panel-ready.tsx` | `scroll-pb-9` on the file-list scroller — reserves the sticky Commits header. |
 | `src/renderer/.../listing/active-open-file-keys.ts` | The `branch::<path>` key. Branch keys **must bypass** the availability filter. |
 
-Three upstream **test** files carry our additions. Take upstream's version, then re-apply:
+Four upstream **test** files carry our additions. Take upstream's version, then re-apply:
 
 - `source-control-active-open-file-keys.test.ts` — the branch-key tests.
 - `source-control-branch-section-heading.test.tsx`, `section-action-buttons.test.tsx` —
   `activeOpenRowKeys` / `activeOpenRowKey` props on the branch section.
+- `diff-navigation-context.test.tsx` — the fake editor's `getModifiedEditor` and line-numbered
+  `getLineChanges` (no-wrap stepping reads both), plus the "does not wrap" test.
 
 ## Verify
 

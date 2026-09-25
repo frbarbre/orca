@@ -56,13 +56,16 @@ upstream's `1.4.211`; see [Versioning](#versioning).
 The feed at `/releases/latest/download/latest-mac.yml` is the only real proof the chain works: curl
 it after a release and check the version it reports.
 
-Two feature groups, both working and covered by tests:
+Three feature groups, all working and covered by tests:
 
 1. **Changed-file navigation.** `editor.previousFile` / `editor.nextFile` step through the Source
    Control panel's *visible* order, honouring filter, collapsed directories and tree/list mode. The
    open file's row highlights (including branch/PR rows, which had no highlight at all before) and
-   scrolls into view, kept clear of the sticky Commits header.
-2. **Review-comment links.** The `file.ts:L208` badge in the checks panel opens that file's diff at
+   scrolls into view, kept clear of the sticky Commits header. Holding the chord keeps stepping,
+   one file per 50ms, and stops at the first/last file; a single press still wraps.
+2. **Change navigation stops at the ends.** `editor.nextChange` / `editor.previousChange` (F7 /
+   Shift+F7) and the header arrows do nothing at the last/first change instead of Monaco's wrap.
+3. **Review-comment links.** The `file.ts:L208` badge in the checks panel opens that file's diff at
    that line. This was a *gap*, not a feature: the sibling Source Control panel already did it for
    its own notes; the checks panel just never wired it up.
 
@@ -101,6 +104,12 @@ first.
   importing module's body, so a module-level read of `ORCA_RELEASES_REPO_URL` resolved before
   `armForkUpdateChannel()` could arm it — the shipped build silently checked upstream's releases and
   offered an upstream version. `src/main/updater-fork-feed-lazy.test.ts` guards it.
+- **A held file-nav chord is handled by a window-level session, not the diff's listener.** Each
+  step opens another file, which remounts the diff editor and drops focus to the body until the
+  next one mounts, so a container listener sees only the first press. The session ends on keyup,
+  blur, a fresh press, or a repeat that no longer matches (released modifier). Repeats are
+  throttled by wall-clock, so ones that queued behind a slow diff mount are dropped rather than
+  replayed as an overshooting burst.
 - **Review order is keyed `<area>::<path>`, never by path.** A file changed in the working tree *and*
   on the branch has a row in both sections; deduping by path made the branch row unreachable.
 
@@ -188,6 +197,9 @@ after a release — a 200 with the expected version is the only real proof the c
 - **A broken `main` is only caught by whoever runs the tests.** That is the accepted trade (see
   Decisions); the recovery is installing an older release, so never delete old releases.
 - **The keybindings have not been exercised by hand**, only by calling `stepToChangedFile` directly.
+  That includes the hold-to-step behaviour and the no-wrap change stepping: both are covered by
+  unit tests against synthetic key events, not observed in the running app. The 50ms step interval
+  is a guess; tune `CHANGED_FILE_HOLD_STEP_INTERVAL_MS` if it feels too fast or too slow.
 - **Nothing is upstreamed.** The two editor features were deliberately kept upstreamable and would
   be better as PRs to `stablyai/orca` than as a fork maintained forever; the updater changes never
   would be. Upstream requires a linked issue (`Fixes #`), before/after visuals, and an AI-disclosure

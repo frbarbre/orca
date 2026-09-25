@@ -16,7 +16,7 @@ export function createStepToChangedFile(
     // Why: change navigation stops at the file boundary, so a reviewer had to reach for the mouse to
     // reach the next file. Steps the same sequence the source-control panel lists, relative to the
     // file currently open.
-    stepToChangedFile: (direction) => {
+    stepToChangedFile: (direction, options) => {
       const state = get()
       const activeFile = state.openFiles.find((file) => file.id === state.activeFileId)
       const worktreeId = activeFile?.worktreeId ?? state.activeWorktreeId
@@ -43,7 +43,7 @@ export function createStepToChangedFile(
         activeFile && activeFile.worktreeId === worktreeId
           ? resolveCurrentRowKey(order, activeFile.diffSource, activeFile.relativePath ?? null)
           : null
-      const targetKey = stepChangedFile(order, currentKey, direction)
+      const targetKey = stepChangedFile(order, currentKey, direction, options)
       const target = targetKey ? parseChangedFileRowKey(targetKey) : null
       if (!target) {
         return

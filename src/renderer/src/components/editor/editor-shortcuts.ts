@@ -2,6 +2,7 @@ import type { KeyboardEvent as ReactKeyboardEvent } from 'react'
 import { getShortcutPlatform } from '@/lib/shortcut-platform'
 import { useAppStore } from '@/store'
 import { keybindingMatchesAction, type KeybindingActionId } from '../../../../shared/keybindings'
+import { beginChangedFileHold } from './changed-file-hold-navigation'
 
 export function editorShortcutMatches(
   actionId: KeybindingActionId,
@@ -87,27 +88,39 @@ type ChangedFileNavigationTarget = {
  * Steps to the previous/next changed file from inside a diff.
  *
  * Why: mirrors installMonacoDiffChangeNavigationShortcut — capture-phase so it beats Monaco's own
- * handling, and repeats are consumed so holding the key does not queue a burst of file opens.
+ * handling. Holding the chord keeps stepping through a window-level hold session, since the diff
+ * this listener sits on is replaced by the first step; repeats that still reach it are consumed.
  */
 export function installChangedFileNavigationShortcut(
   target: ChangedFileNavigationTarget,
-  stepToChangedFile: (direction: 'next' | 'previous') => void
+  stepToChangedFile: (direction: 'next' | 'previous', options?: { wrap?: boolean }) => void
 ): () => void {
   const handleKeyDown = (event: KeyboardEvent): void => {
-    let direction: 'next' | 'previous' | null = null
+    let actionId: 'editor.nextFile' | 'editor.previousFile' | null = null
     if (editorShortcutMatches('editor.nextFile', event)) {
-      direction = 'next'
+      actionId = 'editor.nextFile'
     } else if (editorShortcutMatches('editor.previousFile', event)) {
-      direction = 'previous'
+      actionId = 'editor.previousFile'
     }
-    if (!direction) {
+    if (!actionId) {
       return
     }
     event.preventDefault()
     event.stopPropagation()
-    if (!event.repeat) {
-      stepToChangedFile(direction)
+    if (event.repeat) {
+      return
     }
+    const heldActionId = actionId
+    const direction = heldActionId === 'editor.nextFile' ? 'next' : 'previous'
+    stepToChangedFile(direction)
+    // Why wrap: false: a single press cycles past the end, but a hold must stop on the last file
+    // rather than lap the list faster than the reviewer can let go.
+    beginChangedFileHold(
+      event,
+      direction,
+      (repeat) => editorShortcutMatches(heldActionId, repeat),
+      (heldDirection) => stepToChangedFile(heldDirection, { wrap: false })
+    )
   }
 
   const node = target.getContainerDomNode()

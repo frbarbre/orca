@@ -185,3 +185,31 @@ looks.
 The app **notifies** about a new release and opens the release page; it never installs. That is
 deliberate: macOS hands the swap to Squirrel.Mac, which refuses a bundle whose signature it cannot
 verify, and this fork has no Developer ID. Install the DMG by hand.
+
+## PR previews
+
+Open a pull request and `fork-preview-release.yml` builds it and publishes a **preview release**,
+tagged `preview-pr<N>-<sha>`, linked from a comment on the PR that is edited in place as you push.
+
+A preview installs **beside** your everyday Orca, not over it. `ORCA_PREVIEW_BUILD=1` gives the
+build its own bundle id (`com.stablyai.orca.preview`), product name (`Orca Preview`) and URL scheme
+— the three things macOS uses to decide whether two bundles are the same app. Consequences worth
+knowing before you rely on it:
+
+- It is a **separate app** in `/Applications`, so installing one never replaces the other.
+- It keeps **separate settings and workspaces** (Electron derives `userData` from the product
+  name). A preview starts unconfigured; it does not inherit the release app's state. That is the
+  safe default — two copies sharing one state directory can corrupt it if both run at once.
+- Delete `/Applications/Orca Preview.app` when you are done. Nothing cleans previews up for you.
+
+The preview tag is deliberately **not** a version. The updater mines this repo's `releases.atom`
+and keeps only tags that parse as a version (`src/shared/app-version.ts`), so `preview-pr12-4a3c18d`
+is invisible to an installed release build. It is published as a prerelease too, so it never
+becomes `latest`.
+
+Two things to expect:
+
+- `pull_request` workflows run from the **base** branch, so this file has to be on `main` before
+  any PR will trigger it.
+- A push to a PR cancels the build still running for the previous commit, so a busy branch costs
+  one build rather than one per push.

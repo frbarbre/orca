@@ -1,0 +1,148 @@
+name: Fork Preview Release (macOS)
+
+# Builds a pull request and publishes it as a PREVIEW release you can install alongside your
+# everyday Orca.
+#
+# Why it does not overwrite the main app: preview builds are packaged with ORCA_PREVIEW_BUILD=1,
+# which gives them their own bundle id (com.stablyai.orca.preview), product name ("Orca Preview")
+# and URL scheme. macOS therefore treats them as a different app: separate entry in /Applications,
+# separate Application Support directory, and no chance of Squirrel swapping one over the other.
+# A preview keeps its own settings and workspaces; it does not inherit the release app's.
+#
+# Why the tag is not a version: the fork's updater mines this repo's releases.atom and keeps only
+# tags that parse as a version (src/shared/app-version.ts). "preview-pr12-4a3c18d" does not, so an
+# installed release build can never be offered a preview. Publishing as a prerelease keeps it off
+# "latest" as well.
+#
+# Runs on every push to a PR; the concurrency group cancels a build the moment a newer commit
+# lands, so a busy branch costs one build, not one per push.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+    inputs:
+      pr:
+        description: 'PR number to build a preview for'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: fork-preview-${{ github.event.pull_request.number || inputs.pr }}
+  cancel-in-progress: true
+
+jobs:
+  preview:
+    runs-on: macos-15
+    timeout-minutes: 120
+    env:
+      NODE_OPTIONS: --max-old-space-size=4096
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || format('refs/pull/{0}/head', inputs.pr) }}
+
+      - name: Resolve preview identity
+        id: preview
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number || inputs.pr }}
+        run: |
+          set -euo pipefail
+          sha="$(git rev-parse --short=7 HEAD)"
+          base="$(node -p "require('./package.json').version")"
+          # Why the sha is prefixed: a semver prerelease identifier that is all digits must not have
+          # a leading zero, and a commit sha can be both. "sha<hex>" is always alphanumeric.
+          echo "version=${base}-pr${PR_NUMBER}.sha${sha}" >> "$GITHUB_OUTPUT"
+          echo "tag=preview-pr${PR_NUMBER}-${sha}" >> "$GITHUB_OUTPUT"
+          echo "sha=${sha}" >> "$GITHUB_OUTPUT"
+          echo "pr=${PR_NUMBER}" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Enable pnpm
+        run: corepack enable
+
+      - name: Install dependencies
+        run: pnpm install:release
+
+      - uses: ./.github/actions/install-mobile-dependencies
+
+      - name: Build the app
+        run: pnpm build:release
+
+      - name: Package the preview
+        env:
+          PREVIEW_VERSION: ${{ steps.preview.outputs.version }}
+        run: |
+          set -euo pipefail
+          # Unsigned, like the main fork release: signing is what auto-update needs, and a preview
+          # is installed by hand anyway.
+          export CSC_IDENTITY_AUTO_DISCOVERY=false
+          export ORCA_PREVIEW_BUILD=1
+          node config/scripts/ensure-native-runtime.mjs --runtime=electron
+          pnpm exec electron-builder --config config/electron-builder.config.cjs --mac --publish never \
+            "-c.extraMetadata.version=$PREVIEW_VERSION"
+
+      - name: Publish the preview release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.preview.outputs.tag }}
+          VERSION: ${{ steps.preview.outputs.version }}
+          PR_NUMBER: ${{ steps.preview.outputs.pr }}
+          TARGET_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          set -euo pipefail
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release delete "$TAG" --repo "$GITHUB_REPOSITORY" --yes --cleanup-tag
+          fi
+          # Why a notes file: text written inline would carry this block's indentation onto the
+          # rendered release page.
+          printf '%s\n' \
+            "Preview build of PR #${PR_NUMBER}." \
+            "" \
+            "Installs as **Orca Preview**, alongside your normal Orca - separate app, separate settings." \
+            "Unsigned, so install the DMG by hand (orca-preview-macos-arm64.dmg for Apple Silicon)." \
+            "" \
+            "Delete /Applications/Orca Preview.app when you are done with it." \
+            > preview-notes.md
+          gh release create "$TAG" \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$TARGET_SHA" \
+            --title "Preview: PR #${PR_NUMBER} ($VERSION)" \
+            --notes-file preview-notes.md \
+            --prerelease \
+            dist/*.dmg \
+            dist/*.dmg.blockmap
+
+          gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[].name' | sort
+
+      - name: Link the preview on the PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.preview.outputs.tag }}
+          PR_NUMBER: ${{ steps.preview.outputs.pr }}
+          SHA: ${{ steps.preview.outputs.sha }}
+        run: |
+          set -euo pipefail
+          url="https://github.com/$GITHUB_REPOSITORY/releases/tag/$TAG"
+          printf '%s\n' \
+            "<!-- fork-preview -->" \
+            "**Preview build ready** for \`$SHA\` - [download]($url)" \
+            "" \
+            "Installs as *Orca Preview*, beside your normal Orca." \
+            > preview-comment.md
+          # Why edit in place: one comment that follows the branch, rather than one per push.
+          existing="$(gh pr view "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --json comments \
+            --jq '.comments[] | select(.body | contains("<!-- fork-preview -->")) | .url' | tail -1)"
+          if [ -n "$existing" ]; then
+            gh api --method PATCH "repos/$GITHUB_REPOSITORY/issues/comments/${existing##*-}" \
+              -F body=@preview-comment.md >/dev/null
+          else
+            gh pr comment "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --body-file preview-comment.md
+          fi

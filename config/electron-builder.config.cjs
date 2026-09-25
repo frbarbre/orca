@@ -74,7 +74,18 @@ const devChannelRepo = isHourlyChannel
     : isAdhocChannel
       ? 'orca-adhoc'
       : null
-const appId = 'com.stablyai.orca'
+// Fork: a PR preview must install BESIDE the release app instead of over it, which takes a
+// separate identity on every axis macOS keys off. The bundle id is what Launch Services and
+// Squirrel treat as "the same app"; the product name is what Electron derives userData from, so
+// the two never share settings or state; and the URL scheme would otherwise be claimed by
+// whichever copy registered last.
+//
+// This is deliberately the inverse of the dev channels above, which keep the release identity
+// precisely so they DO replace an installed Orca.
+const isPreviewBuild = process.env.ORCA_PREVIEW_BUILD === '1'
+const appId = isPreviewBuild ? 'com.stablyai.orca.preview' : 'com.stablyai.orca'
+const productName = isPreviewBuild ? 'Orca Preview' : 'Orca'
+const urlScheme = isPreviewBuild ? 'orca-preview' : 'orca'
 const featureWallResources = {
   from: 'resources/onboarding/feature-wall',
   to: 'onboarding/feature-wall'
@@ -172,8 +183,8 @@ const windowsRuntimeResources = existsSync(
 /** @type {import('electron-builder').Configuration} */
 module.exports = {
   appId,
-  productName: 'Orca',
-  protocols: [{ name: 'Orca', schemes: ['orca'] }],
+  productName,
+  protocols: [{ name: productName, schemes: [urlScheme] }],
   toolsets: { appimage: '1.0.3' },
   ...(devChannelBuildVersion
     ? { extraMetadata: { version: devChannelBuildVersion } }
@@ -572,7 +583,7 @@ module.exports = {
   // silently downgrading to ad-hoc artifacts that look shippable in CI logs.
   forceCodeSigning: isMacRelease,
   dmg: {
-    artifactName: 'orca-macos-${arch}.${ext}'
+    artifactName: isPreviewBuild ? 'orca-preview-macos-${arch}.${ext}' : 'orca-macos-${arch}.${ext}'
   },
   linux: {
     // Why mimeTypes and not fileAssociations: shared-mime-info already maps *.md/*.markdown to

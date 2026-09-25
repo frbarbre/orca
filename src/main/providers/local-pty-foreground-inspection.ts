@@ -8,6 +8,7 @@ import {
 } from './agent-foreground-process'
 import { buildPaneProcessFingerprint } from './posix-pane-foreground-fingerprint'
 import { isRetiredPtyMaster } from '../pty/node-pty-master-fd-retirement'
+import { ptyShellProcessId } from '../windows/windows-pty-job'
 import { resolveForegroundFallbackProcess } from './local-pty-launch-helpers'
 import {
   ptyAgentForegroundContextPaths,
@@ -35,6 +36,10 @@ export function inspectLocalPtyChildProcesses(id: string): PtyChildProcessVerdic
   }
   if (isRetiredPtyMaster(proc)) {
     return 'unverifiable'
+  }
+  if ('processNameIsSpawnFile' in proc && proc.processNameIsSpawnFile === true) {
+    const members = process.platform === 'win32' ? readWindowsPtyJobProcessIds(proc) : null
+    return members === null ? 'unverifiable' : members.size > 1 ? 'children' : 'no-children'
   }
   try {
     const foreground = proc.process
@@ -111,7 +116,7 @@ export async function getLocalPtyForegroundProcess(id: string): Promise<string |
       const verdict = judgeCachedAgentJobEvidence({
         jobProcessIds: paneProcessIds,
         jobSupported: isWindowsPtyJobReadable(),
-        shellPid: proc.pid,
+        shellPid: ptyShellProcessId(proc) ?? proc.pid,
         anchorProcessId: cachedEntry?.pid ?? null,
         identityAgeMs: Date.now() - (cachedEntry?.at ?? 0)
       })
@@ -264,7 +269,7 @@ export async function confirmLocalPtyShellForeground(id: string): Promise<boolea
     return false
   }
   const confirmed = await confirmShellForegroundProcess(
-    proc.pid,
+    ptyShellProcessId(proc),
     ptyShellName.get(id),
     process.platform === 'win32'
       ? { readWindowsPtyJobProcessIds: () => readWindowsPtyJobProcessIds(proc) }

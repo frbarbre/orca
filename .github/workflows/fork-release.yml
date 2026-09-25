@@ -95,6 +95,10 @@ jobs:
           if [ -n "${CSC_LINK:-}" ]; then
             export ORCA_MAC_RELEASE=1
           else
+            # Why unset rather than leave them empty: a missing secret still exports the variable as
+            # an empty string, and electron-builder treats a *defined* CSC_LINK as "a certificate is
+            # configured", then fails resolving "" as a path ("<workspace> not a file").
+            unset CSC_LINK CSC_KEY_PASSWORD APPLE_ID APPLE_APP_SPECIFIC_PASSWORD APPLE_TEAM_ID
             export CSC_IDENTITY_AUTO_DISCOVERY=false
           fi
           node config/scripts/ensure-native-runtime.mjs --runtime=electron

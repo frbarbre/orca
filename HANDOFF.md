@@ -48,10 +48,13 @@ Read this before trying to reproduce anything the earlier session did.
 
 ## Current state
 
-**Landed on `main` and released.** Two releases exist: `v1.4.197` and `v1.4.198`, both published
-with 9 assets each. `v1.4.198` was cut via the workflow's `version` override purely so the update
-notice has a target higher than an installed `1.4.197`; the feed at
-`/releases/latest/download/latest-mac.yml` serves `1.4.198` and returns 200.
+**Landed on `main` and released.** `v1.4.197` and `v1.4.198` are published with 9 assets each, and a
+`v1.4.212` build was cut at handoff carrying the module-scope fix described below — check
+`gh release list --repo frbarbre/orca` for whether it completed. `1.4.212` was chosen to sit above
+upstream's `1.4.211`; see [Versioning](#versioning).
+
+The feed at `/releases/latest/download/latest-mac.yml` is the only real proof the chain works: curl
+it after a release and check the version it reports.
 
 Two feature groups, both working and covered by tests:
 
@@ -84,11 +87,49 @@ first.
 - **Release version can be overridden** via the workflow's `version` input
   (`-c.extraMetadata.version`), because the notice only fires for a version *higher* than the
   installed build, and the fork otherwise rides upstream's version. Do not edit `package.json`.
+  See [Versioning](#versioning) — this is no longer optional now that the fork is ahead of upstream.
 - **Keyboard defaults are `Alt+F7` / `Alt+Shift+F7`, not Shift+Arrow.** Shift+Arrow is Monaco's
   text-selection chord. Both actions set `allowBareKeybindings` and `allowShiftOnlyKeybindings`, so
   the owner can bind Shift+Arrow in `~/.orca/keybindings.json`.
+- **Fork env vars are read per call, never at module scope.** ES imports are evaluated before the
+  importing module's body, so a module-level read of `ORCA_RELEASES_REPO_URL` resolved before
+  `armForkUpdateChannel()` could arm it — the shipped build silently checked upstream's releases and
+  offered an upstream version. `src/main/updater-fork-feed-lazy.test.ts` guards it.
 - **Review order is keyed `<area>::<path>`, never by path.** A file changed in the working tree *and*
   on the branch has a row in both sections; deduping by path made the branch row unreachable.
+
+## Versioning
+
+The fork's releases are now **ahead of upstream**, and that has to be maintained deliberately.
+
+`package.json` still tracks upstream and must not be edited — the release version is supplied per
+build by the workflow's `version` input. The rule:
+
+> Every fork release must be versioned **higher than both** the currently installed fork build
+> **and** upstream's latest release.
+
+Why both:
+
+- Higher than the installed build, or the update notice never fires — the updater only reports an
+  update when the published version is greater.
+- Higher than upstream, because the fork's build can still resolve an upstream release in paths that
+  have not been overridden, and a higher upstream version would out-rank the fork's own build. The
+  fork was pushed to `1.4.212` for exactly this reason, upstream being on `1.4.211` at the time.
+
+Practical shape:
+
+```bash
+# what upstream is on
+gh release view --repo stablyai/orca --json tagName --jq .tagName
+# what this fork last published
+gh release list --repo frbarbre/orca --limit 1
+
+gh workflow run fork-release.yml --repo frbarbre/orca --ref main -f version=<higher than both>
+```
+
+After a merge from upstream, `package.json` will carry upstream's newer version. That is the version
+to beat — bump past it rather than reusing it, or an installed fork build sitting on a
+hand-picked higher number will ignore the release.
 
 ## Verifying
 
@@ -120,9 +161,11 @@ in a way that looks like a real break but is not.
 ## Releasing
 
 ```bash
-gh workflow run fork-release.yml --repo frbarbre/orca --ref main
-gh workflow run fork-release.yml --repo frbarbre/orca --ref main -f version=1.4.199   # to bump
+gh workflow run fork-release.yml --repo frbarbre/orca --ref main -f version=<see Versioning>
 ```
+
+Omitting `version` builds at `package.json`'s version, which now tracks *behind* the fork's published
+releases — read [Versioning](#versioning) before cutting one.
 
 Builds on a hosted macOS runner, publishes one release with all artifacts to this fork. The installed
 app reads `https://github.com/frbarbre/orca/releases/latest/download/latest-mac.yml`; curl that URL

@@ -19,10 +19,11 @@ import type {
   SourceControlLaunchActionId
 } from '../../../../../shared/source-control-ai-actions'
 import type { PRCheckDetail } from '../../../../../shared/github/check-types'
-import type { PRComment } from '../../../../../shared/github/comment-types'
 import type { PRRefreshErrorType } from '../../../../../shared/github/pull-request-refresh-types'
 import type { GitLabProjectRef } from '../../../../../shared/gitlab-types'
 import type { PRCommentsListSelectionClearRequest } from '../pr-comments-list-selection'
+import { getGitHubPRCacheKey } from '@/store/slices/github-cache-key'
+import { usePRCommentsState } from '@/components/pr-comments/pr-comments-store'
 import {
   buildChecksPanelGitStatusContextKey,
   type ChecksPanelGitStatusSnapshot
@@ -93,9 +94,6 @@ export function useChecksPanelControllerState() {
 
   const [checks, setChecks] = useState<PRCheckDetail[]>([])
   const [checksLoading, setChecksLoading] = useState(false)
-  const [comments, setComments] = useState<PRComment[]>([])
-  const [commentsLoading, setCommentsLoading] = useState(false)
-  const commentsRef = useRef<PRComment[]>([])
   const [commentsSelectionClearRequest, setCommentsSelectionClearRequest] =
     useState<PRCommentsListSelectionClearRequest | null>(null)
   const commentsSelectionClearTokenRef = useRef(0)
@@ -163,7 +161,6 @@ export function useChecksPanelControllerState() {
   const conflictSummaryRefreshKeyRef = useRef<string | null>(null)
   const panelVisibleSinceRef = useRef<number | null>(null)
   const foregroundedUnrenderedReviewKeyRef = useRef<string | null>(null)
-  commentsRef.current = comments
   const prGenerationRecords = useAppStore((s) => s.pullRequestGenerationRecords)
   const allocatePullRequestGenerationRequestId = useAppStore(
     (s) => s.allocatePullRequestGenerationRequestId
@@ -208,6 +205,23 @@ export function useChecksPanelControllerState() {
   const gitIdentityDisplay = activeWorktree ? getWorktreeGitIdentityDisplay(activeWorktree) : null
   const detachedHeadDisplay = gitIdentityDisplay?.kind === 'detached' ? gitIdentityDisplay : null
   const branch = gitIdentityDisplay?.kind === 'branch' ? gitIdentityDisplay.branchName : ''
+  // Why the comment list comes from a provider rather than useState here: this panel unmounts when
+  // its tab is deselected, and the diff viewer renders the same cards inline from the same list.
+  // The key scopes it to this PR so another worktree's review cannot bleed in.
+  const prCommentScopeKey =
+    repo && branch
+      ? getGitHubPRCacheKey(
+          repo.path,
+          repo.id,
+          branch,
+          settings,
+          repo.connectionId,
+          repo.executionHostId,
+          true
+        )
+      : ''
+  const { comments, setComments, commentsRef, commentsLoading, setCommentsLoading } =
+    usePRCommentsState(prCommentScopeKey)
   const activeWorktreePath = activeWorktree?.path ?? null
   const activeWorktreePushTarget = activeWorktree?.pushTarget ?? null
   const activeSourceControlLaunchPlatform = resolveSourceControlLaunchPlatform({

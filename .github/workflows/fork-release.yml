@@ -103,3 +103,20 @@ jobs:
           fi
           node config/scripts/ensure-native-runtime.mjs --runtime=electron
           pnpm exec electron-builder --config config/electron-builder.config.cjs --mac --publish always
+
+      # Why a separate step rather than releaseType 'release': the dual-arch mac build packages in
+      # two passes, and with a non-draft target both passes race to create the release — producing
+      # two releases on one tag with the assets split between them, one of them without
+      # latest-mac.yml. Drafting first and publishing once at the end is how upstream avoids it.
+      # The updater needs this: GitHub excludes drafts from /releases/latest.
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          version="$(node -p "require('./package.json').version")"
+          tag="v$version"
+          echo "Publishing $tag"
+          gh release edit "$tag" --repo "$GITHUB_REPOSITORY" --draft=false --latest
+          gh release view "$tag" --repo "$GITHUB_REPOSITORY" --json assets \
+            --jq '.assets[].name' | sort

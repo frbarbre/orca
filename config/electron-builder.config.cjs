@@ -677,10 +677,11 @@ module.exports = {
     // public GitHub release as soon as the first platform uploads, and
     // /releases/latest serves a missing Windows exe. release-cut undrafts
     // only after every required asset exists.
-    // Why 'release' on the fork rather than upstream's 'draft': the updater feed reads
-    // /releases/latest/download, and GitHub excludes drafts from /releases/latest — a drafted
-    // build is invisible to every installed copy until someone undrafts it by hand.
-    releaseType: devChannelRepo ? 'prerelease' : 'release'
+    // Why draft on the main repo: `--publish always` otherwise creates a
+    // public GitHub release as soon as the first platform uploads, and
+    // /releases/latest serves a missing Windows exe. release-cut undrafts
+    // only after every required asset exists.
+    releaseType: devChannelRepo ? 'prerelease' : 'draft'
   }
 }
 

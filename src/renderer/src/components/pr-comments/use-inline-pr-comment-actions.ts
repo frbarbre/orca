@@ -133,5 +133,46 @@ export function useInlinePRCommentActions(worktreeId: string | null) {
     [pr?.headSha, pr?.prRepo, prNumber, repo]
   )
 
-  return { groups, prNumber, reviewTarget, mergeComment, ...mutations, handleResolve }
+  // Why a forced refetch after posting: a comment created or replied to over REST comes back
+  // without the GraphQL thread id that grouping keys on, so an optimistic insert cannot nest under
+  // the conversation it belongs to and shows as a second thread on the same line until something
+  // reloads. Synthesising an id would group them, but Resolve sends that id to GraphQL, where a
+  // made-up one fails.
+  const reconcileWithRemote = useCallback(async () => {
+    if (!repo || prNumber === null) {
+      return
+    }
+    try {
+      const fresh = await fetchPRComments(repo.path, prNumber, {
+        force: true,
+        repoId: repo.id,
+        prRepo: pr?.prRepo ?? null
+      })
+      setComments(fresh)
+    } catch {
+      // The optimistic copy stays; it is only missing its thread id until the next fetch.
+    }
+  }, [fetchPRComments, pr?.prRepo, prNumber, repo, setComments])
+
+  const replyAndReconcile = useCallback(
+    async (comment: PRComment, body: string) => {
+      const result = await mutations.handleReplyToComment(comment, body)
+      if (result.ok) {
+        void reconcileWithRemote()
+      }
+      return result
+    },
+    [mutations, reconcileWithRemote]
+  )
+
+  return {
+    groups,
+    prNumber,
+    reviewTarget,
+    mergeComment,
+    reconcileWithRemote,
+    ...mutations,
+    handleReplyToComment: replyAndReconcile,
+    handleResolve
+  }
 }

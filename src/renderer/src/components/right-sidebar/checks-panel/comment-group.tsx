@@ -77,6 +77,11 @@ export function PRCommentGroupView({
 }): React.JSX.Element {
   // Reply targets a specific comment id so any comment in a thread — root or
   // nested reply — can be replied to, not just the thread root.
+  // Why the target is the root rather than the comment the composer sits under: GitHub nests a
+  // reply under the thread its parent opened, so replying to a reply starts a second thread on the
+  // same line. The composer still opens at the foot of the conversation; only its parent differs.
+  const replyTarget = group.kind === 'thread' ? group.root : group.comment
+
   const renderReplyComposer = (comment: PRComment, nested = false): React.ReactNode =>
     replyingCommentId === comment.id && onReply ? (
       <div
@@ -91,14 +96,14 @@ export function PRCommentGroupView({
           placeholder={translate(
             'auto.components.right.sidebar.checks.panel.content.ba20d1a896',
             'Reply to {{value0}}',
-            { value0: comment.author }
+            { value0: replyTarget.author }
           )}
           submitLabel="Reply"
           autoFocus
           disabled={replyDisabled}
           disabledReason={replyDisabledReason}
           onCancel={() => onCancelReply?.(comment.id)}
-          onSubmit={(body) => onReply(comment, body)}
+          onSubmit={(body) => onReply(replyTarget, body)}
         />
       </div>
     ) : null

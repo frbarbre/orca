@@ -385,7 +385,10 @@ export default function DiffViewer({
             onCancel={() => setPopover(null)}
             onSubmitNote={handleSubmitComment}
             onReviewPosted={(comment) => {
+              // Merge first so the card appears at once, then reconcile: the REST response carries
+              // no thread id, and replies to this comment cannot nest under it without one.
               inlinePRComments.mergeComment(comment)
+              void inlinePRComments.reconcileWithRemote()
               setPopover(null)
             }}
           />

@@ -8,6 +8,9 @@ import { UI_STORAGE_KEY, writeJson } from './web-storage'
 export function createWebAppApi(): Partial<PreloadApi> {
   return {
     app: {
+      // Why nulls: the web client has no ~/.orca to read theme files from, so the editor keeps its
+      // stock themes there.
+      getCustomEditorThemes: () => Promise.resolve({ dark: null, light: null }),
       getIdentity: () =>
         Promise.resolve({
           name: 'Orca',

@@ -32,6 +32,7 @@ import { useDiffEditorRegistration } from './diff-navigation-context'
 import { preserveDiffViewStateAcrossModelSwaps } from './diff-model-swap-view-state'
 import { monacoFindOptions } from './monaco-find-options'
 import { resolveDocumentTheme } from '@/lib/document-theme'
+import { editorThemeName, ensureCustomEditorThemes } from '@/lib/custom-editor-theme'
 
 export default function DiffViewer({
   modelKey,
@@ -98,6 +99,21 @@ export default function DiffViewer({
     }
     return diffComments.some((c) => c.id === scrollToDiffCommentId) ? scrollToDiffCommentId : null
   }, [scrollToDiffCommentId, diffComments, worktreeId])
+
+  // Why state: defineTheme happens after the first paint, and Monaco only picks up a theme it
+  // already knows — so re-render once registration lands to swap off the stock theme.
+  const [, setCustomThemesReady] = useState(false)
+  useEffect(() => {
+    let cancelled = false
+    void ensureCustomEditorThemes().then(() => {
+      if (!cancelled) {
+        setCustomThemesReady(true)
+      }
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   // Why: a reveal aimed at this file owns the initial scroll, so the first-change auto-scroll stands down.
   const pendingRevealForThisViewer = useAppStore(
@@ -368,7 +384,7 @@ export default function DiffViewer({
             language={language}
             original={originalContent}
             modified={modifiedContent}
-            theme={resolveDocumentTheme(settings?.theme ?? 'light') ? 'vs-dark' : 'vs'}
+            theme={editorThemeName(resolveDocumentTheme(settings?.theme ?? 'light'))}
             onMount={handleMount}
             // Why: key models by tab identity and preserve the modified undo stack across Changes-mode HEAD rotations.
             originalModelPath={currentDiffModelPaths.originalModelPath}

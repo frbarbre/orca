@@ -1,5 +1,6 @@
 import { ipcRenderer } from 'electron'
 import type { AppIdentity } from '../../shared/app-identity'
+import type { MonacoThemeData } from '../../shared/vscode-theme'
 import type { FloatingTerminalCwdRequest } from '../../shared/ui-chrome-types'
 import type { MacCapturedDigitRowChord } from '../../shared/macos-symbolic-hotkeys'
 import type { MarkdownDocument } from '../../shared/filesystem-entry-types'
@@ -14,6 +15,10 @@ import type { PreloadApi } from '../api-types'
 
 export const appApi = {
   getIdentity: (): Promise<AppIdentity> => ipcRenderer.invoke('app:getIdentity'),
+  getCustomEditorThemes: (): Promise<{
+    dark: MonacoThemeData | null
+    light: MonacoThemeData | null
+  }> => ipcRenderer.invoke('editor-theme:getCustom'),
   getFeatureWallAssetBaseUrl: (): Promise<string> =>
     ipcRenderer.invoke('app:getFeatureWallAssetBaseUrl'),
   relaunch: (): Promise<void> =>

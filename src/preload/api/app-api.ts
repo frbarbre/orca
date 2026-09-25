@@ -1,4 +1,5 @@
 import type { AppIdentity } from '../../shared/app-identity'
+import type { MonacoThemeData } from '../../shared/vscode-theme'
 import type { E2EConfig } from '../../shared/e2e-config'
 import type { ExecutionHostId } from '../../shared/execution-host'
 import type {
@@ -14,6 +15,11 @@ import type { KeyboardLayoutSnapshot } from '../../shared/keyboard-layout-snapsh
 import type { KeyboardLayoutChangeEvent } from '../../shared/keyboard-layout-events'
 
 export type AppApi = {
+  /** User-supplied Monaco themes converted from VS Code theme files in ~/.orca/themes. */
+  getCustomEditorThemes: () => Promise<{
+    dark: MonacoThemeData | null
+    light: MonacoThemeData | null
+  }>
   /** Returns the app identity currently exposed to native chrome and the titlebar. */
   getIdentity: () => Promise<AppIdentity>
   /** Returns a URL base for feature-wall assets. In dev this is Vite /@fs;

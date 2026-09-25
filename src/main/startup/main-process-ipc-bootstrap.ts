@@ -3,8 +3,13 @@ import { recoverLegacyWorkerTerminalsForRendererStartup } from './legacy-worker-
 import { logStartupMilestone } from './startup-diagnostics'
 import { mainProcessState as state } from './main-process-state'
 import { resolveOpenedMarkdownDocuments } from './os-opened-markdown-files'
+import { loadCustomEditorThemes } from '../editor-theme/custom-editor-theme'
 
 export function registerMainProcessIpcHandlers(): void {
+  // Why read per call rather than caching: dropping a theme file in and reloading the window is the
+  // whole edit loop, and a cache would make it a restart instead.
+  ipcMain.handle('editor-theme:getCustom', () => loadCustomEditorThemes())
+
   ipcMain.handle('app:awaitFirstWindowStartupServices', async () => {
     await Promise.all([
       state.firstWindowStartupServicesReady,

@@ -127,6 +127,29 @@ Four upstream **test** files carry our additions. Take upstream's version, then 
 - `diff-navigation-context.test.tsx` — the fake editor's `getModifiedEditor` and line-numbered
   `getLineChanges` (no-wrap stepping reads both), plus the "does not wrap" test.
 
+### 3. Editor theming from a VS Code theme file
+
+Loads `~/.orca/themes/editor-dark.json` / `editor-light.json` (any VS Code theme) and registers them
+with Monaco, so the editor and diff viewer are not stuck on stock `vs` / `vs-dark`.
+
+No theme is committed, deliberately: a VS Code theme is someone else's work under someone else's
+licence. The repo carries the loader, never the colours. Keep it that way.
+
+New files (no conflict unless upstream adds the same path):
+
+- `src/shared/vscode-theme.ts` (+ its test) — JSONC parsing and the VS Code → Monaco conversion.
+- `src/main/editor-theme/custom-editor-theme.ts` — reads the files from `~/.orca/themes`.
+- `src/renderer/src/lib/custom-editor-theme.ts` — registers once per session, picks the theme name.
+
+Modified files, and what to re-apply:
+
+| File | What is ours |
+| --- | --- |
+| `src/main/startup/main-process-ipc-bootstrap.ts` | The `editor-theme:getCustom` handler. |
+| `src/preload/api/app-api.ts`, `app-bridge.ts` | The `getCustomEditorThemes` member and its `ipcRenderer.invoke`. |
+| `src/renderer/src/web/preload-api/web-app-api.ts` | The stub returning nulls — the web client has no `~/.orca`, and the type requires the member. |
+| `src/renderer/.../editor/DiffViewer.tsx`, `MonacoEditor.tsx` | `editorThemeName(...)` in place of the `'vs-dark' : 'vs'` ternary, plus the `ensureCustomEditorThemes()` effect. Both need the effect: `defineTheme` lands after first paint, and Monaco ignores a theme it does not yet know. |
+
 ## Verify
 
 Run all of these. They are the same gates upstream's CI uses.

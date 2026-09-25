@@ -60,16 +60,6 @@ async function runWorkspaceStatusRuleTick(): Promise<void> {
     config,
     existingBranches: scope.existingBranches
   })
-  if (config.reviewInbox.enabled && !config.reviewInbox.seeded) {
-    // Why the whole queue is recorded before the first create: enabling the
-    // inbox must not clone every review already waiting on you.
-    const latest = useAppStore.getState()
-    latest.markPullRequestHandled(plan.seededHandledKeys)
-    latest.setWorkspaceStatusRules({
-      ...useAppStore.getState().workspaceStatusRules,
-      reviewInbox: { ...config.reviewInbox, seeded: true }
-    })
-  }
   await applyWorkspaceStatusRulePlan(plan, config)
 }
 

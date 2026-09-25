@@ -12,7 +12,9 @@ import {
 import { lowercaseLoginSet, resolveWorkspaceStatusRule } from './workspace-status-rules'
 import type { WorkspaceStatus } from './worktree/types'
 
-export const MAX_REVIEW_INBOX_CREATES_PER_TICK = 3
+/** The inbox search returns at most one page, so this is the real ceiling on a
+ *  single tick. Creations run one after another, never concurrently. */
+export const MAX_REVIEW_INBOX_CREATES_PER_TICK = 30
 
 /** A workspace with a resolved pull request, flattened so planning stays pure. */
 export type WorkspaceStatusRuleTarget = {
@@ -34,16 +36,13 @@ export type WorkspaceStatusRulePlan = {
   /** Attempted with force off, so Git refuses one holding uncommitted work or a live agent. */
   removals: { worktreeId: string; executionHostId: ExecutionHostId; displayName: string }[]
   creations: { pr: ReviewSnapshotPullRequest; handledKey: string }[]
-  /** Keys recorded without acting, so enabling the inbox does not clone the backlog. */
-  seededHandledKeys: string[]
 }
 
 function emptyPlan(): WorkspaceStatusRulePlan {
   return {
     statusUpdates: [],
     removals: [],
-    creations: [],
-    seededHandledKeys: []
+    creations: []
   }
 }
 
@@ -120,10 +119,6 @@ export function buildWorkspaceStatusRulePlan(args: {
       continue
     }
     if (existingBranches.has(pr.headRefName)) {
-      continue
-    }
-    if (!config.reviewInbox.seeded) {
-      plan.seededHandledKeys.push(handledKey)
       continue
     }
     if (plan.creations.length < maxCreations) {

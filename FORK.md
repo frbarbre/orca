@@ -144,7 +144,8 @@ New files (no conflict unless upstream adds the same path):
 - `src/shared/workspace-status-rules.ts` (+ test) — the pure condition resolver. All the logic worth
   trusting is here; it takes a snapshot and returns a condition.
 - `src/shared/workspace-status-rule-plan.ts` (+ test) — pure planner: targets + snapshot → status
-  moves, removals, review-workspace creations.
+  moves, removals, review-workspace creations. Every outstanding review request is cloned on the
+  first tick; the `handledPullRequests` ledger is what stops a repeat, not a seeding step.
 - `src/shared/workspace-status-rule-config.ts` — config type, defaults, persistence normalization.
 - `src/shared/workspace-status-rule-prompt.ts` (+ test) — the `{{variable}}` renderer. Orca has no
   other template engine; Quick Commands and Automations both store flat strings.

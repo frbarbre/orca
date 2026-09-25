@@ -109,7 +109,7 @@ export function PullRequestStatusRulesSection(): React.JSX.Element {
             )}
             description={translate(
               'auto.components.settings.prRules.reviewInboxDescription',
-              'Creates the workspace, points the diff at the pull request base, and starts the agent on the prompt below. Reviews already waiting on you when you turn this on are left alone.'
+              'Creates the workspace, points the diff at the pull request base, and starts the agent on the prompt below. Every review already waiting on you is picked up on the first check.'
             )}
             checked={config.reviewInbox.enabled}
             onChange={() =>

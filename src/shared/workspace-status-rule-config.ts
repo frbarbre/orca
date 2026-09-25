@@ -20,9 +20,6 @@ export type WorkspaceStatusRuleReviewInbox = {
   enabled: boolean
   agent: TuiAgent
   promptTemplate: string
-  /** False until the first poll has recorded the review queue that already existed,
-   *  so enabling the inbox never clones everything waiting on you. */
-  seeded: boolean
 }
 
 export type WorkspaceStatusRuleConfig = {
@@ -69,8 +66,7 @@ export function cloneDefaultWorkspaceStatusRuleConfig(): WorkspaceStatusRuleConf
     reviewInbox: {
       enabled: false,
       agent: 'claude',
-      promptTemplate: DEFAULT_REVIEW_PROMPT_TEMPLATE,
-      seeded: false
+      promptTemplate: DEFAULT_REVIEW_PROMPT_TEMPLATE
     },
     handledPullRequests: []
   }
@@ -120,8 +116,7 @@ function sanitizeReviewInbox(value: unknown): WorkspaceStatusRuleReviewInbox {
     promptTemplate:
       typeof raw.promptTemplate === 'string' && raw.promptTemplate.trim()
         ? raw.promptTemplate
-        : defaults.promptTemplate,
-    seeded: raw.seeded === true
+        : defaults.promptTemplate
   }
 }
 

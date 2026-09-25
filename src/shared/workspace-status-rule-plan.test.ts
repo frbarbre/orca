@@ -203,7 +203,7 @@ describe('buildWorkspaceStatusRulePlan — closed without merging', () => {
 describe('buildWorkspaceStatusRulePlan — review inbox', () => {
   const inboxConfig = {
     ...enabled,
-    reviewInbox: { ...enabled.reviewInbox, enabled: true, seeded: true }
+    reviewInbox: { ...enabled.reviewInbox, enabled: true }
   }
   const inbox = makeSnapshot({
     reviewRequestedPullRequests: [
@@ -222,16 +222,19 @@ describe('buildWorkspaceStatusRulePlan — review inbox', () => {
     expect(plan.creations.map((creation) => creation.handledKey)).toEqual(['flowbasedk/flowbase#7'])
   })
 
-  it('records the existing queue instead of acting on it before seeding', () => {
+  it('clones every outstanding review request on the first tick', () => {
     const plan = buildWorkspaceStatusRulePlan({
       targets: [],
-      snapshot: inbox,
-      config: { ...inboxConfig, reviewInbox: { ...inboxConfig.reviewInbox, seeded: false } },
+      snapshot: makeSnapshot({
+        reviewRequestedPullRequests: Array.from({ length: 8 }, (_, index) =>
+          makePR({ number: index + 1, headRefName: `feat/${index}`, author: 'colleague' })
+        )
+      }),
+      config: inboxConfig,
       existingBranches: noBranches
     })
 
-    expect(plan.creations).toEqual([])
-    expect(plan.seededHandledKeys).toEqual(['flowbasedk/flowbase#7'])
+    expect(plan.creations).toHaveLength(8)
   })
 
   it('skips a pull request already handled', () => {
@@ -305,6 +308,5 @@ describe('buildWorkspaceStatusRulePlan — review inbox', () => {
     })
 
     expect(plan.creations).toEqual([])
-    expect(plan.seededHandledKeys).toEqual([])
   })
 })

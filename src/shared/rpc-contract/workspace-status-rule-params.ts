@@ -23,8 +23,7 @@ export const WorkspaceStatusRules = z.object({
   reviewInbox: z.object({
     enabled: z.boolean(),
     agent: z.string(),
-    promptTemplate: z.string(),
-    seeded: z.boolean()
+    promptTemplate: z.string()
   }),
   handledPullRequests: z.array(z.string())
 })

@@ -44,6 +44,8 @@ function render(
       openCommittedDiff={vi.fn()}
       openBranchAllDiffs={vi.fn()}
       diffCommentCountByPath={new Map()}
+      activeOpenRowKeys={new Set()}
+      activeOpenRowKey={null}
     />
   )
 }

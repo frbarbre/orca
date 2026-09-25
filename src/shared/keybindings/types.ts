@@ -91,6 +91,8 @@ export type KeybindingActionId =
   | 'editor.copyContext'
   | 'editor.previousChange'
   | 'editor.nextChange'
+  | 'editor.previousFile'
+  | 'editor.nextFile'
   | 'editor.addReviewNote'
   | 'sourceControl.sendReviewNotes'
   | 'fileExplorer.undo'

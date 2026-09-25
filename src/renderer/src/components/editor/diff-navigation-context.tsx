@@ -1,6 +1,10 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import type { editor } from 'monaco-editor'
-import { installMonacoDiffChangeNavigationShortcut } from './editor-shortcuts'
+import {
+  installChangedFileNavigationShortcut,
+  installMonacoDiffChangeNavigationShortcut
+} from './editor-shortcuts'
+import { useAppStore } from '@/store'
 
 export type DiffEditorRegistrationContextValue = {
   registerDiffEditor: (editor: editor.IStandaloneDiffEditor) => void
@@ -42,6 +46,12 @@ export function DiffNavigationProvider({
   // Why: F7/Shift+F7 change navigation shares the registered editor with the
   // header buttons, so the keyboard listener lives here rather than in DiffViewer.
   const shortcutCleanupRef = useRef<(() => void) | null>(null)
+  // Why: file navigation shares the registered editor with change navigation, so its listener is
+  // installed and torn down on the same seam.
+  const fileShortcutCleanupRef = useRef<(() => void) | null>(null)
+  const stepToChangedFile = useAppStore((s) => s.stepToChangedFile)
+  const stepToChangedFileRef = useRef(stepToChangedFile)
+  stepToChangedFileRef.current = stepToChangedFile
   // Why: changeCount must be state, not a ref — the header is a sibling consumer
   // and only re-renders (enabling the buttons) when the value object identity
   // changes on the 0 -> N flip once the diff computation lands.
@@ -61,6 +71,10 @@ export function DiffNavigationProvider({
     // Hold at most one keyboard listener; replace any prior editor's.
     shortcutCleanupRef.current?.()
     shortcutCleanupRef.current = installMonacoDiffChangeNavigationShortcut(diffEditor)
+    fileShortcutCleanupRef.current?.()
+    fileShortcutCleanupRef.current = installChangedFileNavigationShortcut(diffEditor, (direction) =>
+      stepToChangedFileRef.current(direction)
+    )
     setChangeCount(countChanges(diffEditor))
   }, [])
 
@@ -74,6 +88,8 @@ export function DiffNavigationProvider({
     updateSubRef.current = null
     shortcutCleanupRef.current?.()
     shortcutCleanupRef.current = null
+    fileShortcutCleanupRef.current?.()
+    fileShortcutCleanupRef.current = null
     editorRef.current = null
     setChangeCount(0)
   }, [])
@@ -92,6 +108,8 @@ export function DiffNavigationProvider({
       updateSubRef.current = null
       shortcutCleanupRef.current?.()
       shortcutCleanupRef.current = null
+      fileShortcutCleanupRef.current?.()
+      fileShortcutCleanupRef.current = null
     }
   }, [])
 

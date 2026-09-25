@@ -22,6 +22,7 @@ import { LargeDiffFallback } from './LargeDiffFallback'
 import { getLargeDiffRenderLimit } from './large-diff-render-limit'
 import { useDiffViewerLargeDiffLifecycle } from './useDiffViewerLargeDiffLifecycle'
 import { useDiffViewerFirstChangeAutoScroll } from './useDiffViewerFirstChangeAutoScroll'
+import { useDiffViewerPendingRevealScroll } from './useDiffViewerPendingRevealScroll'
 import { getDiffViewerLargeDiffSaveAction } from './diff-viewer-large-diff-save-action'
 import type { DiffViewerProps } from './diff-viewer-props'
 import { buildDiffEditorWhitespaceOptions } from './diff-editor-whitespace-options'
@@ -98,6 +99,11 @@ export default function DiffViewer({
     return diffComments.some((c) => c.id === scrollToDiffCommentId) ? scrollToDiffCommentId : null
   }, [scrollToDiffCommentId, diffComments, worktreeId])
 
+  // Why: a reveal aimed at this file owns the initial scroll, so the first-change auto-scroll stands down.
+  const pendingRevealForThisViewer = useAppStore(
+    (s) => s.pendingEditorReveal?.filePath === filePath
+  )
+
   // Why: gate the decorator on a comment target; updateDiffComment is only wired for local diffs (worktreeId present).
   useDiffCommentDecorator({
     editor: hasLineCommentAction ? modifiedEditor : null,
@@ -157,11 +163,19 @@ export default function DiffViewer({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [modifiedEditor, popover?.lineNumber])
 
+  useDiffViewerPendingRevealScroll({
+    diffEditorRef,
+    modifiedEditor,
+    filePath,
+    modelKey
+  })
+
   useDiffViewerFirstChangeAutoScroll({
     diffEditorRef,
     modifiedEditor,
     modelKey,
-    pendingScrollCommentId: pendingScrollForThisViewer
+    pendingScrollCommentId: pendingScrollForThisViewer,
+    hasPendingReveal: pendingRevealForThisViewer
   })
 
   const handleEnterLargeDiffFallback = useCallback(() => {

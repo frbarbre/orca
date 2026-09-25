@@ -39,7 +39,8 @@ export function CommentRow({
   onEditComment,
   onDeleteComment,
   onSetReaction,
-  onQueueForAgent
+  onQueueForAgent,
+  onOpenLocation
 }: {
   comment: PRComment
   botAuthorOverrides: ReadonlySet<string>
@@ -63,6 +64,7 @@ export function CommentRow({
     reacted: boolean
   ) => Promise<boolean>
   onQueueForAgent?: () => void
+  onOpenLocation?: (comment: PRComment) => void
 }): React.JSX.Element {
   const automated = isBotPRComment(comment, botAuthorOverrides)
   const canMutateComment = isMutablePRConversationComment(comment)
@@ -75,6 +77,36 @@ export function CommentRow({
       setDraft(comment.body)
     }
   }, [comment.body, editing])
+
+  // Why: the badge is the only place a review location is shown, so it doubles as the jump target
+  // when a handler is wired; without one it stays inert text (mobile and read-only surfaces).
+  const canOpenLocation = Boolean(comment.path && onOpenLocation)
+  const lineRange = formatLineRange(comment)
+  const pathBadgeLabel = comment.path ? (
+    <>
+      {comment.path.split('/').pop()}
+      {lineRange && `:${lineRange}`}
+    </>
+  ) : null
+  const pathBadge = comment.path ? (
+    canOpenLocation ? (
+      <button
+        type="button"
+        className={cn(presentation.pathBadge, 'cursor-pointer hover:underline')}
+        title={comment.path}
+        onClick={(event) => {
+          event.stopPropagation()
+          onOpenLocation?.(comment)
+        }}
+      >
+        {pathBadgeLabel}
+      </button>
+    ) : (
+      <span className={presentation.pathBadge} title={comment.path}>
+        {pathBadgeLabel}
+      </span>
+    )
+  ) : null
 
   const handleStartEdit = useCallback((): void => {
     setDraft(comment.body)
@@ -199,12 +231,7 @@ export function CommentRow({
             {translate('auto.components.right.sidebar.checks.panel.content.2ba0a32bdd', 'bot')}
           </span>
         ) : null}
-        {comment.path ? (
-          <span className={presentation.pathBadge} title={comment.path}>
-            {comment.path.split('/').pop()}
-            {formatLineRange(comment) && `:${formatLineRange(comment)}`}
-          </span>
-        ) : null}
+        {pathBadge}
         <PRCommentActionBadge
           actionState={actionState}
           isQueued={isQueued}
@@ -245,12 +272,7 @@ export function CommentRow({
             {translate('auto.components.right.sidebar.checks.panel.content.2ba0a32bdd', 'bot')}
           </span>
         )}
-        {!isReply && comment.path && (
-          <span className={presentation.pathBadge}>
-            {comment.path.split('/').pop()}
-            {formatLineRange(comment) && `:${formatLineRange(comment)}`}
-          </span>
-        )}
+        {!isReply && pathBadge}
         {!isReply ? (
           <PRCommentActionBadge
             actionState={actionState}

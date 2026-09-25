@@ -54,8 +54,25 @@ describe('buildActiveOpenRowKeys', () => {
     ).toEqual(new Set(['staged::docs/readme.md']))
   })
 
-  it('does not match compare or combined diff tabs to pending rows', () => {
-    expect(buildActiveOpenRowKeys('branch::src/file.ts').size).toBe(0)
+  it('matches a branch diff tab to its branch row, never to a pending row', () => {
+    const keys = buildActiveOpenRowKeys('branch::src/file.ts')
+    expect(keys).toEqual(new Set(['branch::src/file.ts']))
+    // Why: the working-tree rows for the same path must stay unhighlighted — a committed diff is
+    // not the pending change, and highlighting both would claim the user is looking at two rows.
+    expect(keys.has('unstaged::src/file.ts')).toBe(false)
+    expect(keys.has('untracked::src/file.ts')).toBe(false)
+    expect(keys.has('staged::src/file.ts')).toBe(false)
+  })
+
+  it('keeps a branch row key even when the working-tree selection does not list it', () => {
+    // Why: availableRowKeys is the uncommitted selection, so filtering branch keys through it would
+    // drop every one of them and leave committed files unhighlightable.
+    expect(buildActiveOpenRowKeys('branch::src/file.ts', new Set(['unstaged::other.ts']))).toEqual(
+      new Set(['branch::src/file.ts'])
+    )
+  })
+
+  it('does not match commit or combined diff tabs to pending rows', () => {
     expect(buildActiveOpenRowKeys('commit::src/file.ts').size).toBe(0)
     expect(buildActiveOpenRowKeys('combined-uncommitted::src/file.ts').size).toBe(0)
     expect(buildActiveOpenRowKeys('combined-branch::src/file.ts').size).toBe(0)

@@ -9,6 +9,10 @@ import type { SourceControlPanelViewState } from '../panel/use-panel-view-state'
 import { useSourceControlGitHistory } from '../sync/use-git-history'
 import type { SourceControlStatusRefresh } from '../sync/use-status-refresh'
 import { useSourceControlFileProjection } from './use-file-projection'
+import {
+  clearSourceControlReviewOrder,
+  setSourceControlReviewOrder
+} from '@/lib/source-control-review-order'
 import { useSourceControlRowOpening } from './use-row-opening'
 import type { SourceControlWorktreeContext } from './use-worktree-context'
 
@@ -113,14 +117,57 @@ export function useSourceControlFileListing({
   })
 
   // Why: modifier-click keeps the current pane intact by opening the file in a fresh split to the right.
-  const { resolveSplitTargetGroupId, activeOpenRowKeys, handleOpenDiff, openCommittedDiff } =
-    useSourceControlRowOpening({
-      isMac,
-      activeWorktreeId,
-      worktreePath,
-      visibleSelectionEntries,
-      branchSummary
-    })
+  const {
+    resolveSplitTargetGroupId,
+    activeOpenRowKeys,
+    activeOpenRowKey,
+    handleOpenDiff,
+    openCommittedDiff
+  } = useSourceControlRowOpening({
+    isMac,
+    activeWorktreeId,
+    worktreePath,
+    visibleSelectionEntries,
+    branchSummary
+  })
+
+  // Why: keyboard file-stepping must follow what the panel is showing — filtered, collapsed
+  // directories honoured, tree or list — so publish that order rather than let the step action
+  // re-derive it from the raw git arrays and land on a file the user cannot see next to the current one.
+  const reviewOrder = useMemo(() => {
+    const paths: string[] = []
+    const seen = new Set<string>()
+    const push = (path: string): void => {
+      if (seen.has(path)) {
+        return
+      }
+      seen.add(path)
+      paths.push(path)
+    }
+    for (const entry of visibleSelectionEntries) {
+      push(entry.entry.path)
+    }
+    for (const node of visibleBranchTreeRows) {
+      if (node.type === 'file') {
+        push(node.entry.path)
+      }
+    }
+    // Why: list mode renders branch entries flat instead of as tree rows.
+    if (visibleBranchTreeRows.length === 0) {
+      for (const entry of filteredBranchEntries) {
+        push(entry.path)
+      }
+    }
+    return paths
+  }, [filteredBranchEntries, visibleBranchTreeRows, visibleSelectionEntries])
+
+  useEffect(() => {
+    if (!activeWorktreeId) {
+      return
+    }
+    setSourceControlReviewOrder(activeWorktreeId, reviewOrder)
+    return () => clearSourceControlReviewOrder(activeWorktreeId)
+  }, [activeWorktreeId, reviewOrder])
 
   const shouldOpenAsSplit = useCallback(
     (event: SourceControlRowOpenEvent) => isSourceControlSplitOpenModifier(event, isMac),
@@ -193,6 +240,7 @@ export function useSourceControlFileListing({
 
   return {
     activeOpenRowKeys,
+    activeOpenRowKey,
     bulkStagePaths,
     bulkUnstagePaths,
     clearSelection,

@@ -79,6 +79,42 @@ export function installMonacoDiffChangeNavigationShortcut(
   return () => target.removeEventListener('keydown', handleKeyDown, true)
 }
 
+type ChangedFileNavigationTarget = {
+  getContainerDomNode: () => HTMLElement
+}
+
+/**
+ * Steps to the previous/next changed file from inside a diff.
+ *
+ * Why: mirrors installMonacoDiffChangeNavigationShortcut — capture-phase so it beats Monaco's own
+ * handling, and repeats are consumed so holding the key does not queue a burst of file opens.
+ */
+export function installChangedFileNavigationShortcut(
+  target: ChangedFileNavigationTarget,
+  stepToChangedFile: (direction: 'next' | 'previous') => void
+): () => void {
+  const handleKeyDown = (event: KeyboardEvent): void => {
+    let direction: 'next' | 'previous' | null = null
+    if (editorShortcutMatches('editor.nextFile', event)) {
+      direction = 'next'
+    } else if (editorShortcutMatches('editor.previousFile', event)) {
+      direction = 'previous'
+    }
+    if (!direction) {
+      return
+    }
+    event.preventDefault()
+    event.stopPropagation()
+    if (!event.repeat) {
+      stepToChangedFile(direction)
+    }
+  }
+
+  const node = target.getContainerDomNode()
+  node.addEventListener('keydown', handleKeyDown, true)
+  return () => node.removeEventListener('keydown', handleKeyDown, true)
+}
+
 export function installEditorAddReviewNoteShortcut(
   target: HTMLElement,
   onAddReviewNote: () => boolean

@@ -76,6 +76,7 @@ export function SourceControlUncommittedSections(props: {
   worktreePath: string
   selectedKeySet: ReadonlySet<string>
   activeOpenRowKeys: ReadonlySet<string>
+  activeOpenRowKey: string | null
   handleSelect: (event: React.MouseEvent, key: string, entry: GitStatusEntry) => void
   handleContextMenu: (key: string) => void
   revealInExplorer: (worktreeId: string, absolutePath: string) => void
@@ -201,6 +202,7 @@ export function SourceControlUncommittedSections(props: {
                 worktreePath={props.worktreePath}
                 selectedKeySet={props.selectedKeySet}
                 activeOpenRowKeys={props.activeOpenRowKeys}
+                activeOpenRowKey={props.activeOpenRowKey}
                 handleSelect={props.handleSelect}
                 handleContextMenu={props.handleContextMenu}
                 revealInExplorer={props.revealInExplorer}

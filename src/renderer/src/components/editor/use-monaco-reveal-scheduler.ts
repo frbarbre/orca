@@ -6,7 +6,7 @@ export type MonacoRevealScheduler = {
   clearTransientRevealHighlight: () => void
   cancelScheduledReveal: () => void
   queueReveal: (
-    editorInstance: editor.IStandaloneCodeEditor,
+    editorInstance: editor.ICodeEditor,
     line: number,
     column: number,
     matchLength: number,
@@ -43,7 +43,7 @@ export function useMonacoRevealScheduler(): MonacoRevealScheduler {
 
   const queueReveal = useCallback(
     (
-      editorInstance: editor.IStandaloneCodeEditor,
+      editorInstance: editor.ICodeEditor,
       line: number,
       column: number,
       matchLength: number,

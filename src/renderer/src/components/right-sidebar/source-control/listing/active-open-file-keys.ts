@@ -41,6 +41,13 @@ export function buildActiveOpenRowKeys(
     return EMPTY_OPEN_ROW_KEYS
   }
 
+  // Why: branch rows are keyed `branch:<path>` and are not part of `availableRowKeys` (that set is
+  // the working-tree selection), so this key must bypass the availability filter or a committed
+  // file open from a PR review would never highlight.
+  if (diffSource === 'branch') {
+    return new Set([`branch::${path}`])
+  }
+
   if (diffSource === 'staged') {
     return filterAvailableRowKeys([`staged::${path}`], availableRowKeys)
   }

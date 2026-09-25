@@ -45,7 +45,8 @@ export function PRCommentGroupView({
   onEditComment,
   onDeleteComment,
   onSetReaction,
-  onQueueForAgent
+  onQueueForAgent,
+  onOpenLocation
 }: {
   group: PRCommentGroup
   botAuthorOverrides: ReadonlySet<string>
@@ -69,6 +70,7 @@ export function PRCommentGroupView({
     reacted: boolean
   ) => Promise<boolean>
   onQueueForAgent?: () => void
+  onOpenLocation?: (comment: PRComment) => void
 }): React.JSX.Element {
   // Reply targets a specific comment id so any comment in a thread — root or
   // nested reply — can be replied to, not just the thread root.
@@ -116,7 +118,8 @@ export function PRCommentGroupView({
     onEditComment,
     onDeleteComment,
     onSetReaction,
-    onQueueForAgent
+    onQueueForAgent,
+    onOpenLocation
   }
 
   const content =

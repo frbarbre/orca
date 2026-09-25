@@ -29,6 +29,7 @@ import {
 } from '../pr-comments-list-selection'
 import { usePRBotAuthorOverrides } from '@/lib/pr-bot-author-overrides'
 import { translate } from '@/i18n/i18n'
+import { useChecksPanelCommentLocationOpening } from './use-comment-location-opening'
 import { PRCommentGroupView } from './comment-group'
 import { useNow } from '@/hooks/use-now'
 
@@ -214,6 +215,8 @@ export function useCommentsListState({
     )
   }
 
+  const openCommentLocation = useChecksPanelCommentLocationOpening()
+
   const renderCommentGroup = (group: PRCommentGroup): React.JSX.Element => {
     const groupId = getPRCommentGroupId(group)
     const actionState = getPRCommentGroupActionState(group)
@@ -247,6 +250,7 @@ export function useCommentsListState({
         onDeleteComment={onDeleteComment}
         onSetReaction={onSetReaction}
         onQueueForAgent={canQueue ? () => addGroupToSelection(groupId) : undefined}
+        onOpenLocation={openCommentLocation}
       />
     )
   }

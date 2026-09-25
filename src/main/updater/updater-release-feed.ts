@@ -203,7 +203,11 @@ export abstract class UpdaterReleaseFeed extends UpdaterInstallExecution {
     }
     this.clearPrereleaseFallbackContext()
     this.clearPublishingWindowLastGoodCheck()
-    const url = 'https://github.com/stablyai/orca/releases/latest/download'
+    // Fork: same target as the primary feed in updater-setup; upstream here would hand this fork a
+    // stock Orca build the moment the atom resolver comes back empty.
+    const url =
+      process.env.ORCA_UPDATE_FEED_URL ??
+      'https://github.com/stablyai/orca/releases/latest/download'
     console.info(
       `[updater] release feed fallback: current=${currentVersion} includePrerelease=${includePrerelease} → ${url}`
     )

@@ -33,6 +33,7 @@ export function SourceControlSectionFileList({
   worktreePath,
   selectedKeySet,
   activeOpenRowKeys,
+  activeOpenRowKey,
   handleSelect,
   handleContextMenu,
   revealInExplorer,
@@ -60,6 +61,7 @@ export function SourceControlSectionFileList({
   worktreePath: string
   selectedKeySet: ReadonlySet<string>
   activeOpenRowKeys: ReadonlySet<string>
+  activeOpenRowKey: string | null
   handleSelect: (event: React.MouseEvent, key: string, entry: GitStatusEntry) => void
   handleContextMenu: (key: string) => void
   revealInExplorer: (worktreeId: string, absolutePath: string) => void
@@ -75,6 +77,7 @@ export function SourceControlSectionFileList({
       rows={treeRows}
       scrollElement={fileListScrollElement}
       getRowKey={(node) => node.key}
+      scrollToRowKey={activeOpenRowKey}
       renderRow={(node) => {
         if (node.type === 'submodule-placeholder') {
           return (
@@ -140,6 +143,7 @@ export function SourceControlSectionFileList({
       getRowKey={(row) =>
         row.type === 'submodule-placeholder' ? row.key : `${row.entry.area}::${row.entry.path}`
       }
+      scrollToRowKey={activeOpenRowKey}
       renderRow={(row) => {
         if (row.type === 'submodule-placeholder') {
           return (

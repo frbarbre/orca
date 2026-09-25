@@ -8,6 +8,7 @@ type DiffViewerFirstChangeAutoScrollInput = {
   modifiedEditor: editor.ICodeEditor | null
   modelKey: string
   pendingScrollCommentId: string | null
+  hasPendingReveal?: boolean
 }
 
 /**
@@ -20,7 +21,8 @@ export function useDiffViewerFirstChangeAutoScroll({
   diffEditorRef,
   modifiedEditor,
   modelKey,
-  pendingScrollCommentId
+  pendingScrollCommentId,
+  hasPendingReveal = false
 }: DiffViewerFirstChangeAutoScrollInput): void {
   const didAutoScrollFirstDiffRef = useRef(false)
   const didAutoScrollModelKeyRef = useRef(modelKey)
@@ -40,8 +42,9 @@ export function useDiffViewerFirstChangeAutoScroll({
     if (diffViewStateCache.get(modelKey)) {
       return
     }
-    if (pendingScrollCommentId) {
-      // Why: decorator owns this scroll, so set the one-shot flag; else we'd re-run and overwrite it when pendingScroll flips back to null.
+    if (pendingScrollCommentId || hasPendingReveal) {
+      // Why: the decorator or a pending reveal owns this scroll, so set the one-shot flag; else we'd
+      // re-run and overwrite it when that request flips back to null.
       didAutoScrollFirstDiffRef.current = true
       return
     }
@@ -82,5 +85,5 @@ export function useDiffViewerFirstChangeAutoScroll({
         cancelAnimationFrame(rafId)
       }
     }
-  }, [diffEditorRef, modifiedEditor, modelKey, pendingScrollCommentId])
+  }, [diffEditorRef, modifiedEditor, modelKey, pendingScrollCommentId, hasPendingReveal])
 }

@@ -13,6 +13,7 @@ import { initializeMainProcessReady } from './startup/main-process-ready'
 import { installMainProcessQuitHandlers } from './startup/main-process-quit'
 import { shouldActivateDesktopForSecondInstance } from './startup/single-instance-lock'
 import { resolveOpenedMarkdownDocuments } from './startup/os-opened-markdown-files'
+import { armForkUpdateChannel } from './updater/updater-manual-install'
 
 function openMainWindow(options: { revealOnDidFinishLoad?: boolean } = {}): BrowserWindow {
   return openMainWindowController(options)
@@ -104,6 +105,10 @@ if (preflightReady) {
   state.skillShareDeepLinks.capture(process.argv)
   // Why no publish: nothing is listening this early, so the first renderer pulls these on mount.
   state.osOpenedMarkdownFiles.capture(process.argv)
+  // Fork: point the updater at this fork's releases and, because the build is unsigned, let it
+  // notify about new versions rather than attempt an install macOS would reject. Arming at the app
+  // edge keeps every updater module and its tests exactly as upstream wrote them.
+  armForkUpdateChannel(app.isPackaged)
   registerMainProcessIpcHandlers()
   installMainProcessQuitHandlers()
   void app.whenReady().then(async () => {

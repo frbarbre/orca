@@ -53,6 +53,8 @@ function renderBranchSection(): void {
         openCommittedDiff={vi.fn()}
         openBranchAllDiffs={vi.fn()}
         diffCommentCountByPath={new Map()}
+        activeOpenRowKeys={new Set()}
+        activeOpenRowKey={null}
       />
     </TooltipProvider>
   )
@@ -95,6 +97,7 @@ function renderUncommittedSections(): void {
         worktreePath="/tmp/worktree-1"
         selectedKeySet={new Set()}
         activeOpenRowKeys={new Set()}
+        activeOpenRowKey={null}
         handleSelect={vi.fn()}
         handleContextMenu={vi.fn()}
         revealInExplorer={vi.fn()}

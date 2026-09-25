@@ -2,15 +2,22 @@ import { net } from 'electron'
 import { parse } from 'yaml'
 import { compareVersions, isPrereleaseVersion, isValidVersion } from './updater-fallback'
 
-const ATOM_FEED_URL = 'https://github.com/stablyai/orca/releases.atom'
-const RELEASES_DOWNLOAD_BASE = 'https://github.com/stablyai/orca/releases/download'
+// Fork: every release URL here derives from one base so a fork only overrides the slug, and the
+// default stays upstream so this module and its tests behave exactly as written. Left hardcoded,
+// the atom and fallback paths would hand a fork's build a stock Orca artifact.
+const REPO_BASE = process.env.ORCA_RELEASES_REPO_URL ?? 'https://github.com/stablyai/orca'
+const ATOM_FEED_URL = `${REPO_BASE}/releases.atom`
+const RELEASES_DOWNLOAD_BASE = `${REPO_BASE}/releases/download`
 const FETCH_TIMEOUT_MS = 5000
 const MAX_MANIFEST_PROBE_CANDIDATES = 6
 
 // Why: GitHub's atom feed lists every release (prerelease or stable) in a
 // single flat list. Each entry has a /releases/tag/<tag> URL we can mine
 // without any channel filtering.
-const TAG_HREF_RE = /href="https:\/\/github\.com\/stablyai\/orca\/releases\/tag\/([^"]+)"/g
+function escapeForRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+const TAG_HREF_RE = new RegExp(`href="${escapeForRegExp(REPO_BASE)}/releases/tag/([^"]+)"`, 'g')
 
 export function getReleaseDownloadUrl(tag: string): string {
   return `${RELEASES_DOWNLOAD_BASE}/${encodeURIComponent(tag)}`
@@ -153,7 +160,7 @@ async function getReleaseAssetReadiness(tag: string, assetName: string): Promise
   const isGitHubReleaseAsset =
     process.platform === 'win32' &&
     (isRelativeAsset ||
-      /^https:\/\/github\.com\/stablyai\/orca\/releases\/download\//i.test(assetName))
+      new RegExp(`^${escapeForRegExp(RELEASES_DOWNLOAD_BASE)}/`, 'i').test(assetName))
   const assetUrl = isRelativeAsset
     ? getReleaseAssetUrl(tag, assetName.split('/').findLast(Boolean) ?? assetName)
     : assetName

@@ -3,11 +3,21 @@ import { recordUpdaterLifecycle } from '../updater-lifecycle-diagnostics'
 import { isExternallyManagedLinuxInstall } from '../linux-update-package-type'
 import { LINUX_PACKAGE_EXTERNALLY_MANAGED_MESSAGE } from '../linux-package-downloaded-status'
 import { QUIT_AND_INSTALL_DELAY_MS } from './updater-state'
+import {
+  isManualInstallOnlyUpdate,
+  openReleasePageForManualInstall
+} from './updater-manual-install'
 import { UpdaterRemoteStatus } from './updater-remote-status'
 
 /** Coordinates renderer-facing download/install actions and their duplicate guards. */
 export abstract class UpdaterDownloadInstall extends UpdaterRemoteStatus {
   protected quitAndInstall(): void {
+    // Why here as well as in downloadUpdate: nothing was ever downloaded in manual-install mode, so
+    // an install request can only have come from stale renderer state or a direct IPC call.
+    if (isManualInstallOnlyUpdate()) {
+      openReleasePageForManualInstall(this.getKnownReleaseUrl())
+      return
+    }
     if (
       this.localBuildSelectionInProgress ||
       this.pinnedBuildSelectionInProgress ||
@@ -38,6 +48,12 @@ export abstract class UpdaterDownloadInstall extends UpdaterRemoteStatus {
   }
 
   protected downloadUpdate(): void {
+    // Why before the in-flight guards: this path does not download, so it has no state to guard —
+    // it hands the user the release page and leaves the status on 'available' so the card stays.
+    if (isManualInstallOnlyUpdate()) {
+      openReleasePageForManualInstall(this.getKnownReleaseUrl())
+      return
+    }
     if (
       this.localBuildSelectionInProgress ||
       this.pinnedBuildSelectionInProgress ||

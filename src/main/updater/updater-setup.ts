@@ -1,3 +1,4 @@
+import { isManualInstallOnlyUpdate } from './updater-manual-install'
 import { app, powerMonitor } from 'electron'
 import type { BrowserWindow } from 'electron'
 import { is } from '@electron-toolkit/utils'
@@ -148,8 +149,12 @@ export class UpdaterSetup extends UpdaterDownloadInstall {
     }
     // Why: supervised serve installs require an explicit handoff; ordinary service quits must never install implicitly.
     // Only an explicit AppImage/non-root marker may opt into electron-updater's implicit quit install.
+    // Why the manual-install clause: an unsigned build cannot install its own update, so arming a
+    // quit-time install would turn every app close into a failed install attempt.
     autoUpdater.autoInstallOnAppQuit =
-      this.updateInstallMode === 'interactive' && getLinuxPackageType() === 'non-root'
+      !isManualInstallOnlyUpdate() &&
+      this.updateInstallMode === 'interactive' &&
+      getLinuxPackageType() === 'non-root'
     // Why: MacUpdater ignores quitAndInstall arguments; the surviving CLI supervisor must be the only serve relaunch owner.
     autoUpdater.autoRunAppAfterInstall = this.updateInstallMode === 'interactive'
     // Why: our only on-machine window into electron-updater; otherwise an unexpected update-not-available or failed fetch is invisible.
@@ -159,7 +164,12 @@ export class UpdaterSetup extends UpdaterDownloadInstall {
     if (this.activeUpdateSource === 'release') {
       autoUpdater.setFeedURL({
         provider: 'generic',
-        url: 'https://github.com/stablyai/orca/releases/latest/download'
+        // Fork: this build publishes its own releases, so it must not pull upstream's artifacts —
+        // they would overwrite this fork with stock Orca on the first check. ORCA_UPDATE_FEED_URL
+        // keeps the override in one place so a merge from upstream touches one line.
+        url:
+          process.env.ORCA_UPDATE_FEED_URL ??
+          'https://github.com/stablyai/orca/releases/latest/download'
       })
     }
     if (this.autoUpdaterInitialized) {

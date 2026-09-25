@@ -82,6 +82,15 @@ export function useSourceControlRowOpening({
     [activeOpenAvailableRowKeys, activeOpenFileSignature]
   )
 
+  // Why: the scroll target is a single row, while the key set can hold both working-tree variants
+  // of a path; the first surviving key is the one a row actually rendered for.
+  const activeOpenRowKey = useMemo(() => {
+    for (const key of activeOpenRowKeys) {
+      return key
+    }
+    return null
+  }, [activeOpenRowKeys])
+
   const handleOpenDiff = useCallback(
     (entry: GitStatusEntry, event?: SourceControlRowOpenEvent) => {
       if (!activeWorktreeId || !worktreePath) {
@@ -156,5 +165,11 @@ export function useSourceControlRowOpening({
     [activeWorktreeId, branchSummary, openBranchDiff, resolveSplitTargetGroupId, worktreePath]
   )
 
-  return { resolveSplitTargetGroupId, activeOpenRowKeys, handleOpenDiff, openCommittedDiff }
+  return {
+    resolveSplitTargetGroupId,
+    activeOpenRowKeys,
+    activeOpenRowKey,
+    handleOpenDiff,
+    openCommittedDiff
+  }
 }

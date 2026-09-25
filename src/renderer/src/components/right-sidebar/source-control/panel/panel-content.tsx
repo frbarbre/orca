@@ -15,6 +15,7 @@ export function SourceControlPanelContent(props: SourceControlPanelReadyProps) {
   const {
     activeConnectionId,
     activeOpenRowKeys,
+    activeOpenRowKey,
     branchEntries,
     branchSummary,
     collapsedSections,
@@ -160,6 +161,7 @@ export function SourceControlPanelContent(props: SourceControlPanelReadyProps) {
           worktreePath={worktreePath}
           selectedKeySet={selectedKeySet}
           activeOpenRowKeys={activeOpenRowKeys}
+          activeOpenRowKey={activeOpenRowKey}
           handleSelect={handleSelect}
           handleContextMenu={handleContextMenu}
           revealInExplorer={revealInExplorer}
@@ -187,6 +189,8 @@ export function SourceControlPanelContent(props: SourceControlPanelReadyProps) {
 
       {branchSummary?.status === 'ready' && hasFilteredBranchEntries && (
         <SourceControlBranchSection
+          activeOpenRowKeys={activeOpenRowKeys}
+          activeOpenRowKey={activeOpenRowKey}
           branchSummary={branchSummary}
           filteredBranchEntries={filteredBranchEntries}
           totalBranchEntryCount={branchEntries.length}

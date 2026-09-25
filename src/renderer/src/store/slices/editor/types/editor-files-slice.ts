@@ -1,3 +1,4 @@
+import type { ChangedFileStepDirection } from '../actions/changed-file-order'
 import type { HttpLinkSourceOwner } from '@/lib/http-link-routing'
 import type {
   CheckRunDetailsTabPatch,
@@ -111,6 +112,15 @@ export type EditorFilesSlice = {
     language: string,
     options?: EditorOpenTargetOptions
   ) => void
+  openDiffAtLocation: (target: {
+    worktreeId: string
+    worktreePath: string
+    relativePath: string
+    line?: number
+    /** Defaults to true: a review step reuses one preview tab instead of stacking permanent tabs. */
+    preview?: boolean
+  }) => void
+  stepToChangedFile: (direction: ChangedFileStepDirection) => void
   openCommitDiff: (
     worktreeId: string,
     worktreePath: string,

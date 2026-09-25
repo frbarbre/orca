@@ -10,7 +10,7 @@ export const MAX_REVEAL_CONTENT_WAIT_FRAMES = 120
  * and applies a transient inline highlight decoration that clears after 1.2s.
  */
 export function performReveal(
-  ed: editor.IStandaloneCodeEditor,
+  ed: editor.ICodeEditor,
   line: number,
   column: number,
   matchLength: number,

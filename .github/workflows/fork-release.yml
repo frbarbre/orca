@@ -1,0 +1,93 @@
+name: Fork Release (macOS)
+
+# Builds this fork and publishes a macOS release to THIS repo's releases, which is
+# where the packaged app's updater feed points (see src/main/updater/updater-setup.ts).
+#
+# This fork ships unsigned on purpose: a Developer ID is what macOS auto-update needs,
+# so the app runs in notify-only mode instead (see src/main/updater/updater-manual-install.ts).
+# It still checks this repo's releases and tells you a new version exists; the update
+# button opens the release page and you install the DMG yourself.
+#
+# If you ever add signing, set MAC_CERTS / MAC_CERTS_PASSWORD / APPLE_ID /
+# APPLE_APP_SPECIFIC_PASSWORD / APPLE_TEAM_ID as repository secrets — this workflow picks
+# them up automatically — and set ORCA_UPDATE_AUTO_INSTALL=1 in the app to restore
+# download-and-install.
+#
+#   gh workflow run fork-release.yml --ref main
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 'Branch, tag or SHA to build (default: the branch selected above)'
+        required: false
+        default: ''
+        type: string
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+concurrency:
+  group: fork-release-${{ inputs.ref || github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 120
+    env:
+      NODE_OPTIONS: --max-old-space-size=4096
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref || github.ref }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      # Why corepack rather than proto: package.json pins pnpm with an integrity hash,
+      # and corepack honours it without installing another toolchain manager on the runner.
+      - name: Enable pnpm
+        run: corepack enable
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Why: a default install fetches native optional deps for the runner's CPU only, and
+      # the mac target builds both x64 and arm64. See docs/reference/pnpm-install-policy.md.
+      - name: Add cross-architecture native dependencies
+        run: pnpm install:release
+
+      - name: Report signing mode
+        run: |
+          if [ -n "${{ secrets.MAC_CERTS }}" ]; then
+            echo "Signing with Developer ID — auto-update will work."
+          else
+            echo "Building unsigned — the expected path for this fork. The app will notify about new releases and link to them; installs are manual."
+          fi
+
+      - name: Build and publish
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Only set when the secrets exist; electron-builder skips signing without them.
+          CSC_LINK: ${{ secrets.MAC_CERTS }}
+          CSC_KEY_PASSWORD: ${{ secrets.MAC_CERTS_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          set -euo pipefail
+          # ORCA_MAC_RELEASE=1 turns on hardenedRuntime + notarization, which need the Apple
+          # secrets. Without them the build must stay off that path or electron-builder fails
+          # at the notarize step instead of producing an unsigned artifact.
+          if [ -n "${CSC_LINK:-}" ]; then
+            export ORCA_MAC_RELEASE=1
+          else
+            export CSC_IDENTITY_AUTO_DISCOVERY=false
+          fi
+          node config/scripts/ensure-native-runtime.mjs --runtime=electron
+          pnpm exec electron-builder --config config/electron-builder.config.cjs --mac --publish always

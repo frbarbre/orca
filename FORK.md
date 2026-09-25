@@ -47,16 +47,24 @@ resolved wrongly, because the natural instinct is to "fix" the defaults to point
 Every release URL in the updater reads an env var and **falls back to upstream's URL**:
 
 ```ts
-const REPO_BASE = process.env.ORCA_RELEASES_REPO_URL ?? 'https://github.com/stablyai/orca'
+function repoBase(): string {
+  return process.env.ORCA_RELEASES_REPO_URL ?? 'https://github.com/stablyai/orca'
+}
 ```
 
-That default must stay `stablyai`, and it must be read **per call, never at module scope** — ES
-imports are evaluated before the importing module's body, so a module-level `const` resolves before
-`armForkUpdateChannel()` can arm it, and the fork silently checks upstream's releases.
-`src/main/updater-fork-feed-lazy.test.ts` guards this; do not "simplify" those functions to consts. The fork is selected at runtime by `armForkUpdateChannel()`,
-which sets the env vars for packaged builds only. Keeping the defaults upstream is what lets every
-updater module and all 330 of its tests stay exactly as upstream wrote them. Re-pointing the
-literals instead means editing nine test files and re-resolving them on every single merge.
+The fork is selected at runtime by `armForkUpdateChannel()`, which sets the env vars for packaged
+builds only. Keeping the defaults upstream is what lets every updater module and its tests stay
+exactly as upstream wrote them; re-pointing the literals instead means editing nine test files and
+re-resolving them on every merge.
+
+Two rules, both learned the hard way:
+
+1. **The default stays `stablyai`.** The instinct to "fix" it to this fork is what breaks the merge
+   story.
+2. **Read the env var per call, never at module scope.** ES imports are evaluated before the
+   importing module's body, so a module-level `const` resolves *before* `armForkUpdateChannel()` can
+   arm it — a fork build then silently checks upstream's releases and offers an upstream version.
+   `src/main/updater-fork-feed-lazy.test.ts` guards this; do not collapse those functions to consts.
 
 | File | What is ours |
 | --- | --- |
@@ -64,7 +72,7 @@ literals instead means editing nine test files and re-resolving them on every si
 | `src/main/index.ts` | The `armForkUpdateChannel(app.isPackaged)` call and its import. If upstream restructures startup, move the call — keep it before any updater setup runs. |
 | `src/main/updater/updater-setup.ts` | `ORCA_UPDATE_FEED_URL ??` on the feed URL, and the `!isManualInstallOnlyUpdate()` term in `autoInstallOnAppQuit`. |
 | `src/main/updater/updater-release-feed.ts` | `ORCA_UPDATE_FEED_URL ??` on the fallback feed URL. |
-| `src/main/updater-prerelease-feed.ts` | `REPO_BASE` and the regexes derived from it (`TAG_HREF_RE`, the release-asset test). Upstream hardcodes the slug in those regexes; keep them derived. |
+| `src/main/updater-prerelease-feed.ts` | `repoBase()` / `atomFeedUrl()` / `releasesDownloadBase()` / `tagHrefPattern()` and the regexes derived from them. Upstream hardcodes the slug; keep it derived, and keep these as **functions**. |
 | `src/main/updater/updater-download-install.ts` | The `isManualInstallOnlyUpdate()` early return at the top of `downloadUpdate` and `quitAndInstall`. |
 | `config/electron-builder.config.cjs` | `owner: process.env.ORCA_PUBLISH_OWNER ?? 'frbarbre'` and `releaseType: … : 'release'`. |
 | `.github/workflows/fork-release.yml` | Whole file (new). |

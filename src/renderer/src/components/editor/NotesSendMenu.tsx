@@ -35,6 +35,9 @@ export type NotesSendMenuProps<TNote> = {
   targetModeLabel?: string
   triggerClassName?: string
   triggerLabel?: string
+  /** Why opt-out rather than always-on: the accent reads as "AI" beside a note, but on a review
+   *  card it is one more colour competing with the comment it sits under. */
+  triggerAccentIcon?: boolean
   triggerCount?: number
   actionLabel?: string
   disabledTooltip?: string
@@ -67,6 +70,7 @@ export function NotesSendMenu<TNote>({
   targetModeLabel,
   triggerClassName,
   triggerLabel,
+  triggerAccentIcon = true,
   triggerCount,
   actionLabel,
   disabledTooltip = 'All notes sent',
@@ -196,7 +200,9 @@ export function NotesSendMenu<TNote>({
             >
               {triggerLabel ? (
                 <>
-                  <Sparkles className="size-3 text-violet-500 dark:text-violet-400" />
+                  {triggerAccentIcon ? (
+                    <Sparkles className="size-3 text-violet-500 dark:text-violet-400" />
+                  ) : null}
                   <span className="whitespace-nowrap">{triggerLabel}</span>
                   {triggerCount !== undefined ? (
                     <span className="rounded-full bg-background/80 px-1 text-[10px] tabular-nums text-muted-foreground">

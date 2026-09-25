@@ -1,17 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { useAppStore } from '@/store'
-import { useRepoById } from '@/store/selectors'
+import { usePRCommentScope } from './use-pr-comment-scope'
 import { useConfirmationDialog } from '@/components/confirmation-dialog-context'
-import { getWorktreeGitIdentityDisplay } from '@/lib/worktree-git-identity-display'
-import { getGitHubPRCacheKey } from '@/store/slices/github-cache-key'
-import { selectReviewCacheEntry } from '@/components/right-sidebar/review-cache-entry-selection'
 import { useChecksPanelCommentMutations } from '@/components/right-sidebar/checks-panel/use-checks-panel-comment-mutations'
 import { checksPanelAsyncResultKey } from '@/components/right-sidebar/checks-panel-async-result-key'
 import { markPRCommentThreadResolved } from '@/components/right-sidebar/pr-comment-thread-resolution'
 import { mergePRCommentIntoList } from '@/store/github/pr-comment-cache'
-import { groupPRComments, type PRCommentGroup } from '../../../../shared/pr-comment-groups'
-import { usePRCommentsState } from './pr-comments-store'
-import type { PRInfo } from '../../../../shared/github/pull-request-types'
 import type { PRComment } from '../../../../shared/github/comment-types'
 
 /**
@@ -26,35 +20,14 @@ import type { PRComment } from '../../../../shared/github/comment-types'
  * between the two surfaces. One implementation, two call sites.
  */
 export function useInlinePRCommentActions(worktreeId: string | null) {
-  const worktree = useAppStore((s) => (worktreeId ? s.getKnownWorktreeById(worktreeId) : null))
-  const repo = useRepoById(worktree?.repoId ?? null)
-  const settings = useAppStore((s) => s.settings)
   const confirm = useConfirmationDialog()
   const resolveReviewThread = useAppStore((s) => s.resolveReviewThread)
   const addPRConversationComment = useAppStore((s) => s.addPRConversationComment)
   const addPRReviewCommentReply = useAppStore((s) => s.addPRReviewCommentReply)
   const setPRCommentReaction = useAppStore((s) => s.setPRCommentReaction)
 
-  const gitIdentity = worktree ? getWorktreeGitIdentityDisplay(worktree) : null
-  const branch = gitIdentity?.kind === 'branch' ? gitIdentity.branchName : ''
-  const prCacheKey =
-    repo && branch
-      ? getGitHubPRCacheKey(
-          repo.path,
-          repo.id,
-          branch,
-          settings,
-          repo.connectionId,
-          repo.executionHostId,
-          true
-        )
-      : ''
-  const pr: PRInfo | null = useAppStore(
-    (s) => selectReviewCacheEntry(s.prCache, prCacheKey || null)?.data ?? null
-  )
-  const prNumber = pr?.number ?? null
-
-  const { comments, setComments, commentsRef } = usePRCommentsState(prCacheKey)
+  const { repo, branch, prCacheKey, pr, prNumber, setComments, commentsRef, groups } =
+    usePRCommentScope(worktreeId)
 
   // Why the key is rebuilt rather than compared to prCacheKey: the mutation hook stamps each
   // request with checksPanelAsyncResultKey, which also carries the branch, PR number, fork and head
@@ -143,8 +116,6 @@ export function useInlinePRCommentActions(worktreeId: string | null) {
     },
     [setComments]
   )
-
-  const groups: PRCommentGroup[] = useMemo(() => groupPRComments(comments), [comments])
 
   // Why exposed here: the add-comment popover needs the same PR identity this hook already derives
   // to post a review comment, and deriving it twice invites the two drifting apart.

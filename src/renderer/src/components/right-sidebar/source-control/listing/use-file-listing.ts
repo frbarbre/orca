@@ -14,6 +14,8 @@ import {
   setSourceControlReviewOrder
 } from '@/lib/source-control-review-order'
 import { clearOpenInSelection, setOpenInSelection } from '@/lib/open-in-selection'
+import { usePRCommentScope } from '@/components/pr-comments/use-pr-comment-scope'
+import { buildUnresolvedThreadCountByPath } from '@/components/pr-comments/unresolved-thread-count'
 import { parseChangedFileRowKey } from '@/store/slices/editor/actions/changed-file-order'
 import { joinPath } from '@/lib/path'
 import { useSourceControlRowOpening } from './use-row-opening'
@@ -202,6 +204,14 @@ export function useSourceControlFileListing({
     [visibleSelectionEntries]
   )
 
+  // Why here: this hook already owns what the panel renders, and the map has to be built once for
+  // the list rather than per row on every filter keystroke.
+  const { groups: prCommentGroups } = usePRCommentScope(activeWorktreeId)
+  const reviewThreadCountByPath = useMemo(
+    () => buildUnresolvedThreadCountByPath(prCommentGroups),
+    [prCommentGroups]
+  )
+
   // Why the highlighted row rather than the clicked one: stepping with the file-navigation chord
   // moves the highlight without touching the click selection, and the user means whichever row the
   // panel is showing as current -- how they got there is not the point.
@@ -274,6 +284,7 @@ export function useSourceControlFileListing({
   )
 
   return {
+    reviewThreadCountByPath,
     activeOpenRowKeys,
     activeOpenRowKey,
     bulkStagePaths,

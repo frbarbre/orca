@@ -188,9 +188,23 @@ vi.mock('@/store/selectors', () => ({
   useWorktreeById: () => ({ path: '/repo', repoId: 'repo-1' })
 }))
 
+// Why stubbed: this suite walks the element tree by hand rather than rendering it, so a component
+// that uses real React hooks cannot run. The badge is not what these assertions are about.
+vi.mock('@/components/pr-comments/UnresolvedThreadBadge', () => ({
+  UnresolvedThreadBadge: () => null
+}))
+
 vi.mock('@/store', () => {
-  const useAppStore = (selector: (state: { openMarkdownPreview: typeof vi.fn }) => unknown) =>
-    selector({ openMarkdownPreview: appStoreMocks.openMarkdownPreview })
+  // Why getKnownWorktreeById is here: a diff tab renders its unresolved-review-thread badge, which
+  // resolves the pull request from the tab's worktree, and a store without this reader throws
+  // before the tab paints.
+  const useAppStore = (selector: (state: Record<string, unknown>) => unknown) =>
+    selector({
+      openMarkdownPreview: appStoreMocks.openMarkdownPreview,
+      getKnownWorktreeById: () => null,
+      settings: undefined,
+      prCache: {}
+    })
   useAppStore.getState = appStoreMocks.getState
   return { useAppStore }
 })

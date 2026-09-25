@@ -105,6 +105,10 @@ function resetState(overrides: Partial<Record<string, unknown>> = {}): void {
   vi.clearAllMocks()
   mocks.state = {
     activeWorktreeId: mocks.activeWorktree.id,
+    // Why present in the mock: the panel derives the pull request its rows belong to from the
+    // active worktree, and a store without this reader throws before a single row renders.
+    getKnownWorktreeById: (id: string) =>
+      id === mocks.activeWorktree.id ? mocks.activeWorktree : null,
     activeGroupIdByWorktree: { [mocks.activeWorktree.id]: 'group-1' },
     groupsByWorktree: { [mocks.activeWorktree.id]: [{ id: 'group-1', activeTabId: null }] },
     repos: [mocks.activeRepo],

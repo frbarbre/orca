@@ -1,6 +1,6 @@
 import { cn } from '@/lib/utils'
 import React from 'react'
-import { MessageSquare } from 'lucide-react'
+import { MessagesSquare, MessageSquare } from 'lucide-react'
 import { getFileTypeIcon } from '@/lib/file-type-icons'
 import { basename, dirname, joinPath } from '@/lib/path'
 import { WORKSPACE_FILE_PATH_MIME } from '@/lib/workspace-file-drag'
@@ -22,6 +22,7 @@ export function BranchEntryRow({
   connectionId,
   onOpen,
   commentCount,
+  reviewThreadCount,
   isOpenFile = false,
   showPathHint = true
 }: {
@@ -33,6 +34,7 @@ export function BranchEntryRow({
   connectionId?: string | null
   onOpen: (event?: SourceControlRowOpenEvent) => void
   commentCount: number
+  reviewThreadCount: number
   isOpenFile?: boolean
   showPathHint?: boolean
 }): React.JSX.Element {
@@ -92,6 +94,19 @@ export function BranchEntryRow({
           >
             <MessageSquare className="size-3" />
             <span className="tabular-nums">{commentCount}</span>
+          </span>
+        )}
+        {reviewThreadCount > 0 && (
+          <span
+            className="flex shrink-0 items-center gap-0.5 text-[10px] text-status-warning"
+            title={translate(
+              'auto.components.right.sidebar.SourceControl.unresolvedThreads',
+              '{{value0}} unresolved review thread{{value1}}',
+              { value0: reviewThreadCount, value1: reviewThreadCount === 1 ? '' : 's' }
+            )}
+          >
+            <MessagesSquare className="size-3" />
+            <span className="tabular-nums">{reviewThreadCount}</span>
           </span>
         )}
         <DiffLineCounts added={entry.added} removed={entry.removed} />

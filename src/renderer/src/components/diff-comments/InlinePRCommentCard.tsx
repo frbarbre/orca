@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { MessageSquare } from 'lucide-react'
 import { getPRCommentGroupActionState } from '@/lib/pr-comment-action-state'
 import { getPRCommentPresentationClasses } from '@/components/right-sidebar/pr-comment-presentation'
@@ -68,34 +68,61 @@ export function InlinePRCommentCard({
   onDeleteComment,
   onSetReaction
 }: InlinePRCommentCardProps): React.JSX.Element {
-  const [expanded, setExpanded] = useState(!resolved)
+  // Why not useState(!resolved): that reads the flag once, at mount, and the comments often arrive
+  // after the zone does -- so a resolved thread stayed expanded forever. Follow the data until the
+  // reader expresses a preference, then honour theirs.
+  const [manualExpanded, setManualExpanded] = useState<boolean | null>(null)
+  const expanded = manualExpanded ?? !resolved
   const [replyingCommentId, setReplyingCommentId] = useState<number | null>(null)
-  const containerRef = useRef<HTMLDivElement | null>(null)
+  const observerRef = useRef<ResizeObserver | null>(null)
 
-  // Why observed rather than measured once: Monaco fixes a zone's height when it is inserted, so a
-  // card that grows (a reply box opening, an expand) would otherwise be clipped by the next line.
-  useEffect(() => {
-    const node = containerRef.current
-    if (!node || typeof ResizeObserver === 'undefined') {
-      return
-    }
-    const observer = new ResizeObserver(() => onContentResize())
-    observer.observe(node)
-    return () => observer.disconnect()
-  }, [onContentResize])
+  // Why a callback ref rather than useRef + an effect: the collapsed bar and the expanded card are
+  // different elements, so an observer attached once keeps watching the collapsed node after it is
+  // unmounted. The zone then never grows and the card paints over the code below it.
+  const setContainer = useCallback(
+    (node: HTMLDivElement | null) => {
+      observerRef.current?.disconnect()
+      observerRef.current = null
+      if (!node || typeof ResizeObserver === 'undefined') {
+        return
+      }
+      // Why measured rather than computed: Monaco fixes a zone's height when it is inserted and
+      // never re-measures, so every change of size has to push a new one in.
+      const observer = new ResizeObserver(() => onContentResize())
+      observer.observe(node)
+      observerRef.current = observer
+      onContentResize()
+    },
+    [onContentResize]
+  )
 
-  const handleToggle = useCallback(() => setExpanded((value) => !value), [])
+  useEffect(() => () => observerRef.current?.disconnect(), [])
+
+  const handleToggle = useCallback(() => setManualExpanded(!expanded), [expanded])
 
   const root = getPRCommentGroupRoot(group)
   // Why flat rather than cards: the cards variant is tuned for the sidebar's narrow column, and its
   // padding and boxed replies make a zone tall enough to push the surrounding code off screen. Flat
   // gives replies a left rule instead of a box and drops the duplicated timestamps.
-  const presentation = getPRCommentPresentationClasses('flat')
+  const presentation = useMemo(() => {
+    const flat = getPRCommentPresentationClasses('flat')
+    // Why the path stops growing: flex-1 lets it eat the header row, which strands the RESOLVED
+    // chip in the middle of the card instead of reading as a label on the location it describes.
+    return { ...flat, pathBadge: flat.pathBadge.replace('flex-1', '') }
+  }, [])
   const count = getPRCommentGroupCount(group)
+  // Why the last comment rather than the root: every per-row Reply did the same thing -- GitHub
+  // threads all replies together -- so the card offers one, and the composer belongs under the last
+  // thing said rather than above the replies that follow it.
+  const lastCommentId =
+    group.kind === 'thread' && group.replies.length > 0
+      ? (group.replies.at(-1)?.id ?? root.id)
+      : root.id
+  const composing = replyingCommentId !== null
 
   if (resolved && !expanded) {
     return (
-      <div ref={containerRef} className="px-2 py-1">
+      <div ref={setContainer} className="px-2 py-1">
         <button
           type="button"
           onClick={handleToggle}
@@ -120,9 +147,9 @@ export function InlinePRCommentCard({
 
   return (
     <TooltipProvider>
-      <div ref={containerRef} className="px-2 py-1">
+      <div ref={setContainer} className="px-2 py-1">
         {/* One framed block: against code, a loose stack of rows reads as part of the file. */}
-        <div className="overflow-hidden rounded-md border border-border/70 bg-card/60">
+        <div className="rounded-md border border-border/70 bg-card">
           <PRCommentGroupView
             group={group}
             botAuthorOverrides={NO_BOT_OVERRIDES}
@@ -135,7 +162,6 @@ export function InlinePRCommentCard({
             now={now}
             presentation={presentation}
             onResolve={onResolve}
-            onStartReply={setReplyingCommentId}
             onCancelReply={(commentId) =>
               setReplyingCommentId((current) => (current === commentId ? null : current))
             }
@@ -144,7 +170,16 @@ export function InlinePRCommentCard({
             onDeleteComment={onDeleteComment}
             onSetReaction={onSetReaction}
           />
-          <div className="flex items-center gap-2 border-t border-border/70 bg-muted/20 px-2 py-1">
+          <div className="flex items-center border-t border-border/70 bg-muted/20">
+            {composing ? null : (
+              <button
+                type="button"
+                onClick={() => setReplyingCommentId(lastCommentId)}
+                className="rounded-bl-md px-2 py-1 text-[11px] text-muted-foreground hover:text-foreground"
+              >
+                {translate('auto.components.diff.comments.InlinePRCommentCard.reply', 'Reply')}
+              </button>
+            )}
             <NotesSendMenu<PRComment>
               worktreeId={worktreeId}
               groupId={getPRCommentGroupId(group)}
@@ -164,19 +199,20 @@ export function InlinePRCommentCard({
                 'auto.components.diff.comments.InlinePRCommentCard.thisThread',
                 'This comment'
               )}
-              onDelivered={() => undefined}
-            />
-            <span className="text-[11px] text-muted-foreground">
-              {translate(
+              triggerLabel={translate(
                 'auto.components.diff.comments.InlinePRCommentCard.sendHint',
                 'Send to an agent'
               )}
-            </span>
+              triggerClassName="rounded-none px-2 py-1 text-[11px] text-muted-foreground hover:text-foreground"
+              iconClassName="size-3 text-muted-foreground"
+              triggerAccentIcon={false}
+              onDelivered={() => undefined}
+            />
             {resolved ? (
               <button
                 type="button"
                 onClick={handleToggle}
-                className="ml-auto text-[11px] text-muted-foreground hover:text-foreground"
+                className="ml-auto rounded-br-md px-2 py-1 text-[11px] text-muted-foreground hover:text-foreground"
               >
                 {translate(
                   'auto.components.diff.comments.InlinePRCommentCard.collapse',

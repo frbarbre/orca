@@ -53,6 +53,7 @@ function renderBranchSection(): void {
         openCommittedDiff={vi.fn()}
         openBranchAllDiffs={vi.fn()}
         diffCommentCountByPath={new Map()}
+        reviewThreadCountByPath={new Map()}
         activeOpenRowKeys={new Set()}
         activeOpenRowKey={null}
       />
@@ -98,6 +99,7 @@ function renderUncommittedSections(): void {
         selectedKeySet={new Set()}
         activeOpenRowKeys={new Set()}
         activeOpenRowKey={null}
+        reviewThreadCountByPath={new Map()}
         handleSelect={vi.fn()}
         handleContextMenu={vi.fn()}
         revealInExplorer={vi.fn()}

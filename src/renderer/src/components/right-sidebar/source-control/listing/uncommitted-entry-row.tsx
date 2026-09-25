@@ -1,5 +1,5 @@
 import React from 'react'
-import { ChevronDown, MessageSquare, Minus, Plus, Trash, Undo2 } from 'lucide-react'
+import { ChevronDown, MessagesSquare, MessageSquare, Minus, Plus, Trash, Undo2 } from 'lucide-react'
 import { getFileTypeIcon } from '@/lib/file-type-icons'
 import { basename, dirname, joinPath } from '@/lib/path'
 import { cn } from '@/lib/utils'
@@ -48,6 +48,7 @@ export const UncommittedEntryRow = React.memo(function UncommittedEntryRow({
   onUnstage,
   onDiscard,
   commentCount,
+  reviewThreadCount,
   showPathHint = true,
   submoduleExpansion
 }: {
@@ -67,6 +68,7 @@ export const UncommittedEntryRow = React.memo(function UncommittedEntryRow({
   onUnstage: (filePath: string) => Promise<void>
   onDiscard: (entry: GitStatusEntry) => void
   commentCount: number
+  reviewThreadCount: number
   showPathHint?: boolean
   // When set, the row is a dirty submodule: clicking toggles lazy expansion instead of opening an uninformative gitlink diff.
   submoduleExpansion?: { isExpanded: boolean; onToggle: () => void }
@@ -192,6 +194,19 @@ export const UncommittedEntryRow = React.memo(function UncommittedEntryRow({
           >
             <MessageSquare className="size-3" />
             <span className="tabular-nums">{commentCount}</span>
+          </span>
+        )}
+        {reviewThreadCount > 0 && (
+          <span
+            className="flex shrink-0 items-center gap-0.5 text-[10px] text-status-warning"
+            title={translate(
+              'auto.components.right.sidebar.SourceControl.unresolvedThreads',
+              '{{value0}} unresolved review thread{{value1}}',
+              { value0: reviewThreadCount, value1: reviewThreadCount === 1 ? '' : 's' }
+            )}
+          >
+            <MessagesSquare className="size-3" />
+            <span className="tabular-nums">{reviewThreadCount}</span>
           </span>
         )}
         {entry.conflictStatus ? (

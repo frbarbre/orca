@@ -42,7 +42,8 @@ export function SourceControlSectionFileList({
   handleStage,
   handleUnstage,
   requestDiscardEntry,
-  diffCommentCountByPath
+  diffCommentCountByPath,
+  reviewThreadCountByPath
 }: {
   sourceControlViewMode: SourceControlViewMode
   treeRows: RenderableSourceControlNode[]
@@ -71,6 +72,7 @@ export function SourceControlSectionFileList({
   handleUnstage: (path: string) => Promise<void>
   requestDiscardEntry: (entry: GitStatusEntry) => void
   diffCommentCountByPath: Map<string, number>
+  reviewThreadCountByPath: Map<string, number>
 }): React.JSX.Element {
   return sourceControlViewMode === 'tree' ? (
     <VirtualizedList
@@ -130,6 +132,7 @@ export function SourceControlSectionFileList({
             onUnstage={handleUnstage}
             onDiscard={requestDiscardEntry}
             commentCount={diffCommentCountByPath.get(node.entry.path) ?? 0}
+            reviewThreadCount={reviewThreadCountByPath.get(node.entry.path) ?? 0}
             showPathHint={false}
             submoduleExpansion={submoduleExpansion}
           />
@@ -168,6 +171,7 @@ export function SourceControlSectionFileList({
             key={key}
             entryKey={key}
             entry={entry}
+            reviewThreadCount={reviewThreadCountByPath.get(entry.path) ?? 0}
             currentWorktreeId={currentWorktreeId}
             worktreePath={worktreePath}
             depth={entry.submoduleRoot ? 1 : 0}

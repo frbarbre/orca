@@ -46,6 +46,7 @@ function render(
       diffCommentCountByPath={new Map()}
       activeOpenRowKeys={new Set()}
       activeOpenRowKey={null}
+      reviewThreadCountByPath={new Map()}
     />
   )
 }

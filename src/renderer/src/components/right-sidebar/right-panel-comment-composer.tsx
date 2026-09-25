@@ -232,7 +232,10 @@ export function RightPanelCommentComposer({
   return (
     <div
       className={cn(
-        'min-w-0 overflow-hidden rounded-md border border-border bg-background',
+        // Why no border and a gap: the composer opens inside a comment that already has its own
+        // edges, so a box around it reads as a focus ring that never turns off, and flush against
+        // the comment above it the two run together.
+        'mt-2 min-w-0 overflow-hidden rounded-md bg-background',
         className
       )}
       onClick={stopPropagation}

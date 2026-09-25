@@ -100,6 +100,22 @@ export function PRCommentGroupView({
       </div>
     ) : null
   const startReply = onStartReply ? (comment: PRComment) => onStartReply(comment.id) : undefined
+  // Why the button moves rather than multiplying: every per-row Reply did the same thing, since
+  // GitHub threads replies together. One is enough, and it belongs at the end of the conversation --
+  // the root row while nothing has been said back, and below the last reply once something has.
+  const hasReplies = group.kind === 'thread' && group.replies.length > 0
+  const rowReply = hasReplies ? undefined : startReply
+  const lastComment = group.kind === 'thread' ? (group.replies.at(-1) ?? group.root) : group.comment
+  const threadReply =
+    hasReplies && onStartReply && onReply && replyingCommentId === null ? (
+      <button
+        type="button"
+        onClick={() => onStartReply(lastComment.id)}
+        className="px-2 py-1 text-[11px] text-muted-foreground transition-colors hover:text-foreground"
+      >
+        {translate('auto.components.right.sidebar.checks.panel.content.replyThread', 'Reply')}
+      </button>
+    ) : null
   const surfaceClassName = cn(
     getPRCommentGroupSurfaceClasses(presentation, actionState, {
       queued: isQueued
@@ -129,12 +145,13 @@ export function PRCommentGroupView({
           comment={group.comment}
           isReply={false}
           showResolve={false}
-          showReply={Boolean(onReply)}
+          showReply={!hasReplies && Boolean(onReply)}
           selectionControl={selectionControl}
-          onReply={startReply}
+          onReply={rowReply}
           {...sharedRowProps}
         />
         {renderReplyComposer(group.comment)}
+        {threadReply}
       </div>
     ) : (
       <div className={surfaceClassName} data-testid="pr-comment-group">
@@ -142,9 +159,9 @@ export function PRCommentGroupView({
           comment={group.root}
           isReply={false}
           showResolve={true}
-          showReply={Boolean(onReply)}
+          showReply={!hasReplies && Boolean(onReply)}
           selectionControl={selectionControl}
-          onReply={startReply}
+          onReply={rowReply}
           {...sharedRowProps}
         />
         {renderReplyComposer(group.root)}
@@ -157,16 +174,16 @@ export function PRCommentGroupView({
                   comment={reply}
                   isReply={true}
                   showResolve={false}
-                  showReply={Boolean(onReply)}
+                  showReply={false}
                   isQueued={false}
                   now={now}
-                  onReply={startReply}
                 />
                 {renderReplyComposer(reply, true)}
               </React.Fragment>
             ))}
           </div>
         )}
+        {threadReply}
       </div>
     )
 

@@ -2853,24 +2853,6 @@ html.native-shell .app-layout {
 /* Why the composer is repainted: it ships with bg-background, which is the editor's own colour and
    reads as a hole punched in the card it sits inside. Scoped here so the same composer keeps its
    normal look in the comments panel. */
-/* Why no focus ring here: the composer sits inside a card that is itself inside the diff, and a
-   third nested outline on top of the card border and the zone edge reads as clutter rather than as
-   focus. The caret is the focus indicator in a text box the user just clicked into. */
-.orca-inline-pr-comment textarea:focus,
-.orca-inline-pr-comment textarea:focus-visible,
-.orca-inline-pr-comment [contenteditable]:focus,
-.orca-inline-pr-comment [contenteditable]:focus-visible {
-  outline: none;
-  box-shadow: none;
-}
-
-.orca-inline-pr-comment .bg-background {
-  background-color: var(--card);
-  /* Why the gap: the composer opens directly under the comment it answers, and flush against it the
-     two read as one block with a stray toolbar. */
-  margin-top: 8px;
-}
-
 .orca-inline-pr-comment {
   position: relative;
   z-index: 1;

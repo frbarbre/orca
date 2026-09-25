@@ -37,7 +37,12 @@ export function createOpenDiffAtLocation(
           : (state.gitStatusByWorktree[worktreeId] ?? []).filter(
               (entry) => entry.path === relativePath
             )
+      // Why the caller's area wins: a file that is staged and then modified again has a row in both
+      // STAGED CHANGES and CHANGES. Preferring 'unstaged' unconditionally meant stepping onto the
+      // staged row opened the unstaged diff, which highlighted the other row and left the next step
+      // walking on from there.
       const uncommitted =
+        (area ? matches.find((entry) => entry.area === area) : undefined) ??
         matches.find((entry) => entry.area === 'unstaged') ??
         matches.find((entry) => entry.area === 'untracked') ??
         matches[0]

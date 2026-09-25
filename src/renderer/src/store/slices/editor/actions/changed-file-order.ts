@@ -11,8 +11,20 @@ export type ChangedFileStepOptions = {
   wrap?: boolean
 }
 
-/** Which section of the Source Control panel a row belongs to. */
-export type ChangedFileArea = 'branch' | 'working-tree'
+/**
+ * Which section of the Source Control panel a row belongs to.
+ *
+ * Why the working-tree areas stay apart: a file can be staged *and* modified again on top, which is
+ * a row in CHANGES and a row in STAGED CHANGES. Collapsing them lost which one a step landed on, so
+ * the staged row always opened — and highlighted — the unstaged diff.
+ */
+export type ChangedFileArea = 'branch' | 'staged' | 'unstaged' | 'untracked'
+
+const AREAS: readonly ChangedFileArea[] = ['branch', 'staged', 'unstaged', 'untracked']
+
+function toArea(raw: string): ChangedFileArea {
+  return AREAS.includes(raw as ChangedFileArea) ? (raw as ChangedFileArea) : 'unstaged'
+}
 
 export type ChangedFileTarget = {
   area: ChangedFileArea
@@ -46,7 +58,7 @@ export function parseChangedFileRowKey(key: string): ChangedFileTarget | null {
   if (relativePath.length === 0) {
     return null
   }
-  return { area: area === 'branch' ? 'branch' : 'working-tree', relativePath }
+  return { area: toArea(area), relativePath }
 }
 
 /**
@@ -114,6 +126,11 @@ export function stepChangedFile(
  *
  * Why the fallback: a plain edit tab has no row of its own, so enter the list at whichever row
  * carries that path rather than jumping the reviewer back to the top.
+ *
+ * Why the fallback stays on the same side: the same path can sit in a working-tree section and in
+ * the branch section. Letting a branch tab resolve to a working-tree row (or the reverse) moved the
+ * cursor to a different part of the panel, so the next step continued from somewhere the reviewer
+ * had never been.
  */
 export function resolveCurrentRowKey(
   order: readonly string[],
@@ -127,5 +144,10 @@ export function resolveCurrentRowKey(
   if (order.includes(exact)) {
     return exact
   }
-  return order.find((key) => parseChangedFileRowKey(key)?.relativePath === relativePath) ?? null
+  const onBranch = diffSource === 'branch'
+  const matches = order.filter((key) => parseChangedFileRowKey(key)?.relativePath === relativePath)
+  const sameSide = matches.find(
+    (key) => (parseChangedFileRowKey(key)?.area === 'branch') === onBranch
+  )
+  return sameSide ?? matches[0] ?? null
 }

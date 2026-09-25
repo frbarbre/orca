@@ -50,7 +50,15 @@ describe('parseChangedFileRowKey', () => {
       relativePath: 'src/a.ts'
     })
     expect(parseChangedFileRowKey('unstaged::src/a.ts')).toEqual({
-      area: 'working-tree',
+      area: 'unstaged',
+      relativePath: 'src/a.ts'
+    })
+    expect(parseChangedFileRowKey('staged::src/a.ts')).toEqual({
+      area: 'staged',
+      relativePath: 'src/a.ts'
+    })
+    expect(parseChangedFileRowKey('untracked::src/a.ts')).toEqual({
+      area: 'untracked',
       relativePath: 'src/a.ts'
     })
   })
@@ -117,5 +125,34 @@ describe('resolveCurrentRowKey', () => {
   it('returns null when the tab is not a file or its path is in no row', () => {
     expect(resolveCurrentRowKey(order, 'branch', null)).toBeNull()
     expect(resolveCurrentRowKey(order, 'branch', 'absent.ts')).toBeNull()
+  })
+})
+
+describe('resolveCurrentRowKey', () => {
+  const order = ['unstaged::src/a.ts', 'staged::src/a.ts', 'branch::src/a.ts']
+
+  it('keeps a staged tab on its own row rather than the working-tree one above it', () => {
+    expect(resolveCurrentRowKey(order, 'staged', 'src/a.ts')).toBe('staged::src/a.ts')
+  })
+
+  it('stays on the branch side when the exact row is gone', () => {
+    expect(
+      resolveCurrentRowKey(['unstaged::src/a.ts', 'branch::src/a.ts'], 'branch', 'src/a.ts')
+    ).toBe('branch::src/a.ts')
+  })
+
+  it('stays in the working tree when the exact row is gone', () => {
+    expect(
+      resolveCurrentRowKey(['branch::src/a.ts', 'untracked::src/a.ts'], 'unstaged', 'src/a.ts')
+    ).toBe('untracked::src/a.ts')
+  })
+
+  it('falls back to any row carrying the path for a plain edit tab', () => {
+    expect(resolveCurrentRowKey(order, undefined, 'src/a.ts')).toBe('unstaged::src/a.ts')
+  })
+
+  it('is null when the path is absent', () => {
+    expect(resolveCurrentRowKey(order, 'staged', 'src/b.ts')).toBeNull()
+    expect(resolveCurrentRowKey(order, 'staged', null)).toBeNull()
   })
 })

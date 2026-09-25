@@ -83,10 +83,14 @@ export function CommentRow({
   const canOpenLocation = Boolean(comment.path && onOpenLocation)
   const lineRange = formatLineRange(comment)
   const pathBadgeLabel = comment.path ? (
-    <>
-      {comment.path.split('/').pop()}
-      {lineRange && `:${lineRange}`}
-    </>
+    presentation.pathBadgeShowsFile ? (
+      <>
+        {comment.path.split('/').pop()}
+        {lineRange && `:${lineRange}`}
+      </>
+    ) : (
+      lineRange
+    )
   ) : null
   const pathBadge = comment.path ? (
     canOpenLocation ? (
@@ -210,7 +214,9 @@ export function CommentRow({
   ) : null
 
   const commentActions = !editing ? (
-    <div className="flex shrink-0 items-center gap-0.5">
+    // Why ml-auto: the author used to grow and carry these to the far edge, but it no longer does --
+    // it was dragging the timestamp beside it out to the edge as well. This pushes only the actions.
+    <div className="ml-auto flex shrink-0 items-center gap-0.5">
       {presentation.useCardLayout ? null : queueButton}
       {hoverActions}
     </div>
@@ -226,6 +232,13 @@ export function CommentRow({
         }
       >
         {relativeTime ? <span>{relativeTime}</span> : null}
+        {/* Why the negative margin: the row's gap sits on both sides of the separator, which spaces
+            a single glyph as widely as the fields it divides. */}
+        {relativeTime && pathBadge ? (
+          <span className="-mx-1" aria-hidden>
+            ·
+          </span>
+        ) : null}
         {automated ? (
           <span className={presentation.botBadge}>
             {translate('auto.components.right.sidebar.checks.panel.content.2ba0a32bdd', 'bot')}
@@ -263,7 +276,14 @@ export function CommentRow({
         {authorAvatar}
         {authorName}
         {relativeTime ? (
-          <span className={presentation.time} aria-hidden={presentation.time === 'hidden'}>
+          <span
+            // Why trimmed: this separator carries its own leading space, so the row's full gap on
+            // top of it reads wider than the same divider does in the meta row.
+            // Why the line height is forced: centred boxes only share a baseline when they are the
+            // same height, and the timestamp is two points smaller than the name beside it.
+            className={cn(presentation.time, presentation.useCardLayout && '-ml-1 leading-5')}
+            aria-hidden={presentation.time === 'hidden'}
+          >
             {presentation.useCardLayout ? `· ${relativeTime}` : relativeTime}
           </span>
         ) : null}

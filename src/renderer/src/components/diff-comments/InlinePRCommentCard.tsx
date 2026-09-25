@@ -105,10 +105,23 @@ export function InlinePRCommentCard({
   // padding and boxed replies make a zone tall enough to push the surrounding code off screen. Flat
   // gives replies a left rule instead of a box and drops the duplicated timestamps.
   const presentation = useMemo(() => {
-    const flat = getPRCommentPresentationClasses('flat')
+    // Why the panel's own variant rather than the compact one: a thread in a diff is read at the
+    // same distance as one in the panel, so the smaller type and the hidden timestamps made the
+    // card feel like a different, lesser surface rather than the same conversation.
+    const base = getPRCommentPresentationClasses()
     // Why the path stops growing: flex-1 lets it eat the header row, which strands the RESOLVED
     // chip in the middle of the card instead of reading as a label on the location it describes.
-    return { ...flat, pathBadge: flat.pathBadge.replace('flex-1', '') }
+    // Why no file name: the card is open inside that file, so repeating it spends the header on
+    // something the reader can see, and hides the lines that actually locate the comment.
+    return {
+      ...base,
+      pathBadgeShowsFile: false,
+      // Why the group surface goes bare: it carries its own border, radius and shadow, which is
+      // right when it is the card, but here it sits inside one -- two borders a few pixels apart
+      // read as a rendering fault rather than as structure.
+      group: 'overflow-clip',
+      pathBadge: base.pathBadge.replace('flex-1', '')
+    }
   }, [])
   const count = getPRCommentGroupCount(group)
 
@@ -150,6 +163,7 @@ export function InlinePRCommentCard({
             botAuthorOverrides={NO_BOT_OVERRIDES}
             replyingCommentId={replyingCommentId}
             onStartReply={setReplyingCommentId}
+            renderThreadReply={false}
             // Why no selectionControl: the checkbox drives the panel's multi-select-for-AI list, which
             // has no meaning next to a single thread in a diff. The send menu below is the per-thread
             // equivalent.
@@ -190,11 +204,24 @@ export function InlinePRCommentCard({
                 'auto.components.diff.comments.InlinePRCommentCard.sendHint',
                 'Send to an agent'
               )}
-              triggerClassName="rounded-none rounded-bl-md px-2 py-1 text-[11px] text-muted-foreground hover:text-foreground"
+              triggerClassName="gap-1.5 rounded-none rounded-bl-md px-2 py-1 text-[11px] text-muted-foreground hover:text-foreground"
               iconClassName="size-3 text-muted-foreground"
               triggerAccentIcon={false}
               onDelivered={() => undefined}
             />
+            {replyingCommentId === null ? (
+              <button
+                type="button"
+                onClick={() =>
+                  setReplyingCommentId(
+                    group.kind === 'thread' ? (group.replies.at(-1)?.id ?? root.id) : root.id
+                  )
+                }
+                className="rounded-none px-2 py-1 text-[11px] text-muted-foreground transition-colors hover:bg-accent/40 hover:text-foreground"
+              >
+                {translate('auto.components.diff.comments.InlinePRCommentCard.reply', 'Reply')}
+              </button>
+            ) : null}
             {resolved ? (
               <button
                 type="button"

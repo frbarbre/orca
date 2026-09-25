@@ -2853,6 +2853,24 @@ html.native-shell .app-layout {
 /* Why the composer is repainted: it ships with bg-background, which is the editor's own colour and
    reads as a hole punched in the card it sits inside. Scoped here so the same composer keeps its
    normal look in the comments panel. */
+/* Why this exists despite the textarea carrying outline-none: focused, it computes to
+   `outline: 1px solid` -- the utility does not survive whatever sets the focus outline, and the
+   base layer paints it in the ring colour. In the panel that hairline reads as a focused field; in
+   a diff zone it reads as a stray box drawn around the comment. The caret is indicator enough
+   inside a box the reader just clicked into. */
+.orca-inline-pr-comment textarea,
+.orca-inline-pr-comment textarea:focus,
+.orca-inline-pr-comment textarea:focus-visible,
+.orca-inline-pr-comment [contenteditable],
+.orca-inline-pr-comment [contenteditable]:focus,
+.orca-inline-pr-comment [contenteditable]:focus-visible {
+  /* !important because whatever sets the focus outline already beat the element's own
+     outline-none utility; a plain declaration here would lose the same way. */
+  border: 0 !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
 .orca-inline-pr-comment {
   position: relative;
   z-index: 1;

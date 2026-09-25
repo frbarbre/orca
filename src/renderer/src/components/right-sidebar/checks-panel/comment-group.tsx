@@ -46,7 +46,8 @@ export function PRCommentGroupView({
   onDeleteComment,
   onSetReaction,
   onQueueForAgent,
-  onOpenLocation
+  onOpenLocation,
+  renderThreadReply = true
 }: {
   group: PRCommentGroup
   botAuthorOverrides: ReadonlySet<string>
@@ -71,6 +72,8 @@ export function PRCommentGroupView({
   ) => Promise<boolean>
   onQueueForAgent?: () => void
   onOpenLocation?: (comment: PRComment) => void
+  /** The diff card keeps Reply in its own footer bar, beside the send menu. */
+  renderThreadReply?: boolean
 }): React.JSX.Element {
   // Reply targets a specific comment id so any comment in a thread — root or
   // nested reply — can be replied to, not just the thread root.
@@ -107,11 +110,11 @@ export function PRCommentGroupView({
   const rowReply = hasReplies ? undefined : startReply
   const lastComment = group.kind === 'thread' ? (group.replies.at(-1) ?? group.root) : group.comment
   const threadReply =
-    hasReplies && onStartReply && onReply && replyingCommentId === null ? (
+    renderThreadReply && hasReplies && onStartReply && onReply && replyingCommentId === null ? (
       <button
         type="button"
         onClick={() => onStartReply(lastComment.id)}
-        className="px-2 py-1 text-[11px] text-muted-foreground transition-colors hover:text-foreground"
+        className="w-full rounded-t-none rounded-b-md border-t border-border/70 px-3 py-1.5 text-left text-[12px] text-muted-foreground transition-colors hover:bg-accent/40 hover:text-foreground"
       >
         {translate('auto.components.right.sidebar.checks.panel.content.replyThread', 'Reply')}
       </button>

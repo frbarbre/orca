@@ -198,6 +198,10 @@ export function NotesSendMenu<TNote>({
               onMouseDown={(event) => event.stopPropagation()}
               onClick={(event) => event.stopPropagation()}
             >
+              {/* Why the send glyph leads without the accent: the accent opened the row and the rule
+                  closed it, so with neither the label would start the button and the glyph would
+                  trail it, reading as a suffix rather than as the action. */}
+              {triggerLabel && !triggerAccentIcon ? <Send className={iconClassName} /> : null}
               {triggerLabel ? (
                 <>
                   {triggerAccentIcon ? (
@@ -209,10 +213,12 @@ export function NotesSendMenu<TNote>({
                       {triggerCount}
                     </span>
                   ) : null}
-                  <span className="mx-0.5 h-3 w-px bg-border/70" aria-hidden />
+                  {triggerAccentIcon ? (
+                    <span className="mx-0.5 h-3 w-px bg-border/70" aria-hidden />
+                  ) : null}
                 </>
               ) : null}
-              <Send className={iconClassName} />
+              {triggerLabel && !triggerAccentIcon ? null : <Send className={iconClassName} />}
               {actionLabel ? <span className="whitespace-nowrap">{actionLabel}</span> : null}
             </button>
           </DropdownMenuTrigger>

@@ -22,10 +22,14 @@ describe('pr-comment-presentation', () => {
     expect(cards.group).toContain('shadow-xs')
     expect(cards.avatar).toContain('border-border')
     expect(cards.avatar).toContain('bg-background')
-    // Why: replies must read nested under the root (GitHub-style), not full-width siblings.
-    expect(cards.repliesContainer).toContain('ml-3')
-    expect(cards.repliesContainer).toContain('border-l-2')
-    expect(cards.commentRowReply).toContain('pl-3')
+    // Why no indent, rule or tint: a reply is marked by the divider above it and nothing else, so
+    // it keeps the full width and the same surface as the comment it answers. Stepping it in as
+    // well only narrowed the text it was trying to show.
+    expect(cards.repliesContainer).not.toContain('ml-3')
+    expect(cards.repliesContainer).not.toContain('border-l-2')
+    expect(cards.commentRowReply).not.toContain('pl-3')
+    expect(cards.commentRowReply).not.toContain('bg-muted')
+    expect(cards.commentRowReply).toContain('border-t')
 
     const focus = getPRCommentPresentationClasses('focus')
     expect(focus.useCardLayout).toBe(true)
@@ -41,8 +45,9 @@ describe('pr-comment-presentation', () => {
     expect(focus.commentHeaderReply).toContain('px-3 py-2')
     expect(focus.commentHeaderMeta).toContain('pl-7')
     expect(focus.commentHeaderMetaWithSelection).toContain('pl-[3.25rem]')
-    expect(focus.repliesContainer).toContain('ml-3')
-    expect(focus.repliesContainer).toContain('border-l-2')
+    // Why the same here: focus shares the card branch, so replies read full width there too.
+    expect(focus.repliesContainer).not.toContain('ml-3')
+    expect(focus.repliesContainer).not.toContain('border-l-2')
   })
 
   it('restores block flow for span-rendered markdown paragraphs and headings', () => {

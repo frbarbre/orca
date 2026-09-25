@@ -17,6 +17,12 @@ import {
 import { persistedUIValuesEqual } from '../../../../../shared/persisted-ui-equality'
 import { DEFAULT_STATUS_BAR_ITEMS } from '../../../../../shared/constants'
 import type { UISlice } from './ui-slice-contract'
+import {
+  clampWorkspaceBoardColumnWidth,
+  clampWorkspaceBoardOpacity,
+  normalizeWorkspaceStatuses
+} from '../../../../../shared/workspace-statuses'
+import { normalizeWorkspaceStatusRuleConfig } from '../../../../../shared/workspace-status-rule-config'
 
 const MIN_SIDEBAR_WIDTH = 220
 const HYDRATE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000
@@ -249,5 +255,22 @@ export function hydrateUnexpectedSignoutDismissal(
     // A later sync must never undo any dismissal observed in this session.
     unexpectedSignoutDismissedVersions:
       typeof version === 'string' && !observed.includes(version) ? [...observed, version] : observed
+  }
+}
+
+/** Every persisted workspace-board value, normalized together. */
+export function hydrateWorkspaceBoardState(ui: {
+  workspaceStatuses?: unknown
+  workspaceStatusRules?: unknown
+  workspaceBoardOpacity?: unknown
+  workspaceBoardColumnWidth?: unknown
+  syncTaskStatusFromWorkspaceBoard?: unknown
+}) {
+  return {
+    workspaceStatuses: normalizeWorkspaceStatuses(ui.workspaceStatuses),
+    workspaceStatusRules: normalizeWorkspaceStatusRuleConfig(ui.workspaceStatusRules),
+    workspaceBoardOpacity: clampWorkspaceBoardOpacity(ui.workspaceBoardOpacity),
+    workspaceBoardColumnWidth: clampWorkspaceBoardColumnWidth(ui.workspaceBoardColumnWidth),
+    syncTaskStatusFromWorkspaceBoard: ui.syncTaskStatusFromWorkspaceBoard === true
   }
 }

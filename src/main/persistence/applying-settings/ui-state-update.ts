@@ -9,6 +9,7 @@ import {
   clampWorkspaceBoardColumnWidth,
   clampWorkspaceBoardOpacity
 } from '../../../shared/workspace-statuses'
+import { normalizeWorkspaceStatusRuleConfig } from '../../../shared/workspace-status-rule-config'
 import { normalizeUsagePercentageDisplay } from '../../../shared/usage-percentage-display'
 import { normalizeStatusBarUsageMode } from '../../../shared/status-bar-usage-mode'
 import { clampMarkdownTocPanelWidth } from '../../../shared/markdown-toc-panel-width'
@@ -126,6 +127,9 @@ export function updatePersistedUI(
       sanitizedUpdates.workspaceStatuses !== undefined
         ? normalizeWorkspaceStatuses(sanitizedUpdates.workspaceStatuses)
         : normalizeWorkspaceStatuses(operations.state.ui?.workspaceStatuses),
+    workspaceStatusRules: normalizeWorkspaceStatusRuleConfig(
+      sanitizedUpdates.workspaceStatusRules ?? operations.state.ui?.workspaceStatusRules
+    ),
     workspaceBoardOpacity: clampWorkspaceBoardOpacity(
       sanitizedUpdates.workspaceBoardOpacity ?? operations.state.ui?.workspaceBoardOpacity
     ),

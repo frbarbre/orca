@@ -1,4 +1,5 @@
 import type { UISlice, UISliceGet, UISliceSet } from './ui-slice-contract'
+import { createUiWorkspaceStatusRuleActions } from './ui-slice-workspace-status-rule-actions'
 import {
   DEFAULT_AGENTS_GROUP_BY,
   DEFAULT_AGENTS_READ_FILTER
@@ -40,6 +41,7 @@ import {
 
 export function createUiPreferenceActions(set: UISliceSet, get: UISliceGet): Partial<UISlice> {
   return {
+    ...createUiWorkspaceStatusRuleActions(set, get),
     sidebarBody: 'workspaces',
     setSidebarBody: (body) => set({ sidebarBody: body }),
 

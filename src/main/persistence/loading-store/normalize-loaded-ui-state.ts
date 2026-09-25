@@ -6,6 +6,7 @@ import {
 import { isExistingPersistedProfile } from '../../../shared/project-order-manual-default-notice'
 import { resolveUsagePercentageDisplayChangeNoticeDismissed } from '../../../shared/usage-percentage-display-change-notice'
 import { normalizePersistedWorkspaceStatuses } from '../../../shared/workspace-statuses'
+import { normalizeWorkspaceStatusRuleConfig } from '../../../shared/workspace-status-rule-config'
 import {
   normalizeRightSidebarExplorerView,
   normalizeRightSidebarTab,
@@ -191,6 +192,7 @@ export function normalizeLoadedUiState(
     sortBy: migrate ? ('smart' as const) : sort,
     showDotfilesByWorktree: normalizeShowDotfilesByWorktree(parsed.ui?.showDotfilesByWorktree),
     workspaceStatuses,
+    workspaceStatusRules: normalizeWorkspaceStatusRuleConfig(parsed.ui?.workspaceStatusRules),
     _workspaceStatusesDefaultOrderMigrated: true,
     _workspaceStatusesReorderedDefaultRepaired: true,
     _workspaceStatusesDefaultWorkflowMigrated: true,

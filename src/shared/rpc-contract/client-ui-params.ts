@@ -13,6 +13,7 @@ import type { ReleaseChannel } from '../release-channel'
 import { ClientUiWorkspaceFilterFields } from './client-ui-workspace-filter-fields-params'
 import { TaskResumeState } from './task-resume-state-params'
 import { WorkspaceCleanup } from './workspace-cleanup-ui-params'
+import { WorkspaceStatusRules } from './workspace-status-rule-params'
 import { omitUndefinedValues, tolerateUnknownValues } from './ui-update-value-tolerance-params'
 
 export const NullableString = z.string().nullable()
@@ -169,6 +170,7 @@ export const UiUpdateFields = z
     _worktreeCardModeDefaulted: z.boolean().optional(),
     agentActivityDisplayMode: AgentActivityDisplayMode.optional(),
     workspaceStatuses: z.array(WorkspaceStatusDefinition).optional(),
+    workspaceStatusRules: WorkspaceStatusRules.optional(),
     workspaceBoardOpacity: z.number().finite().optional(),
     workspaceBoardColumnWidth: z.number().finite().optional(),
     syncTaskStatusFromWorkspaceBoard: z.boolean().optional(),

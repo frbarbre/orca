@@ -35,9 +35,9 @@ If a conflict is in a file this document does not mention, that is the answer: t
 
 ## What this fork owns
 
-Two groups. The updater group is what makes this fork a distinct app that updates from its own
+Two kinds. The updater group is what makes this fork a distinct app that updates from its own
 releases — losing it silently turns the fork back into stock Orca on the next update check. The
-editor group is the feature work.
+rest is feature work.
 
 ### 1. Fork update channel — keep, and check carefully
 
@@ -62,20 +62,20 @@ Two rules, both learned the hard way:
 1. **The default stays `stablyai`.** The instinct to "fix" it to this fork is what breaks the merge
    story.
 2. **Read the env var per call, never at module scope.** ES imports are evaluated before the
-   importing module's body, so a module-level `const` resolves *before* `armForkUpdateChannel()` can
+   importing module's body, so a module-level `const` resolves _before_ `armForkUpdateChannel()` can
    arm it — a fork build then silently checks upstream's releases and offers an upstream version.
    `src/main/updater-fork-feed-lazy.test.ts` guards this; do not collapse those functions to consts.
 
-| File | What is ours |
-| --- | --- |
-| `src/main/updater/updater-manual-install.ts` | Whole file (new). `armForkUpdateChannel` + the manual-install helpers. |
-| `src/main/index.ts` | The `armForkUpdateChannel(app.isPackaged)` call and its import. If upstream restructures startup, move the call — keep it before any updater setup runs. |
-| `src/main/updater/updater-setup.ts` | `ORCA_UPDATE_FEED_URL ??` on the feed URL, and the `!isManualInstallOnlyUpdate()` term in `autoInstallOnAppQuit`. |
-| `src/main/updater/updater-release-feed.ts` | `ORCA_UPDATE_FEED_URL ??` on the fallback feed URL. |
-| `src/main/updater-prerelease-feed.ts` | `repoBase()` / `atomFeedUrl()` / `releasesDownloadBase()` / `tagHrefPattern()` and the regexes derived from them. Upstream hardcodes the slug; keep it derived, and keep these as **functions**. |
-| `src/main/updater/updater-download-install.ts` | The `isManualInstallOnlyUpdate()` early return at the top of `downloadUpdate` and `quitAndInstall`. |
-| `config/electron-builder.config.cjs` | `owner: process.env.ORCA_PUBLISH_OWNER ?? 'frbarbre'` and `releaseType: … : 'release'`. |
-| `.github/workflows/fork-release.yml` | Whole file (new). |
+| File                                           | What is ours                                                                                                                                                                                     |
+| ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `src/main/updater/updater-manual-install.ts`   | Whole file (new). `armForkUpdateChannel` + the manual-install helpers.                                                                                                                           |
+| `src/main/index.ts`                            | The `armForkUpdateChannel(app.isPackaged)` call and its import. If upstream restructures startup, move the call — keep it before any updater setup runs.                                         |
+| `src/main/updater/updater-setup.ts`            | `ORCA_UPDATE_FEED_URL ??` on the feed URL, and the `!isManualInstallOnlyUpdate()` term in `autoInstallOnAppQuit`.                                                                                |
+| `src/main/updater/updater-release-feed.ts`     | `ORCA_UPDATE_FEED_URL ??` on the fallback feed URL.                                                                                                                                              |
+| `src/main/updater-prerelease-feed.ts`          | `repoBase()` / `atomFeedUrl()` / `releasesDownloadBase()` / `tagHrefPattern()` and the regexes derived from them. Upstream hardcodes the slug; keep it derived, and keep these as **functions**. |
+| `src/main/updater/updater-download-install.ts` | The `isManualInstallOnlyUpdate()` early return at the top of `downloadUpdate` and `quitAndInstall`.                                                                                              |
+| `config/electron-builder.config.cjs`           | `owner: process.env.ORCA_PUBLISH_OWNER ?? 'frbarbre'` and `releaseType: … : 'release'`.                                                                                                          |
+| `.github/workflows/fork-release.yml`           | Whole file (new).                                                                                                                                                                                |
 
 Two things that are **not** ours and must not be changed:
 
@@ -103,21 +103,21 @@ New files (no conflict unless upstream adds the same path):
 
 Modified files, and what to re-apply:
 
-| File | What is ours |
-| --- | --- |
-| `src/shared/keybindings/types.ts` | `editor.previousFile` / `editor.nextFile` in the action union. |
-| `src/shared/keybindings/definitions-core-4.ts` | The two definitions. **These files have a 300-line ESLint cap** — if upstream has grown this one, move ours to whichever `definitions-core-*.ts` has room. |
-| `src/renderer/src/components/editor/editor-shortcuts.ts` | `installChangedFileNavigationShortcut`, including the `beginChangedFileHold` call on a fresh press. `installMonacoDiffChangeNavigationShortcut` stays upstream's. |
-| `src/renderer/src/components/editor/diff-navigation-context.tsx` | The file-nav listener, installed and torn down on the same seam as the change-nav one. The change-nav shortcut is handed an adapter whose `goToDiff` is `goToDiffWithoutWrap`, and the header buttons call `goToDiffWithoutWrap` too — this is what stops Monaco wrapping from the last change to the first. |
-| `src/renderer/.../store/slices/editor/types/editor-files-slice.ts` | `stepToChangedFile` and its `options?: ChangedFileStepOptions` (`wrap: false` for a held chord). |
-| `src/renderer/src/components/editor/DiffViewer.tsx` | `useDiffViewerPendingRevealScroll` + the `hasPendingReveal` argument. |
-| `src/renderer/src/components/editor/useDiffViewerFirstChangeAutoScroll.ts` | The `hasPendingReveal` input that makes the auto-scroll stand down. |
-| `src/renderer/src/components/editor/monaco-reveal.ts`, `use-monaco-reveal-scheduler.ts` | Type widened from `IStandaloneCodeEditor` to `ICodeEditor` so the diff editor can reuse the scheduler. |
-| `src/renderer/src/components/virtualized-list.tsx` | `scrollToRowKey`, `alignRowWithinScrollPadding`, the flow-path wrapper. Heavily edited — merge with care. |
-| `src/renderer/.../checks-panel/comment-row.tsx`, `comment-group.tsx`, `use-comments-list-state.tsx` | The `onOpenLocation` prop and the clickable path badge. |
-| `src/renderer/.../source-control/listing/*` | `activeOpenRowKey`, the branch-row `isOpenFile` highlight, the published review order in `use-file-listing.ts`. |
-| `src/renderer/.../source-control/panel/panel-ready.tsx` | `scroll-pb-9` on the file-list scroller — reserves the sticky Commits header. |
-| `src/renderer/.../listing/active-open-file-keys.ts` | The `branch::<path>` key. Branch keys **must bypass** the availability filter. |
+| File                                                                                                | What is ours                                                                                                                                                                                                                                                                                                 |
+| --------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `src/shared/keybindings/types.ts`                                                                   | `editor.previousFile` / `editor.nextFile` in the action union.                                                                                                                                                                                                                                               |
+| `src/shared/keybindings/definitions-core-4.ts`                                                      | The two definitions. **These files have a 300-line ESLint cap** — if upstream has grown this one, move ours to whichever `definitions-core-*.ts` has room.                                                                                                                                                   |
+| `src/renderer/src/components/editor/editor-shortcuts.ts`                                            | `installChangedFileNavigationShortcut`, including the `beginChangedFileHold` call on a fresh press. `installMonacoDiffChangeNavigationShortcut` stays upstream's.                                                                                                                                            |
+| `src/renderer/src/components/editor/diff-navigation-context.tsx`                                    | The file-nav listener, installed and torn down on the same seam as the change-nav one. The change-nav shortcut is handed an adapter whose `goToDiff` is `goToDiffWithoutWrap`, and the header buttons call `goToDiffWithoutWrap` too — this is what stops Monaco wrapping from the last change to the first. |
+| `src/renderer/.../store/slices/editor/types/editor-files-slice.ts`                                  | `stepToChangedFile` and its `options?: ChangedFileStepOptions` (`wrap: false` for a held chord).                                                                                                                                                                                                             |
+| `src/renderer/src/components/editor/DiffViewer.tsx`                                                 | `useDiffViewerPendingRevealScroll` + the `hasPendingReveal` argument.                                                                                                                                                                                                                                        |
+| `src/renderer/src/components/editor/useDiffViewerFirstChangeAutoScroll.ts`                          | The `hasPendingReveal` input that makes the auto-scroll stand down.                                                                                                                                                                                                                                          |
+| `src/renderer/src/components/editor/monaco-reveal.ts`, `use-monaco-reveal-scheduler.ts`             | Type widened from `IStandaloneCodeEditor` to `ICodeEditor` so the diff editor can reuse the scheduler.                                                                                                                                                                                                       |
+| `src/renderer/src/components/virtualized-list.tsx`                                                  | `scrollToRowKey`, `alignRowWithinScrollPadding`, the flow-path wrapper. Heavily edited — merge with care.                                                                                                                                                                                                    |
+| `src/renderer/.../checks-panel/comment-row.tsx`, `comment-group.tsx`, `use-comments-list-state.tsx` | The `onOpenLocation` prop and the clickable path badge.                                                                                                                                                                                                                                                      |
+| `src/renderer/.../source-control/listing/*`                                                         | `activeOpenRowKey`, the branch-row `isOpenFile` highlight, the published review order in `use-file-listing.ts`.                                                                                                                                                                                              |
+| `src/renderer/.../source-control/panel/panel-ready.tsx`                                             | `scroll-pb-9` on the file-list scroller — reserves the sticky Commits header.                                                                                                                                                                                                                                |
+| `src/renderer/.../listing/active-open-file-keys.ts`                                                 | The `branch::<path>` key. Branch keys **must bypass** the availability filter.                                                                                                                                                                                                                               |
 
 Four upstream **test** files carry our additions. Take upstream's version, then re-apply:
 
@@ -127,7 +127,62 @@ Four upstream **test** files carry our additions. Take upstream's version, then 
 - `diff-navigation-context.test.tsx` — the fake editor's `getModifiedEditor` and line-numbered
   `getLineChanges` (no-wrap stepping reads both), plus the "does not wrap" test.
 
-### 3. Editor theming from a VS Code theme file
+### 3. Pull-request-driven workspace statuses
+
+Watches each workspace's linked pull request and sets its board column, deletes the workspace once
+its pull request is merged or closed, and opens a review workspace when someone asks you to review.
+Configured per project under Settings → Automations.
+
+Everything the rules need comes from **one GraphQL query this fork owns** rather than from
+upstream's `PRInfo`. That is deliberate: upstream's reviewer mapper drops team reviewers (it
+requires a `login`, and a team only has a `slug`), its rollup normalizer rewrites every check name
+to `check-<index>`, and it owns and frequently changes those files. Keeping our own query means the
+whole feature lives in new files and costs one `gh` call per poll for the whole board.
+
+New files (no conflict unless upstream adds the same path):
+
+- `src/shared/workspace-status-rules.ts` (+ test) — the pure condition resolver. All the logic worth
+  trusting is here; it takes a snapshot and returns a condition.
+- `src/shared/workspace-status-rule-plan.ts` (+ test) — pure planner: targets + snapshot → status
+  moves, removals, review-workspace creations.
+- `src/shared/workspace-status-rule-config.ts` — config type, defaults, persistence normalization.
+- `src/shared/workspace-status-rule-prompt.ts` (+ test) — the `{{variable}}` renderer. Orca has no
+  other template engine; Quick Commands and Automations both store flat strings.
+- `src/shared/github/review-status-snapshot-types.ts`, `src/shared/rpc-contract/workspace-status-rule-params.ts`
+- `src/main/github/review-status-snapshot.ts`, `-query.ts`, `-mapping.ts` (+ tests, including
+  `review-status-snapshot-merge-gate.test.ts`, which pins the merge gate as a commit status rather
+  than a check run)
+- `src/preload/api/review-status-rules-api.ts`, `-bridge.ts`
+- `src/renderer/src/components/workspace-status-rules/*` — poller, target collection, plan
+  application, review-workspace creation.
+- `src/renderer/src/components/settings/PullRequestStatusRulesSection.tsx`, `PullRequestStatusRuleRows.tsx`,
+  `pull-request-status-rule-copy.ts`
+- `src/renderer/src/store/slices/ui/ui-slice-workspace-status-rule-actions.ts`
+- `src/renderer/src/web/preload-api/web-review-status-rules-api.ts`
+
+Modified files, and what to re-apply:
+
+| File                                                                            | What is ours                                                                                                                                                                                                      |
+| ------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/shared/persisted-ui-state-types.ts`                                        | `workspaceStatusRules?: WorkspaceStatusRuleConfig` and its import.                                                                                                                                                |
+| `src/shared/rpc-contract/client-ui-params.ts`                                   | `workspaceStatusRules: WorkspaceStatusRules.optional()` and its import.                                                                                                                                           |
+| `src/main/persistence/loading-store/normalize-loaded-ui-state.ts`               | One `normalizeWorkspaceStatusRuleConfig(...)` line in the returned object.                                                                                                                                        |
+| `src/main/persistence/applying-settings/ui-state-read.ts`, `ui-state-update.ts` | One normalize line each, beside `workspaceStatuses`.                                                                                                                                                              |
+| `src/main/startup/main-process-ipc-bootstrap.ts`                                | The `review-status-rules:snapshot` handler.                                                                                                                                                                       |
+| `src/preload/api-types.ts`, `src/preload/index.ts`                              | The `reviewStatusRules` member.                                                                                                                                                                                   |
+| `src/renderer/src/web/web-preload-api.ts`                                       | `...createWebReviewStatusRulesApi()`.                                                                                                                                                                             |
+| `src/renderer/src/store/slices/ui/ui-slice-contract-preferences.ts`             | The three `workspaceStatusRules` members.                                                                                                                                                                         |
+| `src/renderer/src/store/slices/ui/ui-slice-hydration-actions.ts`                | One normalize line.                                                                                                                                                                                               |
+| `src/renderer/src/store/slices/ui/ui-slice-preference-actions.ts`               | `...createUiWorkspaceStatusRuleActions(set, get)` as the first spread. **Deliberately not `ui.ts`** — inserting a line there drags upstream's pre-existing `as UISlice` cast into the changed-lines quality gate. |
+| `src/renderer/src/components/settings/AutomationsSettingsPane.tsx`              | `<PullRequestStatusRulesSection />`.                                                                                                                                                                              |
+
+Two upstream **test** files carry our additions. Take upstream's version, then re-apply:
+
+- `web-preload-api-composition.test.ts` — `'reviewStatusRules'` in the expected namespace list.
+- `AutomationsSettingsPane.test.tsx` — the store mock needs `workspaceStatusRules`,
+  `workspaceStatuses`, `repos` and `setWorkspaceStatusRules`.
+
+### 4. Editor theming from a VS Code theme file
 
 Loads `~/.orca/themes/editor-dark.json` / `editor-light.json` (any VS Code theme) and registers them
 with Monaco, so the editor and diff viewer are not stuck on stock `vs` / `vs-dark`.
@@ -143,11 +198,11 @@ New files (no conflict unless upstream adds the same path):
 
 Modified files, and what to re-apply:
 
-| File | What is ours |
-| --- | --- |
-| `src/main/startup/main-process-ipc-bootstrap.ts` | The `editor-theme:getCustom` handler. |
-| `src/preload/api/app-api.ts`, `app-bridge.ts` | The `getCustomEditorThemes` member and its `ipcRenderer.invoke`. |
-| `src/renderer/src/web/preload-api/web-app-api.ts` | The stub returning nulls — the web client has no `~/.orca`, and the type requires the member. |
+| File                                                         | What is ours                                                                                                                                                                                                                   |
+| ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `src/main/startup/main-process-ipc-bootstrap.ts`             | The `editor-theme:getCustom` handler.                                                                                                                                                                                          |
+| `src/preload/api/app-api.ts`, `app-bridge.ts`                | The `getCustomEditorThemes` member and its `ipcRenderer.invoke`.                                                                                                                                                               |
+| `src/renderer/src/web/preload-api/web-app-api.ts`            | The stub returning nulls — the web client has no `~/.orca`, and the type requires the member.                                                                                                                                  |
 | `src/renderer/.../editor/DiffViewer.tsx`, `MonacoEditor.tsx` | `editorThemeName(...)` in place of the `'vs-dark' : 'vs'` ternary, plus the `ensureCustomEditorThemes()` effect. Both need the effect: `defineTheme` lands after first paint, and Monaco ignores a theme it does not yet know. |
 
 ## Verify

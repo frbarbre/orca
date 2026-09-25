@@ -15,6 +15,7 @@ import type {
 import type { UsagePercentageDisplay } from '../../../../../shared/usage-percentage-display'
 import type { AutomationHostFilter } from '../../../../../shared/automation-host-filter'
 import type { WorkspaceStatusDefinition } from '../../../../../shared/worktree/types'
+import type { WorkspaceStatusRuleConfig } from '../../../../../shared/workspace-status-rule-config'
 import type { WorkspacePortScanResult } from '../../../../../shared/workspace-ports'
 import type { CustomPet } from '../../../../../shared/pet-types'
 import type { ReleaseChannel } from '../../../../../shared/release-channel'
@@ -89,6 +90,10 @@ export type UISlicePreferences = {
   setAgentActivityDisplayMode: (mode: AgentActivityDisplayMode) => void
   workspaceStatuses: WorkspaceStatusDefinition[]
   setWorkspaceStatuses: (statuses: WorkspaceStatusDefinition[]) => void
+  workspaceStatusRules: WorkspaceStatusRuleConfig
+  setWorkspaceStatusRules: (rules: WorkspaceStatusRuleConfig) => void
+  /** Records `owner/repo#number` keys the review inbox has already acted on. */
+  markPullRequestHandled: (keys: readonly string[]) => void
   workspaceBoardOpacity: number
   setWorkspaceBoardOpacity: (opacity: number) => void
   workspaceBoardColumnWidth: number

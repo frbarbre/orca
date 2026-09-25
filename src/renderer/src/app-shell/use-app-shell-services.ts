@@ -19,6 +19,7 @@ import { useWebSessionTabsSync } from '../runtime/web-session-tabs-sync'
 import { useLocalStructuredSessionTabsSync } from '../runtime/local-structured-session-tabs-sync'
 import { useRemoteRuntimeRecoveryTriggers } from '../runtime/use-remote-runtime-recovery-triggers'
 import { useBrowserIdentityMigrationNotice } from '../components/browser-pane/browser-user-agent-migration-notice'
+import { useWorkspaceStatusRulePoller } from '@/components/workspace-status-rules/use-workspace-status-rule-poller'
 
 /**
  * App-level subscriptions that must outlive any individual surface. Each one is here because
@@ -40,6 +41,7 @@ export function useAppShellServices(options: { floatingPanelVisible: boolean }):
   useIpcEvents()
   useRemoteRuntimeRecoveryTriggers()
   useAutomationDispatchEvents()
+  useWorkspaceStatusRulePoller()
   // Why: git polling lives at App level (RightSidebar unmounts when closed, stranding stale Rebasing/Merging badges); gate on workspaceSessionReady so it doesn't compete with first paint.
   useGitStatusPolling({ enabled: workspaceSessionReady })
   // Why: wire file-change watching at App level so the editor keeps hearing FS changes when Explorer unmounts (right-sidebar switches to Source Control/Checks).

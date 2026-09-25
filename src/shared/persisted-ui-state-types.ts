@@ -24,6 +24,7 @@ import type {
   WorktreeCardProperty
 } from './ui-chrome-types'
 import type { WorkspaceStatusDefinition } from './worktree/types'
+import type { WorkspaceStatusRuleConfig } from './workspace-status-rule-config'
 import type { PersistedAutomationHostFilter } from './automation-host-filter'
 
 export type PersistedUIState = {
@@ -97,6 +98,7 @@ export type PersistedUIState = {
   _worktreeCardModeDefaulted?: boolean
   agentActivityDisplayMode?: AgentActivityDisplayMode
   workspaceStatuses?: WorkspaceStatusDefinition[]
+  workspaceStatusRules?: WorkspaceStatusRuleConfig
   workspaceBoardOpacity?: number
   workspaceBoardColumnWidth?: number
   syncTaskStatusFromWorkspaceBoard?: boolean

@@ -5,6 +5,7 @@ import { cleanup, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { getDefaultSettings } from '../../../../shared/constants'
+import { cloneDefaultWorkspaceStatusRuleConfig } from '../../../../shared/workspace-status-rule-config'
 
 const mocks = vi.hoisted(() => ({
   openAutomationsPage: vi.fn()
@@ -16,7 +17,13 @@ vi.mock('@/i18n/i18n', () => ({
 
 vi.mock('@/store', () => ({
   useAppStore: (selector: (state: Record<string, unknown>) => unknown) =>
-    selector({ openAutomationsPage: mocks.openAutomationsPage })
+    selector({
+      openAutomationsPage: mocks.openAutomationsPage,
+      workspaceStatusRules: cloneDefaultWorkspaceStatusRuleConfig(),
+      workspaceStatuses: [],
+      repos: [],
+      setWorkspaceStatusRules: vi.fn()
+    })
 }))
 
 import { AutomationsSettingsPane } from './AutomationsSettingsPane'

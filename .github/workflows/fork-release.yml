@@ -53,13 +53,15 @@ jobs:
       - name: Enable pnpm
         run: corepack enable
 
+      # install:release is `pnpm install --frozen-lockfile --cpu=current,x64,arm64`: a default
+      # install fetches native optional deps for the runner's CPU only, and the mac target builds
+      # both x64 and arm64. See docs/reference/pnpm-install-policy.md.
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      # Why: a default install fetches native optional deps for the runner's CPU only, and
-      # the mac target builds both x64 and arm64. See docs/reference/pnpm-install-policy.md.
-      - name: Add cross-architecture native dependencies
         run: pnpm install:release
+
+      # Why: mobile/ is a separate pnpm project, so the root install leaves mobile/node_modules
+      # empty and build:release's mobile-web bundle cannot resolve React Native or Expo.
+      - uses: ./.github/actions/install-mobile-dependencies
 
       - name: Report signing mode
         run: |

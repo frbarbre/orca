@@ -14,6 +14,7 @@ import {
   setSourceControlReviewOrder
 } from '@/lib/source-control-review-order'
 import { clearOpenInSelection, setOpenInSelection } from '@/lib/open-in-selection'
+import { parseChangedFileRowKey } from '@/store/slices/editor/actions/changed-file-order'
 import { joinPath } from '@/lib/path'
 import { useSourceControlRowOpening } from './use-row-opening'
 import type { SourceControlWorktreeContext } from './use-worktree-context'
@@ -201,11 +202,21 @@ export function useSourceControlFileListing({
     [visibleSelectionEntries]
   )
 
+  // Why the highlighted row rather than the clicked one: stepping with the file-navigation chord
+  // moves the highlight without touching the click selection, and the user means whichever row the
+  // panel is showing as current -- how they got there is not the point.
+  //
   // Why published rather than lifted: the open-in chord reads this once, on a keystroke, and this
-  // selection changes on every arrow-key press.
-  const selectedRowPath = useMemo(() => {
+  // changes on every step.
+  const openInPath = useMemo(() => {
     if (!worktreePath) {
       return null
+    }
+    const highlighted = activeOpenRowKey
+      ? parseChangedFileRowKey(activeOpenRowKey)?.relativePath
+      : null
+    if (highlighted) {
+      return joinPath(worktreePath, highlighted)
     }
     for (const key of selectedKeys) {
       const entry = flatEntriesByKey.get(key)
@@ -214,11 +225,11 @@ export function useSourceControlFileListing({
       }
     }
     return null
-  }, [flatEntriesByKey, selectedKeys, worktreePath])
+  }, [activeOpenRowKey, flatEntriesByKey, selectedKeys, worktreePath])
   useEffect(() => {
-    setOpenInSelection('source-control', selectedRowPath)
+    setOpenInSelection('source-control', openInPath)
     return () => clearOpenInSelection('source-control')
-  }, [selectedRowPath])
+  }, [openInPath])
   const {
     isExecutingBulk,
     setIsExecutingBulk,

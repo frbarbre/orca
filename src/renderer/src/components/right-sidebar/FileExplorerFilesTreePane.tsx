@@ -62,13 +62,16 @@ export function FileExplorerFilesTreePane({
 }: FileExplorerFilesTreePaneProps): React.JSX.Element {
   const { loadingDirPaths, rootCache, rootError } = tree
   const { selectedPaths, preserveSelectionForContextMenu, copyPathsForNode } = selection
-  // Why published rather than lifted: the open-in chord needs this path on a keystroke, and moving
-  // the selection into the store would re-render every subscriber on each arrow-key press.
-  const primarySelectedPath = selectedPaths.values().next().value ?? null
+  // Why activeFileId is a fallback: rows highlight for it as well as for a click, so the open-in
+  // chord should follow the row the panel shows as current however the user landed on it.
+  //
+  // Why published rather than lifted: the chord needs this path on a keystroke, and moving the
+  // selection into the store would re-render every subscriber on each arrow-key press.
+  const openInPath = (selectedPaths.values().next().value ?? activeFileId) || null
   useEffect(() => {
-    setOpenInSelection('explorer', primarySelectedPath)
+    setOpenInSelection('explorer', openInPath)
     return () => clearOpenInSelection('explorer')
-  }, [primarySelectedPath])
+  }, [openInPath])
   const {
     scrollRef,
     runtimeDownloadContext,

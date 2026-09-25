@@ -23,6 +23,14 @@ on:
         required: false
         default: ''
         type: string
+      version:
+        # Why an override rather than editing package.json: the fork tracks upstream's version, and
+        # the updater only reports an update when the published version is higher than the installed
+        # one. A fork-only change with no upstream bump would otherwise be invisible to the notice.
+        description: 'Override the release version (default: package.json). Must be higher than the installed build for the update notice to fire.'
+        required: false
+        default: ''
+        type: string
   push:
     tags: ['v*']
 
@@ -87,6 +95,7 @@ jobs:
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          RELEASE_VERSION: ${{ inputs.version }}
         run: |
           set -euo pipefail
           # ORCA_MAC_RELEASE=1 turns on hardenedRuntime + notarization, which need the Apple
@@ -101,20 +110,27 @@ jobs:
             unset CSC_LINK CSC_KEY_PASSWORD APPLE_ID APPLE_APP_SPECIFIC_PASSWORD APPLE_TEAM_ID
             export CSC_IDENTITY_AUTO_DISCOVERY=false
           fi
+          version_args=()
+          if [ -n "${RELEASE_VERSION:-}" ]; then
+            echo "Overriding version: $RELEASE_VERSION"
+            version_args+=("-c.extraMetadata.version=$RELEASE_VERSION")
+          fi
           node config/scripts/ensure-native-runtime.mjs --runtime=electron
           # Why --publish never: electron-builder publishes from each arch pass, and a draft release
           # does not reserve its tag, so the second pass cannot see the first one's release and
           # creates a second. Packaging locally and uploading once below is deterministic.
-          pnpm exec electron-builder --config config/electron-builder.config.cjs --mac --publish never
+          pnpm exec electron-builder --config config/electron-builder.config.cjs --mac --publish never \
+            "${version_args[@]+"${version_args[@]}"}"
 
       # One release, created once, with every artifact attached in a single call. latest-mac.yml is
       # the file the updater feed reads, so a release without it is invisible to installed copies.
       - name: Publish the release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_VERSION: ${{ inputs.version }}
         run: |
           set -euo pipefail
-          version="$(node -p "require('./package.json').version")"
+          version="${RELEASE_VERSION:-$(node -p "require('./package.json').version")}"
           tag="v$version"
 
           if [ ! -f dist/latest-mac.yml ]; then

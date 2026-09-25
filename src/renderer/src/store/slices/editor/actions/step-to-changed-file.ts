@@ -1,7 +1,12 @@
 import type { EditorGet, EditorSet } from '../types/editor-set-get'
 import type { EditorSlice } from '../types/editor-slice'
 import { getSourceControlReviewOrder } from '@/lib/source-control-review-order'
-import { buildChangedFileOrder, stepChangedFile } from './changed-file-order'
+import {
+  buildChangedFileOrder,
+  parseChangedFileRowKey,
+  resolveCurrentRowKey,
+  stepChangedFile
+} from './changed-file-order'
 
 export function createStepToChangedFile(
   _set: EditorSet,
@@ -34,16 +39,24 @@ export function createStepToChangedFile(
         )
       // Why: only a file from this worktree can locate the cursor in the order; an editor on another
       // worktree enters the list from its start.
-      const currentPath =
+      const currentKey =
         activeFile && activeFile.worktreeId === worktreeId
-          ? (activeFile.relativePath ?? null)
+          ? resolveCurrentRowKey(order, activeFile.diffSource, activeFile.relativePath ?? null)
           : null
-      const target = stepChangedFile(order, currentPath, direction)
+      const targetKey = stepChangedFile(order, currentKey, direction)
+      const target = targetKey ? parseChangedFileRowKey(targetKey) : null
       if (!target) {
         return
       }
 
-      state.openDiffAtLocation({ worktreeId, worktreePath, relativePath: target })
+      // Why the area travels with the target: a path present in both sections would otherwise
+      // always open its working-tree diff, making the branch row impossible to land on.
+      state.openDiffAtLocation({
+        worktreeId,
+        worktreePath,
+        relativePath: target.relativePath,
+        area: target.area
+      })
     }
   }
 }

@@ -1,10 +1,15 @@
 import { describe, expect, it } from 'vitest'
 import type { GitBranchChangeEntry } from '../../../../../../shared/git-diff-compare-types'
 import type { GitStatusEntry } from '../../../../../../shared/git-status-types'
-import { buildChangedFileOrder, stepChangedFile } from './changed-file-order'
+import {
+  buildChangedFileOrder,
+  parseChangedFileRowKey,
+  resolveCurrentRowKey,
+  stepChangedFile
+} from './changed-file-order'
 
-function status(path: string): GitStatusEntry {
-  return { path, area: 'unstaged' } as GitStatusEntry
+function status(path: string, area = 'unstaged'): GitStatusEntry {
+  return { path, area } as GitStatusEntry
 }
 
 function branch(path: string): GitBranchChangeEntry {
@@ -12,19 +17,24 @@ function branch(path: string): GitBranchChangeEntry {
 }
 
 describe('buildChangedFileOrder', () => {
-  it('lists working-tree changes before branch-only changes', () => {
+  it('lists working-tree rows before branch rows', () => {
     expect(
       buildChangedFileOrder([status('src/a.ts'), status('src/b.ts')], [branch('src/c.ts')])
-    ).toEqual(['src/a.ts', 'src/b.ts', 'src/c.ts'])
+    ).toEqual(['unstaged::src/a.ts', 'unstaged::src/b.ts', 'branch::src/c.ts'])
   })
 
-  it('visits a path changed both locally and on the branch only once', () => {
-    expect(buildChangedFileOrder([status('src/a.ts')], [branch('src/a.ts')])).toEqual(['src/a.ts'])
+  it('keeps both rows for a path changed in the working tree and on the branch', () => {
+    // Why this is the interesting case: these are two rows the user can visit separately, and
+    // deduping them by path made the branch row unreachable by keyboard.
+    expect(buildChangedFileOrder([status('src/a.ts')], [branch('src/a.ts')])).toEqual([
+      'unstaged::src/a.ts',
+      'branch::src/a.ts'
+    ])
   })
 
-  it('drops duplicates within the status list, so a staged+unstaged path is one stop', () => {
+  it('drops a genuinely duplicated row', () => {
     expect(buildChangedFileOrder([status('src/a.ts'), status('src/a.ts')], [])).toEqual([
-      'src/a.ts'
+      'unstaged::src/a.ts'
     ])
   })
 
@@ -33,32 +43,73 @@ describe('buildChangedFileOrder', () => {
   })
 })
 
+describe('parseChangedFileRowKey', () => {
+  it('splits a row key into its area and path', () => {
+    expect(parseChangedFileRowKey('branch::src/a.ts')).toEqual({
+      area: 'branch',
+      relativePath: 'src/a.ts'
+    })
+    expect(parseChangedFileRowKey('unstaged::src/a.ts')).toEqual({
+      area: 'working-tree',
+      relativePath: 'src/a.ts'
+    })
+  })
+
+  it('keeps separators that appear inside the path', () => {
+    expect(parseChangedFileRowKey('branch::src/a::b.ts')).toEqual({
+      area: 'branch',
+      relativePath: 'src/a::b.ts'
+    })
+  })
+
+  it('rejects a malformed key', () => {
+    expect(parseChangedFileRowKey('no-separator')).toBeNull()
+    expect(parseChangedFileRowKey('branch::')).toBeNull()
+  })
+})
+
 describe('stepChangedFile', () => {
-  const order = ['a.ts', 'b.ts', 'c.ts']
+  const order = ['unstaged::a.ts', 'branch::a.ts', 'branch::b.ts']
 
   it('steps forward and back', () => {
-    expect(stepChangedFile(order, 'a.ts', 'next')).toBe('b.ts')
-    expect(stepChangedFile(order, 'b.ts', 'previous')).toBe('a.ts')
+    expect(stepChangedFile(order, 'unstaged::a.ts', 'next')).toBe('branch::a.ts')
+    expect(stepChangedFile(order, 'branch::a.ts', 'previous')).toBe('unstaged::a.ts')
   })
 
   it('wraps at both ends so holding the shortcut cycles instead of stalling', () => {
-    expect(stepChangedFile(order, 'c.ts', 'next')).toBe('a.ts')
-    expect(stepChangedFile(order, 'a.ts', 'previous')).toBe('c.ts')
+    expect(stepChangedFile(order, 'branch::b.ts', 'next')).toBe('unstaged::a.ts')
+    expect(stepChangedFile(order, 'unstaged::a.ts', 'previous')).toBe('branch::b.ts')
   })
 
-  it('enters the list from the matching end when the open file is not a changed file', () => {
-    expect(stepChangedFile(order, 'untracked-by-git.ts', 'next')).toBe('a.ts')
-    expect(stepChangedFile(order, null, 'previous')).toBe('c.ts')
+  it('enters the list from the matching end when the open tab is not a changed file', () => {
+    expect(stepChangedFile(order, 'edit::elsewhere.ts', 'next')).toBe('unstaged::a.ts')
+    expect(stepChangedFile(order, null, 'previous')).toBe('branch::b.ts')
   })
 
   it('returns null when there is nowhere to go', () => {
     expect(stepChangedFile([], null, 'next')).toBeNull()
-    // Why: a lone changed file would otherwise "step" onto itself and reload the diff for no reason.
-    expect(stepChangedFile(['only.ts'], 'only.ts', 'next')).toBeNull()
-    expect(stepChangedFile(['only.ts'], 'only.ts', 'previous')).toBeNull()
+    // Why: a lone row would otherwise "step" onto itself and reload the same diff.
+    expect(stepChangedFile(['branch::only.ts'], 'branch::only.ts', 'next')).toBeNull()
+  })
+})
+
+describe('resolveCurrentRowKey', () => {
+  const order = ['unstaged::a.ts', 'branch::a.ts', 'branch::b.ts']
+
+  it('matches the row for the open diff, not merely one with the same path', () => {
+    expect(resolveCurrentRowKey(order, 'branch', 'a.ts')).toBe('branch::a.ts')
+    expect(resolveCurrentRowKey(order, 'unstaged', 'a.ts')).toBe('unstaged::a.ts')
   })
 
-  it('still enters a single-entry list from an unrelated file', () => {
-    expect(stepChangedFile(['only.ts'], 'other.ts', 'next')).toBe('only.ts')
+  it('falls back to the first row carrying the path for a plain edit tab', () => {
+    // Why: an edit tab has no row of its own, and jumping the reviewer to the top of the list
+    // would lose their place.
+    expect(resolveCurrentRowKey(order, undefined, 'a.ts')).toBe('unstaged::a.ts')
+    expect(resolveCurrentRowKey(order, 'edit', 'b.ts')).toBe('branch::b.ts')
+  })
+
+  it('returns null when the tab is not a file or its path is in no row', () => {
+    expect(resolveCurrentRowKey(order, 'branch', null)).toBeNull()
+    expect(resolveCurrentRowKey(order, 'branch', 'absent.ts')).toBeNull()
   })
 })

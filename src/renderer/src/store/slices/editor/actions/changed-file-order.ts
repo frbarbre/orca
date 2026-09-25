@@ -3,13 +3,50 @@ import type { GitStatusEntry } from '../../../../../../shared/git-status-types'
 
 export type ChangedFileStepDirection = 'next' | 'previous'
 
+/** Which section of the Source Control panel a row belongs to. */
+export type ChangedFileArea = 'branch' | 'working-tree'
+
+export type ChangedFileTarget = {
+  area: ChangedFileArea
+  relativePath: string
+}
+
 /**
- * The review order of a worktree's changed files: working-tree changes first, then the
- * branch-compare entries the working tree does not already carry.
+ * A review row is addressed by `<area>::<path>` — the same key the panel gives its rows.
  *
- * Why: mirrors the top-to-bottom order of the source-control panel, so stepping with the keyboard
- * walks the same sequence the user sees. Duplicates are dropped because a path can appear in both
- * lists (modified locally and changed on the branch) and must not be visited twice.
+ * Why not the path alone: a file can be modified in the working tree *and* changed on the branch,
+ * which is two rows the user can visit separately. Keying on the path collapses them into one and
+ * makes the branch row unreachable.
+ */
+export function changedFileRowKey(area: string, relativePath: string): string {
+  return `${area}::${relativePath}`
+}
+
+/**
+ * Split a row key back into its area and path.
+ *
+ * Why only the first separator: a path may itself contain `::`, so splitting on every occurrence
+ * would truncate it.
+ */
+export function parseChangedFileRowKey(key: string): ChangedFileTarget | null {
+  const separator = key.indexOf('::')
+  if (separator === -1) {
+    return null
+  }
+  const area = key.slice(0, separator)
+  const relativePath = key.slice(separator + 2)
+  if (relativePath.length === 0) {
+    return null
+  }
+  return { area: area === 'branch' ? 'branch' : 'working-tree', relativePath }
+}
+
+/**
+ * The review order of a worktree's changed files, as row keys: working-tree rows first, then the
+ * branch-compare rows.
+ *
+ * Why this exists alongside the panel's published order: it is the fallback for when the Source
+ * Control panel has never mounted, so it cannot honour a filter it cannot see.
  */
 export function buildChangedFileOrder(
   statusEntries: readonly GitStatusEntry[],
@@ -17,39 +54,38 @@ export function buildChangedFileOrder(
 ): string[] {
   const order: string[] = []
   const seen = new Set<string>()
-  for (const entry of statusEntries) {
-    if (seen.has(entry.path)) {
-      continue
+  const push = (key: string): void => {
+    if (seen.has(key)) {
+      return
     }
-    seen.add(entry.path)
-    order.push(entry.path)
+    seen.add(key)
+    order.push(key)
+  }
+  for (const entry of statusEntries) {
+    push(changedFileRowKey(entry.area, entry.path))
   }
   for (const entry of branchEntries) {
-    if (seen.has(entry.path)) {
-      continue
-    }
-    seen.add(entry.path)
-    order.push(entry.path)
+    push(changedFileRowKey('branch', entry.path))
   }
   return order
 }
 
 /**
- * The path one step from `currentPath`, or `null` when there is nowhere to go.
+ * The row one step from `currentKey`, or `null` when there is nowhere to go.
  *
- * Why: wraps at both ends so a reviewer holding the shortcut cycles the change set instead of
- * silently stalling on the last file. An unknown `currentPath` (the open tab is not a changed file)
- * enters the list at its first entry going forward, last going back.
+ * Why it wraps at both ends: a reviewer holding the shortcut cycles the change set instead of
+ * silently stalling on the last file. An unknown `currentKey` (the open tab is not a changed file)
+ * enters the list at its first row going forward, last going back.
  */
 export function stepChangedFile(
   order: readonly string[],
-  currentPath: string | null,
+  currentKey: string | null,
   direction: ChangedFileStepDirection
 ): string | null {
   if (order.length === 0) {
     return null
   }
-  const currentIndex = currentPath === null ? -1 : order.indexOf(currentPath)
+  const currentIndex = currentKey === null ? -1 : order.indexOf(currentKey)
   if (currentIndex === -1) {
     return direction === 'next' ? order[0] : (order.at(-1) ?? null)
   }
@@ -59,4 +95,25 @@ export function stepChangedFile(
   const delta = direction === 'next' ? 1 : -1
   const nextIndex = (currentIndex + delta + order.length) % order.length
   return order[nextIndex]
+}
+
+/**
+ * The key for the row the open editor tab corresponds to.
+ *
+ * Why the fallback: a plain edit tab has no row of its own, so enter the list at whichever row
+ * carries that path rather than jumping the reviewer back to the top.
+ */
+export function resolveCurrentRowKey(
+  order: readonly string[],
+  diffSource: string | undefined,
+  relativePath: string | null
+): string | null {
+  if (!relativePath) {
+    return null
+  }
+  const exact = changedFileRowKey(diffSource ?? 'edit', relativePath)
+  if (order.includes(exact)) {
+    return exact
+  }
+  return order.find((key) => parseChangedFileRowKey(key)?.relativePath === relativePath) ?? null
 }

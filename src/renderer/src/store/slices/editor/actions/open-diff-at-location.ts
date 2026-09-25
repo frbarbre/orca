@@ -11,7 +11,14 @@ export function createOpenDiffAtLocation(
     // Why: route a review location by relative path to whichever diff surface owns it — unstaged,
     // then branch compare, else a plain editor tab. Mirrors the source-control note routing so a
     // hosted PR comment lands on the same surface an Orca note would.
-    openDiffAtLocation: ({ worktreeId, worktreePath, relativePath, line, preview = true }) => {
+    openDiffAtLocation: ({
+      worktreeId,
+      worktreePath,
+      relativePath,
+      line,
+      preview = true,
+      area
+    }) => {
       const state = get()
       const language = detectLanguage(relativePath)
       const filePath = joinPath(worktreePath, relativePath)
@@ -22,9 +29,14 @@ export function createOpenDiffAtLocation(
         state.setPendingEditorReveal({ filePath, line, column: 1, matchLength: 0 })
       }
 
-      const matches = (state.gitStatusByWorktree[worktreeId] ?? []).filter(
-        (entry) => entry.path === relativePath
-      )
+      // Why area gates this: a path can be both a working-tree change and a branch change, and the
+      // caller that named a branch row must land on the branch diff, not the uncommitted one.
+      const matches =
+        area === 'branch'
+          ? []
+          : (state.gitStatusByWorktree[worktreeId] ?? []).filter(
+              (entry) => entry.path === relativePath
+            )
       const uncommitted =
         matches.find((entry) => entry.area === 'unstaged') ??
         matches.find((entry) => entry.area === 'untracked') ??

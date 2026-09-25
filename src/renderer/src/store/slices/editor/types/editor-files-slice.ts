@@ -1,4 +1,4 @@
-import type { ChangedFileStepDirection } from '../actions/changed-file-order'
+import type { ChangedFileArea, ChangedFileStepDirection } from '../actions/changed-file-order'
 import type { HttpLinkSourceOwner } from '@/lib/http-link-routing'
 import type {
   CheckRunDetailsTabPatch,
@@ -119,6 +119,8 @@ export type EditorFilesSlice = {
     line?: number
     /** Defaults to true: a review step reuses one preview tab instead of stacking permanent tabs. */
     preview?: boolean
+    /** Which section owns this row; 'branch' skips the working-tree lookup for the same path. */
+    area?: ChangedFileArea
   }) => void
   stepToChangedFile: (direction: ChangedFileStepDirection) => void
   openCommitDiff: (

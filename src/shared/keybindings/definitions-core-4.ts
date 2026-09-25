@@ -26,6 +26,16 @@ export const KEYBINDING_DEFINITION_CORE_4: readonly KeybindingDefinition[] = [
     allowBareKeybindings: true,
     allowShiftOnlyKeybindings: true
   },
+  // Why global scope: the chord has to work from the Explorer and the Source Control listing as
+  // well as the editor, because which of those is on screen is what decides the path it opens.
+  {
+    id: 'editor.openInExternalApp',
+    title: 'Open in External App',
+    group: 'Editors',
+    scope: 'global',
+    searchKeywords: ['shortcut', 'open', 'external', 'editor', 'vscode', 'cursor', 'reveal'],
+    defaultBindings: platformBindings(['Mod+O'])
+  },
   {
     id: 'terminal.clearPaneTitle',
     title: 'Clear Pane Title',

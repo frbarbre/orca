@@ -93,6 +93,7 @@ export type KeybindingActionId =
   | 'editor.nextChange'
   | 'editor.previousFile'
   | 'editor.nextFile'
+  | 'editor.openInExternalApp'
   | 'editor.addReviewNote'
   | 'sourceControl.sendReviewNotes'
   | 'fileExplorer.undo'

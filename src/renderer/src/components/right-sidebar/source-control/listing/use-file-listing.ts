@@ -13,6 +13,8 @@ import {
   clearSourceControlReviewOrder,
   setSourceControlReviewOrder
 } from '@/lib/source-control-review-order'
+import { clearOpenInSelection, setOpenInSelection } from '@/lib/open-in-selection'
+import { joinPath } from '@/lib/path'
 import { useSourceControlRowOpening } from './use-row-opening'
 import type { SourceControlWorktreeContext } from './use-worktree-context'
 
@@ -198,6 +200,25 @@ export function useSourceControlFileListing({
     () => new Map(visibleSelectionEntries.map((entry) => [entry.key, entry])),
     [visibleSelectionEntries]
   )
+
+  // Why published rather than lifted: the open-in chord reads this once, on a keystroke, and this
+  // selection changes on every arrow-key press.
+  const selectedRowPath = useMemo(() => {
+    if (!worktreePath) {
+      return null
+    }
+    for (const key of selectedKeys) {
+      const entry = flatEntriesByKey.get(key)
+      if (entry) {
+        return joinPath(worktreePath, entry.entry.path)
+      }
+    }
+    return null
+  }, [flatEntriesByKey, selectedKeys, worktreePath])
+  useEffect(() => {
+    setOpenInSelection('source-control', selectedRowPath)
+    return () => clearOpenInSelection('source-control')
+  }, [selectedRowPath])
   const {
     isExecutingBulk,
     setIsExecutingBulk,

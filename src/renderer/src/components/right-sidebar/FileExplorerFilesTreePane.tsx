@@ -1,5 +1,6 @@
-import type React from 'react'
+import React, { useEffect } from 'react'
 import { dirname } from '@/lib/path'
+import { clearOpenInSelection, setOpenInSelection } from '@/lib/open-in-selection'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { cn } from '@/lib/utils'
 import { translate } from '@/i18n/i18n'
@@ -61,6 +62,13 @@ export function FileExplorerFilesTreePane({
 }: FileExplorerFilesTreePaneProps): React.JSX.Element {
   const { loadingDirPaths, rootCache, rootError } = tree
   const { selectedPaths, preserveSelectionForContextMenu, copyPathsForNode } = selection
+  // Why published rather than lifted: the open-in chord needs this path on a keystroke, and moving
+  // the selection into the store would re-render every subscriber on each arrow-key press.
+  const primarySelectedPath = selectedPaths.values().next().value ?? null
+  useEffect(() => {
+    setOpenInSelection('explorer', primarySelectedPath)
+    return () => clearOpenInSelection('explorer')
+  }, [primarySelectedPath])
   const {
     scrollRef,
     runtimeDownloadContext,

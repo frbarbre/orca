@@ -18,6 +18,8 @@ import type { ShellOpenExternalEditorResult } from '../../../../shared/shell-ope
 import type { GlobalSettings } from '../../../../shared/global-settings-types'
 import type { OpenInApplication } from '../../../../shared/ui-chrome-types'
 import { translate } from '@/i18n/i18n'
+import { ShortcutKeyCombo } from '@/components/ShortcutKeyCombo'
+import { useShortcutKeyDetails } from '@/hooks/useShortcutLabel'
 
 export { getLocalFileManagerLabel } from '@/lib/local-file-manager-label'
 
@@ -310,11 +312,19 @@ export function WorktreeOpenInMenuItems({
   const settings = useAppStore((s) => s.settings)
   const fileManagerLabel = getLocalFileManagerLabel()
   const entries = getWorktreeOpenInEntries(openInApplications, fileManagerLabel)
+  // Why only the first app: the chord opens the preferred editor, which is whichever the user put
+  // at the top of the list, so labelling any other entry with it would be a lie.
+  const openInAppShortcut = useShortcutKeyDetails('editor.openInExternalApp')
+  const preferredEntryId = openInApplications[0]?.id ?? null
 
   return (
     <>
       {entries.map((entry) => {
         const availability = getOpenInEntryAvailability(entry, settings, connectionId)
+        const showsShortcut =
+          entry.id === preferredEntryId &&
+          openInAppShortcut.keys.length > 0 &&
+          !availability.metadata
         return (
           <DropdownMenuItem
             key={entry.id}
@@ -339,6 +349,13 @@ export function WorktreeOpenInMenuItems({
               <span className="ml-auto shrink-0 text-[11px] text-muted-foreground">
                 {availability.metadata}
               </span>
+            ) : null}
+            {showsShortcut ? (
+              <ShortcutKeyCombo
+                keys={openInAppShortcut.keys}
+                doubleTap={openInAppShortcut.doubleTap}
+                className="ml-auto shrink-0 gap-0.5"
+              />
             ) : null}
           </DropdownMenuItem>
         )

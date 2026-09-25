@@ -6,6 +6,8 @@ import {
 } from './editor/editor-autosave'
 import { getEditorCmdSaveFileId } from './editor/editor-cmd-save-target'
 import { isEventTargetInsideFloatingWorkspacePanel } from '@/lib/floating-workspace-terminal-actions'
+import { getOpenInSelection, resolveOpenInPath } from '@/lib/open-in-selection'
+import { openWorktreePath } from '../components/sidebar/WorktreeOpenInMenu'
 
 type EditorShortcutContext = {
   event: KeyboardEvent
@@ -43,6 +45,31 @@ export function handleTerminalWorkspaceEditorShortcut({
         )
         return true
       }
+    }
+  }
+  // Opens the selected file — or the worktree when nothing is selected — in the first configured
+  // "Open in" application, which is the one the user put at the top as their preferred editor.
+  if (!event.repeat && matchShortcut('editor.openInExternalApp')) {
+    const state = useAppStore.getState()
+    const worktree = state.activeWorktreeId
+      ? state.getKnownWorktreeById(state.activeWorktreeId)
+      : null
+    const preferred = state.settings?.openInApplications?.[0]
+    if (worktree?.path && preferred) {
+      event.preventDefault()
+      notifyTerminalCapture('editor.openInExternalApp')
+      void openWorktreePath({
+        target: 'external-editor',
+        worktreePath: resolveOpenInPath({
+          tab: state.rightSidebarTab,
+          worktreePath: worktree.path,
+          explorerPath: getOpenInSelection('explorer'),
+          sourceControlPath: getOpenInSelection('source-control')
+        }),
+        connectionId: state.repos.find((repo) => repo.id === worktree.repoId)?.connectionId ?? null,
+        command: preferred.command
+      })
+      return true
     }
   }
   // Why: long/structured files need a discoverable unwrap path without Settings (#9974).

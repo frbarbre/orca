@@ -29,6 +29,8 @@ import { buildDiffEditorWhitespaceOptions } from './diff-editor-whitespace-optio
 import { buildDiffEditorWordWrapOptions } from './diff-editor-word-wrap-options'
 import { buildDiffEditorHideUnchangedOptions } from './diff-editor-hide-unchanged-options'
 import { useDiffEditorRegistration } from './diff-navigation-context'
+import { useInlinePRCommentActions } from '@/components/pr-comments/use-inline-pr-comment-actions'
+import { useInlinePRCommentZones } from '@/components/diff-comments/useInlinePRCommentZones'
 import { preserveDiffViewStateAcrossModelSwaps } from './diff-model-swap-view-state'
 import { monacoFindOptions } from './monaco-find-options'
 import { resolveDocumentTheme } from '@/lib/document-theme'
@@ -119,6 +121,24 @@ export default function DiffViewer({
   const pendingRevealForThisViewer = useAppStore(
     (s) => s.pendingEditorReveal?.filePath === filePath
   )
+
+  // PR review threads render in their own zones beside Orca's local notes, so a reviewer sees both
+  // kinds of comment on the line they belong to.
+  const inlinePRComments = useInlinePRCommentActions(worktreeId ?? null)
+  useInlinePRCommentZones({
+    editor: modifiedEditor,
+    modelKey: modifiedModelKey ?? modelKey,
+    groups: inlinePRComments.groups,
+    relativePath,
+    worktreeId: worktreeId ?? '',
+    handlers: {
+      onResolve: inlinePRComments.handleResolve,
+      onReply: inlinePRComments.handleReplyToComment,
+      onEditComment: inlinePRComments.handleEditComment,
+      onDeleteComment: inlinePRComments.handleDeleteComment,
+      onSetReaction: inlinePRComments.handleSetReaction
+    }
+  })
 
   // Why: gate the decorator on a comment target; updateDiffComment is only wired for local diffs (worktreeId present).
   useDiffCommentDecorator({

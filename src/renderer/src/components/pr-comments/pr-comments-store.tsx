@@ -24,6 +24,10 @@ export type PRCommentsState = {
 }
 
 type PRCommentsRegistry = {
+  /** The rendered snapshot. Why exposed as data rather than only through read(): a context value
+   *  whose identity never changes cannot wake its consumers, and a stable reader over a ref is
+   *  exactly that -- comments updated and no card re-rendered. */
+  snapshot: Record<string, PRComment[]>
   read: (key: string) => PRComment[]
   write: (key: string, update: React.SetStateAction<PRComment[]>) => void
   loading: Record<string, boolean>
@@ -67,8 +71,8 @@ export function PRCommentsProvider({ children }: { children: React.ReactNode }):
   }, [])
 
   const value = useMemo<PRCommentsRegistry>(
-    () => ({ read, write, loading, setLoading }),
-    [loading, read, setLoading, write]
+    () => ({ snapshot: byKey, read, write, loading, setLoading }),
+    [byKey, loading, read, setLoading, write]
   )
   return <PRCommentsContext.Provider value={value}>{children}</PRCommentsContext.Provider>
 }
@@ -90,7 +94,10 @@ function useLocalPRCommentsState(): PRCommentsState {
 export function usePRCommentsState(prCacheKey: string): PRCommentsState {
   const registry = useContext(PRCommentsContext)
   const local = useLocalPRCommentsState()
-  const comments = registry && prCacheKey ? registry.read(prCacheKey) : local.comments
+  // Why the snapshot and not read(): read() goes through a ref, which is right for async callbacks
+  // but does not tie this render to the data.
+  const comments =
+    registry && prCacheKey ? (registry.snapshot[prCacheKey] ?? NO_COMMENTS) : local.comments
   const commentsRef = useRef<PRComment[]>(comments)
   commentsRef.current = comments
 

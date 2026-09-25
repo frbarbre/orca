@@ -6,6 +6,7 @@ import { getWorktreeGitIdentityDisplay } from '@/lib/worktree-git-identity-displ
 import { getGitHubPRCacheKey } from '@/store/slices/github-cache-key'
 import { selectReviewCacheEntry } from '@/components/right-sidebar/review-cache-entry-selection'
 import { useChecksPanelCommentMutations } from '@/components/right-sidebar/checks-panel/use-checks-panel-comment-mutations'
+import { checksPanelAsyncResultKey } from '@/components/right-sidebar/checks-panel-async-result-key'
 import { markPRCommentThreadResolved } from '@/components/right-sidebar/pr-comment-thread-resolution'
 import { groupPRComments, type PRCommentGroup } from '../../../../shared/pr-comment-groups'
 import { usePRCommentsState } from './pr-comments-store'
@@ -53,12 +54,20 @@ export function useInlinePRCommentActions(worktreeId: string | null) {
 
   const { comments, setComments, commentsRef } = usePRCommentsState(prCacheKey)
 
-  // Why a ref rather than the value: the mutation hook guards stale async results against the
-  // context they started in, which here is the PR this diff belongs to.
-  const scopeRef = useRef(prCacheKey)
-  scopeRef.current = prCacheKey
+  // Why the key is rebuilt rather than compared to prCacheKey: the mutation hook stamps each
+  // request with checksPanelAsyncResultKey, which also carries the branch, PR number, fork and head
+  // sha. Comparing against the bare cache key never matched, so every optimistic update was
+  // discarded as stale and a posted reply never appeared on the card.
+  const asyncKeyRef = useRef('')
+  asyncKeyRef.current = checksPanelAsyncResultKey(
+    prCacheKey,
+    branch,
+    prNumber,
+    pr?.prRepo,
+    pr?.headSha
+  )
   const isCurrentAsyncResult = useCallback(
-    (requestKey: string) => requestKey === scopeRef.current,
+    (requestKey: string) => requestKey === asyncKeyRef.current,
     []
   )
 

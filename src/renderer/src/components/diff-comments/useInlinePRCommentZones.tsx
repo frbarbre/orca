@@ -116,7 +116,24 @@ export function useInlinePRCommentZones({
         const dom = document.createElement('div')
         dom.className = 'orca-inline-pr-comment'
         // Swallow mousedown so clicking the card does not move the editor's cursor or start a drag.
-        const disposeMouseDownStopper = installDiffCommentZoneMouseDownStopper(dom)
+        const stopMouseDown = installDiffCommentZoneMouseDownStopper(dom)
+
+        // Why pinned: a view zone lives in the scrolling content layer and inherits the *content*
+        // width, which long code lines make far wider than the pane. The card was rendering past
+        // the right edge with its text cut off, and sliding away when the diff scrolled sideways.
+        // Match the visible width and cancel the horizontal scroll so it stays put.
+        const pinHorizontally = (): void => {
+          dom.style.width = `${editor.getLayoutInfo().contentWidth}px`
+          dom.style.transform = `translateX(${editor.getScrollLeft()}px)`
+        }
+        pinHorizontally()
+        const scrollSub = editor.onDidScrollChange(pinHorizontally)
+        const layoutSub = editor.onDidLayoutChange(pinHorizontally)
+        const disposeMouseDownStopper = (): void => {
+          stopMouseDown()
+          scrollSub.dispose()
+          layoutSub.dispose()
+        }
         const root = createRoot(dom)
         const delegate: monacoEditor.IViewZone = {
           afterLineNumber: placement.lineNumber,

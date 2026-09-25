@@ -87,7 +87,10 @@ export function InlinePRCommentCard({
   const handleToggle = useCallback(() => setExpanded((value) => !value), [])
 
   const root = getPRCommentGroupRoot(group)
-  const presentation = getPRCommentPresentationClasses('cards')
+  // Why flat rather than cards: the cards variant is tuned for the sidebar's narrow column, and its
+  // padding and boxed replies make a zone tall enough to push the surrounding code off screen. Flat
+  // gives replies a left rule instead of a box and drops the duplicated timestamps.
+  const presentation = getPRCommentPresentationClasses('flat')
   const count = getPRCommentGroupCount(group)
 
   if (resolved && !expanded) {
@@ -118,64 +121,70 @@ export function InlinePRCommentCard({
   return (
     <TooltipProvider>
       <div ref={containerRef} className="px-2 py-1">
-        <PRCommentGroupView
-          group={group}
-          botAuthorOverrides={NO_BOT_OVERRIDES}
-          replyingCommentId={replyingCommentId}
-          // Why no selectionControl: the checkbox drives the panel's multi-select-for-AI list, which
-          // has no meaning next to a single thread in a diff. The send menu below is the per-thread
-          // equivalent.
-          actionState={getPRCommentGroupActionState(group)}
-          isQueued={false}
-          now={now}
-          presentation={presentation}
-          onResolve={onResolve}
-          onStartReply={setReplyingCommentId}
-          onCancelReply={(commentId) =>
-            setReplyingCommentId((current) => (current === commentId ? null : current))
-          }
-          onReply={onReply}
-          onEditComment={onEditComment}
-          onDeleteComment={onDeleteComment}
-          onSetReaction={onSetReaction}
-        />
-        <div className="mt-1 flex items-center gap-2 rounded-md border border-border/60 bg-muted/30 px-2 py-1">
-          <NotesSendMenu<PRComment>
-            worktreeId={worktreeId}
-            groupId={getPRCommentGroupId(group)}
-            modeIdParts={['pr-review-comment', worktreeId, relativePath, String(root.id)]}
-            scopes={[
-              {
-                id: 'thread',
-                label: translate(
-                  'auto.components.diff.comments.InlinePRCommentCard.thisThread',
-                  'This comment'
-                ),
-                notes: [root],
-                prompt: formatThreadPrompt(group, relativePath)
-              }
-            ]}
-            targetModeLabel={translate(
-              'auto.components.diff.comments.InlinePRCommentCard.thisThread',
-              'This comment'
-            )}
-            onDelivered={() => undefined}
+        {/* One framed block: against code, a loose stack of rows reads as part of the file. */}
+        <div className="overflow-hidden rounded-md border border-border/70 bg-card/60">
+          <PRCommentGroupView
+            group={group}
+            botAuthorOverrides={NO_BOT_OVERRIDES}
+            replyingCommentId={replyingCommentId}
+            // Why no selectionControl: the checkbox drives the panel's multi-select-for-AI list, which
+            // has no meaning next to a single thread in a diff. The send menu below is the per-thread
+            // equivalent.
+            actionState={getPRCommentGroupActionState(group)}
+            isQueued={false}
+            now={now}
+            presentation={presentation}
+            onResolve={onResolve}
+            onStartReply={setReplyingCommentId}
+            onCancelReply={(commentId) =>
+              setReplyingCommentId((current) => (current === commentId ? null : current))
+            }
+            onReply={onReply}
+            onEditComment={onEditComment}
+            onDeleteComment={onDeleteComment}
+            onSetReaction={onSetReaction}
           />
-          <span className="text-[11px] text-muted-foreground">
-            {translate(
-              'auto.components.diff.comments.InlinePRCommentCard.sendHint',
-              'Send to an agent'
-            )}
-          </span>
-          {resolved ? (
-            <button
-              type="button"
-              onClick={handleToggle}
-              className="ml-auto text-[11px] text-muted-foreground hover:text-foreground"
-            >
-              {translate('auto.components.diff.comments.InlinePRCommentCard.collapse', 'Collapse')}
-            </button>
-          ) : null}
+          <div className="flex items-center gap-2 border-t border-border/70 bg-muted/20 px-2 py-1">
+            <NotesSendMenu<PRComment>
+              worktreeId={worktreeId}
+              groupId={getPRCommentGroupId(group)}
+              modeIdParts={['pr-review-comment', worktreeId, relativePath, String(root.id)]}
+              scopes={[
+                {
+                  id: 'thread',
+                  label: translate(
+                    'auto.components.diff.comments.InlinePRCommentCard.thisThread',
+                    'This comment'
+                  ),
+                  notes: [root],
+                  prompt: formatThreadPrompt(group, relativePath)
+                }
+              ]}
+              targetModeLabel={translate(
+                'auto.components.diff.comments.InlinePRCommentCard.thisThread',
+                'This comment'
+              )}
+              onDelivered={() => undefined}
+            />
+            <span className="text-[11px] text-muted-foreground">
+              {translate(
+                'auto.components.diff.comments.InlinePRCommentCard.sendHint',
+                'Send to an agent'
+              )}
+            </span>
+            {resolved ? (
+              <button
+                type="button"
+                onClick={handleToggle}
+                className="ml-auto text-[11px] text-muted-foreground hover:text-foreground"
+              >
+                {translate(
+                  'auto.components.diff.comments.InlinePRCommentCard.collapse',
+                  'Collapse'
+                )}
+              </button>
+            ) : null}
+          </div>
         </div>
       </div>
     </TooltipProvider>

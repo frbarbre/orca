@@ -69,7 +69,13 @@ jobs:
             echo "Building unsigned — the expected path for this fork. The app will notify about new releases and link to them; installs are manual."
           fi
 
-      - name: Build and publish
+      # Why a separate step: electron-builder only packages what is already built. Its beforePack
+      # hook checks for the mobile-web bundle and aborts if the app was never compiled, which is
+      # what a bare packaging run hits. build:release is the same script upstream's channels use.
+      - name: Build the app
+        run: pnpm build:release
+
+      - name: Package and publish
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

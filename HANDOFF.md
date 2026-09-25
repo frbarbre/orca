@@ -48,9 +48,10 @@ Read this before trying to reproduce anything the earlier session did.
 
 ## Current state
 
-**Landed on `main` and released.** The last release is `v1.4.197` (9 assets, published, feed
-verified). A `v1.4.198` build was in flight at handoff purely to test the update notice — check
-`gh run list --repo frbarbre/orca --workflow fork-release.yml` for how it ended.
+**Landed on `main` and released.** Two releases exist: `v1.4.197` and `v1.4.198`, both published
+with 9 assets each. `v1.4.198` was cut via the workflow's `version` override purely so the update
+notice has a target higher than an installed `1.4.197`; the feed at
+`/releases/latest/download/latest-mac.yml` serves `1.4.198` and returns 200.
 
 Two feature groups, both working and covered by tests:
 
@@ -129,9 +130,11 @@ after a release — a 200 with the expected version is the only real proof the c
 
 ## Known gaps
 
-- **The update notice has never been observed firing.** It needs a published version higher than the
-  installed build. Checks are throttled to once per 24h and triggered by window focus or wake from
-  sleep, so a restart does not force one — use "Check for Updates" in the menu.
+- **The update notice has never been observed firing.** The pieces are in place — an installed
+  `1.4.197` against a published `1.4.198` — but nobody has watched it happen. Checks are throttled to
+  once per 24h and triggered by window focus or wake from sleep, so a restart does not force one:
+  use "Check for Updates" in the menu. Expected behaviour is a notice whose action opens the release
+  page, never a download.
 - **The daily upstream-merge agent does not exist yet.** `FORK.md` was written for it.
 - **The keybindings have not been exercised by hand**, only by calling `stepToChangedFile` directly.
 - **Nothing is upstreamed.** The two editor features were deliberately kept upstreamable and would

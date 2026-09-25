@@ -8,9 +8,11 @@ import { selectReviewCacheEntry } from '@/components/right-sidebar/review-cache-
 import { useChecksPanelCommentMutations } from '@/components/right-sidebar/checks-panel/use-checks-panel-comment-mutations'
 import { checksPanelAsyncResultKey } from '@/components/right-sidebar/checks-panel-async-result-key'
 import { markPRCommentThreadResolved } from '@/components/right-sidebar/pr-comment-thread-resolution'
+import { mergePRCommentIntoList } from '@/store/github/pr-comment-cache'
 import { groupPRComments, type PRCommentGroup } from '../../../../shared/pr-comment-groups'
 import { usePRCommentsState } from './pr-comments-store'
 import type { PRInfo } from '../../../../shared/github/pull-request-types'
+import type { PRComment } from '../../../../shared/github/comment-types'
 
 /**
  * The review threads and actions for one diff.
@@ -132,7 +134,33 @@ export function useInlinePRCommentActions(worktreeId: string | null) {
     )
   }, [fetchPRComments, pr?.prRepo, prCacheKey, prNumber, repo, setComments])
 
+  // Why this is needed on top of the store action's own cache write: the cards render from this
+  // working copy, and a comment posted from the diff would otherwise sit in the cache unseen until
+  // something forced a refetch.
+  const mergeComment = useCallback(
+    (comment: PRComment) => {
+      setComments((prev) => mergePRCommentIntoList(prev, comment))
+    },
+    [setComments]
+  )
+
   const groups: PRCommentGroup[] = useMemo(() => groupPRComments(comments), [comments])
 
-  return { groups, prNumber, ...mutations, handleResolve }
+  // Why exposed here: the add-comment popover needs the same PR identity this hook already derives
+  // to post a review comment, and deriving it twice invites the two drifting apart.
+  const reviewTarget = useMemo(
+    () =>
+      repo && prNumber !== null && pr?.headSha
+        ? {
+            repoPath: repo.path,
+            repoId: repo.id,
+            prNumber,
+            prRepo: pr.prRepo ?? null,
+            headSha: pr.headSha
+          }
+        : null,
+    [pr?.headSha, pr?.prRepo, prNumber, repo]
+  )
+
+  return { groups, prNumber, reviewTarget, mergeComment, ...mutations, handleResolve }
 }

@@ -17,6 +17,7 @@ import { createIssueActions } from '../github/issue-actions'
 import { createCheckActions } from '../github/check-actions'
 import { createCommentFetchActions } from '../github/comment-fetch-actions'
 import { createCommentMutationActions } from '../github/comment-mutation-actions'
+import { createReviewCommentCreateAction } from '../github/review-comment-create-action'
 import { createConversationCommentActions } from '../github/conversation-comment-actions'
 import { createReviewThreadActions } from '../github/review-thread-actions'
 import { createStaleWorktreeRefreshActions } from '../github/stale-worktree-refresh-actions'
@@ -80,6 +81,7 @@ export const createGitHubSlice: StateCreator<AppState, [], [], GitHubSlice> = (s
   ...createCheckActions(set, get),
   ...createCommentFetchActions(set, get),
   ...createCommentMutationActions(set, get),
+  ...createReviewCommentCreateAction(set, get),
   ...createConversationCommentActions(set, get),
   ...createReviewThreadActions(set, get),
   ...createStaleWorktreeRefreshActions(get),

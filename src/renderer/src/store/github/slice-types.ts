@@ -96,6 +96,18 @@ export type GitHubSlice = {
     body: string,
     options?: RepoScopedFetchOptions & { prRepo?: GitHubOwnerRepo | null }
   ) => Promise<GitHubCommentResult>
+  addPRReviewComment: (
+    repoPath: string,
+    prNumber: number,
+    body: string,
+    options: RepoScopedFetchOptions & {
+      prRepo?: GitHubOwnerRepo | null
+      commitId: string
+      path: string
+      line: number
+      startLine?: number
+    }
+  ) => Promise<GitHubCommentResult>
   addPRReviewCommentReply: (
     repoPath: string,
     prNumber: number,

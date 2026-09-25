@@ -8,7 +8,7 @@ import { computeDiffEditorFontSize, resolveEditorFontFamily } from '@/lib/editor
 import { useContextualCopySetup } from './useContextualCopySetup'
 import { selectWorktreeDiffComments } from '@/store/worktree-diff-comments-selector'
 import { useDiffCommentDecorator } from '../diff-comments/useDiffCommentDecorator'
-import { DiffCommentPopover } from '../diff-comments/DiffCommentPopover'
+import { DiffLineCommentPopoverHost } from '../diff-comments/DiffLineCommentPopoverHost'
 import {
   getDiffCommentPopoverLeft,
   getDiffCommentPopoverTop
@@ -373,18 +373,21 @@ export default function DiffViewer({
     <div className="flex flex-col flex-1 min-h-0">
       <div ref={diffBodyRef} className="flex-1 min-h-0 relative">
         {popover && hasLineCommentAction && !renderLimit.limited && (
-          <DiffCommentPopover
-            key={`${popover.startLine ?? popover.lineNumber}:${popover.lineNumber}`}
-            lineNumber={popover.lineNumber}
-            startLine={popover.startLine}
-            top={popover.top}
-            left={popover.left}
-            lineHeight={popover.lineHeight}
+          <DiffLineCommentPopoverHost
+            anchor={popover}
+            diffEditor={diffEditorRef.current}
+            modelKey={modifiedModelKey ?? modelKey}
+            relativePath={relativePath}
+            worktreeId={worktreeId ?? null}
+            reviewTarget={inlinePRComments.reviewTarget}
             placeholder={addLineCommentPlaceholder}
             submitLabel={addLineCommentLabel}
-            submittingLabel="Posting…"
             onCancel={() => setPopover(null)}
-            onSubmit={handleSubmitComment}
+            onSubmitNote={handleSubmitComment}
+            onReviewPosted={(comment) => {
+              inlinePRComments.mergeComment(comment)
+              setPopover(null)
+            }}
           />
         )}
         {renderLimit.limited ? (

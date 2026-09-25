@@ -2,6 +2,7 @@ import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from
 import { CornerDownLeft } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 import { useMountedRef } from '@/hooks/useMountedRef'
 import {
   getCommentBodySubmitState,
@@ -13,6 +14,9 @@ import { resolveDiffCommentPopoverTop } from './diff-comment-popover-position'
 
 // Why: a DOM sibling overlay rather than a Monaco content widget, so it can own a React auto-resizing textarea.
 
+/** Where a new comment on this line goes: Orca's own note for an agent, or GitHub's review. */
+export type DiffCommentMode = 'note' | 'review'
+
 type Props = {
   lineNumber: number
   startLine?: number
@@ -21,6 +25,11 @@ type Props = {
   // Anchor line height, used to flip the popover above the line near the viewport bottom; 0 for non-Monaco callers.
   lineHeight?: number
   title?: string
+  /** Present only where both destinations are possible, which is a PR diff on a commentable line. */
+  mode?: DiffCommentMode
+  onModeChange?: (mode: DiffCommentMode) => void
+  /** Why a reason rather than a boolean: a disabled toggle with no explanation reads as a bug. */
+  reviewDisabledReason?: string
   placeholder?: string
   submitLabel?: string
   submittingLabel?: string
@@ -39,6 +48,9 @@ export function DiffCommentPopover({
   left,
   lineHeight = 0,
   title,
+  mode,
+  onModeChange,
+  reviewDisabledReason,
   placeholder = 'Add note for the AI',
   submitLabel = 'Add note',
   submittingLabel = 'Saving…',
@@ -198,6 +210,42 @@ export function DiffCommentPopover({
                   { value0: lineNumber }
                 ))}
         </div>
+        {onModeChange ? (
+          <div className="flex items-center gap-1" role="radiogroup">
+            {(['note', 'review'] as const).map((candidate) => {
+              const disabled = candidate === 'review' && Boolean(reviewDisabledReason)
+              const active = mode === candidate
+              return (
+                <button
+                  key={candidate}
+                  type="button"
+                  role="radio"
+                  aria-checked={active}
+                  disabled={disabled}
+                  title={disabled ? reviewDisabledReason : undefined}
+                  onClick={() => onModeChange(candidate)}
+                  className={cn(
+                    'rounded px-1.5 py-0.5 text-[10px] transition-colors',
+                    active
+                      ? 'bg-accent text-foreground'
+                      : 'text-muted-foreground hover:text-foreground',
+                    disabled && 'cursor-not-allowed opacity-40 hover:text-muted-foreground'
+                  )}
+                >
+                  {candidate === 'note'
+                    ? translate(
+                        'auto.components.diff.comments.DiffCommentPopover.modeNote',
+                        'Note for agent'
+                      )
+                    : translate(
+                        'auto.components.diff.comments.DiffCommentPopover.modeReview',
+                        'Review comment'
+                      )}
+                </button>
+              )
+            })}
+          </div>
+        ) : null}
         <textarea
           ref={focusTextareaRef}
           className="orca-diff-comment-popover-textarea"

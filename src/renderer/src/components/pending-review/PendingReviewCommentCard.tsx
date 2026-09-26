@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { CommentRow } from '@/components/right-sidebar/checks-panel/comment-row'
 import { getPRCommentPresentationClasses } from '@/components/right-sidebar/pr-comment-presentation'
+import { useChecksPanelCommentLocationOpening } from '@/components/right-sidebar/checks-panel/use-comment-location-opening'
 import { cn } from '@/lib/utils'
 import type { PendingReviewComment } from '../../../../shared/github/pending-review-comment'
 import { projectPendingReviewComment } from './pending-review-comment-projection'
@@ -32,6 +33,9 @@ export function PendingReviewCommentCard({
   onContentResize?: () => void
 }): React.JSX.Element {
   const viewer = useGitHubViewer()
+  // Why the same opener a posted comment uses: a draft carries the path and line it was
+  // written against, so the badge should reach the diff exactly as the posted one does.
+  const openLocation = useChecksPanelCommentLocationOpening()
   const [container, setContainer] = useState<HTMLDivElement | null>(null)
   // Why frozen at mount: a draft is minutes old at most, and reading the clock during
   // render makes the row re-render unpredictably.
@@ -79,6 +83,7 @@ export function PendingReviewCommentCard({
             return true
           }}
           onDeleteComment={() => onRemove()}
+          onOpenLocation={openLocation}
         />
       </div>
     </div>

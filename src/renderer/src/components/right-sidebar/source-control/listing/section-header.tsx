@@ -11,7 +11,8 @@ export function SectionHeader({
   conflictCount = 0,
   isCollapsed,
   onToggle,
-  actions
+  actions,
+  className
 }: {
   label: string
   count: number
@@ -21,10 +22,12 @@ export function SectionHeader({
   isCollapsed: boolean
   onToggle: () => void
   actions?: React.ReactNode
+  /** Overrides the outer spacing for a section that sits in a differently padded shelf. */
+  className?: string
 }): React.JSX.Element {
   // Why: shared rounded container so the hover background spans the whole row instead of clipping around the label.
   return (
-    <div className="pl-1 pr-3 pt-3 pb-1">
+    <div className={cn('pl-1 pr-3 pt-3 pb-1', className)}>
       <div className="group/section flex items-center gap-x-1 rounded-md pr-1 hover:bg-accent hover:text-accent-foreground">
         <Button
           type="button"

@@ -1,13 +1,5 @@
 import React, { useState } from 'react'
-import {
-  Check,
-  ChevronRight,
-  GitPullRequest,
-  MessageCircle,
-  MessageSquare,
-  ScanEye,
-  X
-} from 'lucide-react'
+import { Check, GitPullRequest, MessageCircle, ScanEye, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
@@ -20,6 +12,7 @@ import {
 import type { PendingReviewQueue } from '@/components/pending-review/use-pending-review-queue'
 import type { ReviewVerdictSubmitter } from '@/components/pending-review/use-submit-review-verdict'
 import { PendingReviewCommentCard } from '@/components/pending-review/PendingReviewCommentCard'
+import { SectionHeader } from '../listing/section-header'
 import { useReviewDiffBase } from '@/components/pending-review/use-review-diff-base'
 import { SegmentedTabs } from '@/components/ui/segmented-tabs'
 
@@ -129,6 +122,33 @@ export function SourceControlPendingReviewShelf({
 
   return (
     <div className="border-b border-border">
+      {/* Why hidden at zero: a disclosure that opens onto nothing is chrome, and the form
+          below is the part of this shelf that is always worth showing. */}
+      {queue.comments.length > 0 ? (
+        <>
+          {/* Why the shared header: this is one more collapsible list in the same panel as
+              the changed-file sections, and it read as a different kind of thing. */}
+          <SectionHeader
+            label={translate('auto.components.sourceControl.pendingReview.title', 'Pending review')}
+            count={queue.comments.length}
+            isCollapsed={!expanded}
+            onToggle={() => setExpanded((prev) => !prev)}
+            className="pt-3 pb-3"
+          />
+          <div className={cn('px-3 pb-2', !expanded && 'hidden')}>
+            <div className="scrollbar-sleek max-h-64 space-y-2 overflow-y-auto">
+              {queue.comments.map((comment) => (
+                <PendingReviewCommentCard
+                  key={comment.id}
+                  comment={comment}
+                  onChangeBody={(next) => queue.updateBody(comment.id, next)}
+                  onRemove={() => queue.remove(comment.id)}
+                />
+              ))}
+            </div>
+          </div>
+        </>
+      ) : null}
       {diffBase.available ? (
         <div className="px-3 pt-2">
           {/* Why here and not in the base-ref dialog: this is a reading choice a reviewer
@@ -218,43 +238,6 @@ export function SourceControlPendingReviewShelf({
           </div>
         </div>
       </div>
-      {/* Why hidden at zero: a disclosure that opens onto nothing is chrome, and the
-          form above is the part of this shelf that is always worth showing. */}
-      {queue.comments.length > 0 ? (
-        <>
-          <div className="flex items-center gap-1 pt-1 pb-3 pl-3 pr-2">
-            <button
-              type="button"
-              className="flex min-w-0 flex-1 items-center gap-1.5 text-left text-xs text-muted-foreground transition-colors hover:text-foreground"
-              onClick={() => setExpanded((prev) => !prev)}
-              aria-expanded={expanded}
-            >
-              <ChevronRight
-                className={cn('size-3.5 shrink-0 transition-transform', expanded && 'rotate-90')}
-              />
-              <MessageSquare className="size-3.5 shrink-0" />
-              <span className="truncate font-medium text-foreground">
-                {translate('auto.components.sourceControl.pendingReview.title', 'Pending review')}
-              </span>
-              <span className="shrink-0 rounded-sm bg-muted px-1 text-[10px] tabular-nums">
-                {queue.comments.length}
-              </span>
-            </button>
-          </div>
-          <div className={cn('px-3 pb-2', !expanded && 'hidden')}>
-            <div className="scrollbar-sleek max-h-64 space-y-2 overflow-y-auto">
-              {queue.comments.map((comment) => (
-                <PendingReviewCommentCard
-                  key={comment.id}
-                  comment={comment}
-                  onChangeBody={(next) => queue.updateBody(comment.id, next)}
-                  onRemove={() => queue.remove(comment.id)}
-                />
-              ))}
-            </div>
-          </div>
-        </>
-      ) : null}
     </div>
   )
 }

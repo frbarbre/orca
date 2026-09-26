@@ -257,6 +257,7 @@ Modified files, and what is ours:
 | `useInlinePRCommentZones.tsx` | The `pendingReview` input and the pending branch in `renderZone`. |
 | `editor/DiffViewer.tsx` | The queue hook, `onQueueForReview`, and passing the queue to the zones. |
 | `source-control/panel/panel-ready.tsx` | The shelf, hidden at zero drafts like the notes shelf. |
+| `source-control/listing/section-header.tsx` | An optional `className`, so the pending-review section can reuse the changed-file section header with its own spacing. |
 | `src/preload/api-types.ts`, `index.ts`, `web/web-preload-api.ts` | The `pendingReview` member. |
 | `src/renderer/src/components/ui/textarea.tsx` | The `seamless` variant, so a composer can own the border and put its actions inside the same box. Added as a primitive variant because the design-system lint refuses that restyle at the call site. |
 | `checks-panel/comments-list.tsx` | `<PendingReviewPanelSection />` above the list. |

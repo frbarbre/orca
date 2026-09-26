@@ -18,23 +18,31 @@ import { SegmentedTabs } from '@/components/ui/segmented-tabs'
 
 const VERDICTS: {
   id: ReviewVerdict
-  label: string
+  /** A thunk so the label is translated at render, after the locale has loaded, not at import. */
+  label: () => string
   Icon: typeof MessageCircle
   tone: string
 }[] = [
   {
     id: 'comment',
-    label: 'Only comment',
+    label: () =>
+      translate('auto.components.sourceControl.pendingReview.onlyComment', 'Only comment'),
     Icon: MessageCircle,
     tone: 'text-muted-foreground'
   },
   {
     id: 'request-changes',
-    label: 'Request changes',
+    label: () =>
+      translate('auto.components.sourceControl.pendingReview.requestChanges', 'Request changes'),
     Icon: X,
     tone: 'text-destructive'
   },
-  { id: 'approve', label: 'Approve', Icon: Check, tone: 'text-status-success' }
+  {
+    id: 'approve',
+    label: () => translate('auto.components.sourceControl.pendingReview.approve', 'Approve'),
+    Icon: Check,
+    tone: 'text-status-success'
+  }
 ]
 
 export function SourceControlPendingReviewShelf({
@@ -67,7 +75,13 @@ export function SourceControlPendingReviewShelf({
       return
     }
     // Why the queue is untouched: a rejected verdict must not cost the reviewer their comments.
-    toast.error(result.error ?? 'Could not submit the review.')
+    toast.error(
+      result.error ??
+        translate(
+          'auto.components.sourceControl.pendingReview.submitFailed',
+          'Could not submit the review.'
+        )
+    )
   }
 
   if (submitter.prNumber === null) {
@@ -232,7 +246,7 @@ export function SourceControlPendingReviewShelf({
                 <verdict.Icon className={cn('size-3', verdict.tone)} />
                 {submitting === verdict.id
                   ? translate('auto.components.sourceControl.pendingReview.submitting', 'Sending…')
-                  : verdict.label}
+                  : verdict.label()}
               </Button>
             ))}
           </div>

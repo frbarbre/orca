@@ -4,6 +4,7 @@ import { useAppStore } from '@/store'
 import { usePRCommentScope } from '@/components/pr-comments/use-pr-comment-scope'
 import type { ReviewVerdict } from '../../../../shared/github/pending-review-comment'
 import type { PendingReviewQueue } from './use-pending-review-queue'
+import { translate } from '@/i18n/i18n'
 
 export type ReviewVerdictSubmitter = {
   /** Null when the workspace has no pull request to review. */
@@ -71,7 +72,13 @@ export function useSubmitReviewVerdict(
   const submit = useCallback(
     async (verdict: ReviewVerdict, body: string) => {
       if (!repo || prNumber === null) {
-        return { ok: false, error: 'This workspace has no pull request to review.' }
+        return {
+          ok: false,
+          error: translate(
+            'auto.components.pendingReview.noPullRequest',
+            'This workspace has no pull request to review.'
+          )
+        }
       }
       const result = await window.api.pendingReview.submit({
         repoPath: repo.path,
@@ -92,7 +99,17 @@ export function useSubmitReviewVerdict(
       void fetchPRComments(repo.path, prNumber, { force: true, repoId: repo.id, prRepo }).catch(
         () => undefined
       )
-      toast.success(`Review submitted${result.state ? ` (${result.state.toLowerCase()})` : ''}.`)
+      toast.success(
+        result.state
+          ? translate(
+              'auto.components.pendingReview.submittedWithState',
+              'Review submitted ({{state}}).',
+              {
+                state: result.state.toLowerCase()
+              }
+            )
+          : translate('auto.components.pendingReview.submitted', 'Review submitted.')
+      )
       return { ok: true }
     },
     [fetchPRComments, prNumber, prRepo, queue, repo]

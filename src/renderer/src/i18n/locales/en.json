@@ -396,6 +396,10 @@
             "07f788de83": "WebSocket"
           }
         }
+      },
+      "pendingReview": {
+        "submitDesktopOnly": "Reviews are submitted from the desktop app.",
+        "editDesktopOnly": "Comments are edited from the desktop app."
       }
     },
     "store": {
@@ -3270,7 +3274,7 @@
             "missing": {
               "tui": {
                 "title": "This ZCode build has no terminal UI",
-                "description": "Orca's hooks installed correctly \u2014 the zcode on your PATH just cannot open a session. The ZCode desktop app bundles the agent runtime without its terminal UI. Install a zcode that ships the TUI, then run zcode outside Orca to confirm."
+                "description": "Orca's hooks installed correctly — the zcode on your PATH just cannot open a session. The ZCode desktop app bundles the agent runtime without its terminal UI. Install a zcode that ships the TUI, then run zcode outside Orca to confirm."
               }
             }
           },
@@ -12204,6 +12208,44 @@
           "usageLabel": "Usage",
           "noAllowance": "Cursor reported no usage allowance for this account.",
           "staleUsage": "Last known usage — the latest refresh failed: {{reason}}"
+        },
+        "prRules": {
+          "projects": "Projects",
+          "projectsDescription": "The rules only touch workspaces in these projects, and only look for review requests there.",
+          "noColumn": "Do nothing",
+          "enable": "Move workspaces by pull request state",
+          "enableDescription": "Checks the linked pull request every minute while Orca is open, and sets the board column to match.",
+          "checkName": "Merge gate check name",
+          "checkNameDescription": "The check that decides \"Merge gate passed\" above. Matches a check run or a commit status by name.",
+          "pmTeam": "PM approval team",
+          "pmTeamDescription": "As org/team-slug, for example flowbasedk/pm-approval. Leave empty to skip that column.",
+          "deleteOnMerge": "Delete the workspace when its pull request is merged or closed",
+          "deleteOnMergeDescription": "Runs your orca.yaml archive script first. A workspace with uncommitted work or a running agent is kept, and Orca says so. The branch itself stays on the remote.",
+          "deleteOnReviewed": "Close a review workspace once you have reviewed",
+          "deleteOnReviewedDescription": "Applies to pull requests you did not write, once you have approved or requested changes. A workspace holding unsent review comments, uncommitted work or a running agent is kept. If the author asks you again, the workspace comes back with the diff pointed at the commit you last reviewed.",
+          "reviewInbox": "Open a workspace when you are asked to review",
+          "reviewInboxDescription": "Creates the workspace, points the diff at the pull request base, and starts the agent on the prompt below. Every review already waiting on you is picked up on the first check.",
+          "prompt": "Prompt for a first review",
+          "promptDescription": "Supports {{prNumber}}, {{title}}, {{author}}, {{branch}}, {{baseRef}}, {{url}} and {{repo}}.",
+          "rereviewPrompt": "Prompt when you are asked again",
+          "rereviewPromptDescription": "Used when a pull request you already reviewed comes back to you. Same variables, plus {{sinceCommit}} — the commit you last reviewed, which the diff is pointed at.",
+          "merged": "Pull request is merged",
+          "mergedDescription": "Already landed on the base branch. Only used when the workspace is kept — deleting on merge takes precedence.",
+          "closed": "Pull request was closed",
+          "closedDescription": "Closed without merging. Only used when the workspace is kept.",
+          "reviewing": "You are the reviewer",
+          "reviewingDescription": "Somebody else opened the pull request. Stays here until it merges.",
+          "draft": "Pull request is a draft",
+          "draftDescription": "Also applies when a ready pull request is put back into draft.",
+          "changes": "Changes requested",
+          "changesDescription": "Clears as soon as you re-request review from that reviewer.",
+          "merging": "Merge gate passed",
+          "mergingDescription": "The check named below succeeded on the head commit. The pull request is open, not merged.",
+          "pmApproval": "Waiting on PM approval",
+          "pmApprovalDescription": "Every reviewer still to respond belongs to the team below.",
+          "review": "Ready for review",
+          "reviewDescription": "Open, not a draft, and none of the conditions above apply.",
+          "pmTeamPlaceholder": "org/team-slug"
         }
       },
       "right": {
@@ -12737,7 +12779,8 @@
             "entryDiscardFailed": "Failed to discard “{{value0}}”",
             "entryDeleteFailed": "Failed to delete “{{value0}}”",
             "entryFailedInWorkspace": "{{value0}} in {{value1}}",
-            "diffCommentNotesCopyFailed": "Failed to copy notes"
+            "diffCommentNotesCopyFailed": "Failed to copy notes",
+            "unresolvedThreads": "{{value0}} unresolved review thread{{value1}}"
           },
           "SourceControlAgentActionDialog": {
             "8e856842d1": "Could not start the selected agent.",
@@ -12892,7 +12935,13 @@
                 "actionRequiredHint": "This check needs a manual action on GitHub (for example, approving the workflow run) before merging is unblocked.",
                 "b3195cba33": "Unmark author as bot",
                 "f588b46a6c": "Mark author as bot",
-                "e45324fbed": "Failed to load check details."
+                "e45324fbed": "Failed to load check details.",
+                "pendingBadge": "Pending",
+                "replyThread": "Reply",
+                "editedTitle": "Edited {{value0}}",
+                "edited": "(edited)",
+                "outdatedTitle": "The line this comment was left on is no longer in the diff",
+                "outdated": "Outdated"
               },
               "empty": {
                 "state": {
@@ -15655,10 +15704,24 @@
             "commentTooLarge": "Comment is too large to submit safely.",
             "f6c449191e": "Add note for the AI",
             "5fa4bfebaa": "Add note",
-            "5e9b3d0c2e": "Adding..."
+            "5e9b3d0c2e": "Adding...",
+            "modeNote": "Agent",
+            "modeReview": "Comment",
+            "modePending": "Review"
           },
           "useDiffCommentDecorator": {
             "995fa28b50": "This note"
+          },
+          "InlinePRCommentCard": {
+            "resolvedThread": "Resolved · {{author}}: {{body}}",
+            "thisThread": "This comment",
+            "sendHint": "Send to an agent",
+            "reply": "Reply",
+            "collapse": "Collapse"
+          },
+          "useDiffReviewComment": {
+            "noPullRequest": "This diff is not part of a pull request.",
+            "lineNotInDiff": "GitHub only accepts review comments on lines the pull request changed."
           }
         }
       },
@@ -17354,6 +17417,50 @@
             "hostOnly": "Cursor sign-in details are only readable on the computer running Orca."
           }
         }
+      },
+      "pendingReview": {
+        "badgeTitle": "{{count}} review comments waiting to be submitted",
+        "sectionTitle": "Pending review",
+        "rowBadge": "{{value0}} review comment{{value1}} waiting to be submitted",
+        "noPullRequest": "This workspace has no pull request to review.",
+        "submittedWithState": "Review submitted ({{state}}).",
+        "submitted": "Review submitted."
+      },
+      "pr": {
+        "comments": {
+          "UnresolvedThreadBadge": {
+            "title": "{{count}} unresolved review threads"
+          }
+        }
+      },
+      "sourceControl": {
+        "pendingReview": {
+          "standingPending": "Your review is pending",
+          "standingChanges": "You requested changes",
+          "standingApproved": "You approved the changes",
+          "standingRequested": "Your review was requested",
+          "title": "Pending review",
+          "diffBaseLabel": "What the diff compares against",
+          "sinceReview": "Since last review",
+          "sinceReviewMissing": "The commit you last reviewed is no longer in this checkout.",
+          "wholePr": "Whole pull request",
+          "bodyPlaceholder": "Add review summary…",
+          "submitting": "Sending…",
+          "onlyComment": "Only comment",
+          "requestChanges": "Request changes",
+          "approve": "Approve",
+          "submitFailed": "Could not submit the review."
+        }
+      },
+      "diffComments": {
+        "reviewCommentPlaceholder": "Leave a review comment on this line"
+      },
+      "workspaceStatusRules": {
+        "kept": "Kept {{name}}: {{reason}}",
+        "reviewing": "Reviewing #{{number}} — {{title}}",
+        "createFailed": "Could not open a review workspace for #{{number}}: {{reason}}",
+        "noMatchingProject": "No selected project matches {{repo}}.",
+        "reviewTabTitle": "Review #{{number}}"
       }
     },
     "i18n": {

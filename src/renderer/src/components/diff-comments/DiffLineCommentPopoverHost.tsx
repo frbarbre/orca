@@ -3,6 +3,7 @@ import type { editor as monacoEditor } from 'monaco-editor'
 import { DiffCommentPopover } from './DiffCommentPopover'
 import { useDiffReviewComment } from './use-diff-review-comment'
 import type { PRComment } from '../../../../shared/github/comment-types'
+import { translate } from '@/i18n/i18n'
 
 type PopoverAnchor = {
   lineNumber: number
@@ -70,7 +71,14 @@ export function DiffLineCommentPopoverHost({
       mode={effectiveMode}
       onModeChange={review.setMode}
       reviewDisabledReason={disabledReason}
-      placeholder={effectiveMode === 'note' ? placeholder : 'Leave a review comment on this line'}
+      placeholder={
+        effectiveMode === 'note'
+          ? placeholder
+          : translate(
+              'auto.components.diffComments.reviewCommentPlaceholder',
+              'Leave a review comment on this line'
+            )
+      }
       submitLabel={
         effectiveMode === 'note'
           ? submitLabel

@@ -7,6 +7,7 @@ import {
   buildReviewPromptVariables,
   renderWorkspaceStatusRulePrompt
 } from '../../../../shared/workspace-status-rule-prompt'
+import { translate } from '@/i18n/i18n'
 
 function reviewWorkspaceName(pr: ReviewSnapshotPullRequest): string {
   const slug = pr.title
@@ -43,7 +44,11 @@ export async function createReviewWorkspace(
   if (!repoId) {
     return {
       ok: false,
-      error: `No selected project matches ${pr.repo.owner}/${pr.repo.repo}.`
+      error: translate(
+        'auto.components.workspaceStatusRules.noMatchingProject',
+        'No selected project matches {{repo}}.',
+        { repo: `${pr.repo.owner}/${pr.repo.repo}` }
+      )
     }
   }
   const store = useAppStore.getState()
@@ -96,7 +101,13 @@ export async function createReviewWorkspace(
         buildReviewPromptVariables(pr, sinceReviewCommit)
       ),
       launchSource: 'unknown',
-      title: `Review #${pr.number}`
+      title: translate(
+        'auto.components.workspaceStatusRules.reviewTabTitle',
+        'Review #{{number}}',
+        {
+          number: pr.number
+        }
+      )
     })
     return { ok: true, worktreeId: created.worktree.id }
   } catch (error) {

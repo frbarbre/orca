@@ -82,7 +82,10 @@ export function PullRequestStatusRulesSection(): React.JSX.Element {
             control={
               <Input
                 value={config.pmApprovalTeam ?? ''}
-                placeholder="org/team-slug"
+                placeholder={translate(
+                  'auto.components.settings.prRules.pmTeamPlaceholder',
+                  'org/team-slug'
+                )}
                 onChange={(event) => patch({ pmApprovalTeam: event.target.value || null })}
                 className="h-7 w-[220px]"
               />

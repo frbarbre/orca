@@ -3,6 +3,7 @@ import { useAppStore } from '@/store'
 import type { WorkspaceStatusRuleConfig } from '../../../../shared/workspace-status-rule-config'
 import type { WorkspaceStatusRulePlan } from '../../../../shared/workspace-status-rule-plan'
 import { createReviewWorkspace } from './create-review-workspace'
+import { translate } from '@/i18n/i18n'
 
 async function applyStatusUpdates(plan: WorkspaceStatusRulePlan): Promise<void> {
   const { updateWorktreeMeta } = useAppStore.getState()
@@ -29,7 +30,12 @@ async function applyRemovals(plan: WorkspaceStatusRulePlan): Promise<void> {
       false
     )
     if (!result.ok) {
-      toast.error(`Kept ${removal.displayName}: ${result.error}`)
+      toast.error(
+        translate('auto.components.workspaceStatusRules.kept', 'Kept {{name}}: {{reason}}', {
+          name: removal.displayName,
+          reason: result.error
+        })
+      )
       continue
     }
     // Why only after the workspace is actually gone: forgetting the key while the
@@ -62,7 +68,16 @@ async function applyCreations(
     if (result.ok) {
       failedCreateAttempts.delete(creation.handledKey)
       useAppStore.getState().markPullRequestHandled([creation.handledKey])
-      toast.success(`Reviewing #${creation.pr.number} — ${creation.pr.title}`)
+      toast.success(
+        translate(
+          'auto.components.workspaceStatusRules.reviewing',
+          'Reviewing #{{number}} — {{title}}',
+          {
+            number: creation.pr.number,
+            title: creation.pr.title
+          }
+        )
+      )
       continue
     }
     failedCreateAttempts.set(creation.handledKey, attempts + 1)
@@ -72,7 +87,13 @@ async function applyCreations(
       result.error
     )
     if (attempts + 1 >= MAX_CREATE_ATTEMPTS) {
-      toast.error(`Could not open a review workspace for #${creation.pr.number}: ${result.error}`)
+      toast.error(
+        translate(
+          'auto.components.workspaceStatusRules.createFailed',
+          'Could not open a review workspace for #{{number}}: {{reason}}',
+          { number: creation.pr.number, reason: result.error }
+        )
+      )
     }
   }
 }

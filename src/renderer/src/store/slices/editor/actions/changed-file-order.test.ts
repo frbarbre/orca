@@ -128,7 +128,7 @@ describe('resolveCurrentRowKey', () => {
   })
 })
 
-describe('resolveCurrentRowKey', () => {
+describe('resolveCurrentRowKey with the same file in several sections', () => {
   const order = ['unstaged::src/a.ts', 'staged::src/a.ts', 'branch::src/a.ts']
 
   it('keeps a staged tab on its own row rather than the working-tree one above it', () => {

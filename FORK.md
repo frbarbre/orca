@@ -10,23 +10,41 @@ and each one says how to re-apply it if upstream has moved the code underneath i
 ## The merge
 
 ```bash
-git remote add upstream https://github.com/stablyai/orca.git   # once
-git fetch upstream
+# Idempotent: a fresh clone has no upstream remote, and FORK.md used to assume one.
+git remote get-url upstream >/dev/null 2>&1 || git remote add upstream https://github.com/stablyai/orca.git
+git fetch upstream main --no-tags
+git fetch origin --tags            # release tags live on GitHub; the notes script needs them
+
+git switch -c sync/upstream-<version> main
 git merge upstream/main
 ```
 
-Resolve conflicts with the rules below, then run [Verify](#verify) before pushing. Never push a
-merge that has not been verified — a broken `main` here produces a broken release, and the release
-is the only way this fork reaches the machine it runs on.
+Merge on a branch, never straight onto `main`, and fast-forward `main` only once
+[Verify](#verify) is green — a broken `main` produces a broken release, and the release is the only
+way this fork reaches the machine it runs on.
+
+Three things learned the hard way on the first sync:
+
+- **Commit the merge with `--no-verify`.** The pre-commit hook runs `oxfmt --write` on every staged
+  file, and a merge stages thousands of upstream files; the hook reformats them and the merge commit
+  fills with formatting churn that conflicts on every later sync. Upstream's bytes go in verbatim.
+- **Never run `oxfmt` (or any formatter) on a directory.** Upstream's tree is not oxfmt-clean at every
+  commit, so formatting a directory rewrites files the fork never touched. Format only the files you
+  edited, by path.
+- **Keep the merge commit to the merge.** Resolve conflicts in it; put any fork fix the merge surfaces
+  in its own commit after it, so the merge stays readable as "upstream, plus these resolutions".
 
 ## Upstream is the source of truth
 
 For anything not listed in the next section, take upstream's side outright. In particular, resolve
 these with `git checkout --theirs` without reading the diff:
 
-- `package.json` and `pnpm-lock.yaml`, including the `version` field. The fork never sets its own
-  version; releases are cut at whatever version upstream is on.
-- `src/i18n/locales/**` and any other generated or extracted file.
+- `package.json` and `pnpm-lock.yaml`, including the `version` field. `package.json` always carries
+  upstream's version — that is how a release knows which Orca it is based on. The fork's own version
+  line lives in its release tags, not in this file (see [Releasing](#releasing)).
+- `src/i18n/locales/**` and any other generated or extracted file — **then run
+  `pnpm run sync:localization-catalog`**. The fork owns catalog entries for its own strings, taking
+  upstream's catalog drops them, and `pnpm lint` fails on every fork key missing from it.
 - Every workflow in `.github/workflows/` except `fork-release.yml`.
 - `docs/**`, and every test file except the four named below.
 - Any file where our only "change" is formatting from a pre-commit hook.
@@ -76,6 +94,8 @@ Two rules, both learned the hard way:
 | `src/main/updater/updater-download-install.ts` | The `isManualInstallOnlyUpdate()` early return at the top of `downloadUpdate` and `quitAndInstall`.                                                                                              |
 | `config/electron-builder.config.cjs`           | `owner: process.env.ORCA_PUBLISH_OWNER ?? 'frbarbre'` and `releaseType: … : 'release'`.                                                                                                          |
 | `.github/workflows/fork-release.yml`           | Whole file (new).                                                                                                                                                                                |
+| `config/scripts/fork-release-notes.mjs` (+ test) | Whole file (new). Resolves the fork version and writes the two-part release notes. |
+| `config/scripts/test-fork-features.sh` | Whole file (new). Runs every test a fork commit touched; part of [Verify](#verify). |
 
 #### The fork installs its own updates (macOS)
 
@@ -145,7 +165,7 @@ Modified files, and what to re-apply:
 | `src/renderer/src/components/editor/DiffViewer.tsx`                                                 | `useDiffViewerPendingRevealScroll` + the `hasPendingReveal` argument.                                                                                                                                                                                                                                        |
 | `src/renderer/src/components/editor/useDiffViewerFirstChangeAutoScroll.ts`                          | The `hasPendingReveal` input that makes the auto-scroll stand down.                                                                                                                                                                                                                                          |
 | `src/renderer/src/components/editor/monaco-reveal.ts`, `use-monaco-reveal-scheduler.ts`             | Type widened from `IStandaloneCodeEditor` to `ICodeEditor` so the diff editor can reuse the scheduler.                                                                                                                                                                                                       |
-| `src/renderer/src/components/virtualized-list.tsx`                                                  | `scrollToRowKey`, `alignRowWithinScrollPadding`, the flow-path wrapper. Heavily edited — merge with care.                                                                                                                                                                                                    |
+| `src/renderer/src/components/virtualized-list.tsx`                                                  | `scrollToRowKey`, `alignRowWithinScrollPadding`, and the flow-path wrapper — rendered **only when a caller passes `scrollToRowKey`**, so every other list keeps upstream's bare fragment. Heavily edited — merge with care.                                                                                                                                                                                                    |
 | `src/renderer/.../checks-panel/comment-row.tsx`, `comment-group.tsx`, `use-comments-list-state.tsx` | The `onOpenLocation` prop and the clickable path badge.                                                                                                                                                                                                                                                      |
 | `src/renderer/.../source-control/listing/*`                                                         | `activeOpenRowKey`, the branch-row `isOpenFile` highlight, the published review order in `use-file-listing.ts`.                                                                                                                                                                                              |
 | `src/renderer/.../source-control/panel/panel-ready.tsx`                                             | `scroll-pb-9` on the file-list scroller — reserves the sticky Commits header.                                                                                                                                                                                                                                |
@@ -383,13 +403,24 @@ Modified files, and what to re-apply:
 
 ## Verify
 
-Run all of these. They are the same gates upstream's CI uses.
+Run all of these. The first three are the gates upstream's CI uses; the fourth is the fork's.
 
 ```bash
 pnpm lint
 pnpm typecheck
 pnpm test
+./config/scripts/test-fork-features.sh
 ```
+
+`test-fork-features.sh` runs every test file a fork commit touched — derived from git, not listed,
+because a commit reachable from `upstream/main` is upstream's and everything else is ours. A fork
+change that adds a test is covered by it automatically. Run it on its own as well as inside
+`pnpm test`: it is the one check whose failures are always the fork's problem, where a full run
+buries them among upstream's environmental failures.
+
+Run the **full** `pnpm lint`, not just `pnpm run check:code-quality:changed`. The per-change gate is
+what keeps day-to-day commits clean, but it reports warnings without denying them and skips the
+localization checks entirely — the first sync found three gaps it had let through.
 
 Then confirm the fork channel actually survived the merge — a clean test run does **not** prove
 this, because the defaults are upstream's on purpose:
@@ -400,18 +431,87 @@ grep -n "armForkUpdateChannel" src/main/index.ts
 grep -n "ORCA_RELEASES_REPO_URL" src/main/updater-prerelease-feed.ts
 grep -n "ORCA_UPDATE_FEED_URL" src/main/updater/updater-setup.ts src/main/updater/updater-release-feed.ts
 grep -n "isManualInstallOnlyUpdate" src/main/updater/updater-download-install.ts
+grep -n "isForkSelfInstallUpdate" src/main/updater/updater-download-install.ts
 grep -n "frbarbre" config/electron-builder.config.cjs
 ```
 
 If `pnpm test` reports failures, check whether they also fail on upstream before assuming the merge
-caused them — stash the merge and re-run the failing files. Upstream has some tests that fail on a
-clean checkout.
+caused them — stash the merge and re-run the failing files. **Compare against a clean upstream checkout, not a stash** — stashing only
+removes uncommitted work and leaves every fork commit in place, which is how a fork bug got filed as
+"environmental" here once. A worktree sharing `node_modules` is quick:
+
+```bash
+git worktree add --detach /tmp/orca-up upstream/main
+ln -s "$PWD/node_modules" /tmp/orca-up/node_modules
+(cd /tmp/orca-up && npx vitest run --config config/vitest.config.ts <failing files>)
+```
+
+On this machine a clean upstream checkout consistently fails `skill-recipe-shell`,
+`browser-manager-viewport-ownership`, the PTY-settle tests, the real-CLI Claude tests,
+`build-native-for-platform` and the `tests/e2e/cross-version-wire/*` suite (which materializes release
+checkouts). `pty-runtime-hidden-at-spawn-mark` and `session-scanner-service-search` flake under
+full-suite load and pass alone. `e2e-worker-env-isolation` fails only because the cross-version suite
+leaves a `.cross-version-checkouts/` cache inside the repo; `rm -rf .cross-version-checkouts` clears it.
+
+`test-fork-features.sh` fetches `upstream/main`, so upstream can move **during** a sync. Before
+blaming the merge for a failure, check whether upstream fixed it after the merge point — the first
+sync hit exactly that (#23062 landed two commits later) and was fixed by merging again.
+
+### Sync log
+
+**1.4.197 → 1.4.214** (133 upstream commits, three conflicts)
+
+- `src/main/index.ts` — both sides added imports. Keep both; `armForkUpdateChannel` must stay.
+- `store/slices/ui/ui-slice-hydration-actions.ts` — upstream moved status-bar migration into its own
+  module. Take the move, keep the fork's `hydrateWorkspaceBoardState`.
+- `components/editor/DiffViewer.tsx` — **the one that needs judgement.** Upstream #21719 replaced the
+  floating add-note popover with an inline draft card (`DiffCommentDraftCard`, opened by
+  `diff-comment-draft-zone.ts`) that only makes AI notes. The fork's Agent / Comment / Review choice
+  lives in that popover. Resolution: keep the fork's DiffViewer whole — #21719 was upstream's only
+  change to it — and do **not** pass `onCreateComment` to `useDiffCommentDecorator`. Upstream's draft
+  zone deliberately falls back to `onLegacyAddCommentClickRef` when no `onCreateComment` is given,
+  and that fallback is what opens the fork's popover.
+
+  That fallback is load-bearing. If a later sync removes it, the fix is to port the three
+  destinations onto `DiffCommentDraftCard` rather than to revert upstream's card.
+
+- The full run found **three fork bugs that every scoped test run had missed**, none caused by the
+  merge: the self-updater imported `node:child_process` directly (upstream's import-boundary ratchet
+  forbids it — use `spawnProcess` from `src/shared/child-process`); the fork's scroll-by-key wrapper in
+  `virtualized-list.tsx` put a `div` between *every* below-threshold list and its container, breaking
+  the artifacts table's ownership of its rows (it is now opt-in via `scrollToRowKey`); and
+  `mobile-web-bundle-packaging-workflow-contract.test.mjs` enumerates packaging jobs and did not know
+  the fork's two workflows. Scoped runs are fine while building a feature; a full run before a release
+  is not optional.
+- `mobile-web-bundle-packaging-workflow-contract.test.mjs` lists `fork-preview-release.yml preview`
+  and `fork-release.yml build`. If a sync takes upstream's copy of that list, add both back.
+- Upstream's `package.json` runs ahead of its releases: it said 1.4.214 while the newest published
+  release was 1.4.212, and some versions (1.4.202, 1.4.208) were never published at all. The release
+  notes script says so instead of implying notes exist for every version.
 
 ## Releasing
 
 `gh workflow run fork-release.yml --ref main`, or push a `v*` tag. The workflow builds on a
 GitHub-hosted macOS runner and publishes to this fork's releases, which is where the installed app
 looks.
+
+**Versions.** The fork keeps its own version line: each release is the previous fork release plus
+one patch, unless `-f version=` overrides it. It cannot follow upstream's number, because the
+installed app only offers an update whose version is higher than its own, and a sync can land an
+upstream number lower than one the fork has already shipped (the first sync took the fork from
+1.4.232 onto upstream 1.4.214). The upstream version rides along in the title instead:
+**`1.4.233 (Orca 1.4.214)`**, read from `package.json` because that is what the code is.
+
+**Notes.** `config/scripts/fork-release-notes.mjs` writes them in two parts:
+
+- **This fork** — the fork's own commits since the previous release: `git log --no-merges
+  <previous-tag>..HEAD --not upstream/main`. Excluding everything reachable from upstream is what
+  keeps a sync's hundreds of upstream commits out of this list.
+- **Orca** — when `package.json` moved since the previous release, upstream's own release notes for
+  every desktop release in that range, newest first, with their headings nested under each version.
+  GitHub caps a release body at 125,000 characters and one upstream release alone can run to 43,000,
+  so releases that do not fit are listed as links rather than cut off mid-list. When no sync
+  happened, it says the release is still based on the same Orca.
 
 On macOS the app now installs the release itself: it downloads the zip, verifies the manifest
 checksum, backs up the settings JSON, replaces `/Applications/Orca.app` and relaunches. The previous

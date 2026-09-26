@@ -1,7 +1,7 @@
-import { spawn } from 'node:child_process'
 import { chmod, mkdir, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { app } from 'electron'
+import { spawnProcess } from '../../../shared/child-process/run-process'
 import { recordUpdaterLifecycle } from '../../updater-lifecycle-diagnostics'
 import { backupUserSettings } from './fork-update-backup'
 import { downloadForkUpdateArchive, fetchForkUpdateText } from './fork-update-download'
@@ -91,7 +91,16 @@ export async function runForkSelfInstall(
     )
     // Why detached with its own session: the script has to survive this process exiting, which is
     // the very thing it is waiting for.
-    spawn('/bin/bash', [scriptPath], { detached: true, stdio: 'ignore' }).unref()
+    const child = spawnProcess({
+      program: '/bin/bash',
+      args: [scriptPath],
+      detached: true,
+      stdio: 'ignore'
+    })
+    // Why a no-op handler: spawnProcess leaves stream and error events to the caller, and an
+    // unhandled one would take the main process down in the moment before it quits anyway.
+    child.on('error', () => {})
+    child.unref()
     handlers.onReadyToQuit()
   } catch (error) {
     handlers.onError(error instanceof Error ? error.message : String(error))

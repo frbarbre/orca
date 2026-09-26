@@ -268,6 +268,12 @@ export function VirtualizedList<TRow>({
   const announcedSetSize = hasUnloadedRows ? -1 : rows.length
 
   if (!virtualize) {
+    // Why only when asked for: the wrapper is still an element, so it sits between every row and the
+    // container around the list — which breaks a table's ownership of its rows and changes what
+    // `children` holds. A list that never scrolls by key keeps upstream's bare fragment.
+    if (scrollToRowKey === undefined) {
+      return <>{rows.map((row) => renderRow(row))}</>
+    }
     // Why `display: contents`: the wrapper exists only to index rows for scrolling; it must not
     // introduce a box, or it would change how these rows lay out inside the shared scroller.
     return (

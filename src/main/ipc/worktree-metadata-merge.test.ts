@@ -104,3 +104,30 @@ describe('mergeWorktree identity projection', () => {
     expect(worktree.suppressedGitHubPR).toBe(42)
   })
 })
+
+describe('review state that must survive a restart', () => {
+  const meta = {
+    displayName: 'feature',
+    displayNameIsPinned: false,
+    comment: '',
+    linkedIssue: null,
+    linkedPR: null,
+    linkedLinearIssue: null,
+    isArchived: false,
+    isUnread: false,
+    isPinned: false,
+    sortOrder: 0,
+    lastActivityAt: 0
+  }
+
+  // Why this is worth a test of its own: the write side succeeded all along — the drafts were
+  // on disk — and only the read back dropped them, so nothing failed until the next launch.
+  it('carries queued review comments back out of persisted metadata', () => {
+    const pendingReviewComments = [
+      { id: 'draft-1', path: 'src/a.ts', line: 12, body: 'a queued note', createdAt: 1 }
+    ]
+    expect(
+      mergeWorktree('repo-1', git, { ...meta, pendingReviewComments }).pendingReviewComments
+    ).toStrictEqual(pendingReviewComments)
+  })
+})

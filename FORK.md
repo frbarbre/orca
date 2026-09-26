@@ -250,6 +250,7 @@ Modified files, and what is ours:
 | File | What is ours |
 | --- | --- |
 | `src/shared/worktree/types.ts`, `meta-types.ts`, `rpc-contract/worktree-params.ts` | `pendingReviewComments` beside `diffComments`. |
+| `ipc/worktree-metadata-merge.ts`, `ipc/worktrees/folder-workspace-model.ts`, `runtime/runtime-folder-workspace.ts` | `pendingReviewComments` forwarded out of persisted metadata. **Every one of these has to list the field by name**: they rebuild the renderer's `Worktree` field by field, so one that is left out is written on every change and then dropped on the next launch, with nothing failing in between. `runtime/rpc/methods/worktree.ts` still drops it on the remote-runtime write path; adding it there surfaces a pre-existing `consistent-type-assertions` finding that the casting scan will not let a directive suppress. |
 | `DiffCommentPopover.tsx` | `DiffCommentMode` gains `'pending'`, the third radio, and the relabelled `'review'` button ("Comment now"). |
 | `DiffLineCommentPopoverHost.tsx` | The `onQueueForReview` prop and the third submit arm. |
 | `use-diff-review-comment.ts` | `resolveMode` falls back for any non-note mode, not only `'review'`. |

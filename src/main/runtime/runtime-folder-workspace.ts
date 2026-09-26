@@ -71,6 +71,7 @@ export function mergeRuntimeFolderWorkspace(
     ...(meta.priorWorktreeIds !== undefined ? { priorWorktreeIds: meta.priorWorktreeIds } : {}),
     workspaceStatus: meta.workspaceStatus ?? DEFAULT_WORKSPACE_STATUS_ID,
     diffComments: meta.diffComments,
+    pendingReviewComments: meta.pendingReviewComments,
     mobileDiffReview: meta.mobileDiffReview
   }
 }

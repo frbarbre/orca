@@ -35,6 +35,8 @@ export type WorkspaceStatusRuleConfig = {
   reviewInbox: WorkspaceStatusRuleReviewInbox
   /** `owner/repo#number` keys already acted on, so a create never repeats. */
   handledPullRequests: string[]
+  /** Bumped when the meaning of `handledPullRequests` changes; an older ledger is discarded. */
+  ledgerVersion?: number
 }
 
 export const DEFAULT_MERGING_CHECK_NAME = 'Reviews satisfied'
@@ -50,6 +52,11 @@ potential weak points. Analyse the architecture decisions; are they aligned with
 function asRecord(value: unknown): Record<string, unknown> | null {
   return value && typeof value === 'object' && !Array.isArray(value) ? { ...value } : null
 }
+
+/** 1 drops ledgers written by the removed seeding step, which recorded reviews
+ *  as handled without ever cloning them. Re-cloning something that does have a
+ *  workspace is already prevented by the linked-PR and branch checks. */
+const SEED_LEDGER_VERSION = 1
 
 const MAX_HANDLED_PULL_REQUESTS = 500
 const MAX_CHECK_NAME_LENGTH = 120
@@ -68,7 +75,8 @@ export function cloneDefaultWorkspaceStatusRuleConfig(): WorkspaceStatusRuleConf
       agent: 'claude',
       promptTemplate: DEFAULT_REVIEW_PROMPT_TEMPLATE
     },
-    handledPullRequests: []
+    handledPullRequests: [],
+    ledgerVersion: SEED_LEDGER_VERSION
   }
 }
 
@@ -157,7 +165,11 @@ export function normalizeWorkspaceStatusRuleConfig(value: unknown): WorkspaceSta
     pmApprovalTeam,
     onResolved: raw.onResolved === 'delete' ? 'delete' : 'none',
     reviewInbox: sanitizeReviewInbox(raw.reviewInbox),
-    handledPullRequests: sanitizeHandledPullRequests(raw.handledPullRequests)
+    handledPullRequests:
+      raw.ledgerVersion === SEED_LEDGER_VERSION
+        ? sanitizeHandledPullRequests(raw.handledPullRequests)
+        : [],
+    ledgerVersion: SEED_LEDGER_VERSION
   }
 }
 

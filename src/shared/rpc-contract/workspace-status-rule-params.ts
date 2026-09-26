@@ -25,5 +25,6 @@ export const WorkspaceStatusRules = z.object({
     agent: z.string(),
     promptTemplate: z.string()
   }),
-  handledPullRequests: z.array(z.string())
+  handledPullRequests: z.array(z.string()),
+  ledgerVersion: z.number().optional()
 })

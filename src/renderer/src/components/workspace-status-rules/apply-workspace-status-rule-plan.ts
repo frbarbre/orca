@@ -33,18 +33,35 @@ async function applyRemovals(plan: WorkspaceStatusRulePlan): Promise<void> {
   }
 }
 
+/** Why in memory and not the persisted ledger: a create that fails for a passing
+ *  reason (a fetch that timed out, gh not yet authenticated) must not burn the
+ *  pull request forever. Restarting Orca retries it. */
+const failedCreateAttempts = new Map<string, number>()
+const MAX_CREATE_ATTEMPTS = 3
+
 async function applyCreations(
   plan: WorkspaceStatusRulePlan,
   config: WorkspaceStatusRuleConfig
 ): Promise<void> {
   for (const creation of plan.creations) {
+    const attempts = failedCreateAttempts.get(creation.handledKey) ?? 0
+    if (attempts >= MAX_CREATE_ATTEMPTS) {
+      continue
+    }
     const result = await createReviewWorkspace(creation.pr, config)
-    // Why mark on failure too: a create that cannot succeed (no matching
-    // project, a branch Git refuses) would otherwise retry every minute.
-    useAppStore.getState().markPullRequestHandled([creation.handledKey])
     if (result.ok) {
+      failedCreateAttempts.delete(creation.handledKey)
+      useAppStore.getState().markPullRequestHandled([creation.handledKey])
       toast.success(`Reviewing #${creation.pr.number} — ${creation.pr.title}`)
-    } else {
+      continue
+    }
+    failedCreateAttempts.set(creation.handledKey, attempts + 1)
+    console.error(
+      `[workspace-status-rules] review workspace for #${creation.pr.number} failed ` +
+        `(attempt ${attempts + 1}/${MAX_CREATE_ATTEMPTS}):`,
+      result.error
+    )
+    if (attempts + 1 >= MAX_CREATE_ATTEMPTS) {
       toast.error(`Could not open a review workspace for #${creation.pr.number}: ${result.error}`)
     }
   }

@@ -35,7 +35,9 @@ function findRepoIdForPullRequest(
 
 export async function createReviewWorkspace(
   pr: ReviewSnapshotPullRequest,
-  config: WorkspaceStatusRuleConfig
+  config: WorkspaceStatusRuleConfig,
+  /** A re-requested review opens on what changed since you last looked. */
+  sinceReviewCommit?: string
 ): Promise<{ ok: true; worktreeId: string } | { ok: false; error: string }> {
   const repoId = findRepoIdForPullRequest(pr, config.repoIds)
   if (!repoId) {
@@ -80,7 +82,7 @@ export async function createReviewWorkspace(
       undefined,
       undefined,
       undefined,
-      startPoint.compareBaseRef
+      sinceReviewCommit ?? startPoint.compareBaseRef
     )
     await launchAgentBackgroundSession({
       agent: config.reviewInbox.agent,

@@ -18,7 +18,8 @@ async function applyStatusUpdates(plan: WorkspaceStatusRulePlan): Promise<void> 
 }
 
 async function applyRemovals(plan: WorkspaceStatusRulePlan): Promise<void> {
-  const { removeWorktree } = useAppStore.getState()
+  const { removeWorktree, forgetPullRequestHandled } = useAppStore.getState()
+  const forget: string[] = []
   for (const removal of plan.removals) {
     // Why force stays off: Git refuses a checkout holding uncommitted work or a
     // live agent session, and that refusal is the safety net for an automatic
@@ -29,7 +30,16 @@ async function applyRemovals(plan: WorkspaceStatusRulePlan): Promise<void> {
     )
     if (!result.ok) {
       toast.error(`Kept ${removal.displayName}: ${result.error}`)
+      continue
     }
+    // Why only after the workspace is actually gone: forgetting the key while the
+    // checkout survives would have the inbox build a second one beside it.
+    if (removal.forgetHandledKey) {
+      forget.push(removal.forgetHandledKey)
+    }
+  }
+  if (forget.length > 0) {
+    forgetPullRequestHandled(forget)
   }
 }
 
@@ -48,7 +58,7 @@ async function applyCreations(
     if (attempts >= MAX_CREATE_ATTEMPTS) {
       continue
     }
-    const result = await createReviewWorkspace(creation.pr, config)
+    const result = await createReviewWorkspace(creation.pr, config, creation.sinceReviewCommit)
     if (result.ok) {
       failedCreateAttempts.delete(creation.handledKey)
       useAppStore.getState().markPullRequestHandled([creation.handledKey])

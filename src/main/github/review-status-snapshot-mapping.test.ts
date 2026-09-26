@@ -125,7 +125,7 @@ describe('mapReviewStatusSnapshotResponse', () => {
   it('drops reviews with no author', () => {
     const [pr] = mapReviewStatusSnapshotResponse(payload).linkedPullRequests
 
-    expect(pr.latestReviews).toEqual([{ login: 'reviewer', state: 'APPROVED' }])
+    expect(pr.latestReviews).toEqual([{ login: 'reviewer', state: 'APPROVED', commitOid: null }])
   })
 
   it('survives an empty or malformed payload', () => {

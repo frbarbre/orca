@@ -18,6 +18,8 @@ export type ReviewSnapshotRequestedReviewer =
 export type ReviewSnapshotLatestReview = {
   login: string
   state: ReviewSnapshotReviewState
+  /** The commit that review was left on, which a re-opened workspace can diff against. */
+  commitOid: string | null
 }
 
 // Why: the shared rollup normalizer rewrites every name to `check-<index>`, so a

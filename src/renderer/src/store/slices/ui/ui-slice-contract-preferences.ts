@@ -94,6 +94,8 @@ export type UISlicePreferences = {
   setWorkspaceStatusRules: (rules: WorkspaceStatusRuleConfig) => void
   /** Records `owner/repo#number` keys the review inbox has already acted on. */
   markPullRequestHandled: (keys: readonly string[]) => void
+  /** Makes a pull request eligible for the review inbox again after its workspace is removed. */
+  forgetPullRequestHandled: (keys: readonly string[]) => void
   workspaceBoardOpacity: number
   setWorkspaceBoardOpacity: (opacity: number) => void
   workspaceBoardColumnWidth: number

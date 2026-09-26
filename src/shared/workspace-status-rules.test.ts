@@ -72,7 +72,9 @@ describe('resolveWorkspaceStatusRuleCondition', () => {
   })
 
   it('reports changes requested', () => {
-    const pr = makePR({ latestReviews: [{ login: 'reviewer', state: 'CHANGES_REQUESTED' }] })
+    const pr = makePR({
+      latestReviews: [{ login: 'reviewer', state: 'CHANGES_REQUESTED', commitOid: null }]
+    })
 
     expect(resolveWorkspaceStatusRuleCondition(pr, config, pmTeam, viewer)).toBe(
       'changes-requested'
@@ -81,7 +83,7 @@ describe('resolveWorkspaceStatusRuleCondition', () => {
 
   it('clears changes requested once that reviewer is re-requested', () => {
     const pr = makePR({
-      latestReviews: [{ login: 'reviewer', state: 'CHANGES_REQUESTED' }],
+      latestReviews: [{ login: 'reviewer', state: 'CHANGES_REQUESTED', commitOid: null }],
       requestedReviewers: [{ kind: 'user', login: 'reviewer' }]
     })
 
@@ -90,7 +92,7 @@ describe('resolveWorkspaceStatusRuleCondition', () => {
 
   it('matches a re-requested reviewer regardless of login casing', () => {
     const pr = makePR({
-      latestReviews: [{ login: 'Reviewer', state: 'CHANGES_REQUESTED' }],
+      latestReviews: [{ login: 'Reviewer', state: 'CHANGES_REQUESTED', commitOid: null }],
       requestedReviewers: [{ kind: 'user', login: 'reviewer' }]
     })
 
@@ -100,8 +102,8 @@ describe('resolveWorkspaceStatusRuleCondition', () => {
   it('goes to PM approval when a re-request leaves only a PM pending', () => {
     const pr = makePR({
       latestReviews: [
-        { login: 'reviewer', state: 'APPROVED' },
-        { login: 'pmperson', state: 'CHANGES_REQUESTED' }
+        { login: 'reviewer', state: 'APPROVED', commitOid: null },
+        { login: 'pmperson', state: 'CHANGES_REQUESTED', commitOid: null }
       ],
       requestedReviewers: [{ kind: 'user', login: 'PmPerson' }]
     })
@@ -137,7 +139,7 @@ describe('resolveWorkspaceStatusRuleCondition', () => {
   it('reports PM approval when a PM is the only reviewer left', () => {
     const pr = makePR({
       requestedReviewers: [{ kind: 'user', login: 'pmperson' }],
-      latestReviews: [{ login: 'reviewer', state: 'APPROVED' }]
+      latestReviews: [{ login: 'reviewer', state: 'APPROVED', commitOid: null }]
     })
 
     expect(resolveWorkspaceStatusRuleCondition(pr, config, pmTeam, viewer)).toBe('pm-approval')
@@ -180,7 +182,7 @@ describe('resolveWorkspaceStatusRuleCondition', () => {
     const pr = makePR({
       author: 'colleague',
       checks: [{ name: 'Reviews satisfied', state: 'success' }],
-      latestReviews: [{ login: 'someone', state: 'APPROVED' }]
+      latestReviews: [{ login: 'someone', state: 'APPROVED', commitOid: null }]
     })
 
     expect(resolveWorkspaceStatusRuleCondition(pr, config, pmTeam, viewer)).toBe('reviewing')

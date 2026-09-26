@@ -237,6 +237,7 @@ Modified files, and what is ours:
 | `right-sidebar/pr-comment-presentation.ts` | `statusBadgePending` and `commentEditorText` (the editor used to hardcode a size, so editing shrank the text). |
 | `checks-panel/comment-controls.tsx` | The Pending branch of `PRCommentActionBadge`. |
 | `checks-panel/comment-row.tsx` | `forceMutable`, and the editor taking its type scale from the presentation. |
+| `checks-panel/comment-editor.tsx` | New. The body editor, lifted out because the row hit its 400-line cap. It grows to fit the draft up to 240px, then scrolls, and takes mod+Enter as submit (plain Enter is a newline — a comment is prose). |
 | `diff-comments/DiffCommentPopover.tsx` | `MODE_OPTIONS` and the segmented Agent/Comment/Review control. |
 | `diff-comments/use-diff-review-comment.ts` | Commentable lines seeded synchronously and `null` until known, so the popover does not open on the wrong destination and switch a frame later. |
 | `diff-comments/diff-comment-zone-mouse-events.ts`, `useInlinePRCommentZones.tsx` | `installDiffCommentZoneKeyStopper`, so a keystroke typed in a zone card does not also drive the editor. |
@@ -290,6 +291,33 @@ inline comments, conversation comments and review summaries alike.
 | `checks-panel/comment-row.tsx` | `canEditComment` beside `canMutateComment`, and the `(edited)` marker in both layouts. |
 | `checks-panel/use-checks-panel-comment-mutations.tsx` | The inline branch of `handleEditComment`. |
 | `src/renderer/src/web/web-preload-api-composition.test.ts` | `pendingReview` added to the enumerated web surface — the review-mode merge left this red. |
+
+#### Closing a review workspace once you have reviewed
+
+`onReviewed: 'delete'` removes a workspace for someone else's pull request once you have
+approved or requested changes on it, and a later re-request opens it again with the diff
+pointed at the commit you last reviewed.
+
+The mechanics are all in the ledger. `handledPullRequests` is what stops the inbox rebuilding
+a workspace it already made, so a removal that should be reversible has to **forget** its key —
+but only when the pull request is no longer listed as owed on that same tick, otherwise the
+inbox clones it straight back. `readViewerReviewStanding` reads both halves, because GitHub
+keeps a review after a re-request: a verdict alone never expires, what ends it is the viewer
+reappearing among the pending reviewers.
+
+The delete is guarded three ways: git refuses a checkout with uncommitted work or a live agent
+(force stays off), and the plan refuses one holding unsent review comments, which live in
+workspace metadata where git cannot see them.
+
+| File | What is ours |
+| --- | --- |
+| `src/shared/workspace-status-rules.ts` (+ test) | `readViewerReviewStanding`. |
+| `src/shared/workspace-status-rule-plan.ts` (+ test) | The reviewed-removal arm, `forgetHandledKey`, and `sinceReviewCommit` on a creation. |
+| `src/shared/workspace-status-rule-config.ts` | `onReviewed`. |
+| `review-status-snapshot-query.ts`, `-mapping.ts`, `review-status-snapshot-types.ts` | `commit { oid }` on `latestReviews`. |
+| `workspace-status-rules/apply-workspace-status-rule-plan.ts`, `create-review-workspace.ts`, `collect-workspace-status-rule-targets.ts` | Forgetting the key after a removal lands, the re-clone base, and the pending-comment guard. |
+| `store/slices/ui/ui-slice-workspace-status-rule-actions.ts` + its contract | `forgetPullRequestHandled`. |
+| `settings/PullRequestStatusRulesSection.tsx` | The toggle. |
 
 ### 5. Editor theming from a VS Code theme file
 

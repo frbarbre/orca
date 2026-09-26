@@ -113,7 +113,8 @@ function mapLatestReviews(pr: RawNode): ReviewSnapshotLatestReview[] {
   return asNodes(pr.latestReviews).flatMap((review) => {
     const login = asString(asRecord(review.author)?.login)
     const state = asString(review.state).toUpperCase()
-    return login && isReviewState(state) ? [{ login, state }] : []
+    const commitOid = asString(asRecord(review.commit)?.oid)
+    return login && isReviewState(state) ? [{ login, state, commitOid: commitOid || null }] : []
   })
 }
 

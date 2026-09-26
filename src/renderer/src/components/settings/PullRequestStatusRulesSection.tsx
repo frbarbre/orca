@@ -104,6 +104,20 @@ export function PullRequestStatusRulesSection(): React.JSX.Element {
           />
           <SettingsSwitchRow
             label={translate(
+              'auto.components.settings.prRules.deleteOnReviewed',
+              'Close a review workspace once you have reviewed'
+            )}
+            description={translate(
+              'auto.components.settings.prRules.deleteOnReviewedDescription',
+              'Applies to pull requests you did not write, once you have approved or requested changes. A workspace holding unsent review comments, uncommitted work or a running agent is kept. If the author asks you again, the workspace comes back with the diff pointed at the commit you last reviewed.'
+            )}
+            checked={config.onReviewed === 'delete'}
+            onChange={() =>
+              patch({ onReviewed: config.onReviewed === 'delete' ? 'none' : 'delete' })
+            }
+          />
+          <SettingsSwitchRow
+            label={translate(
               'auto.components.settings.prRules.reviewInbox',
               'Open a workspace when you are asked to review'
             )}

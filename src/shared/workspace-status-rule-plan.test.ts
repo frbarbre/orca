@@ -48,6 +48,7 @@ function makeTarget(overrides: Partial<WorkspaceStatusRuleTarget> = {}): Workspa
     displayName: 'one',
     repo,
     prNumber: 1,
+    hasPendingReviewComments: false,
     currentStatus: 'todo',
     ...overrides
   }
@@ -308,5 +309,118 @@ describe('buildWorkspaceStatusRulePlan — review inbox', () => {
     })
 
     expect(plan.creations).toEqual([])
+  })
+})
+
+describe('closing a workspace once you have reviewed', () => {
+  const reviewedPR = makePR({
+    author: 'colleague',
+    latestReviews: [{ login: 'frbarbre', state: 'APPROVED', commitOid: 'reviewed-sha' }]
+  })
+  const config = {
+    ...cloneDefaultWorkspaceStatusRuleConfig(),
+    enabled: true,
+    onReviewed: 'delete' as const
+  }
+
+  it('removes the workspace and lets the inbox open it again later', () => {
+    const plan = buildWorkspaceStatusRulePlan({
+      targets: [makeTarget()],
+      snapshot: makeSnapshot({ linkedPullRequests: [reviewedPR] }),
+      config,
+      existingBranches: new Set()
+    })
+    expect(plan.removals).toStrictEqual([
+      {
+        worktreeId: 'repo::/w/one',
+        executionHostId: 'local',
+        displayName: 'one',
+        forgetHandledKey: 'flowbasedk/flowbase#1'
+      }
+    ])
+  })
+
+  it('keeps the workspace while a review is still owed', () => {
+    const plan = buildWorkspaceStatusRulePlan({
+      targets: [makeTarget()],
+      snapshot: makeSnapshot({
+        linkedPullRequests: [
+          {
+            ...reviewedPR,
+            requestedReviewers: [{ kind: 'user', login: 'frbarbre' }]
+          }
+        ]
+      }),
+      config,
+      existingBranches: new Set()
+    })
+    expect(plan.removals).toStrictEqual([])
+  })
+
+  it('keeps a workspace holding unsent review comments', () => {
+    const plan = buildWorkspaceStatusRulePlan({
+      targets: [makeTarget({ hasPendingReviewComments: true })],
+      snapshot: makeSnapshot({ linkedPullRequests: [reviewedPR] }),
+      config,
+      existingBranches: new Set()
+    })
+    expect(plan.removals).toStrictEqual([])
+  })
+
+  it('keeps the ledger entry while the pull request is still listed as owed', () => {
+    const plan = buildWorkspaceStatusRulePlan({
+      targets: [makeTarget()],
+      snapshot: makeSnapshot({
+        linkedPullRequests: [reviewedPR],
+        reviewRequestedPullRequests: [reviewedPR]
+      }),
+      config,
+      existingBranches: new Set()
+    })
+    expect(plan.removals[0]?.forgetHandledKey).toBeUndefined()
+  })
+
+  it('leaves the workspace alone when the setting is off', () => {
+    const plan = buildWorkspaceStatusRulePlan({
+      targets: [makeTarget()],
+      snapshot: makeSnapshot({ linkedPullRequests: [reviewedPR] }),
+      config: { ...config, onReviewed: 'none' },
+      existingBranches: new Set()
+    })
+    expect(plan.removals).toStrictEqual([])
+  })
+
+  it('re-opens a reviewed pull request on the commit that review was left on', () => {
+    const plan = buildWorkspaceStatusRulePlan({
+      targets: [],
+      snapshot: makeSnapshot({
+        reviewRequestedPullRequests: [
+          {
+            ...reviewedPR,
+            requestedReviewers: [{ kind: 'user', login: 'frbarbre' }]
+          }
+        ]
+      }),
+      config: { ...config, reviewInbox: { ...config.reviewInbox, enabled: true } },
+      existingBranches: new Set()
+    })
+    expect(plan.creations.map((entry) => entry.sinceReviewCommit)).toStrictEqual(['reviewed-sha'])
+  })
+
+  it('opens a first review on the whole pull request', () => {
+    const plan = buildWorkspaceStatusRulePlan({
+      targets: [],
+      snapshot: makeSnapshot({
+        reviewRequestedPullRequests: [
+          makePR({
+            author: 'colleague',
+            requestedReviewers: [{ kind: 'user', login: 'frbarbre' }]
+          })
+        ]
+      }),
+      config: { ...config, reviewInbox: { ...config.reviewInbox, enabled: true } },
+      existingBranches: new Set()
+    })
+    expect(plan.creations.map((entry) => entry.sinceReviewCommit)).toStrictEqual([undefined])
   })
 })

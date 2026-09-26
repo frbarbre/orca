@@ -78,6 +78,35 @@ export function resolveWorkspaceStatusRuleCondition(
   return 'review'
 }
 
+export type ViewerReviewStanding = {
+  /** The viewer has left a verdict that ends their turn. */
+  isFinished: boolean
+  /** The viewer is on the hook again, so the pull request is theirs to look at. */
+  isOwed: boolean
+  /** The commit that verdict was left on, for a workspace re-opened later. */
+  commitOid: string | null
+}
+
+// Why both halves: GitHub keeps the old review after a re-request, so a finished
+// verdict alone never expires. What ends it is the viewer reappearing among the
+// pending reviewers, which is exactly the re-request.
+export function readViewerReviewStanding(
+  pr: ReviewSnapshotPullRequest,
+  viewerLogin: string | null
+): ViewerReviewStanding {
+  const viewer = viewerLogin?.toLowerCase() ?? null
+  if (!viewer) {
+    return { isFinished: false, isOwed: false, commitOid: null }
+  }
+  const review = pr.latestReviews.find((entry) => entry.login.toLowerCase() === viewer)
+  const isOwed = pendingUserReviewerLogins(pr).includes(viewer)
+  return {
+    isFinished: !isOwed && (review?.state === 'APPROVED' || review?.state === 'CHANGES_REQUESTED'),
+    isOwed,
+    commitOid: review?.commitOid ?? null
+  }
+}
+
 export function lowercaseLoginSet(logins: readonly string[]): ReadonlySet<string> {
   return new Set(logins.map((login) => login.toLowerCase()))
 }

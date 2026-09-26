@@ -33,7 +33,7 @@ const PR_FIELDS_FRAGMENT = `fragment SnapshotPR on PullRequest {
     }
   }
   latestReviews(first: 20) {
-    nodes { state author { login } }
+    nodes { state author { login } commit { oid } }
   }
   commits(last: 1) {
     nodes {

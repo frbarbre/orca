@@ -9,7 +9,11 @@ import {
   type WorkspaceStatusRuleCondition,
   type WorkspaceStatusRuleConfig
 } from './workspace-status-rule-config'
-import { lowercaseLoginSet, resolveWorkspaceStatusRule } from './workspace-status-rules'
+import {
+  lowercaseLoginSet,
+  readViewerReviewStanding,
+  resolveWorkspaceStatusRule
+} from './workspace-status-rules'
 import type { WorkspaceStatus } from './worktree/types'
 
 /** The inbox search returns at most one page, so this is the real ceiling on a
@@ -24,6 +28,8 @@ export type WorkspaceStatusRuleTarget = {
   repo: GitHubRepositoryIdentity
   prNumber: number
   currentStatus: WorkspaceStatus | null
+  /** Unsent review comments live in metadata, not the tree, so git would not refuse the delete. */
+  hasPendingReviewComments: boolean
 }
 
 export type WorkspaceStatusRulePlan = {
@@ -34,8 +40,19 @@ export type WorkspaceStatusRulePlan = {
     condition: WorkspaceStatusRuleCondition
   }[]
   /** Attempted with force off, so Git refuses one holding uncommitted work or a live agent. */
-  removals: { worktreeId: string; executionHostId: ExecutionHostId; displayName: string }[]
-  creations: { pr: ReviewSnapshotPullRequest; handledKey: string }[]
+  removals: {
+    worktreeId: string
+    executionHostId: ExecutionHostId
+    displayName: string
+    /** Set when the pull request should be eligible for the inbox again later. */
+    forgetHandledKey?: string
+  }[]
+  creations: {
+    pr: ReviewSnapshotPullRequest
+    handledKey: string
+    /** Present on a pull request reviewed before, so the diff opens on what changed since. */
+    sinceReviewCommit?: string
+  }[]
 }
 
 function emptyPlan(): WorkspaceStatusRulePlan {
@@ -71,6 +88,9 @@ export function buildWorkspaceStatusRulePlan(args: {
   const plan = emptyPlan()
   const pmTeamLogins = lowercaseLoginSet(snapshot.pmApprovalTeamLogins)
   const byKey = indexSnapshotPRs(snapshot.linkedPullRequests)
+  const inboxKeys = new Set(
+    snapshot.reviewRequestedPullRequests.map((pr) => snapshotKey(pr.repo, pr.number))
+  )
 
   for (const target of targets) {
     const pr = byKey.get(snapshotKey(target.repo, target.prNumber))
@@ -89,6 +109,25 @@ export function buildWorkspaceStatusRulePlan(args: {
         worktreeId: target.worktreeId,
         executionHostId: target.executionHostId,
         displayName: target.displayName
+      })
+      continue
+    }
+    if (
+      condition === 'reviewing' &&
+      config.onReviewed === 'delete' &&
+      !target.hasPendingReviewComments &&
+      readViewerReviewStanding(pr, snapshot.viewerLogin).isFinished
+    ) {
+      plan.removals.push({
+        worktreeId: target.worktreeId,
+        executionHostId: target.executionHostId,
+        displayName: target.displayName,
+        // Why conditional: the ledger is what stops the inbox re-creating a workspace it
+        // already made, and forgetting a pull request still listed as owed this tick would
+        // have it cloned straight back. A later re-request brings it back on its own.
+        forgetHandledKey: inboxKeys.has(snapshotKey(pr.repo, pr.number))
+          ? undefined
+          : makeHandledPullRequestKey(pr.repo, pr.number)
       })
       continue
     }
@@ -122,7 +161,14 @@ export function buildWorkspaceStatusRulePlan(args: {
       continue
     }
     if (plan.creations.length < maxCreations) {
-      plan.creations.push({ pr, handledKey })
+      const standing = readViewerReviewStanding(pr, snapshot.viewerLogin)
+      plan.creations.push({
+        pr,
+        handledKey,
+        // Why only when a review exists: a first look wants the whole pull request, and a
+        // re-request wants what the author changed in answer to it.
+        sinceReviewCommit: standing.commitOid ?? undefined
+      })
     }
   }
   return plan

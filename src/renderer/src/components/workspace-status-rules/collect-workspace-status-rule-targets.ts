@@ -65,7 +65,8 @@ export function collectWorkspaceStatusRuleScope(
       displayName: worktree.displayName,
       repo: pr.prRepo,
       prNumber: pr.number,
-      currentStatus: worktree.workspaceStatus ?? null
+      currentStatus: worktree.workspaceStatus ?? null,
+      hasPendingReviewComments: (worktree.pendingReviewComments?.length ?? 0) > 0
     })
     scope.linkedPullRequests.push({ repo: pr.prRepo, number: pr.number })
   }

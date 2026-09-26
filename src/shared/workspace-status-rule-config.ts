@@ -32,6 +32,8 @@ export type WorkspaceStatusRuleConfig = {
   pmApprovalTeam: string | null
   /** What to do once a pull request is merged or closed without merging. */
   onResolved: 'delete' | 'none'
+  /** What to do once you have approved or requested changes on someone else's pull request. */
+  onReviewed: 'delete' | 'none'
   reviewInbox: WorkspaceStatusRuleReviewInbox
   /** `owner/repo#number` keys already acted on, so a create never repeats. */
   handledPullRequests: string[]
@@ -70,6 +72,7 @@ export function cloneDefaultWorkspaceStatusRuleConfig(): WorkspaceStatusRuleConf
     mergingCheckName: DEFAULT_MERGING_CHECK_NAME,
     pmApprovalTeam: null,
     onResolved: 'none',
+    onReviewed: 'none',
     reviewInbox: {
       enabled: false,
       agent: 'claude',
@@ -164,6 +167,7 @@ export function normalizeWorkspaceStatusRuleConfig(value: unknown): WorkspaceSta
     ),
     pmApprovalTeam,
     onResolved: raw.onResolved === 'delete' ? 'delete' : 'none',
+    onReviewed: raw.onReviewed === 'delete' ? 'delete' : 'none',
     reviewInbox: sanitizeReviewInbox(raw.reviewInbox),
     handledPullRequests:
       raw.ledgerVersion === SEED_LEDGER_VERSION

@@ -15,6 +15,7 @@ import type { ChecksPanelComposerState } from './use-checks-panel-composer-state
 import type { ChecksPanelContextState } from './use-checks-panel-context-state'
 import { checksPanelAsyncResultKey } from '../checks-panel-async-result-key'
 import { isMutablePRConversationComment } from './comment-controls'
+import { isEditablePublishedReviewComment } from '@/components/pending-review/editable-published-comment'
 import type { GitHubReactionContent, PRComment } from '../../../../../shared/github/comment-types'
 import { translate } from '@/i18n/i18n'
 
@@ -90,7 +91,36 @@ export function useChecksPanelCommentMutations(model: ChecksPanelCommentMutation
 
   const handleEditComment = useCallback(
     async (comment: PRComment, body: string): Promise<boolean> => {
-      if (!pr?.prRepo || !isMutablePRConversationComment(comment)) {
+      if (!pr?.prRepo) {
+        return false
+      }
+      // Why a separate call: an inline review comment is not an issue comment, so the
+      // conversation endpoint cannot reach it.
+      if (isEditablePublishedReviewComment(comment)) {
+        if (!repo || !comment.reactionSubjectId) {
+          return false
+        }
+        const edit = await window.api.pendingReview.updateComment({
+          repoPath: repo.path,
+          prRepo: pr.prRepo,
+          connectionId: repo.connectionId,
+          commentNodeId: comment.reactionSubjectId,
+          body
+        })
+        if (!edit.ok) {
+          toast.error(edit.error)
+          return false
+        }
+        setComments((prev) =>
+          prev.map((entry) =>
+            entry.id === comment.id
+              ? { ...entry, body: edit.body, lastEditedAt: edit.lastEditedAt ?? undefined }
+              : entry
+          )
+        )
+        return true
+      }
+      if (!isMutablePRConversationComment(comment)) {
         return false
       }
       const result = await window.api.gh.updateIssueCommentBySlug({
@@ -109,7 +139,7 @@ export function useChecksPanelCommentMutations(model: ChecksPanelCommentMutation
       )
       return true
     },
-    [pr?.prRepo, setComments]
+    [pr?.prRepo, repo, setComments]
   )
 
   const handleDeleteComment = useCallback(

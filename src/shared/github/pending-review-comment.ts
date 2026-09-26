@@ -27,6 +27,19 @@ export type SubmitReviewVerdictResult =
   | { ok: true; url: string; state: string }
   | { ok: false; error: string }
 
+export type UpdatePublishedCommentRequest = {
+  repoPath: string
+  prRepo?: GitHubRepositoryIdentity | null
+  connectionId?: string | null
+  /** The comment's GraphQL node id, which locates it without an owner or a number. */
+  commentNodeId: string
+  body: string
+}
+
+export type UpdatePublishedCommentResult =
+  | { ok: true; body: string; lastEditedAt: string | null }
+  | { ok: false; error: string }
+
 const MAX_PENDING_REVIEW_COMMENTS = 200
 
 export function addPendingReviewComment(

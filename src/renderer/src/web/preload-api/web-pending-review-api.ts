@@ -10,6 +10,11 @@ export function createWebPendingReviewApi(): Pick<PreloadApi, 'pendingReview'> {
           ok: false as const,
           error: 'Reviews are submitted from the desktop app.'
         }),
+      updateComment: () =>
+        Promise.resolve({
+          ok: false as const,
+          error: 'Comments are edited from the desktop app.'
+        }),
       context: () =>
         Promise.resolve({
           viewerDidAuthor: false,

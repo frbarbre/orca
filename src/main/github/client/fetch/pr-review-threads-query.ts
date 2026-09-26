@@ -18,6 +18,8 @@ query($owner: String!, $repo: String!, $pr: Int!) {
               author { __typename login avatarUrl(size: 48) }
               body
               createdAt
+              lastEditedAt
+              viewerCanUpdate
               url
               path
               reactionGroups {
@@ -38,6 +40,8 @@ query($owner: String!, $repo: String!, $pr: Int!) {
           author { __typename login avatarUrl(size: 48) }
           body
           createdAt
+          lastEditedAt
+          viewerCanUpdate
           url
           reactionGroups {
             content
@@ -55,6 +59,8 @@ query($owner: String!, $repo: String!, $pr: Int!) {
           author { __typename login avatarUrl(size: 48) }
           body
           createdAt
+          lastEditedAt
+          viewerCanUpdate
           url
           reactionGroups {
             content

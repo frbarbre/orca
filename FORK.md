@@ -261,6 +261,36 @@ missing, and that mapping is the thing to keep if this is ever rewritten.
 | `src/main/github/review-verdict-mutation.ts`, `submit-review-verdict.ts`, `pending-review-api.ts` | `viewerLatestReview { commit { oid } }` and `baseRefName` on the context query. |
 | `source-control/panel/branch-context-row.tsx` | A min height on the HEAD line. The line-total chip unmounts while a new base compares and the row is a hair taller with it, so the panel jumped on every switch. |
 
+
+#### Editing a comment that is already on the pull request
+
+GitHub lets the author rewrite an inline review comment, but orca only had an edit path for
+top-level conversation comments (`isMutablePRConversationComment` refuses anything with a
+`threadId` or a `path`). Inline comments now edit too, through the fork's own
+`pending-review:update-comment` channel rather than a second REST namespace.
+
+Three things worth keeping:
+
+- The gate is **`viewerCanUpdate`**, which GitHub answers itself. Comparing the comment's author
+  to the viewer's login cannot see organization or repository permissions.
+- **Edit is offered where delete is not.** Orca has no path for removing an inline comment, so the
+  more-menu gates the two actions separately.
+- The mutation passes its body as a GraphQL **variable** (`gh api -f`), unlike the verdict, whose
+  nested `threads` array has to be embedded in the document.
+
+An `(edited)` marker comes from `lastEditedAt`, which the review-threads query now selects for
+inline comments, conversation comments and review summaries alike.
+
+| File | What is ours |
+| --- | --- |
+| `src/main/github/update-published-comment.ts` | New. The `updatePullRequestReviewComment` mutation. |
+| `src/renderer/src/components/pending-review/editable-published-comment.ts` (+ test) | New. The `viewerCanUpdate` gate. |
+| `src/main/github/client/fetch/pr-review-threads-query.ts` | `lastEditedAt` and `viewerCanUpdate` on all three comment selections. |
+| `src/main/github/client/fetch/get-pr-comments.ts`, `src/shared/github/comment-types.ts` | Those two fields mapped onto `PRComment`. |
+| `checks-panel/comment-row.tsx` | `canEditComment` beside `canMutateComment`, and the `(edited)` marker in both layouts. |
+| `checks-panel/use-checks-panel-comment-mutations.tsx` | The inline branch of `handleEditComment`. |
+| `src/renderer/src/web/web-preload-api-composition.test.ts` | `pendingReview` added to the enumerated web surface — the review-mode merge left this red. |
+
 ### 5. Editor theming from a VS Code theme file
 
 Loads `~/.orca/themes/editor-dark.json` / `editor-light.json` (any VS Code theme) and registers them

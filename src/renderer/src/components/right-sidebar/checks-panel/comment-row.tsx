@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils'
 import CommentMarkdown from '@/components/sidebar/CommentMarkdown'
 import { CommentReactions } from '@/components/github/CommentReactions'
 import { isBotPRComment } from '../../../../../shared/pr-comment-audience'
+import { isEditablePublishedReviewComment } from '@/components/pending-review/editable-published-comment'
 import type { GitHubReactionContent, PRComment } from '../../../../../shared/github/comment-types'
 import type { PRCommentGroupActionState } from '@/lib/pr-comment-action-state'
 import type { PRCommentPresentationClasses } from '../pr-comment-presentation'
@@ -72,6 +73,9 @@ export function CommentRow({
 }): React.JSX.Element {
   const automated = isBotPRComment(comment, botAuthorOverrides)
   const canMutateComment = forceMutable || isMutablePRConversationComment(comment)
+  // Why edit is wider than delete: the provider lets the author rewrite an inline review
+  // comment, but orca has no path for removing one, so the menu must not offer it.
+  const canEditComment = canMutateComment || isEditablePublishedReviewComment(comment)
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(comment.body)
   const [submittingEdit, setSubmittingEdit] = useState(false)
@@ -161,6 +165,20 @@ export function CommentRow({
   const trimmedDraft = draft.trim()
   const canSaveEdit = !submittingEdit && trimmedDraft.length > 0 && trimmedDraft !== comment.body
   const relativeTime = formatPrCommentRelativeTime(comment.createdAt, now)
+  // Why a marker and not a second timestamp: the provider only says that the body changed,
+  // and two times side by side read as two comments.
+  const editedMarker = comment.lastEditedAt ? (
+    <span
+      className="text-muted-foreground"
+      title={translate(
+        'auto.components.right.sidebar.checks.panel.content.editedTitle',
+        'Edited {{value0}}',
+        { value0: formatPrCommentRelativeTime(comment.lastEditedAt, now) ?? '' }
+      )}
+    >
+      {translate('auto.components.right.sidebar.checks.panel.content.edited', '(edited)')}
+    </span>
+  ) : null
 
   const authorAvatar = comment.authorAvatarUrl ? (
     <img
@@ -213,7 +231,7 @@ export function CommentRow({
       <CommentMoreMenu
         comment={comment}
         botAuthorOverrides={botAuthorOverrides}
-        onStartEdit={canMutateComment && onEditComment ? handleStartEdit : undefined}
+        onStartEdit={canEditComment && onEditComment ? handleStartEdit : undefined}
         onDelete={canMutateComment && onDeleteComment ? handleDelete : undefined}
         onQueueForAgent={!isReply ? onQueueForAgent : undefined}
       />
@@ -239,6 +257,7 @@ export function CommentRow({
         }
       >
         {relativeTime ? <span>{relativeTime}</span> : null}
+        {editedMarker}
         {/* Why the negative margin: the row's gap sits on both sides of the separator, which spaces
             a single glyph as widely as the fields it divides. */}
         {relativeTime && pathBadge ? (
@@ -305,6 +324,7 @@ export function CommentRow({
             {presentation.useCardLayout ? `· ${relativeTime}` : relativeTime}
           </span>
         ) : null}
+        {editedMarker}
         {automated && (
           <span className={presentation.botBadge}>
             {translate('auto.components.right.sidebar.checks.panel.content.2ba0a32bdd', 'bot')}

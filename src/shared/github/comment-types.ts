@@ -22,6 +22,8 @@ export type PRComment = {
   authorAvatarUrl: string
   body: string
   createdAt: string
+  /** Set by the provider only when the comment has been edited since it was posted. */
+  lastEditedAt?: string
   url: string
   reactions?: GitHubReaction[]
   /** GraphQL node ID for GitHub comments that support reaction mutations. */
@@ -39,6 +41,9 @@ export type PRComment = {
   line?: number
   /** Start line of the review annotation range (1-based). Absent for single-line comments. */
   startLine?: number
+  /** The provider's own answer to whether this viewer may edit the comment. Preferred over
+   *  comparing logins, which cannot see organization or repository permissions. */
+  viewerCanUpdate?: boolean
   /** True when GitHub identifies the author as a bot (REST `user.type === 'Bot'` or
    *  GraphQL `__typename === 'Bot'`). Preferred over login-string heuristics because
    *  third-party review bots (e.g. qodo-ai-reviewer, coderabbitai) don't follow a

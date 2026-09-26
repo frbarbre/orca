@@ -1,6 +1,8 @@
 import type {
   SubmitReviewVerdictRequest,
-  SubmitReviewVerdictResult
+  SubmitReviewVerdictResult,
+  UpdatePublishedCommentRequest,
+  UpdatePublishedCommentResult
 } from '../../shared/github/pending-review-comment'
 
 export type PendingReviewContextRequest = Pick<
@@ -11,6 +13,8 @@ export type PendingReviewContextRequest = Pick<
 export type PendingReviewApi = {
   /** Sends the queued comments and the verdict as one review. */
   submit: (request: SubmitReviewVerdictRequest) => Promise<SubmitReviewVerdictResult>
+  /** Rewrites the body of an inline review comment already on the pull request. */
+  updateComment: (request: UpdatePublishedCommentRequest) => Promise<UpdatePublishedCommentResult>
   /** What the viewer is allowed to do on this pull request. */
   context: (request: PendingReviewContextRequest) => Promise<{
     viewerDidAuthor: boolean

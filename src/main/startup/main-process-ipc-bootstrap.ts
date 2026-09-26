@@ -6,7 +6,11 @@ import { resolveOpenedMarkdownDocuments } from './os-opened-markdown-files'
 import { loadCustomEditorThemes } from '../editor-theme/custom-editor-theme'
 import { getReviewStatusSnapshot } from '../github/review-status-snapshot'
 import { getPullRequestReviewContext, submitReviewVerdict } from '../github/submit-review-verdict'
-import type { SubmitReviewVerdictRequest } from '../../shared/github/pending-review-comment'
+import { updatePublishedReviewComment } from '../github/update-published-comment'
+import type {
+  SubmitReviewVerdictRequest,
+  UpdatePublishedCommentRequest
+} from '../../shared/github/pending-review-comment'
 import type { ReviewStatusSnapshotRequest } from '../../shared/github/review-status-snapshot-types'
 
 export function registerMainProcessIpcHandlers(): void {
@@ -20,6 +24,11 @@ export function registerMainProcessIpcHandlers(): void {
 
   ipcMain.handle('pending-review:submit', (_event, request: SubmitReviewVerdictRequest) =>
     submitReviewVerdict(request)
+  )
+
+  ipcMain.handle(
+    'pending-review:update-comment',
+    (_event, request: UpdatePublishedCommentRequest) => updatePublishedReviewComment(request)
   )
 
   ipcMain.handle(

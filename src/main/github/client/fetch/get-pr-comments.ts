@@ -114,6 +114,8 @@ export async function getPRComments(
             author: { __typename?: string; login: string; avatarUrl: string } | null
             body: string
             createdAt: string
+            lastEditedAt: string | null
+            viewerCanUpdate?: boolean
             url: string
             path: string
             reactionGroups?: GitHubGraphQLReactionGroup[] | null
@@ -126,6 +128,8 @@ export async function getPRComments(
         author: { __typename?: string; login: string; avatarUrl: string } | null
         body: string
         createdAt: string
+        lastEditedAt: string | null
+        viewerCanUpdate?: boolean
         url: string
         reactionGroups?: GitHubGraphQLReactionGroup[] | null
       }
@@ -155,6 +159,7 @@ export async function getPRComments(
           authorAvatarUrl: c.author?.avatarUrl ?? '',
           body: c.body ?? '',
           createdAt: c.createdAt,
+          lastEditedAt: c.lastEditedAt ?? undefined,
           url: c.url,
           isBot: c.author?.__typename === 'Bot',
           reactionSubjectId: c.id,
@@ -173,6 +178,7 @@ export async function getPRComments(
                 authorAvatarUrl: review.author?.avatarUrl ?? '',
                 body: review.body,
                 createdAt: review.createdAt,
+                lastEditedAt: review.lastEditedAt ?? undefined,
                 url: review.url,
                 isBot: review.author?.__typename === 'Bot',
                 reactionSubjectId: review.id,
@@ -189,6 +195,8 @@ export async function getPRComments(
               authorAvatarUrl: c.author?.avatarUrl ?? '',
               body: c.body ?? '',
               createdAt: c.createdAt,
+              lastEditedAt: c.lastEditedAt ?? undefined,
+              viewerCanUpdate: c.viewerCanUpdate,
               url: c.url,
               isBot: c.author?.__typename === 'Bot',
               reactionSubjectId: c.id,

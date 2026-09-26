@@ -18,6 +18,10 @@ const FORK_REPO_URL = 'https://github.com/frbarbre/orca'
  *
  * Set ORCA_UPDATE_AUTO_INSTALL=1 to keep the normal download-and-install path once the build is
  * signed.
+ *
+ * On macOS the fork installs its own updates by replacing the bundle (see `fork-self-install.ts`),
+ * which never asks Squirrel. Manual-install mode stays the fallback for every other case, and
+ * ORCA_UPDATE_NO_SELF_INSTALL=1 returns to it.
  */
 export function isManualInstallOnlyUpdate(): boolean {
   return process.env.ORCA_UPDATE_MANUAL_INSTALL === '1'
@@ -40,6 +44,11 @@ export function armForkUpdateChannel(isPackaged: boolean): void {
   process.env.ORCA_UPDATE_FEED_URL ??= `${process.env.ORCA_RELEASES_REPO_URL}/releases/latest/download`
   if (process.env.ORCA_UPDATE_AUTO_INSTALL !== '1') {
     process.env.ORCA_UPDATE_MANUAL_INSTALL = '1'
+    // Why macOS only: the bundle swap is a macOS app-directory move, and it is the platform
+    // where Squirrel refuses the unsigned build in the first place.
+    if (process.platform === 'darwin' && process.env.ORCA_UPDATE_NO_SELF_INSTALL !== '1') {
+      process.env.ORCA_UPDATE_SELF_INSTALL = '1'
+    }
   }
 }
 

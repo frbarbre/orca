@@ -77,6 +77,38 @@ Two rules, both learned the hard way:
 | `config/electron-builder.config.cjs`           | `owner: process.env.ORCA_PUBLISH_OWNER ?? 'frbarbre'` and `releaseType: … : 'release'`.                                                                                                          |
 | `.github/workflows/fork-release.yml`           | Whole file (new).                                                                                                                                                                                |
 
+#### The fork installs its own updates (macOS)
+
+The app used to only notify, because macOS hands the swap to Squirrel.Mac and Squirrel refuses a
+bundle whose signature it cannot validate. The way past that is not to sign — it is not to involve
+Squirrel. `fork-install/` downloads the release zip, replaces `/Applications/Orca.app` itself and
+relaunches. Manual install stays the fallback (`ORCA_UPDATE_NO_SELF_INSTALL=1`).
+
+Four things verified on a real machine before this was written, each of which the design depends on:
+
+- **No `sudo`.** `/Applications` is `drwxrwxr-x root:admin` and the user is in `admin`, so an app
+  they installed can replace its own bundle with no password prompt.
+- **A detached child outlives the app.** `spawn(..., { detached: true, stdio: 'ignore' })` plus
+  `unref()` survives the parent exiting, which is precisely what the script waits for.
+- **Downloading in-process avoids Gatekeeper entirely.** `com.apple.quarantine` is set by the
+  *downloader*, not by the act of downloading; a file written by Node gets only
+  `com.apple.provenance`, which Gatekeeper does not act on. The script still strips quarantine
+  defensively.
+- **`codesign -v` cannot be the gate.** It fails on a perfectly good install of this fork — "code
+  has no resources but signature indicates they must be present" — because the bundles are ad-hoc
+  signed without sealed resources. Integrity is the manifest's **sha512**, checked before anything
+  is swapped; the script then only checks that the archive expanded into something launchable.
+
+The swap moves the old bundle to `Orca.app.previous` rather than deleting it, so a failed install is
+one `mv` from recovery, and every failure path relaunches the version that is still installed.
+`ditto` does the expanding, not `unzip`, which does not preserve bundle symlinks or permissions.
+
+| File | What is ours |
+| --- | --- |
+| `src/main/updater/fork-install/*` (+ tests) | Whole directory (new): manifest parsing, the checksum-gated download, the settings backup, the swap script and the orchestrator. |
+| `src/main/updater/updater-manual-install.ts` | Arms `ORCA_UPDATE_SELF_INSTALL` on macOS. |
+| `src/main/updater/updater-download-install.ts` | The self-install branch of `downloadUpdate`, and the early return in `quitAndInstall`. |
+
 Two things that are **not** ours and must not be changed:
 
 - `appId` stays `com.stablyai.orca`. Changing it orphans the installed app's settings and worktrees.
@@ -379,9 +411,14 @@ clean checkout.
 GitHub-hosted macOS runner and publishes to this fork's releases, which is where the installed app
 looks.
 
-The app **notifies** about a new release and opens the release page; it never installs. That is
-deliberate: macOS hands the swap to Squirrel.Mac, which refuses a bundle whose signature it cannot
-verify, and this fork has no Developer ID. Install the DMG by hand.
+On macOS the app now installs the release itself: it downloads the zip, verifies the manifest
+checksum, backs up the settings JSON, replaces `/Applications/Orca.app` and relaunches. The previous
+version is kept beside it as `Orca.app.previous` until the next update.
+
+Everywhere else it still only notifies and opens the release page, because the bundle swap is a
+macOS app-directory move. Installing a DMG by hand also still works; strip quarantine first with
+`xattr -dr com.apple.quarantine /Applications/Orca.app`, which is what a browser download sets and
+an in-app download does not.
 
 ## PR previews
 

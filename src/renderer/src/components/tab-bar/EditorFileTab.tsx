@@ -8,7 +8,7 @@ import { getEditorDisplayLabel } from '@/components/editor/editor-labels'
 import { renameFileOnDisk } from '@/lib/rename-file'
 import { isImeCompositionKeyDown } from '@/lib/ime-composition-keyboard-event'
 import { detectLanguage } from '@/lib/language-detect'
-import { UnresolvedThreadBadge } from '@/components/pr-comments/UnresolvedThreadBadge'
+import { DiffFileCommentBadges } from '@/components/pending-review/DiffFileCommentBadges'
 import { getFileTypeIcon } from '@/lib/file-type-icons'
 import { useRepoById, useWorktreeById } from '@/store/selectors'
 import { useAppStore } from '@/store'
@@ -367,7 +367,7 @@ export default function EditorFileTab({
         )}
       </span>
       {isDiff ? (
-        <UnresolvedThreadBadge worktreeId={file.worktreeId ?? null} path={file.relativePath} />
+        <DiffFileCommentBadges worktreeId={file.worktreeId ?? null} path={file.relativePath} />
       ) : null}
       {/* Dirty dot and close button share the same slot to prevent tab width shift during auto-save.
          When dirty: dot is shown, close button appears on hover (replacing the dot).

@@ -50,7 +50,14 @@ export function useDiffReviewComment({
 
   // Why recomputed on every diff update rather than once: the modified side is the working tree,
   // which changes under the viewer while a review is open.
-  const [commentableLines, setCommentableLines] = useState<ReadonlySet<number>>(() => new Set())
+  //
+  // Why null rather than an empty set until it is known, and why seeded synchronously: an empty
+  // set reads as "no line takes a comment", so the first paint disabled the review destinations
+  // and `resolveMode` fell back to the agent tab -- the popover opened on the wrong tab and
+  // visibly switched a frame later, once this effect had run.
+  const [commentableLines, setCommentableLines] = useState<ReadonlySet<number> | null>(() =>
+    diffEditor ? collectReviewCommentableLines(diffEditor.getLineChanges()) : null
+  )
   useEffect(() => {
     if (!diffEditor) {
       return
@@ -69,6 +76,10 @@ export function useDiffReviewComment({
           'auto.components.diff.comments.useDiffReviewComment.noPullRequest',
           'This diff is not part of a pull request.'
         )
+      }
+      // Why unknown never disables: see the note on the state above.
+      if (commentableLines === null) {
+        return undefined
       }
       if (!commentableLines.has(lineNumber)) {
         return translate(

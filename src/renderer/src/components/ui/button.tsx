@@ -16,6 +16,11 @@ const buttonVariants = cva(
           'border border-border bg-background text-foreground shadow-xs hover:border-muted-foreground/35 hover:bg-accent hover:text-accent-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50',
         secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80',
         ghost: 'hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50',
+        // Why not `destructive`: that is a filled red button, which overstates a discard
+        // sitting beside an ordinary Edit. This keeps the weight of a ghost and the warning
+        // of the destructive token.
+        'ghost-destructive':
+          'text-destructive hover:bg-destructive/10 hover:text-destructive dark:hover:bg-destructive/20',
         link: 'text-primary underline-offset-4 hover:underline'
       },
       size: {

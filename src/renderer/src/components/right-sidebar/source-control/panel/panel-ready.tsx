@@ -100,13 +100,11 @@ export function SourceControlPanelReady(props: SourceControlPanelReadyProps) {
           manualReviewUrl={manualReviewUrl}
         />
 
-        {/* Why: hidden when empty — a review is queued from the diff view, so an empty shelf is pure chrome. */}
-        {pendingReviewQueue.comments.length > 0 && (
-          <SourceControlPendingReviewShelf
-            queue={pendingReviewQueue}
-            onSubmit={submitReviewVerdict}
-          />
-        )}
+        {/* Why not gated on drafts: a verdict stands on its own — an approve needs no comments. */}
+        <SourceControlPendingReviewShelf
+          queue={pendingReviewQueue}
+          submitter={submitReviewVerdict}
+        />
 
         {/* Why: hidden when count is 0 — notes are created from the diff view, so an empty Notes shelf here is pure chrome. */}
         {activeWorktreeId && worktreePath && diffCommentCount > 0 && (

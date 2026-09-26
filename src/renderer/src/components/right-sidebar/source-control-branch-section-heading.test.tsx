@@ -47,6 +47,7 @@ function render(
       activeOpenRowKeys={new Set()}
       activeOpenRowKey={null}
       reviewThreadCountByPath={new Map()}
+      pendingReviewCountByPath={new Map()}
     />
   )
 }

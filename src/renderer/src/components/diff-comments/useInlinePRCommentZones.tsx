@@ -1,7 +1,10 @@
 import { useEffect, useRef } from 'react'
 import type { editor as monacoEditor } from 'monaco-editor'
 import { createRoot, type Root } from 'react-dom/client'
-import { installDiffCommentZoneMouseDownStopper } from './diff-comment-zone-mouse-events'
+import {
+  installDiffCommentZoneKeyStopper,
+  installDiffCommentZoneMouseDownStopper
+} from './diff-comment-zone-mouse-events'
 import { resizeDiffCommentZone, type ZoneEntry } from './diff-comment-view-zone-entry'
 import { selectInlinePRCommentPlacements } from './inline-pr-comment-placement'
 import { PendingReviewCommentCard } from '@/components/pending-review/PendingReviewCommentCard'
@@ -89,9 +92,10 @@ export function useInlinePRCommentZones({
         entry.root.render(
           <PendingReviewCommentCard
             comment={placement.comment}
+            inDiff
+            onContentResize={() => resizeDiffCommentZone(editor, entry)}
             onChangeBody={(body) => pendingRef.current.updateBody(placement.comment.id, body)}
             onRemove={() => pendingRef.current.remove(placement.comment.id)}
-            onContentResize={() => resizeDiffCommentZone(editor, entry)}
           />
         )
         return
@@ -143,6 +147,7 @@ export function useInlinePRCommentZones({
         dom.className = 'orca-inline-pr-comment'
         // Swallow mousedown so clicking the card does not move the editor's cursor or start a drag.
         const stopMouseDown = installDiffCommentZoneMouseDownStopper(dom)
+        const stopKeys = installDiffCommentZoneKeyStopper(dom)
 
         // Why pinned: a view zone lives in the scrolling content layer and inherits the *content*
         // width, which long code lines make far wider than the pane. The card was rendering past
@@ -157,6 +162,7 @@ export function useInlinePRCommentZones({
         const layoutSub = editor.onDidLayoutChange(pinHorizontally)
         const disposeMouseDownStopper = (): void => {
           stopMouseDown()
+          stopKeys()
           scrollSub.dispose()
           layoutSub.dispose()
         }

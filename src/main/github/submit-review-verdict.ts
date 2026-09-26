@@ -11,7 +11,9 @@ function asRecord(value: unknown): Record<string, unknown> | null {
   return value && typeof value === 'object' && !Array.isArray(value) ? { ...value } : null
 }
 
-const nodeIdCache = new Map<string, string>()
+type PullRequestFacts = { id: string; viewerDidAuthor: boolean }
+
+const nodeIdCache = new Map<string, PullRequestFacts>()
 
 /** Test seam: the node id is stable for a pull request and cached for the session. */
 export function clearPullRequestNodeIdCache(): void {
@@ -34,12 +36,12 @@ function firstGraphQLError(payload: unknown): string | null {
 
 type GhOptions = Awaited<ReturnType<typeof resolveGitHubRepoExecution>>['ghOptions']
 
-async function resolvePullRequestNodeId(
+async function resolvePullRequestFacts(
   owner: string,
   repo: string,
   number: number,
   ghOptions: GhOptions
-): Promise<string | null> {
+): Promise<PullRequestFacts | null> {
   const key = `${owner}/${repo}#${number}`
   const cached = nodeIdCache.get(key)
   if (cached) {
@@ -55,8 +57,35 @@ async function resolvePullRequestNodeId(
   if (typeof id !== 'string' || !id) {
     return null
   }
-  nodeIdCache.set(key, id)
-  return id
+  const facts: PullRequestFacts = { id, viewerDidAuthor: pullRequest?.viewerDidAuthor === true }
+  nodeIdCache.set(key, facts)
+  return facts
+}
+
+export async function getPullRequestReviewContext(
+  request: Pick<SubmitReviewVerdictRequest, 'repoPath' | 'prNumber' | 'prRepo' | 'connectionId'>
+): Promise<{ viewerDidAuthor: boolean }> {
+  const { ownerRepo, ghOptions } = await resolveGitHubRepoExecution(
+    request.repoPath,
+    request.prRepo,
+    request.connectionId
+  )
+  if (!ownerRepo) {
+    return { viewerDidAuthor: false }
+  }
+  try {
+    const facts = await resolvePullRequestFacts(
+      ownerRepo.owner,
+      ownerRepo.repo,
+      request.prNumber,
+      ghOptions
+    )
+    return { viewerDidAuthor: facts?.viewerDidAuthor === true }
+  } catch {
+    // Why false on failure: a lookup that did not answer must not hide a button the
+    // reviewer is entitled to press.
+    return { viewerDidAuthor: false }
+  }
 }
 
 export async function submitReviewVerdict(
@@ -79,13 +108,13 @@ export async function submitReviewVerdict(
   }
   await acquire()
   try {
-    const pullRequestId = await resolvePullRequestNodeId(
+    const facts = await resolvePullRequestFacts(
       ownerRepo.owner,
       ownerRepo.repo,
       request.prNumber,
       ghOptions
     )
-    if (!pullRequestId) {
+    if (!facts) {
       return { ok: false, error: `Could not find pull request #${request.prNumber}.` }
     }
     noteRepositoryRateLimitSpend(ownerRepo, 'graphql', 2, ghOptions)
@@ -95,7 +124,7 @@ export async function submitReviewVerdict(
         'graphql',
         '-f',
         `query=${buildReviewVerdictMutation({
-          pullRequestId,
+          pullRequestId: facts.id,
           verdict: request.verdict,
           body: request.body,
           comments: request.comments

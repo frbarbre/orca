@@ -194,6 +194,10 @@ vi.mock('@/components/pr-comments/UnresolvedThreadBadge', () => ({
   UnresolvedThreadBadge: () => null
 }))
 
+vi.mock('@/components/pending-review/PendingReviewCountBadge', () => ({
+  PendingReviewCountBadge: () => null
+}))
+
 vi.mock('@/store', () => {
   // Why getKnownWorktreeById is here: a diff tab renders its unresolved-review-thread badge, which
   // resolves the pull request from the tab's worktree, and a store without this reader throws

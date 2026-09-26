@@ -33,6 +33,7 @@ export function SourceControlBranchSection({
   openBranchAllDiffs,
   diffCommentCountByPath,
   reviewThreadCountByPath,
+  pendingReviewCountByPath,
   activeOpenRowKeys,
   activeOpenRowKey
 }: {
@@ -58,6 +59,7 @@ export function SourceControlBranchSection({
   ) => void
   diffCommentCountByPath: Map<string, number>
   reviewThreadCountByPath: Map<string, number>
+  pendingReviewCountByPath: Map<string, number>
   activeOpenRowKeys: ReadonlySet<string>
   activeOpenRowKey: string | null
 }): React.JSX.Element {
@@ -140,6 +142,7 @@ export function SourceControlBranchSection({
                   onOpen={(event) => openCommittedDiff(node.entry, event)}
                   commentCount={diffCommentCountByPath.get(node.entry.path) ?? 0}
                   reviewThreadCount={reviewThreadCountByPath.get(node.entry.path) ?? 0}
+                  pendingReviewCount={pendingReviewCountByPath.get(node.entry.path) ?? 0}
                   isOpenFile={activeOpenRowKeys.has(node.key)}
                   showPathHint={false}
                 />
@@ -163,6 +166,7 @@ export function SourceControlBranchSection({
                 onOpen={(event) => openCommittedDiff(entry, event)}
                 commentCount={diffCommentCountByPath.get(entry.path) ?? 0}
                 reviewThreadCount={reviewThreadCountByPath.get(entry.path) ?? 0}
+                pendingReviewCount={pendingReviewCountByPath.get(entry.path) ?? 0}
                 isOpenFile={activeOpenRowKeys.has(`branch::${entry.path}`)}
               />
             )}

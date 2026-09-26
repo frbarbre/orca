@@ -40,7 +40,8 @@ export function CommentRow({
   onDeleteComment,
   onSetReaction,
   onQueueForAgent,
-  onOpenLocation
+  onOpenLocation,
+  forceMutable = false
 }: {
   comment: PRComment
   botAuthorOverrides: ReadonlySet<string>
@@ -65,9 +66,12 @@ export function CommentRow({
   ) => Promise<boolean>
   onQueueForAgent?: () => void
   onOpenLocation?: (comment: PRComment) => void
+  /** Why an override: the provider's own rules refuse an inline comment, but a draft that
+   *  has not been sent yet is ours to edit or throw away. */
+  forceMutable?: boolean
 }): React.JSX.Element {
   const automated = isBotPRComment(comment, botAuthorOverrides)
-  const canMutateComment = isMutablePRConversationComment(comment)
+  const canMutateComment = forceMutable || isMutablePRConversationComment(comment)
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(comment.body)
   const [submittingEdit, setSubmittingEdit] = useState(false)
@@ -336,7 +340,10 @@ export function CommentRow({
               value={draft}
               onChange={(event) => setDraft(event.target.value)}
               onClick={(event) => event.stopPropagation()}
-              className="min-h-[60px] w-full resize-y rounded-md border border-border bg-background px-2 py-1.5 text-[11px] leading-snug text-foreground"
+              className={cn(
+                'min-h-[60px] w-full resize-y rounded-md border border-border bg-background px-2 py-1.5 text-foreground',
+                presentation.commentEditorText
+              )}
             />
             <div className="flex justify-end gap-1">
               <Button

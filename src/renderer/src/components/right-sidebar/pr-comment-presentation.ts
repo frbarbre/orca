@@ -22,6 +22,8 @@ export type PRCommentPresentationClasses = {
   commentHeader: string
   commentHeaderReply: string
   commentBody: string
+  /** Type scale for the inline editor, so editing does not resize the text being edited. */
+  commentEditorText: string
   commentBodyReply: string
   commentBodyMarkdown: string
   author: string
@@ -45,6 +47,7 @@ export type PRCommentPresentationClasses = {
   sectionTriageLabel: string
   statusBadgeResolved: string
   statusBadgeQueued: string
+  statusBadgePending: string
   commentHeaderPrimary: string
   commentHeaderMeta: string
   /** Indents the card meta row when a selection checkbox precedes the avatar. */
@@ -168,6 +171,7 @@ export function getPRCommentPresentationClasses(
       commentHeader: 'flex min-w-0 items-center gap-1.5',
       commentHeaderReply: 'flex min-w-0 items-center gap-1.5',
       commentBody: 'mt-1 pl-[22px] text-[11px] leading-snug text-muted-foreground',
+      commentEditorText: 'text-[11px] leading-snug',
       commentBodyReply: 'mt-1 pl-5 text-[11px] leading-snug text-muted-foreground',
       commentBodyMarkdown: MARKDOWN_BASE,
       author: 'shrink-0 text-[11px] font-semibold text-foreground',
@@ -195,6 +199,8 @@ export function getPRCommentPresentationClasses(
         'shrink-0 rounded border border-border bg-muted px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground',
       statusBadgeQueued:
         'shrink-0 rounded border border-ring/40 bg-accent px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-foreground',
+      statusBadgePending:
+        'shrink-0 rounded border border-status-warning-border bg-status-warning-background px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-status-warning',
       commentHeaderPrimary: 'flex min-w-0 items-center gap-1.5',
       commentHeaderMeta: '',
       commentHeaderMetaWithSelection: '',
@@ -218,6 +224,7 @@ export function getPRCommentPresentationClasses(
     commentHeader: `flex flex-col gap-1 border-b ${COMMENT_CARD_DIVIDER} ${CARD_COMMENT_HEADER_PADDING}`,
     commentHeaderReply: `flex min-w-0 items-center gap-2 ${CARD_COMMENT_HEADER_PADDING}`,
     commentBody: `${CARD_COMMENT_BODY_PADDING} ${CARD_COMMENT_BODY_SIZE} text-foreground`,
+    commentEditorText: CARD_COMMENT_BODY_SIZE,
     commentBodyReply: `${CARD_COMMENT_BODY_PADDING} ${CARD_COMMENT_BODY_SIZE} text-foreground`,
     commentBodyMarkdown: MARKDOWN_BASE,
     // Why no flex-1: the name grew to fill the row, so the timestamp beside it was carried out to
@@ -251,6 +258,8 @@ export function getPRCommentPresentationClasses(
       'shrink-0 rounded border border-border bg-muted px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground',
     statusBadgeQueued:
       'shrink-0 rounded border border-ring/40 bg-accent px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-foreground',
+    statusBadgePending:
+      'shrink-0 rounded border border-status-warning-border bg-status-warning-background px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-status-warning',
     commentHeaderPrimary: 'flex min-w-0 items-center gap-2',
     commentHeaderMeta: cn(
       CARD_COMMENT_META_INDENT,

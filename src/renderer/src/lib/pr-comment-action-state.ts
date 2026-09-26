@@ -2,7 +2,7 @@ import { getPRCommentGroupRoot, type PRCommentGroup } from '../../../shared/pr-c
 import type { PRComment } from '../../../shared/github/comment-types'
 
 /** How a comment group should read in the PR sidebar triage UI. */
-export type PRCommentGroupActionState = 'open' | 'conversation' | 'resolved'
+export type PRCommentGroupActionState = 'open' | 'conversation' | 'resolved' | 'pending'
 
 /** Whether Orca knows this thread is still open on the host. */
 export function getPRCommentGroupActionState(group: PRCommentGroup): PRCommentGroupActionState {

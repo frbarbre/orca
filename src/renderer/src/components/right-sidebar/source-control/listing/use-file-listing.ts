@@ -20,6 +20,7 @@ import { parseChangedFileRowKey } from '@/store/slices/editor/actions/changed-fi
 import { joinPath } from '@/lib/path'
 import { useSourceControlRowOpening } from './use-row-opening'
 import type { SourceControlWorktreeContext } from './use-worktree-context'
+import { usePendingReviewCountByPath } from '@/components/pending-review/pending-review-count'
 
 /**
  * Projects git status and branch compare into the rows the panel renders, and layers the
@@ -211,6 +212,7 @@ export function useSourceControlFileListing({
     () => buildUnresolvedThreadCountByPath(prCommentGroups),
     [prCommentGroups]
   )
+  const pendingReviewCountByPath = usePendingReviewCountByPath(activeWorktreeId)
 
   // Why the highlighted row rather than the clicked one: stepping with the file-navigation chord
   // moves the highlight without touching the click selection, and the user means whichever row the
@@ -285,6 +287,7 @@ export function useSourceControlFileListing({
 
   return {
     reviewThreadCountByPath,
+    pendingReviewCountByPath,
     activeOpenRowKeys,
     activeOpenRowKey,
     bulkStagePaths,

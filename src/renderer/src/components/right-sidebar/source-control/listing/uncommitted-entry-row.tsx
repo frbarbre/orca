@@ -1,5 +1,14 @@
 import React from 'react'
-import { ChevronDown, MessagesSquare, MessageSquare, Minus, Plus, Trash, Undo2 } from 'lucide-react'
+import {
+  ChevronDown,
+  MessageSquare,
+  MessagesSquare,
+  Minus,
+  PencilLine,
+  Plus,
+  Trash,
+  Undo2
+} from 'lucide-react'
 import { getFileTypeIcon } from '@/lib/file-type-icons'
 import { basename, dirname, joinPath } from '@/lib/path'
 import { cn } from '@/lib/utils'
@@ -49,6 +58,7 @@ export const UncommittedEntryRow = React.memo(function UncommittedEntryRow({
   onDiscard,
   commentCount,
   reviewThreadCount,
+  pendingReviewCount,
   showPathHint = true,
   submoduleExpansion
 }: {
@@ -69,6 +79,7 @@ export const UncommittedEntryRow = React.memo(function UncommittedEntryRow({
   onDiscard: (entry: GitStatusEntry) => void
   commentCount: number
   reviewThreadCount: number
+  pendingReviewCount: number
   showPathHint?: boolean
   // When set, the row is a dirty submodule: clicking toggles lazy expansion instead of opening an uninformative gitlink diff.
   submoduleExpansion?: { isExpanded: boolean; onToggle: () => void }
@@ -207,6 +218,19 @@ export const UncommittedEntryRow = React.memo(function UncommittedEntryRow({
           >
             <MessagesSquare className="size-3" />
             <span className="tabular-nums">{reviewThreadCount}</span>
+          </span>
+        )}
+        {pendingReviewCount > 0 && (
+          <span
+            className="flex shrink-0 items-center gap-0.5 text-[10px] text-status-warning"
+            title={translate(
+              'auto.components.pendingReview.rowBadge',
+              '{{value0}} review comment{{value1}} waiting to be submitted',
+              { value0: pendingReviewCount, value1: pendingReviewCount === 1 ? '' : 's' }
+            )}
+          >
+            <PencilLine className="size-3" />
+            <span className="tabular-nums">{pendingReviewCount}</span>
           </span>
         )}
         {entry.conflictStatus ? (

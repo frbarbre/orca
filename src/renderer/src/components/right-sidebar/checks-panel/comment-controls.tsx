@@ -329,6 +329,13 @@ export function PRCommentActionBadge({
       </span>
     )
   }
+  if (actionState === 'pending') {
+    return (
+      <span className={presentation.statusBadgePending}>
+        {translate('auto.components.right.sidebar.checks.panel.content.pendingBadge', 'Pending')}
+      </span>
+    )
+  }
   if (actionState === 'resolved') {
     return (
       <span className={presentation.statusBadgeResolved}>

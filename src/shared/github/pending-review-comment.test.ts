@@ -77,24 +77,27 @@ describe('normalizePendingReviewComments', () => {
 })
 
 describe('canSubmitReviewVerdict', () => {
-  it('refuses request-changes without a body', () => {
+  it('allows request-changes carried entirely by inline comments', () => {
     expect(canSubmitReviewVerdict({ verdict: 'request-changes', body: ' ', pendingCount: 3 })).toBe(
-      false
-    )
-    expect(
-      canSubmitReviewVerdict({ verdict: 'request-changes', body: 'no', pendingCount: 3 })
-    ).toBe(true)
-  })
-
-  it('allows approve with no body at all', () => {
-    expect(canSubmitReviewVerdict({ verdict: 'approve', body: '', pendingCount: 0 })).toBe(false)
-    expect(canSubmitReviewVerdict({ verdict: 'approve', body: '', pendingCount: 1 })).toBe(true)
-    expect(canSubmitReviewVerdict({ verdict: 'approve', body: 'ship it', pendingCount: 0 })).toBe(
       true
     )
   })
 
-  it('refuses an empty comment review', () => {
+  it('allows every verdict with no body at all', () => {
+    for (const verdict of ['comment', 'approve', 'request-changes'] as const) {
+      expect(canSubmitReviewVerdict({ verdict, body: '', pendingCount: 1 })).toBe(true)
+      expect(canSubmitReviewVerdict({ verdict, body: 'ship it', pendingCount: 0 })).toBe(true)
+    }
+  })
+
+  it('allows a bare approve or request-changes, where the verdict is the message', () => {
+    expect(canSubmitReviewVerdict({ verdict: 'approve', body: '   ', pendingCount: 0 })).toBe(true)
+    expect(
+      canSubmitReviewVerdict({ verdict: 'request-changes', body: '   ', pendingCount: 0 })
+    ).toBe(true)
+  })
+
+  it('refuses a comment review that would say nothing at all', () => {
     expect(canSubmitReviewVerdict({ verdict: 'comment', body: '   ', pendingCount: 0 })).toBe(false)
   })
 })

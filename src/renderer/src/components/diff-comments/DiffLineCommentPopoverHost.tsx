@@ -72,7 +72,11 @@ export function DiffLineCommentPopoverHost({
       reviewDisabledReason={disabledReason}
       placeholder={effectiveMode === 'note' ? placeholder : 'Leave a review comment on this line'}
       submitLabel={
-        effectiveMode === 'note' ? submitLabel : effectiveMode === 'review' ? 'Comment' : 'Add'
+        effectiveMode === 'note'
+          ? submitLabel
+          : effectiveMode === 'review'
+            ? 'Comment'
+            : 'Add to review'
       }
       submittingLabel="Posting…"
       onCancel={onCancel}

@@ -25,6 +25,7 @@ import {
 } from '@/lib/pr-comment-audience-labels'
 import { translate } from '@/i18n/i18n'
 import { ResolvedCommentGroupsSection } from './comment-group'
+import { PendingReviewPanelSection } from '@/components/pending-review/PendingReviewPanelSection'
 import {
   getPRCommentsListDisplayModeLabel,
   PR_COMMENT_LIST_DISPLAY_MODES,
@@ -309,6 +310,8 @@ export function PRCommentsList(props: PRCommentsListProps): React.JSX.Element {
           </div>
         )}
       </div>
+
+      <PendingReviewPanelSection />
 
       {/* List */}
       {commentsLoading && comments.length === 0 ? (

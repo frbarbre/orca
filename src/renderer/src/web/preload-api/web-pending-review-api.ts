@@ -9,7 +9,8 @@ export function createWebPendingReviewApi(): Pick<PreloadApi, 'pendingReview'> {
         Promise.resolve({
           ok: false as const,
           error: 'Reviews are submitted from the desktop app.'
-        })
+        }),
+      context: () => Promise.resolve({ viewerDidAuthor: false })
     }
   }
 }

@@ -5,7 +5,7 @@ import { mainProcessState as state } from './main-process-state'
 import { resolveOpenedMarkdownDocuments } from './os-opened-markdown-files'
 import { loadCustomEditorThemes } from '../editor-theme/custom-editor-theme'
 import { getReviewStatusSnapshot } from '../github/review-status-snapshot'
-import { submitReviewVerdict } from '../github/submit-review-verdict'
+import { getPullRequestReviewContext, submitReviewVerdict } from '../github/submit-review-verdict'
 import type { SubmitReviewVerdictRequest } from '../../shared/github/pending-review-comment'
 import type { ReviewStatusSnapshotRequest } from '../../shared/github/review-status-snapshot-types'
 
@@ -20,6 +20,12 @@ export function registerMainProcessIpcHandlers(): void {
 
   ipcMain.handle('pending-review:submit', (_event, request: SubmitReviewVerdictRequest) =>
     submitReviewVerdict(request)
+  )
+
+  ipcMain.handle(
+    'pending-review:context',
+    (_event, request: Parameters<typeof getPullRequestReviewContext>[0]) =>
+      getPullRequestReviewContext(request)
   )
 
   ipcMain.handle('app:awaitFirstWindowStartupServices', async () => {

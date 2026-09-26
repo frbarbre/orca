@@ -3,6 +3,7 @@ import { getShortcutPlatform } from '@/lib/shortcut-platform'
 import { useAppStore } from '@/store'
 import { keybindingMatchesAction, type KeybindingActionId } from '../../../../shared/keybindings'
 import { beginChangedFileHold } from './changed-file-hold-navigation'
+import { isDiffShortcutTypingTarget } from './diff-shortcut-editable-target'
 
 export function editorShortcutMatches(
   actionId: KeybindingActionId,
@@ -56,6 +57,13 @@ export function installMonacoDiffChangeNavigationShortcut(
   editor: MonacoDiffNavigationEditor
 ): () => void {
   const handleKeyDown = (event: KeyboardEvent): void => {
+    // Why only return: stopping propagation here is capture-phase on an ancestor, which
+    // would keep the keystroke from ever reaching the card's own handlers -- Cmd+Enter to
+    // save stopped working. Keeping Monaco off the same press is the card's job, in bubble
+    // (installDiffCommentZoneKeyStopper), where the card's React root has already seen it.
+    if (isDiffShortcutTypingTarget(event.target)) {
+      return
+    }
     let direction: 'next' | 'previous' | null = null
     if (editorShortcutMatches('editor.nextChange', event)) {
       direction = 'next'
@@ -96,6 +104,13 @@ export function installChangedFileNavigationShortcut(
   stepToChangedFile: (direction: 'next' | 'previous', options?: { wrap?: boolean }) => void
 ): () => void {
   const handleKeyDown = (event: KeyboardEvent): void => {
+    // Why only return: stopping propagation here is capture-phase on an ancestor, which
+    // would keep the keystroke from ever reaching the card's own handlers -- Cmd+Enter to
+    // save stopped working. Keeping Monaco off the same press is the card's job, in bubble
+    // (installDiffCommentZoneKeyStopper), where the card's React root has already seen it.
+    if (isDiffShortcutTypingTarget(event.target)) {
+      return
+    }
     let actionId: 'editor.nextFile' | 'editor.previousFile' | null = null
     if (editorShortcutMatches('editor.nextFile', event)) {
       actionId = 'editor.nextFile'

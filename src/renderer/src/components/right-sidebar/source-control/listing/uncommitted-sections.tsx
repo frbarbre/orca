@@ -87,6 +87,7 @@ export function SourceControlUncommittedSections(props: {
   requestDiscardEntry: (entry: GitStatusEntry) => void
   diffCommentCountByPath: Map<string, number>
   reviewThreadCountByPath: Map<string, number>
+  pendingReviewCountByPath: Map<string, number>
 }): React.JSX.Element {
   return (
     <>
@@ -214,6 +215,7 @@ export function SourceControlUncommittedSections(props: {
                 requestDiscardEntry={props.requestDiscardEntry}
                 diffCommentCountByPath={props.diffCommentCountByPath}
                 reviewThreadCountByPath={props.reviewThreadCountByPath}
+                pendingReviewCountByPath={props.pendingReviewCountByPath}
               />
             )}
           </div>

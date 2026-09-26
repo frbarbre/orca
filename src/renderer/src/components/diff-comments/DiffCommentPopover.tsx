@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
-import { CornerDownLeft } from 'lucide-react'
+import { Bot, CornerDownLeft, MessageSquare, ScanEye } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -16,6 +16,28 @@ import { resolveDiffCommentPopoverTop } from './diff-comment-popover-position'
 
 /** Where a new comment on this line goes: Orca's own note for an agent, or GitHub's review. */
 export type DiffCommentMode = 'note' | 'review' | 'pending'
+
+const MODE_OPTIONS: {
+  id: DiffCommentMode
+  Icon: typeof Bot
+  label: () => string
+}[] = [
+  {
+    id: 'note',
+    Icon: Bot,
+    label: () => translate('auto.components.diff.comments.DiffCommentPopover.modeNote', 'Agent')
+  },
+  {
+    id: 'review',
+    Icon: MessageSquare,
+    label: () => translate('auto.components.diff.comments.DiffCommentPopover.modeReview', 'Comment')
+  },
+  {
+    id: 'pending',
+    Icon: ScanEye,
+    label: () => translate('auto.components.diff.comments.DiffCommentPopover.modePending', 'Review')
+  }
+]
 
 type Props = {
   lineNumber: number
@@ -211,41 +233,29 @@ export function DiffCommentPopover({
                 ))}
         </div>
         {onModeChange ? (
-          <div className="flex items-center gap-1" role="radiogroup">
-            {(['note', 'review', 'pending'] as const).map((candidate) => {
-              const disabled = candidate !== 'note' && Boolean(reviewDisabledReason)
-              const active = mode === candidate
+          <div className="flex items-center gap-0.5 rounded-md bg-muted/50 p-0.5" role="radiogroup">
+            {MODE_OPTIONS.map(({ id, Icon, label }) => {
+              const disabled = id !== 'note' && Boolean(reviewDisabledReason)
+              const active = mode === id
               return (
                 <button
-                  key={candidate}
+                  key={id}
                   type="button"
                   role="radio"
                   aria-checked={active}
                   disabled={disabled}
                   title={disabled ? reviewDisabledReason : undefined}
-                  onClick={() => onModeChange(candidate)}
+                  onClick={() => onModeChange(id)}
                   className={cn(
-                    'rounded px-1.5 py-0.5 text-[10px] transition-colors',
+                    'flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] transition-colors',
                     active
-                      ? 'bg-accent text-foreground'
+                      ? 'bg-background text-foreground shadow-xs'
                       : 'text-muted-foreground hover:text-foreground',
                     disabled && 'cursor-not-allowed opacity-40 hover:text-muted-foreground'
                   )}
                 >
-                  {candidate === 'note'
-                    ? translate(
-                        'auto.components.diff.comments.DiffCommentPopover.modeNote',
-                        'Note for agent'
-                      )
-                    : candidate === 'review'
-                      ? translate(
-                          'auto.components.diff.comments.DiffCommentPopover.modeReview',
-                          'Comment now'
-                        )
-                      : translate(
-                          'auto.components.diff.comments.DiffCommentPopover.modePending',
-                          'Add to review'
-                        )}
+                  <Icon className="size-3" />
+                  {label()}
                 </button>
               )
             })}

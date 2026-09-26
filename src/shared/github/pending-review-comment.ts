@@ -58,20 +58,22 @@ export function pendingReviewCommentsForPath(
   return queue.filter((comment) => comment.path === path)
 }
 
-/** Why a verdict needs a body: the provider rejects request-changes without one. */
-export function reviewVerdictRequiresBody(verdict: ReviewVerdict): boolean {
-  return verdict === 'request-changes'
-}
-
+/**
+ * Why no verdict requires a summary: the GraphQL mutations take an optional body for
+ * every event, request-changes included. REST is the one that demands a body there,
+ * and this does not go through REST.
+ *
+ * Why approve and request-changes need nothing else: the verdict is the message. Only a
+ * plain comment review has nothing to say without a summary or a single comment.
+ */
 export function canSubmitReviewVerdict(args: {
   verdict: ReviewVerdict
   body: string
   pendingCount: number
 }): boolean {
-  if (reviewVerdictRequiresBody(args.verdict) && !args.body.trim()) {
-    return false
+  if (args.verdict !== 'comment') {
+    return true
   }
-  // Why a bare comment verdict is refused: it would post an empty review.
   return args.pendingCount > 0 || !!args.body.trim()
 }
 

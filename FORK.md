@@ -226,7 +226,21 @@ Modified files, and what is ours:
 | `editor/DiffViewer.tsx` | The queue hook, `onQueueForReview`, and passing the queue to the zones. |
 | `source-control/panel/panel-ready.tsx` | The shelf, hidden at zero drafts like the notes shelf. |
 | `src/preload/api-types.ts`, `index.ts`, `web/web-preload-api.ts` | The `pendingReview` member. |
-| `src/main/startup/main-process-ipc-bootstrap.ts` | The `pending-review:submit` handler. |
+| `src/renderer/src/components/ui/textarea.tsx` | The `seamless` variant, so a composer can own the border and put its actions inside the same box. Added as a primitive variant because the design-system lint refuses that restyle at the call site. |
+| `checks-panel/comments-list.tsx` | `<PendingReviewPanelSection />` above the list. |
+| `tab-bar/EditorFileTab.tsx` (+ its test's stub) | The per-file pending badge beside the unresolved-thread one. |
+| `source-control/listing/*`, `panel/panel-content.tsx` | `pendingReviewCountByPath` threaded to the file rows, mirroring `reviewThreadCountByPath`. |
+| `src/main/startup/main-process-ipc-bootstrap.ts` | The `pending-review:submit` and `pending-review:context` handlers. |
+| `src/renderer/src/components/ui/button.tsx` | The `ghost-destructive` variant. |
+| `src/renderer/src/components/ui/textarea.tsx` | The `seamless` variant. |
+| `src/renderer/src/lib/pr-comment-action-state.ts` | The `'pending'` state. |
+| `right-sidebar/pr-comment-presentation.ts` | `statusBadgePending` and `commentEditorText` (the editor used to hardcode a size, so editing shrank the text). |
+| `checks-panel/comment-controls.tsx` | The Pending branch of `PRCommentActionBadge`. |
+| `checks-panel/comment-row.tsx` | `forceMutable`, and the editor taking its type scale from the presentation. |
+| `diff-comments/DiffCommentPopover.tsx` | `MODE_OPTIONS` and the segmented Agent/Comment/Review control. |
+| `diff-comments/use-diff-review-comment.ts` | Commentable lines seeded synchronously and `null` until known, so the popover does not open on the wrong destination and switch a frame later. |
+| `diff-comments/diff-comment-zone-mouse-events.ts`, `useInlinePRCommentZones.tsx` | `installDiffCommentZoneKeyStopper`, so a keystroke typed in a zone card does not also drive the editor. |
+| `editor/editor-shortcuts.ts` | The typing-target guard on both diff navigation shortcuts. |
 
 ### 5. Editor theming from a VS Code theme file
 

@@ -50,7 +50,9 @@ export function buildPullRequestNodeIdQuery(args: {
   repo: string
   number: number
 }): string {
+  // viewerDidAuthor rides along because the provider refuses an approve or a
+  // request-changes on your own pull request, and the UI should say so before the click.
   return `query { repository(owner: ${JSON.stringify(args.owner)}, name: ${JSON.stringify(
     args.repo
-  )}) { pullRequest(number: ${args.number}) { id } } }`
+  )}) { pullRequest(number: ${args.number}) { id viewerDidAuthor } } }`
 }

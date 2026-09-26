@@ -59,8 +59,53 @@ export function SourceControlPendingReviewShelf({
     ? VERDICTS.filter((verdict) => verdict.id === 'comment')
     : VERDICTS
 
+  // Why the queue wins over the verdict on record: unsent comments are the newer state,
+  // and saying "you approved" while drafts sit unsent would be wrong about right now.
+  const standing =
+    queue.comments.length > 0
+      ? {
+          Icon: MessageCircle,
+          text: translate(
+            'auto.components.sourceControl.pendingReview.standingPending',
+            'Your review is pending'
+          ),
+          tone: 'border-status-warning-border bg-status-warning-background text-status-warning'
+        }
+      : submitter.viewerLatestReviewState === 'CHANGES_REQUESTED'
+        ? {
+            Icon: X,
+            text: translate(
+              'auto.components.sourceControl.pendingReview.standingChanges',
+              'You requested changes'
+            ),
+            tone: 'border-destructive/40 bg-destructive/10 text-destructive'
+          }
+        : submitter.viewerLatestReviewState === 'APPROVED'
+          ? {
+              Icon: Check,
+              text: translate(
+                'auto.components.sourceControl.pendingReview.standingApproved',
+                'You approved the changes'
+              ),
+              tone: 'border-status-success-border bg-status-success-background text-status-success'
+            }
+          : null
+
   return (
     <div className="border-b border-border">
+      {standing ? (
+        <div className="px-3 pt-2">
+          <div
+            className={cn(
+              'flex items-center gap-1.5 rounded-md border px-2 py-1 text-[11px] font-medium',
+              standing.tone
+            )}
+          >
+            <standing.Icon className="size-3 shrink-0" />
+            {standing.text}
+          </div>
+        </div>
+      ) : null}
       <div className="px-3 pt-2 pb-2">
         <div className="rounded-md border border-input bg-background shadow-xs dark:bg-input/30">
           <Textarea
@@ -102,7 +147,7 @@ export function SourceControlPendingReviewShelf({
           form above is the part of this shelf that is always worth showing. */}
       {queue.comments.length > 0 ? (
         <>
-          <div className="flex items-center gap-1 py-1.5 pl-3 pr-2">
+          <div className="flex items-center gap-1 pt-1 pb-3 pl-3 pr-2">
             <button
               type="button"
               className="flex min-w-0 flex-1 items-center gap-1.5 text-left text-xs text-muted-foreground transition-colors hover:text-foreground"

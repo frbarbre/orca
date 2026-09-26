@@ -12,5 +12,7 @@ export type PendingReviewApi = {
   /** Sends the queued comments and the verdict as one review. */
   submit: (request: SubmitReviewVerdictRequest) => Promise<SubmitReviewVerdictResult>
   /** What the viewer is allowed to do on this pull request. */
-  context: (request: PendingReviewContextRequest) => Promise<{ viewerDidAuthor: boolean }>
+  context: (
+    request: PendingReviewContextRequest
+  ) => Promise<{ viewerDidAuthor: boolean; viewerLatestReviewState: string | null }>
 }

@@ -11,7 +11,12 @@ function asRecord(value: unknown): Record<string, unknown> | null {
   return value && typeof value === 'object' && !Array.isArray(value) ? { ...value } : null
 }
 
-type PullRequestFacts = { id: string; viewerDidAuthor: boolean }
+type PullRequestFacts = {
+  id: string
+  viewerDidAuthor: boolean
+  /** APPROVED | CHANGES_REQUESTED | COMMENTED | DISMISSED, or null when never reviewed. */
+  viewerLatestReviewState: string | null
+}
 
 const nodeIdCache = new Map<string, PullRequestFacts>()
 
@@ -57,21 +62,26 @@ async function resolvePullRequestFacts(
   if (typeof id !== 'string' || !id) {
     return null
   }
-  const facts: PullRequestFacts = { id, viewerDidAuthor: pullRequest?.viewerDidAuthor === true }
+  const latest = asRecord(pullRequest?.viewerLatestReview)
+  const facts: PullRequestFacts = {
+    id,
+    viewerDidAuthor: pullRequest?.viewerDidAuthor === true,
+    viewerLatestReviewState: typeof latest?.state === 'string' ? latest.state : null
+  }
   nodeIdCache.set(key, facts)
   return facts
 }
 
 export async function getPullRequestReviewContext(
   request: Pick<SubmitReviewVerdictRequest, 'repoPath' | 'prNumber' | 'prRepo' | 'connectionId'>
-): Promise<{ viewerDidAuthor: boolean }> {
+): Promise<{ viewerDidAuthor: boolean; viewerLatestReviewState: string | null }> {
   const { ownerRepo, ghOptions } = await resolveGitHubRepoExecution(
     request.repoPath,
     request.prRepo,
     request.connectionId
   )
   if (!ownerRepo) {
-    return { viewerDidAuthor: false }
+    return { viewerDidAuthor: false, viewerLatestReviewState: null }
   }
   try {
     const facts = await resolvePullRequestFacts(
@@ -80,11 +90,14 @@ export async function getPullRequestReviewContext(
       request.prNumber,
       ghOptions
     )
-    return { viewerDidAuthor: facts?.viewerDidAuthor === true }
+    return {
+      viewerDidAuthor: facts?.viewerDidAuthor === true,
+      viewerLatestReviewState: facts?.viewerLatestReviewState ?? null
+    }
   } catch {
     // Why false on failure: a lookup that did not answer must not hide a button the
     // reviewer is entitled to press.
-    return { viewerDidAuthor: false }
+    return { viewerDidAuthor: false, viewerLatestReviewState: null }
   }
 }
 
@@ -137,6 +150,9 @@ export async function submitReviewVerdict(
     if (error) {
       return { ok: false, error }
     }
+    // Why evicted: the viewer's latest review is part of these facts, and submitting is
+    // exactly what changes it.
+    nodeIdCache.delete(`${ownerRepo.owner}/${ownerRepo.repo}#${request.prNumber}`)
     const added = asRecord(asRecord(asRecord(parsed)?.data)?.addPullRequestReview)
     const review = asRecord(added?.pullRequestReview)
     return {

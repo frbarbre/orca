@@ -10,6 +10,8 @@ export type ReviewVerdictSubmitter = {
   prNumber: number | null
   /** The provider refuses an approve or a request-changes from the author. */
   viewerDidAuthor: boolean
+  /** The verdict already on record from this reviewer, or null if they have not reviewed. */
+  viewerLatestReviewState: string | null
   submit: (verdict: ReviewVerdict, body: string) => Promise<{ ok: boolean; error?: string }>
 }
 
@@ -20,6 +22,9 @@ export function useSubmitReviewVerdict(
   const scope = usePRCommentScope(worktreeId)
   const fetchPRComments = useAppStore((state) => state.fetchPRComments)
   const [viewerDidAuthor, setViewerDidAuthor] = useState(false)
+  const [viewerLatestReviewState, setViewerLatestReviewState] = useState<string | null>(null)
+  // Why a nonce: submitting changes the verdict on record, so the banner has to re-ask.
+  const [contextNonce, setContextNonce] = useState(0)
 
   const repo = scope.repo
   const prNumber = scope.pr?.number ?? null
@@ -28,6 +33,7 @@ export function useSubmitReviewVerdict(
   useEffect(() => {
     if (!repo || prNumber === null) {
       setViewerDidAuthor(false)
+      setViewerLatestReviewState(null)
       return
     }
     let cancelled = false
@@ -41,13 +47,14 @@ export function useSubmitReviewVerdict(
       .then((context) => {
         if (!cancelled) {
           setViewerDidAuthor(context.viewerDidAuthor)
+          setViewerLatestReviewState(context.viewerLatestReviewState)
         }
       })
       .catch(() => undefined)
     return () => {
       cancelled = true
     }
-  }, [prNumber, prRepo, repo])
+  }, [contextNonce, prNumber, prRepo, repo])
 
   const submit = useCallback(
     async (verdict: ReviewVerdict, body: string) => {
@@ -67,6 +74,7 @@ export function useSubmitReviewVerdict(
         return result
       }
       queue.clear()
+      setContextNonce((value) => value + 1)
       // Why forced: the comments were just created remotely, and only a real fetch
       // carries the thread ids they need before anyone can reply or resolve them.
       void fetchPRComments(repo.path, prNumber, { force: true, repoId: repo.id, prRepo }).catch(
@@ -78,5 +86,5 @@ export function useSubmitReviewVerdict(
     [fetchPRComments, prNumber, prRepo, queue, repo]
   )
 
-  return { prNumber, viewerDidAuthor, submit }
+  return { prNumber, viewerDidAuthor, viewerLatestReviewState, submit }
 }

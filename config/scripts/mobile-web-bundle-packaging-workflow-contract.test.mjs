@@ -90,6 +90,10 @@ const EXPECTED_PACKAGING_JOBS = [
   'daemon-relocation-spike.yml spike',
   'daily-mac-build.yml build-daily-mac',
   'dev-channel-win-build.yml build-win',
+  // The fork's own release workflows. Upstream does not have them, so a sync that takes upstream's
+  // copy of this list must add them back.
+  'fork-preview-release.yml preview',
+  'fork-release.yml build',
   'hourly-mac-build.yml build-hourly-mac',
   'pr.yml package',
   'pr.yml package_windows',

@@ -104,6 +104,7 @@ export function SourceControlPanelReady(props: SourceControlPanelReadyProps) {
         <SourceControlPendingReviewShelf
           queue={pendingReviewQueue}
           submitter={submitReviewVerdict}
+          worktreeId={props.model.activeWorktreeId ?? null}
         />
 
         {/* Why: hidden when count is 0 — notes are created from the diff view, so an empty Notes shelf here is pure chrome. */}

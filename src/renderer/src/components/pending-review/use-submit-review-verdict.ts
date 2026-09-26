@@ -14,6 +14,10 @@ export type ReviewVerdictSubmitter = {
   viewerLatestReviewState: string | null
   /** True while a review is outstanding from this reviewer. */
   viewerHasReviewRequest: boolean
+  /** The commit this reviewer last reviewed, or null if they never have. */
+  viewerLatestReviewCommit: string | null
+  /** The branch the pull request targets, which is the other end of the diff. */
+  baseRefName: string | null
   submit: (verdict: ReviewVerdict, body: string) => Promise<{ ok: boolean; error?: string }>
 }
 
@@ -26,6 +30,7 @@ export function useSubmitReviewVerdict(
   const [viewerDidAuthor, setViewerDidAuthor] = useState(false)
   const [viewerLatestReviewState, setViewerLatestReviewState] = useState<string | null>(null)
   const [viewerHasReviewRequest, setViewerHasReviewRequest] = useState(false)
+  const [viewerLatestReviewCommit, setViewerLatestReviewCommit] = useState<string | null>(null)
   // Why a nonce: submitting changes the verdict on record, so the banner has to re-ask.
   const [contextNonce, setContextNonce] = useState(0)
 
@@ -38,6 +43,7 @@ export function useSubmitReviewVerdict(
       setViewerDidAuthor(false)
       setViewerLatestReviewState(null)
       setViewerHasReviewRequest(false)
+      setViewerLatestReviewCommit(null)
       return
     }
     let cancelled = false
@@ -53,6 +59,7 @@ export function useSubmitReviewVerdict(
           setViewerDidAuthor(context.viewerDidAuthor)
           setViewerLatestReviewState(context.viewerLatestReviewState)
           setViewerHasReviewRequest(context.viewerHasReviewRequest)
+          setViewerLatestReviewCommit(context.viewerLatestReviewCommit)
         }
       })
       .catch(() => undefined)
@@ -91,5 +98,13 @@ export function useSubmitReviewVerdict(
     [fetchPRComments, prNumber, prRepo, queue, repo]
   )
 
-  return { prNumber, viewerDidAuthor, viewerLatestReviewState, viewerHasReviewRequest, submit }
+  return {
+    prNumber,
+    viewerDidAuthor,
+    viewerLatestReviewState,
+    viewerHasReviewRequest,
+    viewerLatestReviewCommit,
+    baseRefName: scope.pr?.baseRefName ?? null,
+    submit
+  }
 }

@@ -256,7 +256,10 @@ function StackedCompareFlow({
           The base line keeps the commit count, which measures the comparison. */}
       {/* Why: gap-2 (not gap-1.5) — an ellipsis butting against the colored
           counts reads as part of the branch name. */}
-      <div className="flex min-w-0 items-center gap-2">
+      {/* Why the min height: the line total unmounts while a new base is being compared,
+          and the row is a hair taller with it than without, so the panel jumped on every
+          switch. Reserving the taller of the two states holds the row still. */}
+      <div className="flex min-h-[1.125rem] min-w-0 items-center gap-2">
         <span className="flex min-w-0 flex-1 items-center">
           <HeadIdentity display={headDisplay} />
         </span>

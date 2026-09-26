@@ -18,6 +18,8 @@ type PullRequestFacts = {
   viewerLatestReviewState: string | null
   /** True while the reviewer is on the hook for a review they have not submitted. */
   viewerHasReviewRequest: boolean
+  /** The commit the reviewer last reviewed, which a diff can be based on. */
+  viewerLatestReviewCommit: string | null
 }
 
 const nodeIdCache = new Map<string, PullRequestFacts>()
@@ -69,7 +71,11 @@ async function resolvePullRequestFacts(
     id,
     viewerDidAuthor: pullRequest?.viewerDidAuthor === true,
     viewerLatestReviewState: typeof latest?.state === 'string' ? latest.state : null,
-    viewerHasReviewRequest: asRecord(pullRequest?.viewerLatestReviewRequest) !== null
+    viewerHasReviewRequest: asRecord(pullRequest?.viewerLatestReviewRequest) !== null,
+    viewerLatestReviewCommit:
+      typeof asRecord(latest?.commit)?.oid === 'string'
+        ? String(asRecord(latest?.commit)?.oid)
+        : null
   }
   nodeIdCache.set(key, facts)
   return facts
@@ -81,6 +87,7 @@ export async function getPullRequestReviewContext(
   viewerDidAuthor: boolean
   viewerLatestReviewState: string | null
   viewerHasReviewRequest: boolean
+  viewerLatestReviewCommit: string | null
 }> {
   const { ownerRepo, ghOptions } = await resolveGitHubRepoExecution(
     request.repoPath,
@@ -88,7 +95,12 @@ export async function getPullRequestReviewContext(
     request.connectionId
   )
   if (!ownerRepo) {
-    return { viewerDidAuthor: false, viewerLatestReviewState: null, viewerHasReviewRequest: false }
+    return {
+      viewerDidAuthor: false,
+      viewerLatestReviewState: null,
+      viewerHasReviewRequest: false,
+      viewerLatestReviewCommit: null
+    }
   }
   try {
     const facts = await resolvePullRequestFacts(
@@ -100,12 +112,18 @@ export async function getPullRequestReviewContext(
     return {
       viewerDidAuthor: facts?.viewerDidAuthor === true,
       viewerLatestReviewState: facts?.viewerLatestReviewState ?? null,
-      viewerHasReviewRequest: facts?.viewerHasReviewRequest === true
+      viewerHasReviewRequest: facts?.viewerHasReviewRequest === true,
+      viewerLatestReviewCommit: facts?.viewerLatestReviewCommit ?? null
     }
   } catch {
     // Why false on failure: a lookup that did not answer must not hide a button the
     // reviewer is entitled to press.
-    return { viewerDidAuthor: false, viewerLatestReviewState: null, viewerHasReviewRequest: false }
+    return {
+      viewerDidAuthor: false,
+      viewerLatestReviewState: null,
+      viewerHasReviewRequest: false,
+      viewerLatestReviewCommit: null
+    }
   }
 }
 

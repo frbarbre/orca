@@ -16,5 +16,6 @@ export type PendingReviewApi = {
     viewerDidAuthor: boolean
     viewerLatestReviewState: string | null
     viewerHasReviewRequest: boolean
+    viewerLatestReviewCommit: string | null
   }>
 }

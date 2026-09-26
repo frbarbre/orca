@@ -20,6 +20,7 @@ describe('web preload API composition', () => {
     expect(Object.keys(globals.window.api)).toEqual([
       'app',
       'reviewStatusRules',
+      'pendingReview',
       'starNag',
       'platform',
       'workspacePorts',

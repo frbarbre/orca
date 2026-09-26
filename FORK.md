@@ -242,6 +242,25 @@ Modified files, and what is ours:
 | `diff-comments/diff-comment-zone-mouse-events.ts`, `useInlinePRCommentZones.tsx` | `installDiffCommentZoneKeyStopper`, so a keystroke typed in a zone card does not also drive the editor. |
 | `editor/editor-shortcuts.ts` | The typing-target guard on both diff navigation shortcuts. |
 
+#### The diff base: since last review, or the whole pull request
+
+A segmented control in the review shelf switches the workspace's `baseRef` between the commit the
+viewer last reviewed (`viewerLatestReview.commit.oid`, free on the context query the banner already
+makes) and `refs/remotes/origin/<base>`. The whole pull request is always the other tab rather than
+an error path, because a force-push can strip the reviewed commit off the remote.
+
+Before offering the tab, `use-commit-resolves.ts` probes the commit with the same branch compare the
+diff itself would run. Note that git resolves a well-formed sha naming no object, so a force-pushed
+commit comes back as **`no-merge-base`**, not `invalid-base` — `commit-resolution.ts` treats both as
+missing, and that mapping is the thing to keep if this is ever rewritten.
+
+| File | What is ours |
+| --- | --- |
+| `src/renderer/src/components/ui/segmented-tabs.tsx` | New. The Agent/Comment/Review control lifted out of `DiffCommentPopover` so the shelf can reuse it, plus `fullWidth`. |
+| `src/renderer/src/components/pending-review/use-review-diff-base.ts`, `use-commit-resolves.ts`, `commit-resolution.ts` (+ test) | New. The base switch and the reachability probe. |
+| `src/main/github/review-verdict-mutation.ts`, `submit-review-verdict.ts`, `pending-review-api.ts` | `viewerLatestReview { commit { oid } }` and `baseRefName` on the context query. |
+| `source-control/panel/branch-context-row.tsx` | A min height on the HEAD line. The line-total chip unmounts while a new base compares and the row is a hair taller with it, so the panel jumped on every switch. |
+
 ### 5. Editor theming from a VS Code theme file
 
 Loads `~/.orca/themes/editor-dark.json` / `editor-light.json` (any VS Code theme) and registers them

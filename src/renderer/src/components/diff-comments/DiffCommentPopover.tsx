@@ -2,7 +2,7 @@ import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from
 import { Bot, CornerDownLeft, MessageSquare, ScanEye } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
-import { cn } from '@/lib/utils'
+import { SegmentedTabs } from '@/components/ui/segmented-tabs'
 import { useMountedRef } from '@/hooks/useMountedRef'
 import {
   getCommentBodySubmitState,
@@ -233,33 +233,18 @@ export function DiffCommentPopover({
                 ))}
         </div>
         {onModeChange ? (
-          <div className="flex items-center gap-0.5 rounded-md bg-muted/50 p-0.5" role="radiogroup">
-            {MODE_OPTIONS.map(({ id, Icon, label }) => {
-              const disabled = id !== 'note' && Boolean(reviewDisabledReason)
-              const active = mode === id
-              return (
-                <button
-                  key={id}
-                  type="button"
-                  role="radio"
-                  aria-checked={active}
-                  disabled={disabled}
-                  title={disabled ? reviewDisabledReason : undefined}
-                  onClick={() => onModeChange(id)}
-                  className={cn(
-                    'flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] transition-colors',
-                    active
-                      ? 'bg-background text-foreground shadow-xs'
-                      : 'text-muted-foreground hover:text-foreground',
-                    disabled && 'cursor-not-allowed opacity-40 hover:text-muted-foreground'
-                  )}
-                >
-                  <Icon className="size-3" />
-                  {label()}
-                </button>
-              )
-            })}
-          </div>
+          <SegmentedTabs
+            options={MODE_OPTIONS.map(({ id, Icon, label }) => ({
+              id,
+              Icon,
+              label: label(),
+              ...(id !== 'note' && reviewDisabledReason
+                ? { disabledReason: reviewDisabledReason }
+                : {})
+            }))}
+            value={mode ?? 'note'}
+            onChange={onModeChange}
+          />
         ) : null}
         <textarea
           ref={focusTextareaRef}

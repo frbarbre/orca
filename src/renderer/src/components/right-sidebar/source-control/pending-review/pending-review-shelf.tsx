@@ -1,5 +1,13 @@
 import React, { useState } from 'react'
-import { Check, ChevronRight, MessageCircle, MessageSquare, ScanEye, X } from 'lucide-react'
+import {
+  Check,
+  ChevronRight,
+  GitPullRequest,
+  MessageCircle,
+  MessageSquare,
+  ScanEye,
+  X
+} from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
@@ -12,6 +20,8 @@ import {
 import type { PendingReviewQueue } from '@/components/pending-review/use-pending-review-queue'
 import type { ReviewVerdictSubmitter } from '@/components/pending-review/use-submit-review-verdict'
 import { PendingReviewCommentCard } from '@/components/pending-review/PendingReviewCommentCard'
+import { useReviewDiffBase } from '@/components/pending-review/use-review-diff-base'
+import { SegmentedTabs } from '@/components/ui/segmented-tabs'
 
 const VERDICTS: {
   id: ReviewVerdict
@@ -19,18 +29,35 @@ const VERDICTS: {
   Icon: typeof MessageCircle
   tone: string
 }[] = [
-  { id: 'comment', label: 'Only comment', Icon: MessageCircle, tone: 'text-muted-foreground' },
-  { id: 'request-changes', label: 'Request changes', Icon: X, tone: 'text-destructive' },
+  {
+    id: 'comment',
+    label: 'Only comment',
+    Icon: MessageCircle,
+    tone: 'text-muted-foreground'
+  },
+  {
+    id: 'request-changes',
+    label: 'Request changes',
+    Icon: X,
+    tone: 'text-destructive'
+  },
   { id: 'approve', label: 'Approve', Icon: Check, tone: 'text-status-success' }
 ]
 
 export function SourceControlPendingReviewShelf({
   queue,
-  submitter
+  submitter,
+  worktreeId
 }: {
   queue: PendingReviewQueue
   submitter: ReviewVerdictSubmitter
+  worktreeId: string | null
 }): React.JSX.Element | null {
+  const diffBase = useReviewDiffBase(
+    worktreeId,
+    submitter.viewerLatestReviewCommit,
+    submitter.baseRefName
+  )
   // Why closed by default: the drafts are a reference you open when you want them, while
   // the form below is the thing a reviewer comes here to use.
   const [expanded, setExpanded] = useState(false)
@@ -102,6 +129,45 @@ export function SourceControlPendingReviewShelf({
 
   return (
     <div className="border-b border-border">
+      {diffBase.available ? (
+        <div className="px-3 pt-2">
+          {/* Why here and not in the base-ref dialog: this is a reading choice a reviewer
+              makes repeatedly while working through a pull request, not repo configuration. */}
+          <SegmentedTabs
+            ariaLabel={translate(
+              'auto.components.sourceControl.pendingReview.diffBaseLabel',
+              'What the diff compares against'
+            )}
+            options={[
+              {
+                id: 'since-review' as const,
+                Icon: ScanEye,
+                label: translate(
+                  'auto.components.sourceControl.pendingReview.sinceReview',
+                  'Since last review'
+                ),
+                disabledReason: diffBase.sinceReviewMissing
+                  ? translate(
+                      'auto.components.sourceControl.pendingReview.sinceReviewMissing',
+                      'The commit you last reviewed is no longer in this checkout.'
+                    )
+                  : undefined
+              },
+              {
+                id: 'whole' as const,
+                Icon: GitPullRequest,
+                label: translate(
+                  'auto.components.sourceControl.pendingReview.wholePr',
+                  'Whole pull request'
+                )
+              }
+            ]}
+            fullWidth
+            value={diffBase.value}
+            onChange={diffBase.setValue}
+          />
+        </div>
+      ) : null}
       {standing ? (
         <div className="px-3 pt-2">
           <div

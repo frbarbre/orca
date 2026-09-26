@@ -84,7 +84,10 @@ export function CommentRow({
 
   // Why: the badge is the only place a review location is shown, so it doubles as the jump target
   // when a handler is wired; without one it stays inert text (mobile and read-only surfaces).
-  const canOpenLocation = Boolean(comment.path && onOpenLocation)
+  // Why outdated cannot be opened: the provider marks a thread outdated when it can no
+  // longer place it in the diff, so there is no line left to jump to.
+  const isOutdated = comment.isOutdated === true
+  const canOpenLocation = Boolean(comment.path && onOpenLocation && !isOutdated)
   const lineRange = formatLineRange(comment)
   const pathBadgeLabel = comment.path ? (
     presentation.pathBadgeShowsFile ? (
@@ -249,6 +252,17 @@ export function CommentRow({
           </span>
         ) : null}
         {pathBadge}
+        {isOutdated ? (
+          <span
+            className={presentation.statusBadgeOutdated}
+            title={translate(
+              'auto.components.right.sidebar.checks.panel.content.outdatedTitle',
+              'The line this comment was left on is no longer in the diff'
+            )}
+          >
+            {translate('auto.components.right.sidebar.checks.panel.content.outdated', 'Outdated')}
+          </span>
+        ) : null}
         <PRCommentActionBadge
           actionState={actionState}
           isQueued={isQueued}

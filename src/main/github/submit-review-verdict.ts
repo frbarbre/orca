@@ -16,6 +16,8 @@ type PullRequestFacts = {
   viewerDidAuthor: boolean
   /** APPROVED | CHANGES_REQUESTED | COMMENTED | DISMISSED, or null when never reviewed. */
   viewerLatestReviewState: string | null
+  /** True while the reviewer is on the hook for a review they have not submitted. */
+  viewerHasReviewRequest: boolean
 }
 
 const nodeIdCache = new Map<string, PullRequestFacts>()
@@ -66,7 +68,8 @@ async function resolvePullRequestFacts(
   const facts: PullRequestFacts = {
     id,
     viewerDidAuthor: pullRequest?.viewerDidAuthor === true,
-    viewerLatestReviewState: typeof latest?.state === 'string' ? latest.state : null
+    viewerLatestReviewState: typeof latest?.state === 'string' ? latest.state : null,
+    viewerHasReviewRequest: asRecord(pullRequest?.viewerLatestReviewRequest) !== null
   }
   nodeIdCache.set(key, facts)
   return facts
@@ -74,14 +77,18 @@ async function resolvePullRequestFacts(
 
 export async function getPullRequestReviewContext(
   request: Pick<SubmitReviewVerdictRequest, 'repoPath' | 'prNumber' | 'prRepo' | 'connectionId'>
-): Promise<{ viewerDidAuthor: boolean; viewerLatestReviewState: string | null }> {
+): Promise<{
+  viewerDidAuthor: boolean
+  viewerLatestReviewState: string | null
+  viewerHasReviewRequest: boolean
+}> {
   const { ownerRepo, ghOptions } = await resolveGitHubRepoExecution(
     request.repoPath,
     request.prRepo,
     request.connectionId
   )
   if (!ownerRepo) {
-    return { viewerDidAuthor: false, viewerLatestReviewState: null }
+    return { viewerDidAuthor: false, viewerLatestReviewState: null, viewerHasReviewRequest: false }
   }
   try {
     const facts = await resolvePullRequestFacts(
@@ -92,12 +99,13 @@ export async function getPullRequestReviewContext(
     )
     return {
       viewerDidAuthor: facts?.viewerDidAuthor === true,
-      viewerLatestReviewState: facts?.viewerLatestReviewState ?? null
+      viewerLatestReviewState: facts?.viewerLatestReviewState ?? null,
+      viewerHasReviewRequest: facts?.viewerHasReviewRequest === true
     }
   } catch {
     // Why false on failure: a lookup that did not answer must not hide a button the
     // reviewer is entitled to press.
-    return { viewerDidAuthor: false, viewerLatestReviewState: null }
+    return { viewerDidAuthor: false, viewerLatestReviewState: null, viewerHasReviewRequest: false }
   }
 }
 

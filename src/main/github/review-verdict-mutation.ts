@@ -54,5 +54,5 @@ export function buildPullRequestNodeIdQuery(args: {
   // request-changes on your own pull request, and the UI should say so before the click.
   return `query { repository(owner: ${JSON.stringify(args.owner)}, name: ${JSON.stringify(
     args.repo
-  )}) { pullRequest(number: ${args.number}) { id viewerDidAuthor viewerLatestReview { state } } } }`
+  )}) { pullRequest(number: ${args.number}) { id viewerDidAuthor viewerLatestReviewRequest { __typename } viewerLatestReview { state } } } }`
 }

@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Check, ChevronRight, MessageCircle, MessageSquare, X } from 'lucide-react'
+import { Check, ChevronRight, MessageCircle, MessageSquare, ScanEye, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
@@ -89,7 +89,16 @@ export function SourceControlPendingReviewShelf({
               ),
               tone: 'border-status-success-border bg-status-success-background text-status-success'
             }
-          : null
+          : submitter.viewerHasReviewRequest
+            ? {
+                Icon: ScanEye,
+                text: translate(
+                  'auto.components.sourceControl.pendingReview.standingRequested',
+                  'Your review was requested'
+                ),
+                tone: 'border-border bg-muted text-muted-foreground'
+              }
+            : null
 
   return (
     <div className="border-b border-border">

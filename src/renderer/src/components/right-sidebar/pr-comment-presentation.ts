@@ -48,6 +48,7 @@ export type PRCommentPresentationClasses = {
   statusBadgeResolved: string
   statusBadgeQueued: string
   statusBadgePending: string
+  statusBadgeOutdated: string
   commentHeaderPrimary: string
   commentHeaderMeta: string
   /** Indents the card meta row when a selection checkbox precedes the avatar. */
@@ -127,6 +128,10 @@ const RESOLVED_SECTION_LABEL =
 const CARD_COMMENT_BODY_SIZE = 'text-[13px] leading-relaxed'
 const CARD_COMMENT_AUTHOR_SIZE = 'text-[13px]'
 const CARD_COMMENT_LIST_GAP = 'gap-2'
+
+/** Shared by the badges that mean "this needs your attention": pending and outdated. */
+const WARNING_BADGE =
+  'shrink-0 rounded border border-status-warning-border bg-status-warning-background px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-status-warning'
 const CARD_COMMENT_BODY_PADDING = 'px-4 py-2.5'
 const CARD_COMMENT_HEADER_PADDING = 'px-3 py-2'
 const CARD_COMMENT_META_INDENT = 'pl-7'
@@ -199,8 +204,8 @@ export function getPRCommentPresentationClasses(
         'shrink-0 rounded border border-border bg-muted px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground',
       statusBadgeQueued:
         'shrink-0 rounded border border-ring/40 bg-accent px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-foreground',
-      statusBadgePending:
-        'shrink-0 rounded border border-status-warning-border bg-status-warning-background px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-status-warning',
+      statusBadgePending: WARNING_BADGE,
+      statusBadgeOutdated: WARNING_BADGE,
       commentHeaderPrimary: 'flex min-w-0 items-center gap-1.5',
       commentHeaderMeta: '',
       commentHeaderMetaWithSelection: '',
@@ -258,8 +263,8 @@ export function getPRCommentPresentationClasses(
       'shrink-0 rounded border border-border bg-muted px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground',
     statusBadgeQueued:
       'shrink-0 rounded border border-ring/40 bg-accent px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-foreground',
-    statusBadgePending:
-      'shrink-0 rounded border border-status-warning-border bg-status-warning-background px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-status-warning',
+    statusBadgePending: WARNING_BADGE,
+    statusBadgeOutdated: WARNING_BADGE,
     commentHeaderPrimary: 'flex min-w-0 items-center gap-2',
     commentHeaderMeta: cn(
       CARD_COMMENT_META_INDENT,

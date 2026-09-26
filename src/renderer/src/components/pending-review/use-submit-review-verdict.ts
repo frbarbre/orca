@@ -12,6 +12,8 @@ export type ReviewVerdictSubmitter = {
   viewerDidAuthor: boolean
   /** The verdict already on record from this reviewer, or null if they have not reviewed. */
   viewerLatestReviewState: string | null
+  /** True while a review is outstanding from this reviewer. */
+  viewerHasReviewRequest: boolean
   submit: (verdict: ReviewVerdict, body: string) => Promise<{ ok: boolean; error?: string }>
 }
 
@@ -23,6 +25,7 @@ export function useSubmitReviewVerdict(
   const fetchPRComments = useAppStore((state) => state.fetchPRComments)
   const [viewerDidAuthor, setViewerDidAuthor] = useState(false)
   const [viewerLatestReviewState, setViewerLatestReviewState] = useState<string | null>(null)
+  const [viewerHasReviewRequest, setViewerHasReviewRequest] = useState(false)
   // Why a nonce: submitting changes the verdict on record, so the banner has to re-ask.
   const [contextNonce, setContextNonce] = useState(0)
 
@@ -34,6 +37,7 @@ export function useSubmitReviewVerdict(
     if (!repo || prNumber === null) {
       setViewerDidAuthor(false)
       setViewerLatestReviewState(null)
+      setViewerHasReviewRequest(false)
       return
     }
     let cancelled = false
@@ -48,6 +52,7 @@ export function useSubmitReviewVerdict(
         if (!cancelled) {
           setViewerDidAuthor(context.viewerDidAuthor)
           setViewerLatestReviewState(context.viewerLatestReviewState)
+          setViewerHasReviewRequest(context.viewerHasReviewRequest)
         }
       })
       .catch(() => undefined)
@@ -86,5 +91,5 @@ export function useSubmitReviewVerdict(
     [fetchPRComments, prNumber, prRepo, queue, repo]
   )
 
-  return { prNumber, viewerDidAuthor, viewerLatestReviewState, submit }
+  return { prNumber, viewerDidAuthor, viewerLatestReviewState, viewerHasReviewRequest, submit }
 }

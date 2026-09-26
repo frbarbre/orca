@@ -1,8 +1,8 @@
 import React, { useCallback, useEffect, useState } from 'react'
-import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import CommentMarkdown from '@/components/sidebar/CommentMarkdown'
 import { CommentReactions } from '@/components/github/CommentReactions'
+import { CommentEditor } from './comment-editor'
 import { isBotPRComment } from '../../../../../shared/pr-comment-audience'
 import { isEditablePublishedReviewComment } from '@/components/pending-review/editable-published-comment'
 import type { GitHubReactionContent, PRComment } from '../../../../../shared/github/comment-types'
@@ -137,26 +137,22 @@ export function CommentRow({
     [comment.body]
   )
 
-  const handleSaveEdit = useCallback(
-    async (event: React.MouseEvent): Promise<void> => {
-      event.stopPropagation()
-      const trimmedDraft = draft.trim()
-      if (!onEditComment || !trimmedDraft || trimmedDraft === comment.body) {
+  const submitEdit = useCallback(async (): Promise<void> => {
+    const trimmedDraft = draft.trim()
+    if (!onEditComment || !trimmedDraft || trimmedDraft === comment.body) {
+      setEditing(false)
+      return
+    }
+    setSubmittingEdit(true)
+    try {
+      const ok = await onEditComment(comment, trimmedDraft)
+      if (ok) {
         setEditing(false)
-        return
       }
-      setSubmittingEdit(true)
-      try {
-        const ok = await onEditComment(comment, trimmedDraft)
-        if (ok) {
-          setEditing(false)
-        }
-      } finally {
-        setSubmittingEdit(false)
-      }
-    },
-    [comment, draft, onEditComment]
-  )
+    } finally {
+      setSubmittingEdit(false)
+    }
+  }, [comment, draft, onEditComment])
 
   const handleDelete = useCallback((): void => {
     void onDeleteComment?.(comment)
@@ -369,38 +365,15 @@ export function CommentRow({
               presentation.useCardLayout ? 'px-3 pb-3' : isReply ? 'pl-5' : 'pl-[22px]'
             )}
           >
-            <textarea
-              autoFocus
-              value={draft}
-              onChange={(event) => setDraft(event.target.value)}
-              onClick={(event) => event.stopPropagation()}
-              className={cn(
-                'min-h-[60px] w-full resize-y rounded-md border border-border bg-background px-2 py-1.5 text-foreground',
-                presentation.commentEditorText
-              )}
+            <CommentEditor
+              draft={draft}
+              onDraftChange={setDraft}
+              canSave={canSaveEdit}
+              submitting={submittingEdit}
+              presentation={presentation}
+              onSubmit={() => void submitEdit()}
+              onCancel={handleCancelEdit}
             />
-            <div className="flex justify-end gap-1">
-              <Button
-                type="button"
-                variant="ghost"
-                size="xs"
-                disabled={submittingEdit}
-                onClick={handleCancelEdit}
-              >
-                {translate(
-                  'auto.components.right.sidebar.checks.panel.content.b062f55f29',
-                  'Cancel'
-                )}
-              </Button>
-              <Button
-                type="button"
-                size="xs"
-                disabled={!canSaveEdit}
-                onClick={(event) => void handleSaveEdit(event)}
-              >
-                {translate('auto.components.right.sidebar.checks.panel.content.f6a40263ff', 'Save')}
-              </Button>
-            </div>
           </div>
         ) : (
           <div className={isReply ? presentation.commentBodyReply : presentation.commentBody}>

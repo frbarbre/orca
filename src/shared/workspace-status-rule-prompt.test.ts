@@ -4,7 +4,10 @@ import {
   buildReviewPromptVariables,
   renderWorkspaceStatusRulePrompt
 } from './workspace-status-rule-prompt'
-import { DEFAULT_REVIEW_PROMPT_TEMPLATE } from './workspace-status-rule-config'
+import {
+  DEFAULT_REREVIEW_PROMPT_TEMPLATE,
+  DEFAULT_REVIEW_PROMPT_TEMPLATE
+} from './workspace-status-rule-config'
 
 const pr: ReviewSnapshotPullRequest = {
   repo: { owner: 'flowbasedk', repo: 'flowbase' },
@@ -58,5 +61,34 @@ describe('renderWorkspaceStatusRulePrompt', () => {
 
     expect(rendered).not.toMatch(/\{\{/)
     expect(rendered).toContain('#42')
+  })
+})
+
+describe('the commit a re-review is measured from', () => {
+  it('is the commit you last reviewed', () => {
+    expect(
+      renderWorkspaceStatusRulePrompt(
+        '{{sinceCommit}}',
+        buildReviewPromptVariables(pr, 'reviewed-sha')
+      )
+    ).toBe('reviewed-sha')
+  })
+
+  // Why the base branch: a first look has no earlier review to measure from, and leaving
+  // the placeholder in would put "{{sinceCommit}}" in front of the agent.
+  it('falls back to the base branch on a first look', () => {
+    expect(renderWorkspaceStatusRulePrompt('{{sinceCommit}}', buildReviewPromptVariables(pr))).toBe(
+      'main'
+    )
+  })
+
+  it('is filled in by the shipped re-review template', () => {
+    const rendered = renderWorkspaceStatusRulePrompt(
+      DEFAULT_REREVIEW_PROMPT_TEMPLATE,
+      buildReviewPromptVariables(pr, 'reviewed-sha')
+    )
+    expect(rendered).not.toContain('{{')
+    expect(rendered).toContain('reviewed-sha')
+    expect(rendered).toContain('colleague')
   })
 })

@@ -133,25 +133,55 @@ export function PullRequestStatusRulesSection(): React.JSX.Element {
             }
           />
           {config.reviewInbox.enabled ? (
-            <SettingsRow
-              alignTop
-              label={translate('auto.components.settings.prRules.prompt', 'Review prompt')}
-              description={translate(
-                'auto.components.settings.prRules.promptDescription',
-                'Supports {{prNumber}}, {{title}}, {{author}}, {{branch}}, {{baseRef}}, {{url}} and {{repo}}.'
-              )}
-              control={
-                <Textarea
-                  value={config.reviewInbox.promptTemplate}
-                  onChange={(event) =>
-                    patch({
-                      reviewInbox: { ...config.reviewInbox, promptTemplate: event.target.value }
-                    })
-                  }
-                  className="h-40 w-[320px]"
-                />
-              }
-            />
+            <>
+              <SettingsRow
+                alignTop
+                label={translate(
+                  'auto.components.settings.prRules.prompt',
+                  'Prompt for a first review'
+                )}
+                description={translate(
+                  'auto.components.settings.prRules.promptDescription',
+                  'Supports {{prNumber}}, {{title}}, {{author}}, {{branch}}, {{baseRef}}, {{url}} and {{repo}}.'
+                )}
+                control={
+                  <Textarea
+                    value={config.reviewInbox.promptTemplate}
+                    onChange={(event) =>
+                      patch({
+                        reviewInbox: { ...config.reviewInbox, promptTemplate: event.target.value }
+                      })
+                    }
+                    className="h-40 w-[320px]"
+                  />
+                }
+              />
+              <SettingsRow
+                alignTop
+                label={translate(
+                  'auto.components.settings.prRules.rereviewPrompt',
+                  'Prompt when you are asked again'
+                )}
+                description={translate(
+                  'auto.components.settings.prRules.rereviewPromptDescription',
+                  'Used when a pull request you already reviewed comes back to you. Same variables, plus {{sinceCommit}} — the commit you last reviewed, which the diff is pointed at.'
+                )}
+                control={
+                  <Textarea
+                    value={config.reviewInbox.rereviewPromptTemplate}
+                    onChange={(event) =>
+                      patch({
+                        reviewInbox: {
+                          ...config.reviewInbox,
+                          rereviewPromptTemplate: event.target.value
+                        }
+                      })
+                    }
+                    className="h-40 w-[320px]"
+                  />
+                }
+              />
+            </>
           ) : null}
         </>
       ) : null}

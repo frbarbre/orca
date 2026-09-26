@@ -20,6 +20,8 @@ export type WorkspaceStatusRuleReviewInbox = {
   enabled: boolean
   agent: TuiAgent
   promptTemplate: string
+  /** Used instead when the pull request comes back after a review you already sent. */
+  rereviewPromptTemplate: string
 }
 
 export type WorkspaceStatusRuleConfig = {
@@ -51,6 +53,13 @@ What UI changes should I check for?
 Analyse the changes, and point out the most important bits of the PR and what could be
 potential weak points. Analyse the architecture decisions; are they aligned with the codebase?`
 
+export const DEFAULT_REREVIEW_PROMPT_TEMPLATE = `You reviewed pull request #{{prNumber}} — "{{title}}" by {{author}} ({{url}}) before, and {{author}} has asked you to look again.
+The branch {{branch}} is checked out and the diff is pointed at {{sinceCommit}}, the commit you last reviewed, so it shows only what has changed since.
+
+Find the changes I asked for in my own review comments on this pull request, and for each one say how {{author}} answered it: done as asked, done differently, or not addressed. Quote the relevant part of the new code.
+
+Then flag anything new that arrived with these commits and was not part of what I asked for.`
+
 function asRecord(value: unknown): Record<string, unknown> | null {
   return value && typeof value === 'object' && !Array.isArray(value) ? { ...value } : null
 }
@@ -76,7 +85,8 @@ export function cloneDefaultWorkspaceStatusRuleConfig(): WorkspaceStatusRuleConf
     reviewInbox: {
       enabled: false,
       agent: 'claude',
-      promptTemplate: DEFAULT_REVIEW_PROMPT_TEMPLATE
+      promptTemplate: DEFAULT_REVIEW_PROMPT_TEMPLATE,
+      rereviewPromptTemplate: DEFAULT_REREVIEW_PROMPT_TEMPLATE
     },
     handledPullRequests: [],
     ledgerVersion: SEED_LEDGER_VERSION
@@ -127,7 +137,11 @@ function sanitizeReviewInbox(value: unknown): WorkspaceStatusRuleReviewInbox {
     promptTemplate:
       typeof raw.promptTemplate === 'string' && raw.promptTemplate.trim()
         ? raw.promptTemplate
-        : defaults.promptTemplate
+        : defaults.promptTemplate,
+    rereviewPromptTemplate:
+      typeof raw.rereviewPromptTemplate === 'string' && raw.rereviewPromptTemplate.trim()
+        ? raw.rereviewPromptTemplate
+        : defaults.rereviewPromptTemplate
   }
 }
 

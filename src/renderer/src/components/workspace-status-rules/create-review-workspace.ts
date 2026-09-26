@@ -87,9 +87,13 @@ export async function createReviewWorkspace(
     await launchAgentBackgroundSession({
       agent: config.reviewInbox.agent,
       worktreeId: created.worktree.id,
+      // Why a second template: a re-request is a different job from a first read — the
+      // question is what the author did about what you already said.
       prompt: renderWorkspaceStatusRulePrompt(
-        config.reviewInbox.promptTemplate,
-        buildReviewPromptVariables(pr)
+        sinceReviewCommit
+          ? config.reviewInbox.rereviewPromptTemplate
+          : config.reviewInbox.promptTemplate,
+        buildReviewPromptVariables(pr, sinceReviewCommit)
       ),
       launchSource: 'unknown',
       title: `Review #${pr.number}`

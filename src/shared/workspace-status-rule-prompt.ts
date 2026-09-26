@@ -7,14 +7,17 @@ export const WORKSPACE_STATUS_RULE_PROMPT_VARIABLES = [
   'branch',
   'baseRef',
   'url',
-  'repo'
+  'repo',
+  'sinceCommit'
 ] as const
 
 export type WorkspaceStatusRulePromptVariable =
   (typeof WORKSPACE_STATUS_RULE_PROMPT_VARIABLES)[number]
 
 export function buildReviewPromptVariables(
-  pr: ReviewSnapshotPullRequest
+  pr: ReviewSnapshotPullRequest,
+  /** The commit a re-review is diffed against; absent on a first look. */
+  sinceCommit?: string
 ): Record<WorkspaceStatusRulePromptVariable, string> {
   return {
     prNumber: String(pr.number),
@@ -23,7 +26,8 @@ export function buildReviewPromptVariables(
     branch: pr.headRefName,
     baseRef: pr.baseRefName,
     url: pr.url,
-    repo: `${pr.repo.owner}/${pr.repo.repo}`
+    repo: `${pr.repo.owner}/${pr.repo.repo}`,
+    sinceCommit: sinceCommit ?? pr.baseRefName
   }
 }
 

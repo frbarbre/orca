@@ -317,7 +317,12 @@ workspace metadata where git cannot see them.
 | `review-status-snapshot-query.ts`, `-mapping.ts`, `review-status-snapshot-types.ts` | `commit { oid }` on `latestReviews`. |
 | `workspace-status-rules/apply-workspace-status-rule-plan.ts`, `create-review-workspace.ts`, `collect-workspace-status-rule-targets.ts` | Forgetting the key after a removal lands, the re-clone base, and the pending-comment guard. |
 | `store/slices/ui/ui-slice-workspace-status-rule-actions.ts` + its contract | `forgetPullRequestHandled`. |
-| `settings/PullRequestStatusRulesSection.tsx` | The toggle. |
+| `settings/PullRequestStatusRulesSection.tsx` | The toggle, and the second prompt box. |
+| `src/shared/workspace-status-rule-prompt.ts` (+ test) | `{{sinceCommit}}`, which falls back to the base branch so a first-look prompt never shows a raw placeholder. |
+
+A re-request runs `reviewInbox.rereviewPromptTemplate` instead of the first-look prompt, because
+the question is no longer "what does this change do" but "what did the author do about what you
+already said". Both templates are editable in Automations, and clearing either restores its default.
 
 ### 5. Editor theming from a VS Code theme file
 

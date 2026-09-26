@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import type { PendingReviewComment } from '../../../../shared/github/pending-review-comment'
 import { selectInlinePRCommentPlacements } from './inline-pr-comment-placement'
 import type { PRCommentGroup } from '../../../../shared/pr-comment-groups'
 import type { PRComment } from '../../../../shared/github/comment-types'
@@ -28,7 +29,7 @@ describe('selectInlinePRCommentPlacements', () => {
   it('places a thread on the line it was left on', () => {
     const groups = [thread({ id: 1, path: 'src/a.ts', line: 12 })]
     expect(selectInlinePRCommentPlacements(groups, 'src/a.ts', 100)).toEqual([
-      { id: 'thread:1', lineNumber: 12, group: groups[0], resolved: false }
+      { kind: 'thread', id: 'thread:1', lineNumber: 12, group: groups[0], resolved: false }
     ])
   })
 
@@ -61,7 +62,8 @@ describe('selectInlinePRCommentPlacements', () => {
 
   it('reports the resolved state so the zone can render collapsed', () => {
     const groups = [thread({ id: 1, path: 'src/a.ts', line: 4, isResolved: true })]
-    expect(selectInlinePRCommentPlacements(groups, 'src/a.ts', 100)[0]?.resolved).toBe(true)
+    const [placement] = selectInlinePRCommentPlacements(groups, 'src/a.ts', 100)
+    expect(placement?.kind === 'thread' && placement.resolved).toBe(true)
   })
 
   it('orders by line rather than fetch order', () => {
@@ -78,5 +80,55 @@ describe('selectInlinePRCommentPlacements', () => {
     const groups = [thread({ id: 1, path: 'src/a.ts', line: 4 })]
     expect(selectInlinePRCommentPlacements(groups, '', 100)).toEqual([])
     expect(selectInlinePRCommentPlacements(groups, 'src/a.ts', 0)).toEqual([])
+  })
+})
+
+describe('pending review comments', () => {
+  const draft = (overrides: Partial<PendingReviewComment> = {}): PendingReviewComment => ({
+    id: 'p1',
+    path: 'src/a.ts',
+    line: 20,
+    body: 'queued',
+    createdAt: 1,
+    ...overrides
+  })
+
+  it('places a queued comment on its line', () => {
+    const [placement] = selectInlinePRCommentPlacements([], 'src/a.ts', 100, [draft()])
+
+    expect(placement).toMatchObject({ kind: 'pending', lineNumber: 20, id: 'pending:p1' })
+  })
+
+  it('leaves queued comments for other files alone', () => {
+    expect(
+      selectInlinePRCommentPlacements([], 'src/a.ts', 100, [draft({ path: 'src/b.ts' })])
+    ).toEqual([])
+  })
+
+  it('drops a queued comment past the end of the diff', () => {
+    expect(selectInlinePRCommentPlacements([], 'src/a.ts', 10, [draft({ line: 50 })])).toEqual([])
+  })
+
+  it('interleaves queued comments with threads in line order', () => {
+    const groups = [thread({ id: 1, path: 'src/a.ts', line: 30 })]
+    const placements = selectInlinePRCommentPlacements(groups, 'src/a.ts', 100, [
+      draft({ id: 'p1', line: 10 }),
+      draft({ id: 'p2', line: 40 })
+    ])
+
+    expect(placements.map((p) => [p.kind, p.lineNumber])).toEqual([
+      ['pending', 10],
+      ['thread', 30],
+      ['pending', 40]
+    ])
+  })
+
+  it('keeps a queued comment and a thread on the same line, thread first', () => {
+    const groups = [thread({ id: 1, path: 'src/a.ts', line: 12 })]
+    const placements = selectInlinePRCommentPlacements(groups, 'src/a.ts', 100, [
+      draft({ line: 12 })
+    ])
+
+    expect(placements.map((p) => p.kind)).toEqual(['thread', 'pending'])
   })
 })

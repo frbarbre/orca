@@ -111,7 +111,7 @@ export function useDiffReviewComment({
   // reach, which happens when the diff updates under an open popover.
   const resolveMode = useCallback(
     (lineNumber: number): DiffCommentMode =>
-      mode === 'review' && reviewDisabledReason(lineNumber) ? 'note' : mode,
+      mode !== 'note' && reviewDisabledReason(lineNumber) ? 'note' : mode,
     [mode, reviewDisabledReason]
   )
 

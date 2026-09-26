@@ -11,6 +11,7 @@ import { createWebAgentStatusApi } from './preload-api/web-agent-status-api'
 import { createWebAiVaultApi } from './preload-api/web-ai-vault-api'
 import { createWebAppApi } from './preload-api/web-app-api'
 import { createWebReviewStatusRulesApi } from './preload-api/web-review-status-rules-api'
+import { createWebPendingReviewApi } from './preload-api/web-pending-review-api'
 import { createBrowserApi, createEmulatorApi } from './preload-api/web-browser-api'
 import { createCliApi } from './preload-api/web-cli-api'
 import { createWebDiagnosticsApi } from './preload-api/web-diagnostics-api'
@@ -65,6 +66,7 @@ function createWebPreloadApi(): Partial<PreloadApi> {
   return {
     ...createWebAppApi(),
     ...createWebReviewStatusRulesApi(),
+    ...createWebPendingReviewApi(),
     ...createWebStarNagApi(),
     ...createWebPlatformApi(),
     ...createWebWorkspacePortsApi(),

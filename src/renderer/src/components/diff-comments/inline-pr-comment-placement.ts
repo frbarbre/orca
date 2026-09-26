@@ -1,3 +1,4 @@
+import type { PendingReviewComment } from '../../../../shared/github/pending-review-comment'
 import {
   getPRCommentGroupId,
   getPRCommentGroupRoot,
@@ -5,12 +6,9 @@ import {
   type PRCommentGroup
 } from '../../../../shared/pr-comment-groups'
 
-export type InlinePRCommentPlacement = {
-  id: string
-  lineNumber: number
-  group: PRCommentGroup
-  resolved: boolean
-}
+export type InlinePRCommentPlacement =
+  | { kind: 'thread'; id: string; lineNumber: number; group: PRCommentGroup; resolved: boolean }
+  | { kind: 'pending'; id: string; lineNumber: number; comment: PendingReviewComment }
 
 /**
  * The review threads that belong on a line of this file's diff.
@@ -26,7 +24,8 @@ export type InlinePRCommentPlacement = {
 export function selectInlinePRCommentPlacements(
   groups: readonly PRCommentGroup[],
   relativePath: string,
-  modifiedLineCount: number
+  modifiedLineCount: number,
+  pendingComments: readonly PendingReviewComment[] = []
 ): InlinePRCommentPlacement[] {
   if (!relativePath || modifiedLineCount <= 0) {
     return []
@@ -42,10 +41,27 @@ export function selectInlinePRCommentPlacements(
       continue
     }
     placements.push({
+      kind: 'thread',
       id: getPRCommentGroupId(group),
       lineNumber,
       group,
       resolved: isResolvedPRCommentGroup(group)
+    })
+  }
+  // Why the same bound as a thread: a queued comment is anchored to a diff line too, and
+  // a zone past the last line is one Monaco silently never lays out.
+  for (const comment of pendingComments) {
+    if (comment.path !== relativePath) {
+      continue
+    }
+    if (comment.line < 1 || comment.line > modifiedLineCount) {
+      continue
+    }
+    placements.push({
+      kind: 'pending',
+      id: `pending:${comment.id}`,
+      lineNumber: comment.line,
+      comment
     })
   }
   // Why sorted: zones are created in iteration order, and two threads on one line should read in

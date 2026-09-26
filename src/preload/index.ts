@@ -6,6 +6,7 @@ import {
 } from './preload-runtime-support'
 import { appApi } from './api/app-bridge'
 import { reviewStatusRulesApi } from './api/review-status-rules-bridge'
+import { pendingReviewApi } from './api/pending-review-bridge'
 import { orcaProfilesApi } from './api/orca-profiles-bridge'
 import { platformApi } from './api/platform-bridge'
 import { wslApi } from './api/wsl-bridge'
@@ -102,6 +103,7 @@ const telemetryGetConsentStateApi: PreloadApi['telemetryGetConsentState'] = () =
 const api = {
   app: appApi,
   reviewStatusRules: reviewStatusRulesApi,
+  pendingReview: pendingReviewApi,
   orcaProfiles: orcaProfilesApi,
   platform: platformApi,
   wsl: wslApi,

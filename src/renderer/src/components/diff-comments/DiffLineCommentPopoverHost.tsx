@@ -32,7 +32,8 @@ export function DiffLineCommentPopoverHost({
   submitLabel = 'Add note',
   onCancel,
   onSubmitNote,
-  onReviewPosted
+  onReviewPosted,
+  onQueueForReview
 }: {
   anchor: PopoverAnchor
   diffEditor: monacoEditor.IStandaloneDiffEditor | null
@@ -45,6 +46,8 @@ export function DiffLineCommentPopoverHost({
   onCancel: () => void
   onSubmitNote: (body: string) => Promise<void>
   onReviewPosted: (comment: PRComment) => void
+  /** Queue the comment for the review instead of posting it now. */
+  onQueueForReview: (body: string, line: number, startLine: number | undefined) => void
 }): React.JSX.Element {
   const review = useDiffReviewComment({
     diffEditor,
@@ -67,13 +70,22 @@ export function DiffLineCommentPopoverHost({
       mode={effectiveMode}
       onModeChange={review.setMode}
       reviewDisabledReason={disabledReason}
-      placeholder={effectiveMode === 'review' ? 'Leave a review comment on this line' : placeholder}
-      submitLabel={effectiveMode === 'review' ? 'Comment' : submitLabel}
+      placeholder={effectiveMode === 'note' ? placeholder : 'Leave a review comment on this line'}
+      submitLabel={
+        effectiveMode === 'note' ? submitLabel : effectiveMode === 'review' ? 'Comment' : 'Add'
+      }
       submittingLabel="Posting…"
       onCancel={onCancel}
       onSubmit={async (body) => {
-        if (effectiveMode !== 'review') {
+        if (effectiveMode === 'note') {
           await onSubmitNote(body)
+          return
+        }
+        if (effectiveMode === 'pending') {
+          onQueueForReview(body, anchor.lineNumber, anchor.startLine)
+          // Why dismiss here rather than in the caller: queueing has no response to wait
+          // for, so the popover would otherwise stay open over the comment it just made.
+          onCancel()
           return
         }
         const posted = await review.submitReviewComment(anchor.lineNumber, anchor.startLine, body)

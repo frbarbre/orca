@@ -35,6 +35,7 @@ import { preserveDiffViewStateAcrossModelSwaps } from './diff-model-swap-view-st
 import { monacoFindOptions } from './monaco-find-options'
 import { resolveDocumentTheme } from '@/lib/document-theme'
 import { editorThemeName, ensureCustomEditorThemes } from '@/lib/custom-editor-theme'
+import { usePendingReviewForDiff } from '@/components/pending-review/use-pending-review-for-diff'
 
 export default function DiffViewer({
   modelKey,
@@ -125,12 +126,14 @@ export default function DiffViewer({
   // PR review threads render in their own zones beside Orca's local notes, so a reviewer sees both
   // kinds of comment on the line they belong to.
   const inlinePRComments = useInlinePRCommentActions(worktreeId ?? null)
+  const pendingReview = usePendingReviewForDiff(worktreeId ?? null, relativePath)
   useInlinePRCommentZones({
     editor: modifiedEditor,
     modelKey: modifiedModelKey ?? modelKey,
     groups: inlinePRComments.groups,
     relativePath,
     worktreeId: worktreeId ?? '',
+    pendingReview,
     handlers: {
       onResolve: inlinePRComments.handleResolve,
       onReply: inlinePRComments.handleReplyToComment,
@@ -384,6 +387,7 @@ export default function DiffViewer({
             submitLabel={addLineCommentLabel}
             onCancel={() => setPopover(null)}
             onSubmitNote={handleSubmitComment}
+            onQueueForReview={pendingReview.queueComment}
             onReviewPosted={(comment) => {
               // Merge first so the card appears at once, then reconcile: the REST response carries
               // no thread id, and replies to this comment cannot nest under it without one.

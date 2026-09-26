@@ -8,6 +8,7 @@ import type { EphemeralVmCheckoutMode } from '../orca-yaml-hook-types'
 import type { BuiltInWorktreeVisibilitySourceId } from '../repo-types'
 import type { WorktreeIdentity } from './identity'
 import type { WorktreeScanFailureKind } from '../worktree-scan-failure'
+import type { PendingReviewComment } from '../github/pending-review-comment'
 
 export type WorkspaceLinkedItem = {
   provider: 'github' | 'gitlab' | 'linear' | 'jira'
@@ -140,6 +141,8 @@ export type Worktree = {
   priorWorktreeIds?: string[]
   workspaceStatus?: WorkspaceStatus
   diffComments?: DiffComment[]
+  /** Review comments queued locally, not yet submitted to the provider. */
+  pendingReviewComments?: PendingReviewComment[]
   mobileDiffReview?: MobileDiffReviewState
   automationProvenance?: AutomationWorkspaceProvenance
   cliProvenance?: CliWorkspaceProvenance

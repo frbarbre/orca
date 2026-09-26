@@ -151,6 +151,7 @@ export const WorktreeSet = WorktreeSelector.extend({
     .nullable()
     .optional(),
   diffComments: z.array(z.unknown()).optional(),
+  pendingReviewComments: z.array(z.unknown()).optional(),
   mobileDiffReview: z.unknown().optional(),
   parentWorktree: OptionalString,
   noParent: OptionalBoolean

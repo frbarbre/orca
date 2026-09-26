@@ -183,7 +183,52 @@ Two upstream **test** files carry our additions. Take upstream's version, then r
 - `AutomationsSettingsPane.test.tsx` — the store mock needs `workspaceStatusRules`,
   `workspaceStatuses`, `repos` and `setWorkspaceStatusRules`.
 
-### 4. Editor theming from a VS Code theme file
+### 4. Review mode: pending comments and a submitted verdict
+
+Queues inline review comments locally instead of posting each one immediately, then sends them as
+one review with an approve / request-changes / comment verdict. The queue lives on the workspace's
+own metadata, so it survives a restart and a crash.
+
+Two things about the transport, both learned the hard way:
+
+- The verdict goes through **GraphQL `addPullRequestReview`**, not REST. `gh api -f` sends strings
+  only, so the nested `threads` array cannot be a variable, and `ghExecFileWithScopeAsync` accepts
+  an `options.stdin` by inheritance but **never forwards it to the spawn**
+  (`gh-exec-file.ts:187`), so `gh api --input -` silently sends an empty body. The input is
+  therefore embedded in the mutation document, which is what `review-verdict-mutation.ts` builds
+  and escapes.
+- `hostedReview` already means *the pull request itself* in this codebase, so this feature is named
+  `pendingReviewComment` / `reviewVerdict` throughout. Do not rename it to "review".
+
+New files (no conflict unless upstream adds the same path):
+
+- `src/shared/github/pending-review-comment.ts` (+ test) — the queue model, its pure helpers and the
+  wire types.
+- `src/main/github/review-verdict-mutation.ts` (+ test) — the GraphQL document builder.
+- `src/main/github/submit-review-verdict.ts` — the one `gh api graphql` call, rate-limit guarded.
+- `src/preload/api/pending-review-api.ts`, `-bridge.ts`, and the web stub
+  `web-pending-review-api.ts`.
+- `src/renderer/src/components/pending-review/*` — the queue hook, the per-diff wrapper (which
+  exists because inlining it tipped `DiffViewer.tsx` past its 400-line cap), the draft card and the
+  submit action.
+- `src/renderer/src/components/right-sidebar/source-control/pending-review/pending-review-shelf.tsx`.
+
+Modified files, and what is ours:
+
+| File | What is ours |
+| --- | --- |
+| `src/shared/worktree/types.ts`, `meta-types.ts`, `rpc-contract/worktree-params.ts` | `pendingReviewComments` beside `diffComments`. |
+| `DiffCommentPopover.tsx` | `DiffCommentMode` gains `'pending'`, the third radio, and the relabelled `'review'` button ("Comment now"). |
+| `DiffLineCommentPopoverHost.tsx` | The `onQueueForReview` prop and the third submit arm. |
+| `use-diff-review-comment.ts` | `resolveMode` falls back for any non-note mode, not only `'review'`. |
+| `inline-pr-comment-placement.ts` (+ test) | The placement union gains `kind`, and pending drafts are placed alongside threads. |
+| `useInlinePRCommentZones.tsx` | The `pendingReview` input and the pending branch in `renderZone`. |
+| `editor/DiffViewer.tsx` | The queue hook, `onQueueForReview`, and passing the queue to the zones. |
+| `source-control/panel/panel-ready.tsx` | The shelf, hidden at zero drafts like the notes shelf. |
+| `src/preload/api-types.ts`, `index.ts`, `web/web-preload-api.ts` | The `pendingReview` member. |
+| `src/main/startup/main-process-ipc-bootstrap.ts` | The `pending-review:submit` handler. |
+
+### 5. Editor theming from a VS Code theme file
 
 Loads `~/.orca/themes/editor-dark.json` / `editor-light.json` (any VS Code theme) and registers them
 with Monaco, so the editor and diff viewer are not stuck on stock `vs` / `vs-dark`.

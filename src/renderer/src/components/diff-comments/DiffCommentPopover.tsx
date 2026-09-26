@@ -15,7 +15,7 @@ import { resolveDiffCommentPopoverTop } from './diff-comment-popover-position'
 // Why: a DOM sibling overlay rather than a Monaco content widget, so it can own a React auto-resizing textarea.
 
 /** Where a new comment on this line goes: Orca's own note for an agent, or GitHub's review. */
-export type DiffCommentMode = 'note' | 'review'
+export type DiffCommentMode = 'note' | 'review' | 'pending'
 
 type Props = {
   lineNumber: number
@@ -212,8 +212,8 @@ export function DiffCommentPopover({
         </div>
         {onModeChange ? (
           <div className="flex items-center gap-1" role="radiogroup">
-            {(['note', 'review'] as const).map((candidate) => {
-              const disabled = candidate === 'review' && Boolean(reviewDisabledReason)
+            {(['note', 'review', 'pending'] as const).map((candidate) => {
+              const disabled = candidate !== 'note' && Boolean(reviewDisabledReason)
               const active = mode === candidate
               return (
                 <button
@@ -237,10 +237,15 @@ export function DiffCommentPopover({
                         'auto.components.diff.comments.DiffCommentPopover.modeNote',
                         'Note for agent'
                       )
-                    : translate(
-                        'auto.components.diff.comments.DiffCommentPopover.modeReview',
-                        'Review comment'
-                      )}
+                    : candidate === 'review'
+                      ? translate(
+                          'auto.components.diff.comments.DiffCommentPopover.modeReview',
+                          'Comment now'
+                        )
+                      : translate(
+                          'auto.components.diff.comments.DiffCommentPopover.modePending',
+                          'Add to review'
+                        )}
                 </button>
               )
             })}

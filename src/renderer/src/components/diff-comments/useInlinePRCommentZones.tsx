@@ -4,6 +4,8 @@ import { createRoot, type Root } from 'react-dom/client'
 import { installDiffCommentZoneMouseDownStopper } from './diff-comment-zone-mouse-events'
 import { resizeDiffCommentZone, type ZoneEntry } from './diff-comment-view-zone-entry'
 import { selectInlinePRCommentPlacements } from './inline-pr-comment-placement'
+import { PendingReviewCommentCard } from '@/components/pending-review/PendingReviewCommentCard'
+import type { PendingReviewQueue } from '@/components/pending-review/use-pending-review-queue'
 import { InlinePRCommentCard } from './InlinePRCommentCard'
 import type { PRCommentGroup } from '../../../../shared/pr-comment-groups'
 import type { GitHubReactionContent, PRComment } from '../../../../shared/github/comment-types'
@@ -13,6 +15,7 @@ import type { RightPanelCommentSubmitResult } from '@/components/right-sidebar/r
 // its own, so the zone starts roughly card-sized and the card's ResizeObserver corrects it.
 const INITIAL_ZONE_PX = 132
 const RESOLVED_ZONE_PX = 34
+const PENDING_ZONE_PX = 108
 
 export type InlinePRCommentZoneHandlers = {
   onResolve: (threadId: string, resolve: boolean) => boolean | Promise<boolean>
@@ -39,7 +42,8 @@ export function useInlinePRCommentZones({
   groups,
   relativePath,
   worktreeId,
-  handlers
+  handlers,
+  pendingReview
 }: {
   editor: monacoEditor.ICodeEditor | null
   modelKey: string | null
@@ -47,11 +51,14 @@ export function useInlinePRCommentZones({
   relativePath: string
   worktreeId: string
   handlers: InlinePRCommentZoneHandlers
+  pendingReview: PendingReviewQueue
 }): void {
   // Why refs: the handlers are rebuilt every render, and re-running the zone effect on that would
   // tear down and re-add every zone on each keystroke in a reply box.
   const handlersRef = useRef(handlers)
   handlersRef.current = handlers
+  const pendingRef = useRef(pendingReview)
+  pendingRef.current = pendingReview
   const zonesRef = useRef(new Map<string, ZoneEntry>())
 
   useEffect(() => {
@@ -63,7 +70,12 @@ export function useInlinePRCommentZones({
     if (!model) {
       return
     }
-    const placements = selectInlinePRCommentPlacements(groups, relativePath, model.getLineCount())
+    const placements = selectInlinePRCommentPlacements(
+      groups,
+      relativePath,
+      model.getLineCount(),
+      pendingReview.comments
+    )
     const wanted = new Map(placements.map((placement) => [placement.id, placement]))
     const rootsToUnmount: Root[] = []
 
@@ -71,6 +83,17 @@ export function useInlinePRCommentZones({
       const entry = zones.get(id)
       const placement = wanted.get(id)
       if (!entry || !placement) {
+        return
+      }
+      if (placement.kind === 'pending') {
+        entry.root.render(
+          <PendingReviewCommentCard
+            comment={placement.comment}
+            onChangeBody={(body) => pendingRef.current.updateBody(placement.comment.id, body)}
+            onRemove={() => pendingRef.current.remove(placement.comment.id)}
+            onContentResize={() => resizeDiffCommentZone(editor, entry)}
+          />
+        )
         return
       }
       entry.root.render(
@@ -105,7 +128,10 @@ export function useInlinePRCommentZones({
 
       for (const placement of placements) {
         const existing = zones.get(placement.id)
-        const signature = `${placement.lineNumber}:${placement.resolved}`
+        const signature =
+          placement.kind === 'pending'
+            ? `${placement.lineNumber}:pending:${placement.comment.body}`
+            : `${placement.lineNumber}:${placement.resolved}`
         if (existing) {
           if (existing.lastRenderSignature !== signature) {
             existing.lastRenderSignature = signature
@@ -137,7 +163,12 @@ export function useInlinePRCommentZones({
         const root = createRoot(dom)
         const delegate: monacoEditor.IViewZone = {
           afterLineNumber: placement.lineNumber,
-          heightInPx: placement.resolved ? RESOLVED_ZONE_PX : INITIAL_ZONE_PX,
+          heightInPx:
+            placement.kind === 'pending'
+              ? PENDING_ZONE_PX
+              : placement.resolved
+                ? RESOLVED_ZONE_PX
+                : INITIAL_ZONE_PX,
           domNode: dom,
           suppressMouseDown: false
         }
@@ -165,7 +196,7 @@ export function useInlinePRCommentZones({
         }
       })
     }
-  }, [editor, groups, modelKey, relativePath, worktreeId])
+  }, [editor, groups, modelKey, pendingReview.comments, relativePath, worktreeId])
 
   // Tear every zone down when the viewer goes away, so a reused editor does not inherit them.
   useEffect(() => {

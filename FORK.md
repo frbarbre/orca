@@ -23,7 +23,16 @@ Merge on a branch, never straight onto `main`, and fast-forward `main` only once
 [Verify](#verify) is green — a broken `main` produces a broken release, and the release is the only
 way this fork reaches the machine it runs on.
 
-Three things learned the hard way on the first sync:
+Four things learned the hard way on the first sync:
+
+- **Adding the `upstream` remote silently re-points `gh` at `stablyai/orca`.** `gh` resolves its
+  default repository from the remotes and prefers one named `upstream`, so right after the first
+  `git remote add` a plain `gh workflow run fork-release.yml` targeted upstream's repository (it
+  404'd, so nothing ran). Pin it once, and pass `--repo` in anything scripted:
+
+  ```bash
+  gh repo set-default frbarbre/orca
+  ```
 
 - **Commit the merge with `--no-verify`.** The pre-commit hook runs `oxfmt --write` on every staged
   file, and a merge stages thousands of upstream files; the hook reformats them and the merge commit
@@ -491,7 +500,7 @@ sync hit exactly that (#23062 landed two commits later) and was fixed by merging
 
 ## Releasing
 
-`gh workflow run fork-release.yml --ref main`, or push a `v*` tag. The workflow builds on a
+`gh workflow run fork-release.yml --repo frbarbre/orca --ref main`, or push a `v*` tag. The workflow builds on a
 GitHub-hosted macOS runner and publishes to this fork's releases, which is where the installed app
 looks.
 

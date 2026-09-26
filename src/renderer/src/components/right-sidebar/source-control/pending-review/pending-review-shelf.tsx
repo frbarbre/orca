@@ -61,38 +61,7 @@ export function SourceControlPendingReviewShelf({
 
   return (
     <div className="border-b border-border">
-      <div className="flex items-center gap-1 py-1.5 pl-3 pr-2">
-        <button
-          type="button"
-          className="flex min-w-0 flex-1 items-center gap-1.5 text-left text-xs text-muted-foreground transition-colors hover:text-foreground"
-          onClick={() => setExpanded((prev) => !prev)}
-          aria-expanded={expanded}
-        >
-          <ChevronRight
-            className={cn('size-3.5 shrink-0 transition-transform', expanded && 'rotate-90')}
-          />
-          <MessageSquare className="size-3.5 shrink-0" />
-          <span className="truncate font-medium text-foreground">
-            {translate('auto.components.sourceControl.pendingReview.title', 'Pending review')}
-          </span>
-          <span className="shrink-0 rounded-sm bg-muted px-1 text-[10px] tabular-nums">
-            {queue.comments.length}
-          </span>
-        </button>
-      </div>
-      <div className={cn('px-3 pb-2', !expanded && 'hidden')}>
-        <div className="scrollbar-sleek max-h-64 space-y-2 overflow-y-auto">
-          {queue.comments.map((comment) => (
-            <PendingReviewCommentCard
-              key={comment.id}
-              comment={comment}
-              onChangeBody={(next) => queue.updateBody(comment.id, next)}
-              onRemove={() => queue.remove(comment.id)}
-            />
-          ))}
-        </div>
-      </div>
-      <div className="px-3 pb-2">
+      <div className="px-3 pt-2 pb-2">
         <div className="rounded-md border border-input bg-background shadow-xs dark:bg-input/30">
           <Textarea
             value={body}
@@ -129,6 +98,43 @@ export function SourceControlPendingReviewShelf({
           </div>
         </div>
       </div>
+      {/* Why hidden at zero: a disclosure that opens onto nothing is chrome, and the
+          form above is the part of this shelf that is always worth showing. */}
+      {queue.comments.length > 0 ? (
+        <>
+          <div className="flex items-center gap-1 py-1.5 pl-3 pr-2">
+            <button
+              type="button"
+              className="flex min-w-0 flex-1 items-center gap-1.5 text-left text-xs text-muted-foreground transition-colors hover:text-foreground"
+              onClick={() => setExpanded((prev) => !prev)}
+              aria-expanded={expanded}
+            >
+              <ChevronRight
+                className={cn('size-3.5 shrink-0 transition-transform', expanded && 'rotate-90')}
+              />
+              <MessageSquare className="size-3.5 shrink-0" />
+              <span className="truncate font-medium text-foreground">
+                {translate('auto.components.sourceControl.pendingReview.title', 'Pending review')}
+              </span>
+              <span className="shrink-0 rounded-sm bg-muted px-1 text-[10px] tabular-nums">
+                {queue.comments.length}
+              </span>
+            </button>
+          </div>
+          <div className={cn('px-3 pb-2', !expanded && 'hidden')}>
+            <div className="scrollbar-sleek max-h-64 space-y-2 overflow-y-auto">
+              {queue.comments.map((comment) => (
+                <PendingReviewCommentCard
+                  key={comment.id}
+                  comment={comment}
+                  onChangeBody={(next) => queue.updateBody(comment.id, next)}
+                  onRemove={() => queue.remove(comment.id)}
+                />
+              ))}
+            </div>
+          </div>
+        </>
+      ) : null}
     </div>
   )
 }

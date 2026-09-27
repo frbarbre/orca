@@ -101,26 +101,32 @@ export function usePRCommentsState(prCacheKey: string): PRCommentsState {
   const commentsRef = useRef<PRComment[]>(comments)
   commentsRef.current = comments
 
+  // Why the setters and not `registry` / `local`: both objects are new on every render, and the
+  // fetch effect depends on these setters, so an unstable identity refetched and re-rendered forever.
+  const registryWrite = registry?.write
+  const registrySetLoading = registry?.setLoading
+  const { setComments: setLocalComments, setCommentsLoading: setLocalCommentsLoading } = local
+
   const setComments = useCallback<React.Dispatch<React.SetStateAction<PRComment[]>>>(
     (update) => {
-      if (registry && prCacheKey) {
-        registry.write(prCacheKey, update)
+      if (registryWrite && prCacheKey) {
+        registryWrite(prCacheKey, update)
         return
       }
-      local.setComments(update)
+      setLocalComments(update)
     },
-    [local, prCacheKey, registry]
+    [prCacheKey, registryWrite, setLocalComments]
   )
 
   const setCommentsLoading = useCallback<React.Dispatch<React.SetStateAction<boolean>>>(
     (value) => {
-      if (registry && prCacheKey) {
-        registry.setLoading(prCacheKey, value)
+      if (registrySetLoading && prCacheKey) {
+        registrySetLoading(prCacheKey, value)
         return
       }
-      local.setCommentsLoading(value)
+      setLocalCommentsLoading(value)
     },
-    [local, prCacheKey, registry]
+    [prCacheKey, registrySetLoading, setLocalCommentsLoading]
   )
 
   if (!registry || !prCacheKey) {

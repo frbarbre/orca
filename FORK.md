@@ -491,6 +491,20 @@ sync hit exactly that (#23062 landed two commits later) and was fixed by merging
 
 ### Sync log
 
+**1.4.214 → 1.4.214** (`1554f15b6c..433986fa3b`, 92 upstream commits, no conflicts)
+
+- Upstream's `package.json` did not move: all 92 commits landed under the same 1.4.214, so the
+  branch name repeats the previous sync's. `git switch -C` reuses it; the release title still reads
+  `(Orca 1.4.214)`.
+- The merge was clean. Upstream touched five files the fork also carries (`src/main/index.ts`,
+  `config/electron-builder.config.cjs`, `assets/main.css`, `en.json` and
+  `SourceControl.virtual-file-list.test.tsx`); git merged each without conflict and upstream's hunks
+  went in verbatim. The localization catalog verifies without `--fix`.
+- `diff-comment-draft-zone.ts` still falls back to `onLegacyAddCommentClickRef`, so the fork's
+  Agent / Comment / Review popover keeps working.
+- Upstream changed `virtualized-list.test.tsx`; the fork's `scrollToRowKey` wrapper lives in that
+  component, so look there first if Verify fails on it.
+
 **1.4.197 → 1.4.214** (133 upstream commits, three conflicts)
 
 - `src/main/index.ts` — both sides added imports. Keep both; `armForkUpdateChannel` must stay.

@@ -71,7 +71,7 @@ rest is feature work.
 **Rule: keep the indirection, keep upstream's default.** This is the one thing most likely to be
 resolved wrongly, because the natural instinct is to "fix" the defaults to point at this fork.
 
-Every release URL in the updater reads an env var and **falls back to upstream's URL**:
+Every release URL in the updater reads an env var and **falls back to upstream's URL**. The renderer is the exception — it cannot read main's env — so it is armed from a build flag, `VITE_ORCA_RELEASES_REPO`, which `fork-release.yml` sets on the build step:
 
 ```ts
 function repoBase(): string {
@@ -105,6 +105,8 @@ Two rules, both learned the hard way:
 | `.github/workflows/fork-release.yml`           | Whole file (new).                                                                                                                                                                                |
 | `config/scripts/fork-release-notes.mjs` (+ test) | Whole file (new). Resolves the fork version and writes the two-part release notes. |
 | `config/scripts/test-fork-features.sh` | Whole file (new). Runs every test a fork commit touched; part of [Verify](#verify). |
+| `src/shared/release-channel.ts` | `setMainReleaseRepoOverride` and the `mainReleaseRepo()` it feeds. `MAIN_RELEASE_REPO` itself stays upstream's — same rule as the updater URLs. |
+| `src/renderer/src/main.tsx` | Arms that override from `VITE_ORCA_RELEASES_REPO`. The renderer cannot read the main process's env, so release-notes links there resolved to upstream's repo — a 404 for every fork-only version. |
 
 #### The fork installs its own updates (macOS)
 

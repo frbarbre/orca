@@ -114,8 +114,24 @@ export function requiresManualDevChannelInstall(options: {
   return runningChannel === null || !hasDedicatedReleaseRepo(runningChannel)
 }
 
+// Why a setter rather than editing the constants: a fork build updates from its own repo, so its
+// release links must point there, while upstream's defaults and every test written against them
+// stay untouched. Each process arms it at its own edge — main from the fork update channel, the
+// renderer from a flag the fork's release build bakes in.
+let mainReleaseRepoOverride: string | null = null
+
+export function setMainReleaseRepoOverride(repo: string | null): void {
+  mainReleaseRepoOverride = repo
+}
+
+function mainReleaseRepo(): string {
+  return mainReleaseRepoOverride ?? MAIN_RELEASE_REPO
+}
+
 export function getReleaseRepoForChannel(channel: ReleaseChannel): string {
-  return CHANNEL_RELEASE_REPOS[channel]
+  return channel === 'stable' || channel === 'rc'
+    ? mainReleaseRepo()
+    : CHANNEL_RELEASE_REPOS[channel]
 }
 
 export function normalizeTagToVersion(tag: string): string {
@@ -244,7 +260,7 @@ export function getVersionChannel(version: string): ReleaseChannel | null {
  */
 export function getReleaseNotesUrlForVersion(version: string | null): string {
   const channel = version ? getVersionChannel(version) : null
-  const repo = channel ? getReleaseRepoForChannel(channel) : MAIN_RELEASE_REPO
+  const repo = channel ? getReleaseRepoForChannel(channel) : mainReleaseRepo()
   return version
     ? `https://github.com/${repo}/releases/tag/v${normalizeTagToVersion(version)}`
     : `https://github.com/${repo}/releases`

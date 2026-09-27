@@ -1,5 +1,6 @@
 import { shell } from 'electron'
 import { recordUpdaterLifecycle } from '../updater-lifecycle-diagnostics'
+import { setMainReleaseRepoOverride } from '../../shared/release-channel'
 
 const FORK_REPO_URL = 'https://github.com/frbarbre/orca'
 
@@ -41,6 +42,11 @@ export function armForkUpdateChannel(isPackaged: boolean): void {
   // upstream's, and re-pointing the literals means editing nine test files and re-resolving them on
   // every merge. One env var at the edge leaves all of that untouched.
   process.env.ORCA_RELEASES_REPO_URL ??= FORK_REPO_URL
+  // Why: release-notes links and the release-build list resolve their repo in shared code, which
+  // reads no env var, so the fork repo has to be handed to it explicitly.
+  setMainReleaseRepoOverride(
+    new URL(process.env.ORCA_RELEASES_REPO_URL).pathname.replace(/^\/|\/$/g, '')
+  )
   process.env.ORCA_UPDATE_FEED_URL ??= `${process.env.ORCA_RELEASES_REPO_URL}/releases/latest/download`
   if (process.env.ORCA_UPDATE_AUTO_INSTALL !== '1') {
     process.env.ORCA_UPDATE_MANUAL_INSTALL = '1'

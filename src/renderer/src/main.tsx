@@ -24,11 +24,17 @@ import { getOrCreateRendererRoot } from './lib/react-renderer-root'
 import { primeTerminalWebglAddon } from './lib/pane-manager/pane-webgl-renderer'
 import { SkillWarningPreviewLauncher } from './components/skills/SkillWarningPreviewLauncher'
 import { installBrowserClientPageRenderer } from './components/browser-pane/browser-client-page-renderer-installation'
+import { setMainReleaseRepoOverride } from '../../shared/release-channel'
 
 recordRendererCrashBreadcrumb('renderer_bootstrap_started', { dev: import.meta.env.DEV })
 installRendererCrashDiagnostics()
 installTypingLatencyDiagnostic()
 installAutomationHostDiagnostic()
+// Why a build flag: the renderer cannot read the main process's env, and the fork's release links
+// must point at the repo it updates from. Unset in upstream builds, which keep upstream's links.
+if (import.meta.env.VITE_ORCA_RELEASES_REPO) {
+  setMainReleaseRepoOverride(String(import.meta.env.VITE_ORCA_RELEASES_REPO))
+}
 
 if (
   import.meta.env.DEV &&

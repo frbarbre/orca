@@ -196,6 +196,12 @@ Watches each workspace's linked pull request and sets its board column, deletes 
 its pull request is merged or closed, and opens a review workspace when someone asks you to review.
 Configured per project under Settings → Automations.
 
+A second, simpler rule lives beside it: **a column per remote server**. Every workspace on a mapped
+server (`statusByHost`, keyed by execution host id such as `runtime:<environment id>`) is kept in
+that column, whatever project it is in and whether or not the pull request rules are on. For those
+workspaces it wins: the pull request collector skips them, so the two never move a workspace back
+and forth.
+
 Everything the rules need comes from **one GraphQL query this fork owns** rather than from
 upstream's `PRInfo`. That is deliberate: upstream's reviewer mapper drops team reviewers (it
 requires a `login`, and a team only has a `slug`), its rollup normalizer rewrites every check name
@@ -210,6 +216,7 @@ New files (no conflict unless upstream adds the same path):
   moves, removals, review-workspace creations. Every outstanding review request is cloned on the
   first tick; the `handledPullRequests` ledger is what stops a repeat, not a seeding step.
 - `src/shared/workspace-status-rule-config.ts` — config type, defaults, persistence normalization.
+- `src/shared/workspace-host-status-plan.ts` (+ test) — pure planner for the per-server column.
 - `src/shared/workspace-status-rule-prompt.ts` (+ test) — the `{{variable}}` renderer. Orca has no
   other template engine; Quick Commands and Automations both store flat strings.
 - `src/shared/github/review-status-snapshot-types.ts`, `src/shared/rpc-contract/workspace-status-rule-params.ts`
@@ -220,7 +227,7 @@ New files (no conflict unless upstream adds the same path):
 - `src/renderer/src/components/workspace-status-rules/*` — poller, target collection, plan
   application, review-workspace creation.
 - `src/renderer/src/components/settings/PullRequestStatusRulesSection.tsx`, `PullRequestStatusRuleRows.tsx`,
-  `pull-request-status-rule-copy.ts`
+  `pull-request-status-rule-copy.ts`, `RemoteHostStatusRulesSection.tsx` (+ test)
 - `src/renderer/src/store/slices/ui/ui-slice-workspace-status-rule-actions.ts`
 - `src/renderer/src/web/preload-api/web-review-status-rules-api.ts`
 
@@ -238,13 +245,15 @@ Modified files, and what to re-apply:
 | `src/renderer/src/store/slices/ui/ui-slice-contract-preferences.ts`             | The three `workspaceStatusRules` members.                                                                                                                                                                         |
 | `src/renderer/src/store/slices/ui/ui-slice-hydration-actions.ts`                | One normalize line.                                                                                                                                                                                               |
 | `src/renderer/src/store/slices/ui/ui-slice-preference-actions.ts`               | `...createUiWorkspaceStatusRuleActions(set, get)` as the first spread. **Deliberately not `ui.ts`** — inserting a line there drags upstream's pre-existing `as UISlice` cast into the changed-lines quality gate. |
-| `src/renderer/src/components/settings/AutomationsSettingsPane.tsx`              | `<PullRequestStatusRulesSection />`.                                                                                                                                                                              |
+| `src/renderer/src/components/settings/AutomationsSettingsPane.tsx`              | `<PullRequestStatusRulesSection />` and `<RemoteHostStatusRulesSection />`.                                                                                                                                       |
 
 Two upstream **test** files carry our additions. Take upstream's version, then re-apply:
 
 - `web-preload-api-composition.test.ts` — `'reviewStatusRules'` in the expected namespace list.
 - `AutomationsSettingsPane.test.tsx` — the store mock needs `workspaceStatusRules`,
-  `workspaceStatuses`, `repos` and `setWorkspaceStatusRules`.
+  `workspaceStatuses`, `repos` and `setWorkspaceStatusRules`, plus the host-option inputs
+  `sshTargetLabels`, `sshConnectionStates`, `settings`, `runtimeEnvironments` and
+  `runtimeStatusByEnvironmentId`.
 
 ### 4. Review mode: pending comments and a submitted verdict
 

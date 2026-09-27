@@ -3,6 +3,7 @@ import type { GlobalSettings } from '../../../../shared/global-settings-types'
 import { Button } from '@/components/ui/button'
 import { SettingsSwitchRow } from './SettingsFormControls'
 import { PullRequestStatusRulesSection } from './PullRequestStatusRulesSection'
+import { RemoteHostStatusRulesSection } from './RemoteHostStatusRulesSection'
 import { useAppStore } from '@/store'
 import { translate } from '@/i18n/i18n'
 
@@ -34,6 +35,7 @@ export function AutomationsSettingsPane({
         }
       />
       <PullRequestStatusRulesSection />
+      <RemoteHostStatusRulesSection />
       <section className="space-y-4 py-5">
         <div className="space-y-1">
           <h3 className="text-sm font-medium">

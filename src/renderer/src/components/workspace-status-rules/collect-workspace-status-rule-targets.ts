@@ -4,6 +4,9 @@ import { getIndexedAllWorktrees, getIndexedRepoMap } from '@/store/worktree-repo
 import { resolveWorktreeBranchLabel } from '@/lib/worktree-default-display-name'
 import type { GitHubRepositoryIdentity } from '../../../../shared/github/pull-request-types'
 import type { WorkspaceStatusRuleTarget } from '../../../../shared/workspace-status-rule-plan'
+import type { WorkspaceHostStatusTarget } from '../../../../shared/workspace-host-status-plan'
+import { getWorktreeExecutionHostId } from '../../../../shared/execution-host'
+import type { WorkspaceStatus } from '../../../../shared/worktree/types'
 import { getPendingReviewDrafts } from '../pending-review/pending-review-draft-store'
 
 export type WorkspaceStatusRuleScope = {
@@ -12,6 +15,29 @@ export type WorkspaceStatusRuleScope = {
   existingBranches: Set<string>
   /** Working directory for the `gh` call; snapshot queries name their own repos. */
   repoPath: string | null
+}
+
+/** Every live workspace on a host that has a column, whatever project it belongs to. */
+export function collectWorkspaceHostStatusTargets(
+  state: AppState,
+  statusByHost: Readonly<Record<string, WorkspaceStatus>>
+): WorkspaceHostStatusTarget[] {
+  const repoMap = getIndexedRepoMap(state.repos)
+  const targets: WorkspaceHostStatusTarget[] = []
+  for (const worktree of getIndexedAllWorktrees(state.worktreesByRepo)) {
+    if (worktree.isArchived || worktree.isBare) {
+      continue
+    }
+    const executionHostId = getWorktreeExecutionHostId(worktree, repoMap.get(worktree.repoId))
+    if (statusByHost[executionHostId]) {
+      targets.push({
+        worktreeId: worktree.id,
+        executionHostId,
+        currentStatus: worktree.workspaceStatus ?? null
+      })
+    }
+  }
+  return targets
 }
 
 export function collectWorkspaceStatusRuleScope(
@@ -43,6 +69,11 @@ export function collectWorkspaceStatusRuleScope(
     }
     const repo = repoMap.get(worktree.repoId)
     if (!repo) {
+      continue
+    }
+    // Why: a host's column wins over the pull request rules, which would otherwise move the
+    // workspace back out of it on every tick.
+    if (state.workspaceStatusRules.statusByHost[getWorktreeExecutionHostId(worktree, repo)]) {
       continue
     }
     const pr =

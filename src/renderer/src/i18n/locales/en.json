@@ -12246,6 +12246,10 @@
           "review": "Ready for review",
           "reviewDescription": "Open, not a draft, and none of the conditions above apply.",
           "pmTeamPlaceholder": "org/team-slug"
+        },
+        "hostRules": {
+          "title": "Move workspaces by server",
+          "description": "Keeps every workspace on a server in one column, checked every minute while Orca is open. It takes precedence over the pull request rules for those workspaces."
         }
       },
       "right": {

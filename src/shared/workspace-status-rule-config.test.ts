@@ -37,4 +37,18 @@ describe('normalizeWorkspaceStatusRuleConfig', () => {
     expect(config.reviewInbox.enabled).toBe(true)
     expect('seeded' in config.reviewInbox).toBe(false)
   })
+
+  it('keeps a column per remote host and drops local or malformed host ids', () => {
+    const config = normalizeWorkspaceStatusRuleConfig({
+      statusByHost: {
+        'runtime:helios-env': ' status-7 ',
+        'ssh:box': 'todo',
+        local: 'todo',
+        'not-a-host': 'todo',
+        'runtime:empty': ''
+      }
+    })
+
+    expect(config.statusByHost).toEqual({ 'runtime:helios-env': 'status-7', 'ssh:box': 'todo' })
+  })
 })

@@ -556,7 +556,7 @@ an in-app download does not.
 
 ## PR previews
 
-Open a pull request and `fork-preview-release.yml` builds it and publishes a **preview release**,
+Open a pull request (except a `sync/*` one, which is released straight after Verify) and `fork-preview-release.yml` builds it and publishes a **preview release**,
 tagged `preview-pr<N>-<sha>`, linked from a comment on the PR that is edited in place as you push.
 
 A preview installs **beside** your everyday Orca, not over it. `ORCA_PREVIEW_BUILD=1` gives the

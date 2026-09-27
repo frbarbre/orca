@@ -37,6 +37,8 @@ concurrency:
 
 jobs:
   preview:
+    # Sync pull requests (sync/*) are verified by fork-verify.yml and released right after; no preview.
+    if: github.event_name == 'workflow_dispatch' || !startsWith(github.head_ref, 'sync/')
     runs-on: macos-15
     timeout-minutes: 120
     env:

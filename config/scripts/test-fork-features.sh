@@ -13,6 +13,8 @@ git fetch upstream main --quiet --no-tags
 
 files=()
 while IFS= read -r file; do
+  # e2e suites need a real app and display; they are never part of Verify.
+  case "$file" in tests/e2e/*) continue ;; esac
   [ -f "$file" ] && files+=("$file")
 done < <(
   git log --no-merges --format= --name-only upstream/main..HEAD -- \

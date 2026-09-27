@@ -23,6 +23,12 @@ Merge on a branch, never straight onto `main`, and fast-forward `main` only once
 [Verify](#verify) is green — a broken `main` produces a broken release, and the release is the only
 way this fork reaches the machine it runs on.
 
+Push the branch and open a pull request against `main`; Verify runs there on GitHub's runners as the
+`fork verify` check. When it is green, fast-forward `main` to the branch head with
+`git push origin HEAD:main` (GitHub then marks the pull request merged). **Never merge it through
+GitHub's merge button**: squash and rebase rewrite upstream's commits, and a merge commit puts one
+more commit on `main` than the check verified.
+
 Four things learned the hard way on the first sync:
 
 - **Adding the `upstream` remote silently re-points `gh` at `stablyai/orca`.** `gh` resolves its
@@ -54,7 +60,8 @@ these with `git checkout --theirs` without reading the diff:
 - `src/i18n/locales/**` and any other generated or extracted file — **then run
   `pnpm run sync:localization-catalog`**. The fork owns catalog entries for its own strings, taking
   upstream's catalog drops them, and `pnpm lint` fails on every fork key missing from it.
-- Every workflow in `.github/workflows/` except `fork-release.yml`.
+- Every workflow in `.github/workflows/` except `fork-release.yml`, `fork-preview-release.yml` and
+  `fork-verify.yml`.
 - `docs/**`, and every test file except the four named below.
 - Any file where our only "change" is formatting from a pre-commit hook.
 
@@ -105,6 +112,8 @@ Two rules, both learned the hard way:
 | `.github/workflows/fork-release.yml`           | Whole file (new).                                                                                                                                                                                |
 | `config/scripts/fork-release-notes.mjs` (+ test) | Whole file (new). Resolves the fork version and writes the two-part release notes. |
 | `config/scripts/test-fork-features.sh` | Whole file (new). Runs every test a fork commit touched; part of [Verify](#verify). |
+| `.github/workflows/fork-verify.yml` | Whole file (new). [Verify](#verify) on pull requests. |
+| `config/scripts/fork-disable-upstream-pr-workflows.mjs` | Whole file (new). Keeps upstream's pull-request workflows disabled on this repository. |
 | `src/shared/release-channel.ts` | `setMainReleaseRepoOverride` and the `mainReleaseRepo()` it feeds. `MAIN_RELEASE_REPO` itself stays upstream's — same rule as the updater URLs. |
 | `src/renderer/src/main.tsx` | Arms that override from `VITE_ORCA_RELEASES_REPO`. The renderer cannot read the main process's env, so release-notes links there resolved to upstream's repo — a 404 for every fork-only version. |
 
@@ -423,27 +432,39 @@ Modified files, and what to re-apply:
 
 ## Verify
 
-Run all of these. The first three are the gates upstream's CI uses; the fourth is the fork's.
+Verify runs on GitHub, not locally: `fork-verify.yml` runs it on every pull request against `main`,
+and its `fork verify` check is the gate. It runs
 
 ```bash
 pnpm lint
 pnpm typecheck
-pnpm test
 ./config/scripts/test-fork-features.sh
 ```
 
-`test-fork-features.sh` runs every test file a fork commit touched — derived from git, not listed,
-because a commit reachable from `upstream/main` is upstream's and everything else is ours. A fork
-change that adds a test is covered by it automatically. Run it on its own as well as inside
-`pnpm test`: it is the one check whose failures are always the fork's problem, where a full run
-buries them among upstream's environmental failures.
+plus the update-channel greps below. Read a failure with `gh run view <run> --repo frbarbre/orca
+--log-failed`; reproduce only the failing files locally.
+
+**Tests are only the fork's own.** `test-fork-features.sh` runs every test file a fork commit touched —
+derived from git, not listed, because a commit reachable from `upstream/main` is upstream's and
+everything else is ours. A fork change that adds a test is covered by it automatically. Upstream's full
+`pnpm test` and every e2e suite are deliberately not run: upstream's own CI runs them on upstream's
+commits, and on a fork runner they only bury the fork's failures among upstream's environmental ones.
+The script skips `tests/e2e/`.
 
 Run the **full** `pnpm lint`, not just `pnpm run check:code-quality:changed`. The per-change gate is
 what keeps day-to-day commits clean, but it reports warnings without denying them and skips the
 localization checks entirely — the first sync found three gaps it had let through.
 
-Then confirm the fork channel actually survived the merge — a clean test run does **not** prove
-this, because the defaults are upstream's on purpose:
+Upstream's own pull-request workflows are disabled on this repository, so `fork verify` is the only
+check a pull request gets (plus the fork's preview build). A sync can bring in a new one, which starts
+enabled, so after every merge run:
+
+```bash
+node config/scripts/fork-disable-upstream-pr-workflows.mjs
+```
+
+The workflow also confirms the fork channel actually survived the merge — a clean test run does
+**not** prove this, because the defaults are upstream's on purpose:
 
 ```bash
 # Each must print a match. A miss means the update channel was lost in the merge.
@@ -455,23 +476,14 @@ grep -n "isForkSelfInstallUpdate" src/main/updater/updater-download-install.ts
 grep -n "frbarbre" config/electron-builder.config.cjs
 ```
 
-If `pnpm test` reports failures, check whether they also fail on upstream before assuming the merge
-caused them — stash the merge and re-run the failing files. **Compare against a clean upstream checkout, not a stash** — stashing only
-removes uncommitted work and leaves every fork commit in place, which is how a fork bug got filed as
-"environmental" here once. A worktree sharing `node_modules` is quick:
+If a fork test fails, check whether upstream broke it before assuming the fork did: upstream can
+change code a fork test depends on. Compare against a clean upstream checkout, not a stash:
 
 ```bash
 git worktree add --detach /tmp/orca-up upstream/main
 ln -s "$PWD/node_modules" /tmp/orca-up/node_modules
 (cd /tmp/orca-up && npx vitest run --config config/vitest.config.ts <failing files>)
 ```
-
-On this machine a clean upstream checkout consistently fails `skill-recipe-shell`,
-`browser-manager-viewport-ownership`, the PTY-settle tests, the real-CLI Claude tests,
-`build-native-for-platform` and the `tests/e2e/cross-version-wire/*` suite (which materializes release
-checkouts). `pty-runtime-hidden-at-spawn-mark` and `session-scanner-service-search` flake under
-full-suite load and pass alone. `e2e-worker-env-isolation` fails only because the cross-version suite
-leaves a `.cross-version-checkouts/` cache inside the repo; `rm -rf .cross-version-checkouts` clears it.
 
 `test-fork-features.sh` fetches `upstream/main`, so upstream can move **during** a sync. Before
 blaming the merge for a failure, check whether upstream fixed it after the merge point — the first

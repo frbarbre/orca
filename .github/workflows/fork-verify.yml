@@ -1,0 +1,119 @@
+name: Fork Verify
+
+# FORK.md's Verify section as one check, so a sync is verified on GitHub's runners instead of on the
+# machine that runs the Orca automation. The fork sync automation opens its merge as a pull request,
+# waits for the `fork verify` check and fast-forwards main only once it is green.
+#
+# Upstream's own pull-request workflows are disabled on this repository (see
+# config/scripts/fork-disable-upstream-pr-workflows.mjs); this is the check that replaces them.
+#
+# Tests are only the fork's own (test-fork-features.sh), never upstream's full suite or any e2e:
+# upstream's CI already runs those on upstream's commits.
+#
+# Every job builds the pull request's head commit rather than GitHub's merge preview: main is
+# fast-forwarded to exactly that commit, so that is what has to be green.
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, ready_for_review]
+  workflow_dispatch:
+
+concurrency:
+  group: fork-verify-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          filter: blob:none
+          persist-credentials: false
+
+      - uses: ./.github/actions/install-node-dependencies
+        with:
+          native-runtime: node
+
+      - run: pnpm lint
+
+  typecheck:
+    name: typecheck
+    # Typechecking uses no native runtime, so it can use the free public ARM runner.
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+
+      - uses: ./.github/actions/install-node-dependencies
+
+      - run: pnpm run typecheck
+
+  fork_features:
+    name: fork features and update channel
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          # Why the full history: test-fork-features.sh derives the fork's tests from the commits
+          # between upstream/main and HEAD.
+          fetch-depth: 0
+          filter: blob:none
+          persist-credentials: false
+
+      - uses: ./.github/actions/install-node-dependencies
+        with:
+          native-runtime: node
+          cache-electron-package: 'true'
+
+      - name: Install Electron package binary for tests
+        run: node config/scripts/install-electron-package-binary.mjs
+
+      - name: Fork-owned tests
+        env:
+          ORCA_BACKGROUND_LAUNCH: '1'
+        run: ./config/scripts/test-fork-features.sh
+
+      # A clean test run does not prove the update channel survived a merge, because its defaults
+      # are upstream's on purpose. Each grep must match.
+      - name: Update channel survived
+        run: |
+          grep -n "armForkUpdateChannel" src/main/index.ts
+          grep -n "ORCA_RELEASES_REPO_URL" src/main/updater-prerelease-feed.ts
+          grep -n "ORCA_UPDATE_FEED_URL" src/main/updater/updater-setup.ts
+          grep -n "ORCA_UPDATE_FEED_URL" src/main/updater/updater-release-feed.ts
+          grep -n "isManualInstallOnlyUpdate" src/main/updater/updater-download-install.ts
+          grep -n "isForkSelfInstallUpdate" src/main/updater/updater-download-install.ts
+          grep -n "frbarbre" config/electron-builder.config.cjs
+
+  verify:
+    name: fork verify
+    if: ${{ !cancelled() }}
+    needs: [lint, typecheck, fork_features]
+    runs-on: ubuntu-slim
+    timeout-minutes: 5
+    steps:
+      - name: Require every check
+        if: >-
+          contains(needs.*.result, 'failure') ||
+          contains(needs.*.result, 'cancelled') ||
+          contains(needs.*.result, 'skipped')
+        run: |
+          echo '${{ toJSON(needs.*.result) }}'
+          exit 1

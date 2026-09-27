@@ -51,40 +51,74 @@ describe('NSIS process-check integration', () => {
 describe.runIf(process.platform === 'win32')(
   'NSIS capability probe under Restricted policy',
   () => {
+    const policyReceipt = 'orca-nsis: restricted policy verified'
+    const queryFailureReceipt = 'orca-nsis: injected query failure'
+    const policyCheck = [
+      'function Test-OrcaRestrictedPolicy { param([string]$Scope)',
+      "try { $parameters = @{ ErrorAction = 'Stop' };",
+      'if ($Scope) { $parameters.Scope = $Scope };',
+      "return ((Get-ExecutionPolicy @parameters) -eq 'Restricted')",
+      '} catch { return $false } };',
+      // A failed getter must not fall through to the query's successful exit.
+      "if ((Test-OrcaRestrictedPolicy '__orca_invalid_scope__') -ne $false) { exit 11 };",
+      "if ((Test-OrcaRestrictedPolicy 'Process') -ne $true) { exit 10 };",
+      'if ((Test-OrcaRestrictedPolicy) -ne $true) { exit 10 };',
+      `[Console]::Out.WriteLine('${policyReceipt}');`
+    ].join(' ')
+
+    // A watchdog against a wedged probe, not a latency budget: Windows PowerShell 5.1
+    // cold start under the packaged-CI process load has reached the former 20s cap. Matches
+    // the synchronous-probe ceiling in tests/tools/win-update-e2e/powershell-runner.mjs.
+    const PROBE_TIMEOUT_MS = 60_000
+    // Vitest's 30s default would otherwise cap the blocking spawn ahead of PROBE_TIMEOUT_MS.
+    const PROBE_TEST_TIMEOUT_MS = PROBE_TIMEOUT_MS + 15_000
+
     function runProbe(arch, prefix = '') {
       const { args, command } = readPowerShellProbe()
       if (!process.env.SystemRoot) {
         throw new Error('SystemRoot is required on Windows')
       }
+      // The pwsh runner's module path points Windows PowerShell at incompatible PS7 modules.
+      const env = Object.fromEntries(
+        Object.entries(process.env).filter(([key]) => key.toLowerCase() !== 'psmodulepath')
+      )
       return runProcessSync({
         program: join(process.env.SystemRoot, arch, 'WindowsPowerShell', 'v1.0', 'powershell.exe'),
-        args: [
-          ...args,
-          '-Command',
-          `if ((Get-ExecutionPolicy -Scope Process) -ne 'Restricted') { exit 10 }; ${prefix}${command}`
-        ],
+        args: [...args, '-Command', `${policyCheck} ${prefix}${command}`],
         env: {
-          ...process.env,
+          ...env,
           ORCA_BACKGROUND_LAUNCH: '1',
           PSExecutionPolicyPreference: 'Restricted'
         },
-        timeoutMs: 20_000
+        timeoutMs: PROBE_TIMEOUT_MS
       })
     }
 
-    it.each(['SysWOW64', 'System32'])('%s permits the real inline process query', (arch) => {
-      const result = runProbe(arch)
-      expect(result.code, result.stderr).toBe(0)
-      expect(result.timedOut).toBe(false)
-    })
+    it.each(['SysWOW64', 'System32'])(
+      '%s permits the real inline process query',
+      { timeout: PROBE_TEST_TIMEOUT_MS },
+      (arch) => {
+        const result = runProbe(arch)
+        expect(result.code, JSON.stringify(result)).toBe(0)
+        expect(result.timedOut).toBe(false)
+        expect(result.stdout).toContain(policyReceipt)
+      }
+    )
 
-    it.each(['SysWOW64', 'System32'])('%s rejects a failed process query', (arch) => {
-      const result = runProbe(
-        arch,
-        "function Get-CimInstance { [CmdletBinding()] param([string]$ClassName); Write-Error 'CIM unavailable' }; "
-      )
-      expect(result.code, result.stderr).toBe(1)
-      expect(result.timedOut).toBe(false)
-    })
+    it.each(['SysWOW64', 'System32'])(
+      '%s rejects a failed process query',
+      { timeout: PROBE_TEST_TIMEOUT_MS },
+      (arch) => {
+        const result = runProbe(
+          arch,
+          'function Get-CimInstance { [CmdletBinding()] param([string]$ClassName); ' +
+            `[Console]::Out.WriteLine('${queryFailureReceipt}'); Write-Error 'CIM unavailable' }; `
+        )
+        expect(result.code, JSON.stringify(result)).toBe(1)
+        expect(result.timedOut).toBe(false)
+        expect(result.stdout).toContain(policyReceipt)
+        expect(result.stdout).toContain(queryFailureReceipt)
+      }
+    )
   }
 )

@@ -249,8 +249,16 @@ Two upstream **test** files carry our additions. Take upstream's version, then r
 ### 4. Review mode: pending comments and a submitted verdict
 
 Queues inline review comments locally instead of posting each one immediately, then sends them as
-one review with an approve / request-changes / comment verdict. The queue lives on the workspace's
-own metadata, so it survives a restart and a crash.
+one review with an approve / request-changes / comment verdict.
+
+**The queue lives on the reviewer's device**, in `<userData>/pending-review-drafts.json`, written
+through (serialized, atomic rename) on every edit so it survives a restart and a crash. It used to
+live on the workspace's metadata, which fails for a workspace on a **remote runtime**: that
+metadata belongs to the runtime, and a runtime running upstream Orca has no field for drafts, so its
+`worktree.set` schema strips them and every edit was silently thrown away. Queued comments are the
+reviewer's, not the workspace's, so they now never travel through a runtime at all. Drafts still
+sitting on workspace metadata are adopted into the file the first time their workspace is opened,
+then cleared there; until then the reviewed-removal guard counts both places.
 
 Two things about the transport, both learned the hard way:
 
@@ -281,7 +289,8 @@ Modified files, and what is ours:
 | File | What is ours |
 | --- | --- |
 | `src/shared/worktree/types.ts`, `meta-types.ts`, `rpc-contract/worktree-params.ts` | `pendingReviewComments` beside `diffComments`. |
-| `ipc/worktree-metadata-merge.ts`, `ipc/worktrees/folder-workspace-model.ts`, `runtime/runtime-folder-workspace.ts` | `pendingReviewComments` forwarded out of persisted metadata. **Every one of these has to list the field by name**: they rebuild the renderer's `Worktree` field by field, so one that is left out is written on every change and then dropped on the next launch, with nothing failing in between. `runtime/rpc/methods/worktree.ts` still drops it on the remote-runtime write path; adding it there surfaces a pre-existing `consistent-type-assertions` finding that the casting scan will not let a directive suppress. |
+| `ipc/worktree-metadata-merge.ts`, `ipc/worktrees/folder-workspace-model.ts`, `runtime/runtime-folder-workspace.ts` | `pendingReviewComments` forwarded out of persisted metadata. **Every one of these has to list the field by name**: they rebuild the renderer's `Worktree` field by field, so one that is left out is written on every change and then dropped on the next launch, with nothing failing in between. Now read only to adopt drafts written before they moved onto the device. |
+| `src/main/github/pending-review-draft-store.ts` (+ test), `components/pending-review/pending-review-draft-store.ts` (+ test) | New. The device-local queue: the file, and the renderer store that keeps an edit made before the first load finishes. Reached through `pending-review:drafts-read` / `-write` on the fork's own IPC surface, so no upstream persistence code is touched. |
 | `DiffCommentPopover.tsx` | `DiffCommentMode` gains `'pending'`, the third radio, and the relabelled `'review'` button ("Comment now"). |
 | `DiffLineCommentPopoverHost.tsx` | The `onQueueForReview` prop and the third submit arm. |
 | `use-diff-review-comment.ts` | `resolveMode` falls back for any non-note mode, not only `'review'`. |

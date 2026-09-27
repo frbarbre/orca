@@ -4,6 +4,7 @@ import { getIndexedAllWorktrees, getIndexedRepoMap } from '@/store/worktree-repo
 import { resolveWorktreeBranchLabel } from '@/lib/worktree-default-display-name'
 import type { GitHubRepositoryIdentity } from '../../../../shared/github/pull-request-types'
 import type { WorkspaceStatusRuleTarget } from '../../../../shared/workspace-status-rule-plan'
+import { getPendingReviewDrafts } from '../pending-review/pending-review-draft-store'
 
 export type WorkspaceStatusRuleScope = {
   targets: WorkspaceStatusRuleTarget[]
@@ -66,7 +67,10 @@ export function collectWorkspaceStatusRuleScope(
       repo: pr.prRepo,
       prNumber: pr.number,
       currentStatus: worktree.workspaceStatus ?? null,
-      hasPendingReviewComments: (worktree.pendingReviewComments?.length ?? 0) > 0
+      // Why both: a queue not yet moved onto this device still sits on the workspace metadata.
+      hasPendingReviewComments:
+        (getPendingReviewDrafts(worktree.id)?.length ?? 0) > 0 ||
+        (worktree.pendingReviewComments?.length ?? 0) > 0
     })
     scope.linkedPullRequests.push({ repo: pr.prRepo, number: pr.number })
   }

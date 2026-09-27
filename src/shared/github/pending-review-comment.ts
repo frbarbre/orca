@@ -27,6 +27,9 @@ export type SubmitReviewVerdictResult =
   | { ok: true; url: string; state: string }
   | { ok: false; error: string }
 
+/** Queued comments per workspace id, kept on this device rather than on the workspace's runtime. */
+export type PendingReviewDraftMap = Record<string, PendingReviewComment[]>
+
 export type UpdatePublishedCommentRequest = {
   repoPath: string
   prRepo?: GitHubRepositoryIdentity | null

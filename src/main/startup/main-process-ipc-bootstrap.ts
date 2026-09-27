@@ -1,4 +1,5 @@
-import { ipcMain } from 'electron'
+import { join } from 'node:path'
+import { app, ipcMain } from 'electron'
 import { recoverLegacyWorkerTerminalsForRendererStartup } from './legacy-worker-renderer-recovery'
 import { logStartupMilestone } from './startup-diagnostics'
 import { mainProcessState as state } from './main-process-state'
@@ -7,7 +8,12 @@ import { loadCustomEditorThemes } from '../editor-theme/custom-editor-theme'
 import { getReviewStatusSnapshot } from '../github/review-status-snapshot'
 import { getPullRequestReviewContext, submitReviewVerdict } from '../github/submit-review-verdict'
 import { updatePublishedReviewComment } from '../github/update-published-comment'
+import {
+  readPendingReviewDrafts,
+  writePendingReviewDrafts
+} from '../github/pending-review-draft-store'
 import type {
+  PendingReviewComment,
   SubmitReviewVerdictRequest,
   UpdatePublishedCommentRequest
 } from '../../shared/github/pending-review-comment'
@@ -24,6 +30,20 @@ export function registerMainProcessIpcHandlers(): void {
 
   ipcMain.handle('pending-review:submit', (_event, request: SubmitReviewVerdictRequest) =>
     submitReviewVerdict(request)
+  )
+
+  // Why a file of its own on this device: queued comments are the reviewer's, not the
+  // workspace's, and a workspace on a remote runtime keeps its metadata on that runtime — whose
+  // schema, if it runs upstream Orca, has no field for them and silently drops them.
+  const pendingReviewDraftFile = (): string =>
+    join(app.getPath('userData'), 'pending-review-drafts.json')
+  ipcMain.handle('pending-review:drafts-read', () =>
+    readPendingReviewDrafts(pendingReviewDraftFile())
+  )
+  ipcMain.handle(
+    'pending-review:drafts-write',
+    (_event, worktreeId: string, comments: PendingReviewComment[]) =>
+      writePendingReviewDrafts(pendingReviewDraftFile(), worktreeId, comments)
   )
 
   ipcMain.handle(

@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react'
+import { useCallback, useEffect, useMemo } from 'react'
 import { useAppStore } from '@/store'
 import { createBrowserUuid } from '@/lib/browser-uuid'
 import {
@@ -8,6 +8,7 @@ import {
   updatePendingReviewCommentBody,
   type PendingReviewComment
 } from '../../../../shared/github/pending-review-comment'
+import { setPendingReviewDrafts, usePendingReviewDrafts } from './pending-review-draft-store'
 
 export type PendingReviewQueue = {
   comments: PendingReviewComment[]
@@ -20,8 +21,12 @@ export type PendingReviewQueue = {
 const NO_COMMENTS: PendingReviewComment[] = []
 
 /**
- * The queue lives on the workspace's own metadata, so it is written through on every
- * edit and is still there after a restart -- the same storage the diff notes use.
+ * The queue lives on this device, written through on every edit, so it is still there after
+ * a restart or a crash.
+ *
+ * Why not on the workspace: a workspace on a remote runtime keeps its metadata on that runtime,
+ * and one running upstream Orca has no field for these and drops them. Queued comments are the
+ * reviewer's, not the workspace's, so this device is where they belong.
  */
 export function usePendingReviewQueue(worktreeId: string | null): PendingReviewQueue {
   const worktree = useAppStore((state) =>
@@ -30,23 +35,37 @@ export function usePendingReviewQueue(worktreeId: string | null): PendingReviewQ
   const updateWorktreeMeta = useAppStore((state) => state.updateWorktreeMeta)
   const hostId = worktree?.hostId
 
-  const comments = useMemo(
-    () => normalizePendingReviewComments(worktree?.pendingReviewComments) ?? NO_COMMENTS,
-    [worktree?.pendingReviewComments]
-  )
+  const stored = usePendingReviewDrafts(worktreeId)
+  const legacy = worktree?.pendingReviewComments
+
+  // Why adopted once and then cleared: queues written before they moved to this device sit on
+  // the workspace's metadata. Taking them over keeps them; clearing them stops a stale copy from
+  // resurfacing if this device's queue is later emptied.
+  useEffect(() => {
+    if (!worktreeId || !stored.loaded || stored.comments !== undefined) {
+      return
+    }
+    const adopted = normalizePendingReviewComments(legacy)
+    if (adopted.length === 0) {
+      return
+    }
+    setPendingReviewDrafts(worktreeId, adopted)
+    void updateWorktreeMeta(
+      worktreeId,
+      { pendingReviewComments: [] },
+      hostId ? { executionHostId: hostId } : undefined
+    )
+  }, [hostId, legacy, stored.comments, stored.loaded, updateWorktreeMeta, worktreeId])
+
+  const comments = stored.comments ?? NO_COMMENTS
 
   const write = useCallback(
     (next: PendingReviewComment[]) => {
-      if (!worktreeId) {
-        return
+      if (worktreeId) {
+        setPendingReviewDrafts(worktreeId, next)
       }
-      void updateWorktreeMeta(
-        worktreeId,
-        { pendingReviewComments: next },
-        hostId ? { executionHostId: hostId } : undefined
-      )
     },
-    [hostId, updateWorktreeMeta, worktreeId]
+    [worktreeId]
   )
 
   return useMemo(

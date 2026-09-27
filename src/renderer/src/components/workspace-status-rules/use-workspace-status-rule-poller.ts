@@ -6,6 +6,7 @@ import type { GitHubRepositoryIdentity } from '../../../../shared/github/pull-re
 import { buildWorkspaceStatusRulePlan } from '../../../../shared/workspace-status-rule-plan'
 import { applyWorkspaceStatusRulePlan } from './apply-workspace-status-rule-plan'
 import { collectWorkspaceStatusRuleScope } from './collect-workspace-status-rule-targets'
+import { loadPendingReviewDrafts } from '../pending-review/pending-review-draft-store'
 
 /** Matches the active-workspace review tier; a board does not change faster than this. */
 const POLL_INTERVAL_MS = 60_000
@@ -41,6 +42,9 @@ async function runWorkspaceStatusRuleTick(): Promise<void> {
   if (!config.enabled || config.repoIds.length === 0) {
     return
   }
+  // Why awaited: the reviewed-removal guard reads the queue, and one still loading would read as
+  // empty and let a workspace with unsent comments be deleted.
+  await loadPendingReviewDrafts()
   const scope = collectWorkspaceStatusRuleScope(state, config.repoIds)
   if (!scope.repoPath) {
     return

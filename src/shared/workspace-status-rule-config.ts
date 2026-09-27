@@ -1,7 +1,6 @@
 import { isTuiAgent } from './tui-agent-config'
 import type { TuiAgent } from './tui-agent'
 import type { WorkspaceStatus } from './worktree/types'
-import { parseExecutionHostId } from './execution-host'
 
 /** Evaluation order. The first condition a pull request satisfies wins. */
 export const WORKSPACE_STATUS_RULE_CONDITIONS = [
@@ -30,9 +29,6 @@ export type WorkspaceStatusRuleConfig = {
   /** Projects the rules act on. Empty means the rules do nothing. */
   repoIds: string[]
   statusByCondition: Partial<Record<WorkspaceStatusRuleCondition, WorkspaceStatus>>
-  /** Column for every workspace on a remote host, keyed by execution host id. Applies whether or
-   *  not the pull request rules are on, and takes precedence over them. */
-  statusByHost: Record<string, WorkspaceStatus>
   mergingCheckName: string
   /** `org/team-slug`, or null when PM approval is not in use. */
   pmApprovalTeam: string | null
@@ -82,7 +78,6 @@ export function cloneDefaultWorkspaceStatusRuleConfig(): WorkspaceStatusRuleConf
     enabled: false,
     repoIds: [],
     statusByCondition: {},
-    statusByHost: {},
     mergingCheckName: DEFAULT_MERGING_CHECK_NAME,
     pmApprovalTeam: null,
     onResolved: 'none',
@@ -125,21 +120,6 @@ function sanitizeStatusByCondition(
     const status = raw[condition]
     if (typeof status === 'string' && status.trim()) {
       mapped[condition] = status.trim()
-    }
-  }
-  return mapped
-}
-
-function sanitizeStatusByHost(value: unknown): Record<string, WorkspaceStatus> {
-  const raw = asRecord(value)
-  if (!raw) {
-    return {}
-  }
-  const mapped: Record<string, WorkspaceStatus> = {}
-  for (const [hostId, status] of Object.entries(raw)) {
-    const parsed = parseExecutionHostId(hostId)
-    if (parsed && parsed.kind !== 'local' && typeof status === 'string' && status.trim()) {
-      mapped[hostId] = status.trim()
     }
   }
   return mapped
@@ -194,7 +174,6 @@ export function normalizeWorkspaceStatusRuleConfig(value: unknown): WorkspaceSta
         ]
       : [],
     statusByCondition: sanitizeStatusByCondition(raw.statusByCondition),
-    statusByHost: sanitizeStatusByHost(raw.statusByHost),
     mergingCheckName: sanitizeString(
       raw.mergingCheckName,
       defaults.mergingCheckName,

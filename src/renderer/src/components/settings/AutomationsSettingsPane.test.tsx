@@ -22,12 +22,7 @@ vi.mock('@/store', () => ({
       workspaceStatusRules: cloneDefaultWorkspaceStatusRuleConfig(),
       workspaceStatuses: [],
       repos: [],
-      setWorkspaceStatusRules: vi.fn(),
-      sshTargetLabels: new Map(),
-      sshConnectionStates: new Map(),
-      settings: null,
-      runtimeEnvironments: [],
-      runtimeStatusByEnvironmentId: new Map()
+      setWorkspaceStatusRules: vi.fn()
     })
 }))
 

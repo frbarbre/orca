@@ -5,11 +5,7 @@ import { getIndexedRepoMap } from '@/store/worktree-repo-index'
 import type { GitHubRepositoryIdentity } from '../../../../shared/github/pull-request-types'
 import { buildWorkspaceStatusRulePlan } from '../../../../shared/workspace-status-rule-plan'
 import { applyWorkspaceStatusRulePlan } from './apply-workspace-status-rule-plan'
-import {
-  collectWorkspaceHostStatusTargets,
-  collectWorkspaceStatusRuleScope
-} from './collect-workspace-status-rule-targets'
-import { planWorkspaceHostStatusUpdates } from '../../../../shared/workspace-host-status-plan'
+import { collectWorkspaceStatusRuleScope } from './collect-workspace-status-rule-targets'
 import { loadPendingReviewDrafts } from '../pending-review/pending-review-draft-store'
 
 /** Matches the active-workspace review tier; a board does not change faster than this. */
@@ -40,26 +36,7 @@ async function resolveScopedRepoSlugs(
   return slugs
 }
 
-async function applyHostStatusRules(): Promise<void> {
-  const state = useAppStore.getState()
-  const { statusByHost } = state.workspaceStatusRules
-  const updates = planWorkspaceHostStatusUpdates(
-    collectWorkspaceHostStatusTargets(state, statusByHost),
-    statusByHost
-  )
-  await Promise.all(
-    updates.map((update) =>
-      state.updateWorktreeMeta(
-        update.worktreeId,
-        { workspaceStatus: update.status },
-        { executionHostId: update.executionHostId }
-      )
-    )
-  )
-}
-
 async function runWorkspaceStatusRuleTick(): Promise<void> {
-  await applyHostStatusRules()
   const state = useAppStore.getState()
   const config = state.workspaceStatusRules
   if (!config.enabled || config.repoIds.length === 0) {
@@ -91,11 +68,7 @@ async function runWorkspaceStatusRuleTick(): Promise<void> {
 }
 
 export function useWorkspaceStatusRulePoller(): void {
-  const enabled = useAppStore(
-    (state) =>
-      state.workspaceStatusRules.enabled ||
-      Object.keys(state.workspaceStatusRules.statusByHost).length > 0
-  )
+  const enabled = useAppStore((state) => state.workspaceStatusRules.enabled)
 
   useEffect(() => {
     if (!enabled) {

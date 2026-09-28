@@ -17466,7 +17466,8 @@
           "dismissed": "Review dismissed",
           "title": "Reviewers",
           "rerequest": "Re-request review from {{login}}",
-          "rerequestTip": "Re-request review"
+          "rerequestTip": "Re-request review",
+          "loading": "Loading reviewers"
         }
       },
       "diffComments": {

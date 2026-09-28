@@ -20,11 +20,21 @@ export type ReviewVerdictSubmitter = {
   viewerLatestReviewCommit: string | null
   /** The branch the pull request targets, which is the other end of the diff. */
   baseRefName: string | null
-  /** Who is asked to review and where each of them stands. */
-  reviewers: PullRequestReviewer[]
+  /** Who is asked to review and where each of them stands; null while that is still loading. */
+  reviewers: PullRequestReviewer[] | null
   /** Asks a reviewer who already reviewed to look again. */
   rerequest: (login: string) => Promise<boolean>
   submit: (verdict: ReviewVerdict, body: string) => Promise<{ ok: boolean; error?: string }>
+}
+
+type PendingReviewContext = Awaited<ReturnType<typeof window.api.pendingReview.context>>
+
+const EMPTY_CONTEXT: PendingReviewContext = {
+  viewerDidAuthor: false,
+  viewerLatestReviewState: null,
+  viewerHasReviewRequest: false,
+  viewerLatestReviewCommit: null,
+  reviewers: []
 }
 
 export function useSubmitReviewVerdict(
@@ -33,25 +43,20 @@ export function useSubmitReviewVerdict(
 ): ReviewVerdictSubmitter {
   const scope = usePRCommentScope(worktreeId)
   const fetchPRComments = useAppStore((state) => state.fetchPRComments)
-  const [viewerDidAuthor, setViewerDidAuthor] = useState(false)
-  const [viewerLatestReviewState, setViewerLatestReviewState] = useState<string | null>(null)
-  const [viewerHasReviewRequest, setViewerHasReviewRequest] = useState(false)
-  const [viewerLatestReviewCommit, setViewerLatestReviewCommit] = useState<string | null>(null)
-  const [reviewers, setReviewers] = useState<PullRequestReviewer[]>([])
+  const [loaded, setLoaded] = useState<{ key: string; context: PendingReviewContext } | null>(null)
   // Why a nonce: submitting changes the verdict on record, so the banner has to re-ask.
   const [contextNonce, setContextNonce] = useState(0)
 
   const repo = scope.repo
   const prNumber = scope.pr?.number ?? null
   const prRepo = scope.pr?.prRepo ?? null
+  const contextKey =
+    repo && prNumber !== null ? JSON.stringify([repo.path, prRepo, prNumber]) : null
+  // Why keyed: after a workspace switch the last pull request's answer must not stand in for this one's.
+  const context = loaded && loaded.key === contextKey ? loaded.context : null
 
   useEffect(() => {
-    if (!repo || prNumber === null) {
-      setViewerDidAuthor(false)
-      setViewerLatestReviewState(null)
-      setViewerHasReviewRequest(false)
-      setViewerLatestReviewCommit(null)
-      setReviewers([])
+    if (!repo || prNumber === null || contextKey === null) {
       return
     }
     let cancelled = false
@@ -62,20 +67,16 @@ export function useSubmitReviewVerdict(
         prRepo,
         connectionId: repo.connectionId ?? null
       })
-      .then((context) => {
+      .catch(() => EMPTY_CONTEXT)
+      .then((next) => {
         if (!cancelled) {
-          setViewerDidAuthor(context.viewerDidAuthor)
-          setViewerLatestReviewState(context.viewerLatestReviewState)
-          setViewerHasReviewRequest(context.viewerHasReviewRequest)
-          setViewerLatestReviewCommit(context.viewerLatestReviewCommit)
-          setReviewers(context.reviewers ?? [])
+          setLoaded({ key: contextKey, context: next })
         }
       })
-      .catch(() => undefined)
     return () => {
       cancelled = true
     }
-  }, [contextNonce, prNumber, prRepo, repo])
+  }, [contextKey, contextNonce, prNumber, prRepo, repo])
 
   const rerequest = useCallback(
     async (login: string) => {
@@ -153,12 +154,12 @@ export function useSubmitReviewVerdict(
 
   return {
     prNumber,
-    viewerDidAuthor,
-    viewerLatestReviewState,
-    viewerHasReviewRequest,
-    viewerLatestReviewCommit,
+    viewerDidAuthor: context?.viewerDidAuthor ?? false,
+    viewerLatestReviewState: context?.viewerLatestReviewState ?? null,
+    viewerHasReviewRequest: context?.viewerHasReviewRequest ?? false,
+    viewerLatestReviewCommit: context?.viewerLatestReviewCommit ?? null,
     baseRefName: scope.pr?.baseRefName ?? null,
-    reviewers,
+    reviewers: contextKey === null ? [] : (context?.reviewers ?? null),
     rerequest,
     submit
   }

@@ -48,6 +48,34 @@ function StateIcon({ state }: { state: PullRequestReviewerState }): React.JSX.El
   }
 }
 
+function ReviewersHeader(): React.JSX.Element {
+  return (
+    <div className="pb-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+      {translate('auto.components.sourceControl.reviewers.title', 'Reviewers')}
+    </div>
+  )
+}
+
+function PendingReviewReviewersLoading(): React.JSX.Element {
+  return (
+    <div
+      className="px-3 pt-3"
+      role="status"
+      aria-label={translate('auto.components.sourceControl.reviewers.loading', 'Loading reviewers')}
+    >
+      <ReviewersHeader />
+      <ul className="space-y-0.5">
+        {['w-24', 'w-16'].map((width) => (
+          <li key={width} className="flex h-7 items-center gap-2">
+            <span className="size-5 shrink-0 animate-pulse rounded-full bg-muted" />
+            <span className={`h-2.5 animate-pulse rounded bg-muted ${width}`} />
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+
 /**
  * Who is asked to review the pull request and where each of them stands, laid out like GitHub's
  * reviewer list, with GitHub's re-request button beside anyone who has already reviewed.
@@ -56,10 +84,13 @@ export function PendingReviewReviewers({
   reviewers,
   onRerequest
 }: {
-  reviewers: readonly PullRequestReviewer[]
+  reviewers: readonly PullRequestReviewer[] | null
   onRerequest: (login: string) => Promise<boolean>
 }): React.JSX.Element | null {
   const [requesting, setRequesting] = useState<string | null>(null)
+  if (reviewers === null) {
+    return <PendingReviewReviewersLoading />
+  }
   if (reviewers.length === 0) {
     return null
   }
@@ -75,9 +106,7 @@ export function PendingReviewReviewers({
 
   return (
     <div className="px-3 pt-3">
-      <div className="pb-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-        {translate('auto.components.sourceControl.reviewers.title', 'Reviewers')}
-      </div>
+      <ReviewersHeader />
       <ul className="space-y-0.5">
         {reviewers.map((reviewer) => (
           <li

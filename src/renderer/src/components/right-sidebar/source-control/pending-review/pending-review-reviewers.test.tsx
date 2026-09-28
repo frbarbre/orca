@@ -25,7 +25,10 @@ function reviewer(overrides: Partial<PullRequestReviewer>): PullRequestReviewer 
   }
 }
 
-function renderList(reviewers: PullRequestReviewer[], onRerequest = vi.fn(async () => true)) {
+function renderList(
+  reviewers: PullRequestReviewer[] | null,
+  onRerequest = vi.fn(async () => true)
+) {
   render(
     <TooltipProvider>
       <PendingReviewReviewers reviewers={reviewers} onRerequest={onRerequest} />
@@ -40,6 +43,12 @@ describe('PendingReviewReviewers', () => {
   it('renders nothing without reviewers', () => {
     const { container } = render(<PendingReviewReviewers reviewers={[]} onRerequest={vi.fn()} />)
     expect(container).toBeEmptyDOMElement()
+  })
+
+  it('shows a loading state until the reviewers arrive', () => {
+    renderList(null)
+    expect(screen.getByRole('status', { name: 'Loading reviewers' })).toBeInTheDocument()
+    expect(screen.getByText('Reviewers')).toBeInTheDocument()
   })
 
   it('offers a re-request only to reviewers who have already reviewed', async () => {

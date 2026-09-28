@@ -12,6 +12,10 @@ import {
 } from './terminal-option-shortcut-policy'
 import type { OptionKeyLocationState } from '../../lib/keyboard-layout/option-key-location-state'
 import type { TerminalOptionKittyRelease } from './terminal-option-kitty-release'
+import {
+  resolveDirectionalPaneFocus,
+  type PaneFocusDirection
+} from '../../../../shared/keybindings/directional-pane-focus'
 
 export type { MacOptionAsAlt } from './terminal-option-shortcut-policy'
 
@@ -51,6 +55,7 @@ export type TerminalShortcutAction =
   | { type: 'toggleSearch' }
   | { type: 'clearActivePane' }
   | { type: 'focusPane'; direction: 'next' | 'previous' }
+  | { type: 'focusPaneInDirection'; direction: PaneFocusDirection }
   | { type: 'equalizePaneSizes' }
   | { type: 'toggleExpandActivePane' }
   | { type: 'setTitle' }
@@ -125,6 +130,11 @@ export function resolveTerminalShortcutAction(
 
     if (keybindingMatchesAction('terminal.focusNextPane', event, platform, keybindings)) {
       return { type: 'focusPane', direction: 'next' }
+    }
+
+    const paneFocusDirection = resolveDirectionalPaneFocus(event, platform, keybindings)
+    if (paneFocusDirection) {
+      return { type: 'focusPaneInDirection', direction: paneFocusDirection }
     }
 
     if (keybindingMatchesAction('terminal.equalizePaneSizes', event, platform, keybindings)) {

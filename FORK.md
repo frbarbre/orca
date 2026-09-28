@@ -484,6 +484,24 @@ Modified files, and what to re-apply:
 | `src/renderer/src/web/preload-api/web-app-api.ts`            | The stub returning nulls — the web client has no `~/.orca`, and the type requires the member.                                                                                                                                  |
 | `src/renderer/.../editor/DiffViewer.tsx`, `MonacoEditor.tsx` | `editorThemeName(...)` in place of the `'vs-dark' : 'vs'` ternary, plus the `ensureCustomEditorThemes()` effect. Both need the effect: `defineTheme` lands after first paint, and Monaco ignores a theme it does not yet know. |
 
+### 6. Terminal: move between panes by direction
+
+Cmd+Option+Arrow on macOS moves focus to the pane on that side, as Warp and tmux do. The target is
+the pane with the nearest edge that shares part of the active pane's side, and there is no
+wrap-around. Linux and Windows ship unbound, since Ctrl+Alt+Arrow is the desktop's workspace switch
+there and upstream tests pin it to the shell.
+
+The chords are worktree history's defaults too. Inside a focused terminal the pane move wins, at
+both places that would otherwise take it first (main's `before-input-event` and the renderer's
+global keydown). Anywhere else, worktree history still works as before.
+
+| File | What is ours |
+| --- | --- |
+| `src/shared/keybindings/definitions-pane-direction.ts`, `directional-pane-focus.ts` | The four actions and their matcher. |
+| `src/renderer/src/lib/pane-manager/pane-in-direction.ts` (+ test) | `findPaneInDirection`. |
+| `terminal-pane/terminal-shortcut-policy.ts` (+ `-pane-direction` test), `terminal-keyboard-action-dispatch.ts` | `focusPaneInDirection`. |
+| `src/main/window/main-window-shortcut-routing.ts`, `app-shell/use-global-keybindings.ts` | Yielding the chord to a focused terminal. |
+
 ## Verify
 
 Verify runs on GitHub, not locally: `fork-verify.yml` runs it on every pull request against `main`,

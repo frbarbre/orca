@@ -16,6 +16,7 @@ import {
   windowShortcutActionCapturesTerminal,
   type WindowShortcutAction
 } from '../../shared/window-shortcut-policy'
+import { resolveDirectionalPaneFocus } from '../../shared/keybindings/directional-pane-focus'
 import type { Store } from '../persistence'
 import type { CreateMainWindowOptions } from './main-window-contracts'
 import type { MainWindowFocusLifecycle } from './main-window-focus-lifecycle'
@@ -201,6 +202,14 @@ export function installMainWindowShortcutRouting(args: {
       !input.alt &&
       !input.shift &&
       modForBold
+    ) {
+      return
+    }
+
+    // Why: the pane-focus chords default to worktree history's; inside a terminal the pane move wins.
+    if (
+      terminalShortcutContext.context === 'terminal' &&
+      resolveDirectionalPaneFocus(input, process.platform, keybindings)
     ) {
       return
     }

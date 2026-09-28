@@ -25,6 +25,7 @@ import {
   type KeybindingActionId,
   type KeybindingMatchOptions
 } from '../../../shared/keybindings'
+import { resolveDirectionalPaneFocus } from '../../../shared/keybindings/directional-pane-focus'
 import { PLUGIN_COMMAND_ALIAS_ACTION_IDS } from '../../../shared/plugins/plugin-command-actions'
 import {
   ModifierDoubleTapDetector,
@@ -233,6 +234,14 @@ export function useGlobalKeybindings(args: {
           })
           return
         }
+      }
+
+      // Why: the pane-focus chords default to worktree history's; inside a terminal the pane move wins.
+      if (
+        context === 'terminal' &&
+        resolveDirectionalPaneFocus(input, shortcutPlatform, keybindings)
+      ) {
+        return
       }
 
       const handlers = createAppCommandHandlers(state, input, context)

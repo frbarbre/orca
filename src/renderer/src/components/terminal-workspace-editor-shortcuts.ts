@@ -8,6 +8,7 @@ import { getEditorCmdSaveFileId } from './editor/editor-cmd-save-target'
 import { isEventTargetInsideFloatingWorkspacePanel } from '@/lib/floating-workspace-terminal-actions'
 import { getOpenInSelection, resolveOpenInPath } from '@/lib/open-in-selection'
 import { openWorktreePath } from '../components/sidebar/WorktreeOpenInMenu'
+import { handleDiffShortcutOutsideEditor } from './editor/diff-shortcuts-outside-editor'
 
 type EditorShortcutContext = {
   event: KeyboardEvent
@@ -24,6 +25,9 @@ export function handleTerminalWorkspaceEditorShortcut({
   matchShortcut,
   notifyTerminalCapture
 }: EditorShortcutContext): boolean {
+  if (handleDiffShortcutOutsideEditor(event, matchShortcut)) {
+    return true
+  }
   // Save active editor file — fallback for when focus is outside the editor (tab bar/sidebar); editor-local handlers own save when the editor is focused.
   if (!event.repeat && matchShortcut('editor.save')) {
     const target = event.target as HTMLElement | null

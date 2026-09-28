@@ -5,6 +5,7 @@ import {
   installMonacoDiffChangeNavigationShortcut
 } from './editor-shortcuts'
 import { goToDiffWithoutWrap } from './diff-change-step'
+import { registerDiffEditorForOutsideShortcuts } from './diff-shortcuts-outside-editor'
 import { useAppStore } from '@/store'
 
 export type DiffEditorRegistrationContextValue = {
@@ -50,6 +51,7 @@ export function DiffNavigationProvider({
   // Why: file navigation shares the registered editor with change navigation, so its listener is
   // installed and torn down on the same seam.
   const fileShortcutCleanupRef = useRef<(() => void) | null>(null)
+  const outsideShortcutCleanupRef = useRef<(() => void) | null>(null)
   const stepToChangedFile = useAppStore((s) => s.stepToChangedFile)
   const stepToChangedFileRef = useRef(stepToChangedFile)
   stepToChangedFileRef.current = stepToChangedFile
@@ -81,6 +83,11 @@ export function DiffNavigationProvider({
       diffEditor,
       (direction, options) => stepToChangedFileRef.current(direction, options)
     )
+    outsideShortcutCleanupRef.current?.()
+    outsideShortcutCleanupRef.current = registerDiffEditorForOutsideShortcuts({
+      getShortcutTarget: () => diffEditor.getModifiedEditor().getContainerDomNode(),
+      focus: () => diffEditor.getModifiedEditor().focus()
+    })
     setChangeCount(countChanges(diffEditor))
   }, [])
 
@@ -96,6 +103,8 @@ export function DiffNavigationProvider({
     shortcutCleanupRef.current = null
     fileShortcutCleanupRef.current?.()
     fileShortcutCleanupRef.current = null
+    outsideShortcutCleanupRef.current?.()
+    outsideShortcutCleanupRef.current = null
     editorRef.current = null
     setChangeCount(0)
   }, [])
@@ -121,6 +130,8 @@ export function DiffNavigationProvider({
       shortcutCleanupRef.current = null
       fileShortcutCleanupRef.current?.()
       fileShortcutCleanupRef.current = null
+      outsideShortcutCleanupRef.current?.()
+      outsideShortcutCleanupRef.current = null
     }
   }, [])
 

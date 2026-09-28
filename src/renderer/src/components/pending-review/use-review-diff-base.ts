@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo } from 'react'
 import { useAppStore } from '@/store'
 import { useCommitResolves } from './use-commit-resolves'
 import { markReviewedCommit } from '@/lib/reviewed-commit-bases'
+import { isReviewBaseRef } from '../../../../shared/github/review-base'
+import { useReviewBase } from './use-review-base'
 
 export type ReviewDiffBase = 'since-review' | 'whole'
 
@@ -34,19 +36,28 @@ export function useReviewDiffBase(
   useEffect(() => {
     markReviewedCommit(lastReviewedCommit)
   }, [lastReviewedCommit])
-  const missing = resolution === 'missing'
+  const reviewBase = useReviewBase(
+    worktree?.path ?? null,
+    worktree?.head ?? null,
+    lastReviewedCommit,
+    wholeRef
+  )
+  const missing = reviewBase?.kind === 'missing' || resolution === 'missing'
+  // Why the fallback to the commit: a workspace the desktop cannot run git in has no interdiff,
+  // and comparing against the reviewed commit is still right as long as nobody rebased.
+  const sinceReviewRef =
+    reviewBase && reviewBase.kind !== 'missing' ? reviewBase.baseRef : lastReviewedCommit
+  const onReviewBase =
+    currentBaseRef !== null &&
+    (currentBaseRef === lastReviewedCommit || isReviewBaseRef(currentBaseRef))
 
   const value: ReviewDiffBase = useMemo(
-    () =>
-      !missing && lastReviewedCommit && currentBaseRef === lastReviewedCommit
-        ? 'since-review'
-        : 'whole',
-    [currentBaseRef, lastReviewedCommit, missing]
+    () => (!missing && onReviewBase ? 'since-review' : 'whole'),
+    [missing, onReviewBase]
   )
 
-  const setValue = useCallback(
-    (next: ReviewDiffBase) => {
-      const baseRef = next === 'since-review' ? lastReviewedCommit : wholeRef
+  const writeBaseRef = useCallback(
+    (baseRef: string | null) => {
       if (!worktreeId || !baseRef || baseRef === currentBaseRef) {
         return
       }
@@ -57,16 +68,29 @@ export function useReviewDiffBase(
         hostId ? { executionHostId: hostId } : undefined
       )
     },
-    [currentBaseRef, lastReviewedCommit, updateWorktreeMeta, wholeRef, worktree?.hostId, worktreeId]
+    [currentBaseRef, updateWorktreeMeta, worktree?.hostId, worktreeId]
   )
+
+  const setValue = useCallback(
+    (next: ReviewDiffBase) => writeBaseRef(next === 'since-review' ? sinceReviewRef : wholeRef),
+    [sinceReviewRef, wholeRef, writeBaseRef]
+  )
+
+  // Why follow the resolved base: a rebase since the review turns the reviewed commit into the
+  // wrong base, and another force-push rebuilds the interdiff under a new ref.
+  useEffect(() => {
+    if (onReviewBase && reviewBase && reviewBase.kind !== 'missing') {
+      writeBaseRef(reviewBase.baseRef)
+    }
+  }, [onReviewBase, reviewBase, writeBaseRef])
 
   // Why repair rather than only disable: the workspace can already be parked on the commit
   // that has since been force-pushed away, and leaving it there is a diff that never loads.
   useEffect(() => {
-    if (missing && lastReviewedCommit && currentBaseRef === lastReviewedCommit) {
-      setValue('whole')
+    if (missing && onReviewBase) {
+      writeBaseRef(wholeRef)
     }
-  }, [currentBaseRef, lastReviewedCommit, missing, setValue])
+  }, [missing, onReviewBase, wholeRef, writeBaseRef])
 
   return {
     available: Boolean(lastReviewedCommit && wholeRef),

@@ -6,6 +6,10 @@ import { mainProcessState as state } from './main-process-state'
 import { resolveOpenedMarkdownDocuments } from './os-opened-markdown-files'
 import { loadCustomEditorThemes } from '../editor-theme/custom-editor-theme'
 import { getReviewStatusSnapshot } from '../github/review-status-snapshot'
+import { resolveReviewBase } from '../github/review-base'
+import type { ResolveReviewBaseRequest } from '../../shared/github/review-base'
+import { resolveRegisteredWorktreePath } from '../ipc/registered-worktree-roots-cache'
+import { getLocalGitOptionsForRegisteredWorktree } from '../ipc/local-worktree-runtime-options'
 import { getPullRequestReviewContext, submitReviewVerdict } from '../github/submit-review-verdict'
 import { updatePublishedReviewComment } from '../github/update-published-comment'
 import {
@@ -44,6 +48,22 @@ export function registerMainProcessIpcHandlers(): void {
     'pending-review:drafts-write',
     (_event, worktreeId: string, comments: PendingReviewComment[]) =>
       writePendingReviewDrafts(pendingReviewDraftFile(), worktreeId, comments)
+  )
+
+  // Why the registered-path check: the path comes from the renderer, and git runs in it.
+  ipcMain.handle(
+    'pending-review:resolve-base',
+    async (_event, request: ResolveReviewBaseRequest) => {
+      const store = state.store
+      if (!store) {
+        throw new Error('The store is not ready.')
+      }
+      const worktreePath = await resolveRegisteredWorktreePath(request.worktreePath, store)
+      return resolveReviewBase(
+        { ...request, worktreePath },
+        getLocalGitOptionsForRegisteredWorktree(store, request.worktreePath, worktreePath)
+      )
+    }
   )
 
   ipcMain.handle(

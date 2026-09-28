@@ -6,6 +6,7 @@ import { launchWorktreeBackgroundTerminals } from '@/lib/launch-worktree-backgro
 import { markReviewedCommit } from '@/lib/reviewed-commit-bases'
 import type { ReviewSnapshotPullRequest } from '../../../../shared/github/review-status-snapshot-types'
 import type { WorkspaceStatusRuleConfig } from '../../../../shared/workspace-status-rule-config'
+import type { Worktree } from '../../../../shared/worktree/types'
 import {
   buildReviewPromptVariables,
   renderWorkspaceStatusRulePrompt
@@ -108,17 +109,21 @@ export async function createReviewWorkspace(
         console.warn('[workspace-status-rules] review workspace setup failed:', error)
       })
     }
+    const rebaseNote = sinceReviewCommit
+      ? await pinInterdiffBase(created.worktree, sinceReviewCommit, pr)
+      : ''
     await launchAgentBackgroundSession({
       agent: config.reviewInbox.agent,
       worktreeId: created.worktree.id,
       // Why a second template: a re-request is a different job from a first read — the
       // question is what the author did about what you already said.
-      prompt: renderWorkspaceStatusRulePrompt(
-        sinceReviewCommit
-          ? config.reviewInbox.rereviewPromptTemplate
-          : config.reviewInbox.promptTemplate,
-        buildReviewPromptVariables(pr, sinceReviewCommit)
-      ),
+      prompt:
+        renderWorkspaceStatusRulePrompt(
+          sinceReviewCommit
+            ? config.reviewInbox.rereviewPromptTemplate
+            : config.reviewInbox.promptTemplate,
+          buildReviewPromptVariables(pr, sinceReviewCommit)
+        ) + rebaseNote,
       launchSource: 'unknown',
       title: translate(
         'auto.components.workspaceStatusRules.reviewTabTitle',
@@ -132,4 +137,39 @@ export async function createReviewWorkspace(
   } catch (error) {
     return { ok: false, error: error instanceof Error ? error.message : String(error) }
   }
+}
+
+/**
+ * When the author rebased since the review, points the workspace at the interdiff base and returns
+ * a note telling the agent how to diff against it; otherwise changes nothing and returns ''.
+ *
+ * Why the note: the reviewed commit is no longer in the branch, so the template's instruction to
+ * diff against it would show everything the target branch gained, and a three-dot diff against
+ * the interdiff base would too.
+ */
+async function pinInterdiffBase(
+  worktree: Pick<Worktree, 'id' | 'path' | 'hostId'>,
+  reviewedCommit: string,
+  pr: ReviewSnapshotPullRequest
+): Promise<string> {
+  const resolveBase = window.api?.pendingReview?.resolveBase
+  if (!resolveBase) {
+    return ''
+  }
+  const base = await resolveBase({
+    worktreePath: worktree.path,
+    reviewedCommit,
+    targetRef: `refs/remotes/origin/${pr.baseRefName}`
+  }).catch(() => null)
+  if (base?.kind !== 'interdiff') {
+    return ''
+  }
+  await useAppStore
+    .getState()
+    .updateWorktreeMeta(
+      worktree.id,
+      { baseRef: base.baseRef },
+      worktree.hostId ? { executionHostId: worktree.hostId } : undefined
+    )
+  return `\n\nThe branch was rebased after your review, so ${reviewedCommit} is no longer in it. \`${base.baseRef}\` is the version you reviewed, replayed onto the branch's current base: run \`git diff ${base.baseRef} HEAD\` (two dots, not three) to see only what changed since your review.${base.conflicted ? ' Replaying it hit conflicts, so files marked with conflict markers there are ones both the rebase and the new commits touched; read them against HEAD.' : ''}`
 }

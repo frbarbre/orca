@@ -4,6 +4,7 @@ import type {
 } from '../../../shared/git-diff-compare-types'
 import { readBranchCompareHead } from '../../../shared/git-branch-compare-head'
 import { resolveWorktreeAddBaseRef } from '../../../shared/worktree/base-ref'
+import { isReviewBaseRef } from '../../../shared/github/review-base'
 import type { GitRuntimeOptions } from '../git-runtime-options'
 import { resolveWorktreeBaseCommitOid } from '../worktree-base-ref-probe'
 import { loadBranchChanges } from './branch-change-entries'
@@ -86,7 +87,11 @@ export async function getBranchCompare(
 
   let mergeBase = ''
   try {
-    mergeBase = await resolveMergeBase(worktreePath, baseOid, headOid, options)
+    // Why exact: a review base is the reviewed version replayed onto the branch's current base, so
+    // the compare must start at it; its merge base with HEAD would bring back the whole branch.
+    mergeBase = isReviewBaseRef(baseRef)
+      ? baseOid
+      : await resolveMergeBase(worktreePath, baseOid, headOid, options)
     summary.mergeBase = mergeBase
   } catch {
     summary.status = 'no-merge-base'

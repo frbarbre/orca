@@ -231,6 +231,14 @@ New files (no conflict unless upstream adds the same path):
   moves, removals, review-workspace creations. Every outstanding review request is cloned on the
   first tick; the `handledPullRequests` ledger is what stops a repeat, not a seeding step.
 - `src/shared/workspace-status-rule-config.ts` — config type, defaults, persistence normalization.
+- `src/main/github/review-base.ts` (+ a real-git test), `src/shared/github/review-base.ts`,
+  `src/renderer/src/components/pending-review/use-review-base.ts` — the interdiff. When the author
+  rebased after your review, the reviewed commit is no longer in the branch and comparing against it
+  pulls in everything the target branch gained. The reviewed version is replayed onto the branch's
+  current base (`git merge-tree --merge-base`, then `commit-tree`) and saved as
+  `refs/orca/review-base/<worktree>-<commit>`; a rebuild after another force-push gets a new name,
+  because the branch compare caches by base ref. Local worktrees only: a remote runtime or SSH host
+  keeps comparing against the reviewed commit.
 - `src/renderer/src/lib/reviewed-commit-bases.ts` (+ test) — the commits known to be ones you
   reviewed. Upstream's `resolveSourceControlBaseRef` swaps any worktree base pinned to a raw sha for
   the PR's base branch (a repair for old PR worktrees that pinned the head), which silently turned
@@ -259,7 +267,8 @@ Modified files, and what to re-apply:
 | `src/main/persistence/loading-store/normalize-loaded-ui-state.ts`               | One `normalizeWorkspaceStatusRuleConfig(...)` line in the returned object.                                                                                                                                        |
 | `src/main/persistence/applying-settings/ui-state-read.ts`, `ui-state-update.ts` | One normalize line each, beside `workspaceStatuses`.                                                                                                                                                              |
 | `src/renderer/.../source-control/sync/use-base-refs.ts`                         | `useIsReviewedCommit(normalizedWorktreeBaseRef)` and the `compareBaseRef` line that prefers a pinned reviewed commit. The PR/rebase target (`effectiveBaseRef`) stays upstream's.                                   |
-| `src/main/startup/main-process-ipc-bootstrap.ts`                                | The `review-status-rules:snapshot` handler.                                                                                                                                                                       |
+| `src/main/git/source-control/branch-compare.ts`                                 | `isReviewBaseRef(baseRef) ? baseOid : resolveMergeBase(...)` — a review base is an exact base. Every diff consumer reads `summary.mergeBase`, so the file diffs follow.                                       |
+| `src/main/startup/main-process-ipc-bootstrap.ts`                                | The `review-status-rules:snapshot` handler, and `pending-review:resolve-base` (registered-path check first).                                                                                                                                                                       |
 | `src/preload/api-types.ts`, `src/preload/index.ts`                              | The `reviewStatusRules` member.                                                                                                                                                                                   |
 | `src/renderer/src/web/web-preload-api.ts`                                       | `...createWebReviewStatusRulesApi()`.                                                                                                                                                                             |
 | `src/renderer/src/store/slices/ui/ui-slice-contract-preferences.ts`             | The three `workspaceStatusRules` members.                                                                                                                                                                         |

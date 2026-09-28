@@ -6,7 +6,9 @@ const mocks = vi.hoisted(() => ({
   createWorktree: vi.fn(),
   ensureHooksConfirmed: vi.fn(),
   launchWorktreeBackgroundTerminals: vi.fn(),
-  launchAgentBackgroundSession: vi.fn()
+  launchAgentBackgroundSession: vi.fn(),
+  updateWorktreeMeta: vi.fn(),
+  resolveBase: vi.fn()
 }))
 
 vi.mock('@/store', () => ({
@@ -14,7 +16,8 @@ vi.mock('@/store', () => ({
     getState: () => ({
       settings: null,
       repos: [{ id: 'repo-1', path: '/work/flowbasedk/flowbase' }],
-      createWorktree: mocks.createWorktree
+      createWorktree: mocks.createWorktree,
+      updateWorktreeMeta: mocks.updateWorktreeMeta
     })
   }
 }))
@@ -69,6 +72,9 @@ describe('createReviewWorkspace', () => {
     mocks.ensureHooksConfirmed.mockReset()
     mocks.launchWorktreeBackgroundTerminals.mockReset().mockResolvedValue(undefined)
     mocks.launchAgentBackgroundSession.mockReset().mockResolvedValue(undefined)
+    mocks.updateWorktreeMeta.mockReset().mockResolvedValue(undefined)
+    mocks.resolveBase.mockReset()
+    vi.stubGlobal('window', { api: { pendingReview: { resolveBase: mocks.resolveBase } } })
   })
 
   it('runs a trusted setup script in a Setup tab beside the review agent', async () => {
@@ -96,5 +102,41 @@ describe('createReviewWorkspace', () => {
     expect(mocks.createWorktree.mock.calls[0]?.[3]).toBe('skip')
     expect(mocks.launchWorktreeBackgroundTerminals).not.toHaveBeenCalled()
     expect(mocks.launchAgentBackgroundSession).toHaveBeenCalled()
+  })
+
+  it('pins a rebased re-review to the interdiff base and tells the agent how to diff', async () => {
+    mocks.ensureHooksConfirmed.mockResolvedValue('skip')
+    mocks.createWorktree.mockResolvedValue({ worktree: { id: 'wt-1', path: '/work/review-3168' } })
+    mocks.resolveBase.mockResolvedValue({
+      kind: 'interdiff',
+      baseRef: 'refs/orca/review-base/abc-123',
+      conflicted: false
+    })
+
+    await createReviewWorkspace(PR, config(), '084e70825ee06cc0ef08c9b09f6378adf2179bfe')
+
+    expect(mocks.resolveBase).toHaveBeenCalledWith({
+      worktreePath: '/work/review-3168',
+      reviewedCommit: '084e70825ee06cc0ef08c9b09f6378adf2179bfe',
+      targetRef: 'refs/remotes/origin/main'
+    })
+    expect(mocks.updateWorktreeMeta).toHaveBeenCalledWith(
+      'wt-1',
+      { baseRef: 'refs/orca/review-base/abc-123' },
+      undefined
+    )
+    const prompt = mocks.launchAgentBackgroundSession.mock.calls[0]?.[0]?.prompt
+    expect(prompt).toContain('git diff refs/orca/review-base/abc-123 HEAD')
+  })
+
+  it('leaves a re-review alone when nothing was rebased', async () => {
+    mocks.ensureHooksConfirmed.mockResolvedValue('skip')
+    mocks.createWorktree.mockResolvedValue({ worktree: { id: 'wt-1', path: '/work/review-3168' } })
+    mocks.resolveBase.mockResolvedValue({ kind: 'reviewed', baseRef: 'reviewed-sha' })
+
+    await createReviewWorkspace(PR, config(), 'reviewed-sha')
+
+    expect(mocks.updateWorktreeMeta).not.toHaveBeenCalled()
+    expect(mocks.launchAgentBackgroundSession.mock.calls[0]?.[0]?.prompt).not.toContain('rebased')
   })
 })

@@ -17,6 +17,8 @@ export function createWebPendingReviewApi(): Pick<PreloadApi, 'pendingReview'> {
       // Why empty: a web client cannot submit a review, so it has no queue of its own to keep.
       readDrafts: () => Promise.resolve({}),
       writeDrafts: () => Promise.resolve(),
+      readSummaries: () => Promise.resolve({}),
+      writeSummary: () => Promise.resolve(),
       updateComment: () =>
         Promise.resolve({
           ok: false as const,

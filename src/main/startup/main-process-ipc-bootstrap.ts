@@ -14,7 +14,9 @@ import { getPullRequestReviewContext, submitReviewVerdict } from '../github/subm
 import { updatePublishedReviewComment } from '../github/update-published-comment'
 import {
   readPendingReviewDrafts,
-  writePendingReviewDrafts
+  writePendingReviewDrafts,
+  readPendingReviewSummaries,
+  writePendingReviewSummary
 } from '../github/pending-review-draft-store'
 import type {
   PendingReviewComment,
@@ -41,6 +43,12 @@ export function registerMainProcessIpcHandlers(): void {
   // schema, if it runs upstream Orca, has no field for them and silently drops them.
   const pendingReviewDraftFile = (): string =>
     join(app.getPath('userData'), 'pending-review-drafts.json')
+  ipcMain.handle('pending-review:summaries-read', () =>
+    readPendingReviewSummaries(pendingReviewDraftFile())
+  )
+  ipcMain.handle('pending-review:summary-write', (_event, worktreeId: string, text: string) =>
+    writePendingReviewSummary(pendingReviewDraftFile(), worktreeId, text)
+  )
   ipcMain.handle('pending-review:drafts-read', () =>
     readPendingReviewDrafts(pendingReviewDraftFile())
   )

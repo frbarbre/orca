@@ -2,7 +2,12 @@ import { mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import { readPendingReviewDrafts, writePendingReviewDrafts } from './pending-review-draft-store'
+import {
+  readPendingReviewDrafts,
+  readPendingReviewSummaries,
+  writePendingReviewDrafts,
+  writePendingReviewSummary
+} from './pending-review-draft-store'
 
 let dir: string
 let file: string
@@ -56,5 +61,32 @@ describe('the queued-comment file on this device', () => {
   it('treats a damaged file as empty rather than failing the review', async () => {
     await writeFile(file, '{ not json', 'utf8')
     expect(await readPendingReviewDrafts(file)).toStrictEqual({})
+  })
+
+  it('keeps each workspace’s review summary on its own', async () => {
+    await writePendingReviewSummary(file, 'wt-a', 'Looks good apart from the naming')
+    await writePendingReviewSummary(file, 'wt-b', 'Needs tests')
+
+    expect(await readPendingReviewSummaries(file)).toEqual({
+      'wt-a': 'Looks good apart from the naming',
+      'wt-b': 'Needs tests'
+    })
+  })
+
+  it('keeps comments and summaries apart when both are written at once', async () => {
+    await Promise.all([
+      writePendingReviewDrafts(file, 'wt-a', [draft('c1')]),
+      writePendingReviewSummary(file, 'wt-a', 'Summary')
+    ])
+
+    expect(await readPendingReviewDrafts(file)).toEqual({ 'wt-a': [draft('c1')] })
+    expect(await readPendingReviewSummaries(file)).toEqual({ 'wt-a': 'Summary' })
+  })
+
+  it('forgets a summary that is cleared', async () => {
+    await writePendingReviewSummary(file, 'wt-a', 'Summary')
+    await writePendingReviewSummary(file, 'wt-a', '   ')
+
+    expect(await readPendingReviewSummaries(file)).toEqual({})
   })
 })

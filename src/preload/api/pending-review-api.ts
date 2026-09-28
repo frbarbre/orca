@@ -23,6 +23,10 @@ export type PendingReviewApi = {
   readDrafts: () => Promise<PendingReviewDraftMap>
   /** Replaces one workspace's queued comments on this device. */
   writeDrafts: (worktreeId: string, comments: PendingReviewComment[]) => Promise<void>
+  /** Every workspace's unsent review summary, as stored on this device. */
+  readSummaries: () => Promise<Record<string, string>>
+  /** Replaces one workspace's unsent review summary on this device. */
+  writeSummary: (worktreeId: string, text: string) => Promise<void>
   /** Rewrites the body of an inline review comment already on the pull request. */
   updateComment: (request: UpdatePublishedCommentRequest) => Promise<UpdatePublishedCommentResult>
   /** The base a "since last review" compare should use, rebuilt when the branch was rebased. */

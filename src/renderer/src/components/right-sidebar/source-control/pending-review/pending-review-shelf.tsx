@@ -14,6 +14,7 @@ import type { ReviewVerdictSubmitter } from '@/components/pending-review/use-sub
 import { PendingReviewCommentCard } from '@/components/pending-review/PendingReviewCommentCard'
 import { SectionHeader } from '../listing/section-header'
 import { useReviewDiffBase } from '@/components/pending-review/use-review-diff-base'
+import { usePendingReviewSummary } from '@/components/pending-review/pending-review-summary-store'
 import { SegmentedTabs } from '@/components/ui/segmented-tabs'
 
 const VERDICTS: {
@@ -62,7 +63,7 @@ export function SourceControlPendingReviewShelf({
   // Why closed by default: the drafts are a reference you open when you want them, while
   // the form below is the thing a reviewer comes here to use.
   const [expanded, setExpanded] = useState(false)
-  const [body, setBody] = useState('')
+  const [body, setBody] = usePendingReviewSummary(worktreeId)
   const [submitting, setSubmitting] = useState<ReviewVerdict | null>(null)
 
   const submit = async (verdict: ReviewVerdict): Promise<void> => {
@@ -70,7 +71,7 @@ export function SourceControlPendingReviewShelf({
     const result = await submitter.submit(verdict, body.trim())
     setSubmitting(null)
     if (result.ok) {
-      setBody('')
+      setBody('', true)
       setExpanded(false)
       return
     }

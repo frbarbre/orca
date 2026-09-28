@@ -6,6 +6,9 @@ export const pendingReviewApi: PendingReviewApi = {
   readDrafts: () => ipcRenderer.invoke('pending-review:drafts-read'),
   writeDrafts: (worktreeId, comments) =>
     ipcRenderer.invoke('pending-review:drafts-write', worktreeId, comments),
+  readSummaries: () => ipcRenderer.invoke('pending-review:summaries-read'),
+  writeSummary: (worktreeId, text) =>
+    ipcRenderer.invoke('pending-review:summary-write', worktreeId, text),
   updateComment: (request) => ipcRenderer.invoke('pending-review:update-comment', request),
   resolveBase: (request) => ipcRenderer.invoke('pending-review:resolve-base', request),
   context: (request) => ipcRenderer.invoke('pending-review:context', request)

@@ -240,6 +240,14 @@ New files (no conflict unless upstream adds the same path):
   `refs/orca/review-base/<worktree>-<commit>`; a rebuild after another force-push gets a new name,
   because the branch compare caches by base ref. Local worktrees only: a remote runtime or SSH host
   keeps comparing against the reviewed commit.
+- `src/shared/workspace-new-status-plan.ts` (+ test) — "New workspaces start in": a workspace Orca
+  creates in a scoped project, with no column yet, goes into the chosen column. Only workspaces
+  created after the column was chosen (`newWorkspaceStatusSince`, compared with `createdAt`) are
+  moved, so choosing it never reshuffles the board.
+- `src/renderer/src/components/pending-review/pending-review-summary-store.ts` (+ test) — each
+  workspace's unsent review summary, stored beside its queued comments in the same device file
+  (`summaries` next to `drafts` in `pending-review-drafts.json`, written through the same
+  serialized read-modify-write in `src/main/github/pending-review-draft-store.ts`).
 - `src/renderer/src/lib/reviewed-commit-bases.ts` (+ test) — the commits known to be ones you
   reviewed. Upstream's `resolveSourceControlBaseRef` swaps any worktree base pinned to a raw sha for
   the PR's base branch (a repair for old PR worktrees that pinned the head), which silently turned

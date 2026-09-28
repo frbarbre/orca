@@ -95,9 +95,16 @@ export function cloneDefaultWorkspaceStatusRuleConfig(): WorkspaceStatusRuleConf
 
 export function makeHandledPullRequestKey(
   repo: { owner: string; repo: string },
-  number: number
+  number: number,
+  reviewedCommit?: string | null
 ): string {
-  return `${repo.owner}/${repo.repo}#${number}`
+  const key = `${repo.owner}/${repo.repo}#${number}`
+  return reviewedCommit ? `${key}@${reviewedCommit}` : key
+}
+
+/** Whether a ledger entry belongs to this pull request, whichever review it was keyed on. */
+export function isHandledKeyForPullRequest(entry: string, pullRequestKey: string): boolean {
+  return entry === pullRequestKey || entry.startsWith(`${pullRequestKey}@`)
 }
 
 function sanitizeString(value: unknown, fallback: string, maxLength: number): string {

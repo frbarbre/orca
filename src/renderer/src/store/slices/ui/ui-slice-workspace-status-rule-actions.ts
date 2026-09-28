@@ -1,6 +1,7 @@
 import type { UISlice, UISliceGet, UISliceSet } from './ui-slice-contract'
 import {
   cloneDefaultWorkspaceStatusRuleConfig,
+  isHandledKeyForPullRequest,
   normalizeWorkspaceStatusRuleConfig
 } from '../../../../../shared/workspace-status-rule-config'
 
@@ -38,8 +39,10 @@ export function createUiWorkspaceStatusRuleActions(
     },
     forgetPullRequestHandled: (keys) => {
       const current = get().workspaceStatusRules
-      const drop = new Set(keys)
-      const remaining = current.handledPullRequests.filter((key) => !drop.has(key))
+      // Why by pull request: forgetting it must also drop the entries keyed on a reviewed commit.
+      const remaining = current.handledPullRequests.filter(
+        (entry) => !keys.some((key) => isHandledKeyForPullRequest(entry, key))
+      )
       if (remaining.length === current.handledPullRequests.length) {
         return
       }

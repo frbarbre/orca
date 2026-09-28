@@ -3,7 +3,10 @@ import type {
   ReviewSnapshotPullRequest,
   ReviewStatusSnapshot
 } from './github/review-status-snapshot-types'
-import { cloneDefaultWorkspaceStatusRuleConfig } from './workspace-status-rule-config'
+import {
+  cloneDefaultWorkspaceStatusRuleConfig,
+  makeHandledPullRequestKey
+} from './workspace-status-rule-config'
 import {
   buildWorkspaceStatusRulePlan,
   type WorkspaceStatusRuleTarget
@@ -405,6 +408,72 @@ describe('closing a workspace once you have reviewed', () => {
       existingBranches: new Set()
     })
     expect(plan.creations.map((entry) => entry.sinceReviewCommit)).toStrictEqual(['reviewed-sha'])
+  })
+
+  it('finds the reviewed commit once GitHub has dropped the review for the re-request', () => {
+    // Why this shape: GitHub leaves a re-requested reviewer out of latestReviews and keeps their
+    // review only in latestOpinionatedReviews, so this is what a re-request really looks like.
+    const plan = buildWorkspaceStatusRulePlan({
+      targets: [],
+      snapshot: makeSnapshot({
+        reviewRequestedPullRequests: [
+          {
+            ...reviewedPR,
+            latestReviews: [],
+            latestOpinionatedReviews: reviewedPR.latestReviews,
+            requestedReviewers: [{ kind: 'user', login: 'frbarbre' }]
+          }
+        ]
+      }),
+      config: { ...config, reviewInbox: { ...config.reviewInbox, enabled: true } },
+      existingBranches: new Set()
+    })
+    expect(plan.creations.map((entry) => entry.sinceReviewCommit)).toStrictEqual(['reviewed-sha'])
+  })
+
+  it('clones a re-request again although the pull request was handled before', () => {
+    const plan = buildWorkspaceStatusRulePlan({
+      targets: [],
+      snapshot: makeSnapshot({
+        reviewRequestedPullRequests: [
+          {
+            ...reviewedPR,
+            latestReviews: [],
+            latestOpinionatedReviews: reviewedPR.latestReviews,
+            requestedReviewers: [{ kind: 'user', login: 'frbarbre' }]
+          }
+        ]
+      }),
+      config: {
+        ...config,
+        reviewInbox: { ...config.reviewInbox, enabled: true },
+        handledPullRequests: [makeHandledPullRequestKey(reviewedPR.repo, reviewedPR.number)]
+      },
+      existingBranches: new Set()
+    })
+    expect(plan.creations.map((entry) => entry.handledKey)).toStrictEqual([
+      makeHandledPullRequestKey(reviewedPR.repo, reviewedPR.number, 'reviewed-sha')
+    ])
+  })
+
+  it('does not clone the same re-request twice', () => {
+    const plan = buildWorkspaceStatusRulePlan({
+      targets: [],
+      snapshot: makeSnapshot({
+        reviewRequestedPullRequests: [
+          { ...reviewedPR, requestedReviewers: [{ kind: 'user', login: 'frbarbre' }] }
+        ]
+      }),
+      config: {
+        ...config,
+        reviewInbox: { ...config.reviewInbox, enabled: true },
+        handledPullRequests: [
+          makeHandledPullRequestKey(reviewedPR.repo, reviewedPR.number, 'reviewed-sha')
+        ]
+      },
+      existingBranches: new Set()
+    })
+    expect(plan.creations).toStrictEqual([])
   })
 
   it('opens a first review on the whole pull request', () => {

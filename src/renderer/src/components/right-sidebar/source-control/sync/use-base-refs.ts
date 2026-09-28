@@ -6,6 +6,7 @@ import {
   resolveSourceControlPickerBaseRef
 } from './base-ref-resolution'
 import { useSourceControlBaseRefDefault } from './use-base-ref-default'
+import { useIsReviewedCommit } from '@/lib/reviewed-commit-bases'
 
 /**
  * Resolves the base refs the panel works against: the worktree/repo pins, the repo default, and the
@@ -57,13 +58,15 @@ export function useSourceControlBaseRefs({
     defaultBaseRef
   })
   // Why: the compare/diff view uses this base; the PR/rebase merge target keeps effectiveBaseRef (equal when the setting is off).
-  const compareBaseRef = resolveSourceControlCompareBaseRef({
+  const pinnedToReviewedCommit = useIsReviewedCommit(normalizedWorktreeBaseRef)
+  const resolvedCompareBaseRef = resolveSourceControlCompareBaseRef({
     enabled: settings?.sourceControlCompareAgainstUpstream ?? false,
     worktreeBaseRef: normalizedWorktreeBaseRef,
     repoBaseRef: normalizedRepoBaseRef,
     upstreamName: remoteStatus?.upstreamName ?? null,
     fallbackBaseRef: effectiveBaseRef
   })
+  const compareBaseRef = pinnedToReviewedCommit ? normalizedWorktreeBaseRef : resolvedCompareBaseRef
   const pickerBaseRef = resolveSourceControlPickerBaseRef({
     pinnedBaseRef,
     effectiveBaseRef

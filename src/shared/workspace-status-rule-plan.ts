@@ -150,7 +150,10 @@ export function buildWorkspaceStatusRulePlan(args: {
   const maxCreations = args.maxCreations ?? MAX_REVIEW_INBOX_CREATES_PER_TICK
 
   for (const pr of snapshot.reviewRequestedPullRequests) {
-    const handledKey = makeHandledPullRequestKey(pr.repo, pr.number)
+    const standing = readViewerReviewStanding(pr, snapshot.viewerLogin)
+    // Why the reviewed commit is part of the key: a re-request after a review is new work, and
+    // keying on the pull request alone meant it was never cloned again once handled.
+    const handledKey = makeHandledPullRequestKey(pr.repo, pr.number, standing.commitOid)
     if (handled.has(handledKey) || linkedKeys.has(snapshotKey(pr.repo, pr.number))) {
       continue
     }
@@ -161,7 +164,6 @@ export function buildWorkspaceStatusRulePlan(args: {
       continue
     }
     if (plan.creations.length < maxCreations) {
-      const standing = readViewerReviewStanding(pr, snapshot.viewerLogin)
       plan.creations.push({
         pr,
         handledKey,

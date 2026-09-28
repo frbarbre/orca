@@ -98,12 +98,13 @@ export function readViewerReviewStanding(
   if (!viewer) {
     return { isFinished: false, isOwed: false, commitOid: null }
   }
-  const review = pr.latestReviews.find((entry) => entry.login.toLowerCase() === viewer)
+  const byViewer = (entry: { login: string }): boolean => entry.login.toLowerCase() === viewer
+  const review = pr.latestReviews.find(byViewer)
   const isOwed = pendingUserReviewerLogins(pr).includes(viewer)
   return {
     isFinished: !isOwed && (review?.state === 'APPROVED' || review?.state === 'CHANGES_REQUESTED'),
     isOwed,
-    commitOid: review?.commitOid ?? null
+    commitOid: review?.commitOid ?? pr.latestOpinionatedReviews?.find(byViewer)?.commitOid ?? null
   }
 }
 

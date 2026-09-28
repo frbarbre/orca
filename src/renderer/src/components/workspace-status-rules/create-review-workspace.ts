@@ -3,6 +3,7 @@ import { resolveGitHubPrStartPointForRepo } from '@/lib/github-pr-start-point'
 import { launchAgentBackgroundSession } from '@/lib/launch-agent-background-session'
 import { ensureHooksConfirmed } from '@/lib/ensure-hooks-confirmed'
 import { launchWorktreeBackgroundTerminals } from '@/lib/launch-worktree-background-terminals'
+import { markReviewedCommit } from '@/lib/reviewed-commit-bases'
 import type { ReviewSnapshotPullRequest } from '../../../../shared/github/review-status-snapshot-types'
 import type { WorkspaceStatusRuleConfig } from '../../../../shared/workspace-status-rule-config'
 import {
@@ -66,6 +67,7 @@ export async function createReviewWorkspace(
     // the same gate as a workspace created by hand -- a trusted script runs without asking, and a
     // changed one prompts instead of running someone else's commands.
     const setupDecision = await ensureHooksConfirmed(store, repoId, 'setup')
+    markReviewedCommit(sinceReviewCommit)
     const created = await store.createWorktree(
       repoId,
       reviewWorkspaceName(pr),

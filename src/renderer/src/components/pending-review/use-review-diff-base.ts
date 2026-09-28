@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo } from 'react'
 import { useAppStore } from '@/store'
 import { useCommitResolves } from './use-commit-resolves'
+import { markReviewedCommit } from '@/lib/reviewed-commit-bases'
 
 export type ReviewDiffBase = 'since-review' | 'whole'
 
@@ -30,6 +31,9 @@ export function useReviewDiffBase(
   const wholeRef = baseRefName ? `refs/remotes/origin/${baseRefName}` : null
   const currentBaseRef = worktree?.baseRef ?? null
   const resolution = useCommitResolves(worktreeId, lastReviewedCommit)
+  useEffect(() => {
+    markReviewedCommit(lastReviewedCommit)
+  }, [lastReviewedCommit])
   const missing = resolution === 'missing'
 
   const value: ReviewDiffBase = useMemo(

@@ -109,8 +109,8 @@ function isReviewState(value: string): value is ReviewSnapshotReviewState {
   return REVIEW_STATES.some((state) => state === value)
 }
 
-function mapLatestReviews(pr: RawNode): ReviewSnapshotLatestReview[] {
-  return asNodes(pr.latestReviews).flatMap((review) => {
+function mapReviews(nodes: unknown): ReviewSnapshotLatestReview[] {
+  return asNodes(nodes).flatMap((review) => {
     const login = asString(asRecord(review.author)?.login)
     const state = asString(review.state).toUpperCase()
     const commitOid = asString(asRecord(review.commit)?.oid)
@@ -144,7 +144,10 @@ export function mapReviewSnapshotPullRequest(value: unknown): ReviewSnapshotPull
     baseRefName: asString(pr.baseRefName),
     headRefOid: asString(pr.headRefOid),
     requestedReviewers: mapRequestedReviewers(pr),
-    latestReviews: mapLatestReviews(pr),
+    latestReviews: mapReviews(pr.latestReviews),
+    // Why both: GitHub drops a reviewer from latestReviews as soon as they are re-requested, and
+    // the re-request is exactly when the commit they last reviewed is needed.
+    latestOpinionatedReviews: mapReviews(pr.latestOpinionatedReviews),
     checks: mapChecks(pr)
   }
 }

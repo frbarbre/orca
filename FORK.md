@@ -212,6 +212,11 @@ Watches each workspace's linked pull request and sets its board column, deletes 
 its pull request is merged or closed, and opens a review workspace when someone asks you to review.
 Configured per project under Settings → Automations.
 
+The reviewed commit is read from `latestOpinionatedReviews` as well as `latestReviews`: GitHub
+leaves a re-requested reviewer out of `latestReviews`, and the re-request is exactly when that
+commit is needed. The inbox ledger keys a re-request on it (`owner/repo#n@<sha>`), so a pull request
+you reviewed is cloned again when it comes back; forgetting a pull request drops every such entry.
+
 Everything the rules need comes from **one GraphQL query this fork owns** rather than from
 upstream's `PRInfo`. That is deliberate: upstream's reviewer mapper drops team reviewers (it
 requires a `login`, and a team only has a `slug`), its rollup normalizer rewrites every check name
@@ -226,6 +231,11 @@ New files (no conflict unless upstream adds the same path):
   moves, removals, review-workspace creations. Every outstanding review request is cloned on the
   first tick; the `handledPullRequests` ledger is what stops a repeat, not a seeding step.
 - `src/shared/workspace-status-rule-config.ts` — config type, defaults, persistence normalization.
+- `src/renderer/src/lib/reviewed-commit-bases.ts` (+ test) — the commits known to be ones you
+  reviewed. Upstream's `resolveSourceControlBaseRef` swaps any worktree base pinned to a raw sha for
+  the PR's base branch (a repair for old PR worktrees that pinned the head), which silently turned
+  "since last review" back into the whole pull request. `use-base-refs.ts` compares against a pinned
+  sha only when it is recorded here, so the repair still applies to every other pinned sha.
 - `src/shared/workspace-status-rule-prompt.ts` (+ test) — the `{{variable}}` renderer. Orca has no
   other template engine; Quick Commands and Automations both store flat strings.
 - `src/shared/github/review-status-snapshot-types.ts`, `src/shared/rpc-contract/workspace-status-rule-params.ts`
@@ -248,6 +258,7 @@ Modified files, and what to re-apply:
 | `src/shared/rpc-contract/client-ui-params.ts`                                   | `workspaceStatusRules: WorkspaceStatusRules.optional()` and its import.                                                                                                                                           |
 | `src/main/persistence/loading-store/normalize-loaded-ui-state.ts`               | One `normalizeWorkspaceStatusRuleConfig(...)` line in the returned object.                                                                                                                                        |
 | `src/main/persistence/applying-settings/ui-state-read.ts`, `ui-state-update.ts` | One normalize line each, beside `workspaceStatuses`.                                                                                                                                                              |
+| `src/renderer/.../source-control/sync/use-base-refs.ts`                         | `useIsReviewedCommit(normalizedWorktreeBaseRef)` and the `compareBaseRef` line that prefers a pinned reviewed commit. The PR/rebase target (`effectiveBaseRef`) stays upstream's.                                   |
 | `src/main/startup/main-process-ipc-bootstrap.ts`                                | The `review-status-rules:snapshot` handler.                                                                                                                                                                       |
 | `src/preload/api-types.ts`, `src/preload/index.ts`                              | The `reviewStatusRules` member.                                                                                                                                                                                   |
 | `src/renderer/src/web/web-preload-api.ts`                                       | `...createWebReviewStatusRulesApi()`.                                                                                                                                                                             |

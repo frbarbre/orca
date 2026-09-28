@@ -42,6 +42,8 @@ export type ReviewSnapshotPullRequest = {
   headRefOid: string
   requestedReviewers: ReviewSnapshotRequestedReviewer[]
   latestReviews: ReviewSnapshotLatestReview[]
+  /** Each reviewer's last approve or request-changes review, kept after they are re-requested. */
+  latestOpinionatedReviews?: ReviewSnapshotLatestReview[]
   checks: ReviewSnapshotCheck[]
 }
 

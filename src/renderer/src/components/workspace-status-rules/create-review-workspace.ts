@@ -64,7 +64,9 @@ export async function createReviewWorkspace(
       repoId,
       reviewWorkspaceName(pr),
       startPoint.baseBranch,
-      'skip',
+      // Why run: a review workspace needs the same setup (dependencies, env files) as any other
+      // checkout, and nobody is there to answer an ask, so the project's setup script always runs.
+      'run',
       undefined,
       'unknown',
       pr.title,

@@ -37,4 +37,24 @@ describe('normalizeWorkspaceStatusRuleConfig', () => {
     expect(config.reviewInbox.enabled).toBe(true)
     expect('seeded' in config.reviewInbox).toBe(false)
   })
+
+  it('keeps the new-workspace column with the time it was chosen', () => {
+    const config = normalizeWorkspaceStatusRuleConfig({
+      newWorkspaceStatus: ' todo ',
+      newWorkspaceStatusSince: 1_700_000_000_000
+    })
+
+    expect(config.newWorkspaceStatus).toBe('todo')
+    expect(config.newWorkspaceStatusSince).toBe(1_700_000_000_000)
+  })
+
+  it('clears the new-workspace time when no column is chosen', () => {
+    const config = normalizeWorkspaceStatusRuleConfig({
+      newWorkspaceStatus: '',
+      newWorkspaceStatusSince: 1_700_000_000_000
+    })
+
+    expect(config.newWorkspaceStatus).toBeNull()
+    expect(config.newWorkspaceStatusSince).toBeNull()
+  })
 })

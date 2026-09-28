@@ -7,7 +7,7 @@ import type {
   WorkspaceStatusRuleConfig
 } from '../../../../shared/workspace-status-rule-config'
 import { SettingsRow, SettingsSwitchRow } from './SettingsFormControls'
-import { ConditionRows, ProjectScopeRow } from './PullRequestStatusRuleRows'
+import { ConditionRows, NewWorkspaceStatusRow, ProjectScopeRow } from './PullRequestStatusRuleRows'
 
 export function PullRequestStatusRulesSection(): React.JSX.Element {
   const config = useAppStore((state) => state.workspaceStatusRules)
@@ -55,6 +55,16 @@ export function PullRequestStatusRulesSection(): React.JSX.Element {
                 repoIds: selected
                   ? [...config.repoIds, repoId]
                   : config.repoIds.filter((id) => id !== repoId)
+              })
+            }
+          />
+          <NewWorkspaceStatusRow
+            value={config.newWorkspaceStatus}
+            statuses={statuses}
+            onChange={(status) =>
+              patch({
+                newWorkspaceStatus: status ?? null,
+                newWorkspaceStatusSince: status ? Date.now() : null
               })
             }
           />

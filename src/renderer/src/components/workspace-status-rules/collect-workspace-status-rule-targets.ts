@@ -4,6 +4,7 @@ import { getIndexedAllWorktrees, getIndexedRepoMap } from '@/store/worktree-repo
 import { resolveWorktreeBranchLabel } from '@/lib/worktree-default-display-name'
 import type { GitHubRepositoryIdentity } from '../../../../shared/github/pull-request-types'
 import type { WorkspaceStatusRuleTarget } from '../../../../shared/workspace-status-rule-plan'
+import type { NewWorkspaceStatusTarget } from '../../../../shared/workspace-new-status-plan'
 import { getPendingReviewDrafts } from '../pending-review/pending-review-draft-store'
 
 export type WorkspaceStatusRuleScope = {
@@ -12,6 +13,30 @@ export type WorkspaceStatusRuleScope = {
   existingBranches: Set<string>
   /** Working directory for the `gh` call; snapshot queries name their own repos. */
   repoPath: string | null
+}
+
+/** Workspaces in the scoped projects that no rule or person has given a column yet. */
+export function collectNewWorkspaceStatusTargets(
+  state: AppState,
+  repoIds: readonly string[]
+): NewWorkspaceStatusTarget[] {
+  const scopedRepoIds = new Set(repoIds)
+  return getIndexedAllWorktrees(state.worktreesByRepo).flatMap((worktree) =>
+    scopedRepoIds.has(worktree.repoId) &&
+    !worktree.isArchived &&
+    !worktree.isBare &&
+    !worktree.isMainWorktree &&
+    !worktree.workspaceStatus
+      ? [
+          {
+            worktreeId: worktree.id,
+            executionHostId: worktree.hostId ?? 'local',
+            currentStatus: null,
+            createdAt: worktree.createdAt ?? null
+          }
+        ]
+      : []
+  )
 }
 
 export function collectWorkspaceStatusRuleScope(

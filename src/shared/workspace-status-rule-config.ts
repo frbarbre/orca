@@ -30,6 +30,10 @@ export type WorkspaceStatusRuleConfig = {
   repoIds: string[]
   statusByCondition: Partial<Record<WorkspaceStatusRuleCondition, WorkspaceStatus>>
   mergingCheckName: string
+  /** Column a workspace Orca creates in a scoped project starts in, before any rule applies. */
+  newWorkspaceStatus: WorkspaceStatus | null
+  /** When `newWorkspaceStatus` was chosen; only workspaces created after it are moved. */
+  newWorkspaceStatusSince: number | null
   /** `org/team-slug`, or null when PM approval is not in use. */
   pmApprovalTeam: string | null
   /** What to do once a pull request is merged or closed without merging. */
@@ -79,6 +83,8 @@ export function cloneDefaultWorkspaceStatusRuleConfig(): WorkspaceStatusRuleConf
     repoIds: [],
     statusByCondition: {},
     mergingCheckName: DEFAULT_MERGING_CHECK_NAME,
+    newWorkspaceStatus: null,
+    newWorkspaceStatusSince: null,
     pmApprovalTeam: null,
     onResolved: 'none',
     onReviewed: 'none',
@@ -130,6 +136,19 @@ function sanitizeStatusByCondition(
     }
   }
   return mapped
+}
+
+function sanitizeNewWorkspaceStatus(
+  status: unknown,
+  since: unknown
+): Pick<WorkspaceStatusRuleConfig, 'newWorkspaceStatus' | 'newWorkspaceStatusSince'> {
+  if (typeof status !== 'string' || !status.trim()) {
+    return { newWorkspaceStatus: null, newWorkspaceStatusSince: null }
+  }
+  return {
+    newWorkspaceStatus: status.trim(),
+    newWorkspaceStatusSince: typeof since === 'number' && Number.isFinite(since) ? since : null
+  }
 }
 
 function sanitizeReviewInbox(value: unknown): WorkspaceStatusRuleReviewInbox {
@@ -186,6 +205,7 @@ export function normalizeWorkspaceStatusRuleConfig(value: unknown): WorkspaceSta
       defaults.mergingCheckName,
       MAX_CHECK_NAME_LENGTH
     ),
+    ...sanitizeNewWorkspaceStatus(raw.newWorkspaceStatus, raw.newWorkspaceStatusSince),
     pmApprovalTeam,
     onResolved: raw.onResolved === 'delete' ? 'delete' : 'none',
     onReviewed: raw.onReviewed === 'delete' ? 'delete' : 'none',

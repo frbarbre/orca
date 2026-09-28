@@ -91,3 +91,43 @@ export function ConditionRows({
     </>
   )
 }
+
+export function NewWorkspaceStatusRow({
+  value,
+  statuses,
+  onChange
+}: {
+  value: string | null
+  statuses: readonly WorkspaceStatusDefinition[]
+  onChange: (status: string | undefined) => void
+}): React.JSX.Element {
+  return (
+    <SettingsRow
+      label={translate('auto.components.settings.prRules.newWorkspace', 'New workspaces start in')}
+      description={translate(
+        'auto.components.settings.prRules.newWorkspaceDescription',
+        'Where a workspace Orca creates in these projects goes before it has a pull request. Workspaces that already exist keep their column.'
+      )}
+      control={
+        <Select
+          value={value ?? UNMAPPED}
+          onValueChange={(next) => onChange(next === UNMAPPED ? undefined : next)}
+        >
+          <SelectTrigger size="sm" className="h-7 w-[180px]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={UNMAPPED}>
+              {translate('auto.components.settings.prRules.noColumn', 'Do nothing')}
+            </SelectItem>
+            {statuses.map((status) => (
+              <SelectItem key={status.id} value={status.id}>
+                {status.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      }
+    />
+  )
+}

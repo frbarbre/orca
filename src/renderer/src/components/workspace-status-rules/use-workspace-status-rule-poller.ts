@@ -5,7 +5,11 @@ import { getIndexedRepoMap } from '@/store/worktree-repo-index'
 import type { GitHubRepositoryIdentity } from '../../../../shared/github/pull-request-types'
 import { buildWorkspaceStatusRulePlan } from '../../../../shared/workspace-status-rule-plan'
 import { applyWorkspaceStatusRulePlan } from './apply-workspace-status-rule-plan'
-import { collectWorkspaceStatusRuleScope } from './collect-workspace-status-rule-targets'
+import {
+  collectNewWorkspaceStatusTargets,
+  collectWorkspaceStatusRuleScope
+} from './collect-workspace-status-rule-targets'
+import { planNewWorkspaceStatusUpdates } from '../../../../shared/workspace-new-status-plan'
 import { loadPendingReviewDrafts } from '../pending-review/pending-review-draft-store'
 
 /** Matches the active-workspace review tier; a board does not change faster than this. */
@@ -42,6 +46,19 @@ async function runWorkspaceStatusRuleTick(): Promise<void> {
   if (!config.enabled || config.repoIds.length === 0) {
     return
   }
+  await Promise.all(
+    planNewWorkspaceStatusUpdates(
+      collectNewWorkspaceStatusTargets(state, config.repoIds),
+      config.newWorkspaceStatus,
+      config.newWorkspaceStatusSince
+    ).map((update) =>
+      state.updateWorktreeMeta(
+        update.worktreeId,
+        { workspaceStatus: update.status },
+        { executionHostId: update.executionHostId }
+      )
+    )
+  )
   // Why awaited: the reviewed-removal guard reads the queue, and one still loading would read as
   // empty and let a workspace with unsent comments be deleted.
   await loadPendingReviewDrafts()

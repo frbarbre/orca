@@ -3,6 +3,7 @@ import { toast } from 'sonner'
 import { useAppStore } from '@/store'
 import { usePRCommentScope } from '@/components/pr-comments/use-pr-comment-scope'
 import type { ReviewVerdict } from '../../../../shared/github/pending-review-comment'
+import type { PullRequestReviewer } from '../../../../shared/github/pull-request-reviewers'
 import type { PendingReviewQueue } from './use-pending-review-queue'
 import { translate } from '@/i18n/i18n'
 
@@ -19,6 +20,10 @@ export type ReviewVerdictSubmitter = {
   viewerLatestReviewCommit: string | null
   /** The branch the pull request targets, which is the other end of the diff. */
   baseRefName: string | null
+  /** Who is asked to review and where each of them stands. */
+  reviewers: PullRequestReviewer[]
+  /** Asks a reviewer who already reviewed to look again. */
+  rerequest: (login: string) => Promise<boolean>
   submit: (verdict: ReviewVerdict, body: string) => Promise<{ ok: boolean; error?: string }>
 }
 
@@ -32,6 +37,7 @@ export function useSubmitReviewVerdict(
   const [viewerLatestReviewState, setViewerLatestReviewState] = useState<string | null>(null)
   const [viewerHasReviewRequest, setViewerHasReviewRequest] = useState(false)
   const [viewerLatestReviewCommit, setViewerLatestReviewCommit] = useState<string | null>(null)
+  const [reviewers, setReviewers] = useState<PullRequestReviewer[]>([])
   // Why a nonce: submitting changes the verdict on record, so the banner has to re-ask.
   const [contextNonce, setContextNonce] = useState(0)
 
@@ -45,6 +51,7 @@ export function useSubmitReviewVerdict(
       setViewerLatestReviewState(null)
       setViewerHasReviewRequest(false)
       setViewerLatestReviewCommit(null)
+      setReviewers([])
       return
     }
     let cancelled = false
@@ -61,6 +68,7 @@ export function useSubmitReviewVerdict(
           setViewerLatestReviewState(context.viewerLatestReviewState)
           setViewerHasReviewRequest(context.viewerHasReviewRequest)
           setViewerLatestReviewCommit(context.viewerLatestReviewCommit)
+          setReviewers(context.reviewers ?? [])
         }
       })
       .catch(() => undefined)
@@ -68,6 +76,34 @@ export function useSubmitReviewVerdict(
       cancelled = true
     }
   }, [contextNonce, prNumber, prRepo, repo])
+
+  const rerequest = useCallback(
+    async (login: string) => {
+      if (!repo || prNumber === null) {
+        return false
+      }
+      const result = await window.api.gh.requestPRReviewers({
+        repoPath: repo.path,
+        repoId: repo.id,
+        prNumber,
+        reviewers: [login],
+        prRepo
+      })
+      if (!result.ok) {
+        toast.error(
+          translate(
+            'auto.components.pendingReview.rerequestFailed',
+            'Could not ask {{login}} to review again: {{reason}}',
+            { login, reason: result.error }
+          )
+        )
+        return false
+      }
+      setContextNonce((value) => value + 1)
+      return true
+    },
+    [prNumber, prRepo, repo]
+  )
 
   const submit = useCallback(
     async (verdict: ReviewVerdict, body: string) => {
@@ -122,6 +158,8 @@ export function useSubmitReviewVerdict(
     viewerHasReviewRequest,
     viewerLatestReviewCommit,
     baseRefName: scope.pr?.baseRefName ?? null,
+    reviewers,
+    rerequest,
     submit
   }
 }

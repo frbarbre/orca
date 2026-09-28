@@ -34,7 +34,8 @@ export function createWebPendingReviewApi(): Pick<PreloadApi, 'pendingReview'> {
           viewerDidAuthor: false,
           viewerLatestReviewState: null,
           viewerHasReviewRequest: false,
-          viewerLatestReviewCommit: null
+          viewerLatestReviewCommit: null,
+          reviewers: []
         })
     }
   }

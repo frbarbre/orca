@@ -6,6 +6,7 @@ import type {
   UpdatePublishedCommentRequest,
   UpdatePublishedCommentResult
 } from '../../shared/github/pending-review-comment'
+import type { PullRequestReviewer } from '../../shared/github/pull-request-reviewers'
 import type {
   ResolveReviewBaseRequest,
   ResolveReviewBaseResult
@@ -37,5 +38,6 @@ export type PendingReviewApi = {
     viewerLatestReviewState: string | null
     viewerHasReviewRequest: boolean
     viewerLatestReviewCommit: string | null
+    reviewers: PullRequestReviewer[]
   }>
 }

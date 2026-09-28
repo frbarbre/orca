@@ -17429,7 +17429,8 @@
         "rowBadge": "{{value0}} review comment{{value1}} waiting to be submitted",
         "noPullRequest": "This workspace has no pull request to review.",
         "submittedWithState": "Review submitted ({{state}}).",
-        "submitted": "Review submitted."
+        "submitted": "Review submitted.",
+        "rerequestFailed": "Could not ask {{login}} to review again: {{reason}}"
       },
       "pr": {
         "comments": {
@@ -17455,6 +17456,17 @@
           "requestChanges": "Request changes",
           "approve": "Approve",
           "submitFailed": "Could not submit the review."
+        },
+        "reviewers": {
+          "pending": "Awaiting review",
+          "reRequested": "Asked to review again",
+          "approved": "Approved",
+          "changesRequested": "Requested changes",
+          "commented": "Left comments",
+          "dismissed": "Review dismissed",
+          "title": "Reviewers",
+          "rerequest": "Re-request review from {{login}}",
+          "rerequestTip": "Re-request review"
         }
       },
       "diffComments": {

@@ -443,6 +443,24 @@ A re-request runs `reviewInbox.rereviewPromptTemplate` instead of the first-look
 the question is no longer "what does this change do" but "what did the author do about what you
 already said". Both templates are editable in Automations, and clearing either restores its default.
 
+#### Who is reviewing, and asking again
+
+The review shelf lists the pull request's reviewers above the summary box, each with where they
+stand, and a re-request button beside anyone who has already reviewed and is not requested now,
+as GitHub's sidebar does. A re-requested reviewer drops out of `latestReviews` but stays in
+`latestOpinionatedReviews`, so the pair is what tells a re-request from a first request.
+
+The pull request facts behind the shelf (node id, head commit, reviewers) are fetched each time
+the shelf loads rather than cached for the session, which had left the verdict and the reviewed
+commit stale.
+
+| File | What is ours |
+| --- | --- |
+| `src/shared/github/pull-request-reviewers.ts` (+ test) | `buildPullRequestReviewers`. |
+| `src/main/github/review-verdict-mutation.ts`, `submit-review-verdict.ts` | Reviewer fields on the facts query, and their parsing. |
+| `pending-review/use-submit-review-verdict.ts` | `reviewers` and `rerequest`, through `gh.requestPRReviewers`. |
+| `source-control/pending-review/pending-review-reviewers.tsx` (+ test) | The list. |
+
 ### 5. Editor theming from a VS Code theme file
 
 Loads `~/.orca/themes/editor-dark.json` / `editor-light.json` (any VS Code theme) and registers them

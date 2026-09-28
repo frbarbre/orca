@@ -13,6 +13,7 @@ import type { PendingReviewQueue } from '@/components/pending-review/use-pending
 import type { ReviewVerdictSubmitter } from '@/components/pending-review/use-submit-review-verdict'
 import { PendingReviewCommentCard } from '@/components/pending-review/PendingReviewCommentCard'
 import { SectionHeader } from '../listing/section-header'
+import { PendingReviewReviewers } from './pending-review-reviewers'
 import { useReviewDiffBase } from '@/components/pending-review/use-review-diff-base'
 import { usePendingReviewSummary } from '@/components/pending-review/pending-review-summary-store'
 import { SegmentedTabs } from '@/components/ui/segmented-tabs'
@@ -137,6 +138,7 @@ export function SourceControlPendingReviewShelf({
 
   return (
     <div className="border-b border-border">
+      <PendingReviewReviewers reviewers={submitter.reviewers} onRerequest={submitter.rerequest} />
       {/* Why hidden at zero: a disclosure that opens onto nothing is chrome, and the form
           below is the part of this shelf that is always worth showing. */}
       {queue.comments.length > 0 ? (

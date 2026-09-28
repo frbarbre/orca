@@ -6,6 +6,12 @@ import { acquire, ghExecFileAsync, release } from './gh-utils'
 import { resolveGitHubRepoExecution } from './github-api-repository'
 import { noteRepositoryRateLimitSpend, repositoryRateLimitGuard } from './rate-limit'
 import { buildPullRequestNodeIdQuery, buildReviewVerdictMutation } from './review-verdict-mutation'
+import {
+  buildPullRequestReviewers,
+  type PullRequestReviewer,
+  type RawReview,
+  type RawReviewRequest
+} from '../../shared/github/pull-request-reviewers'
 
 function asRecord(value: unknown): Record<string, unknown> | null {
   return value && typeof value === 'object' && !Array.isArray(value) ? { ...value } : null
@@ -20,13 +26,7 @@ type PullRequestFacts = {
   viewerHasReviewRequest: boolean
   /** The commit the reviewer last reviewed, which a diff can be based on. */
   viewerLatestReviewCommit: string | null
-}
-
-const nodeIdCache = new Map<string, PullRequestFacts>()
-
-/** Test seam: the node id is stable for a pull request and cached for the session. */
-export function clearPullRequestNodeIdCache(): void {
-  nodeIdCache.clear()
+  reviewers: PullRequestReviewer[]
 }
 
 function firstGraphQLError(payload: unknown): string | null {
@@ -51,11 +51,6 @@ async function resolvePullRequestFacts(
   number: number,
   ghOptions: GhOptions
 ): Promise<PullRequestFacts | null> {
-  const key = `${owner}/${repo}#${number}`
-  const cached = nodeIdCache.get(key)
-  if (cached) {
-    return cached
-  }
   const { stdout } = await ghExecFileAsync(
     ['api', 'graphql', '-f', `query=${buildPullRequestNodeIdQuery({ owner, repo, number })}`],
     ghOptions
@@ -75,10 +70,62 @@ async function resolvePullRequestFacts(
     viewerLatestReviewCommit:
       typeof asRecord(latest?.commit)?.oid === 'string'
         ? String(asRecord(latest?.commit)?.oid)
-        : null
+        : null,
+    reviewers: buildPullRequestReviewers({
+      requests: readReviewRequests(pullRequest?.reviewRequests),
+      latestReviews: readReviews(pullRequest?.latestReviews),
+      latestOpinionatedReviews: readReviews(pullRequest?.latestOpinionatedReviews),
+      authorLogin: readString(asRecord(pullRequest?.author)?.login)
+    })
   }
-  nodeIdCache.set(key, facts)
   return facts
+}
+
+function readString(value: unknown): string | null {
+  return typeof value === 'string' && value ? value : null
+}
+
+function readNodes(connection: unknown): Record<string, unknown>[] {
+  const nodes = asRecord(connection)?.nodes
+  return Array.isArray(nodes)
+    ? nodes.flatMap((node) => {
+        const record = asRecord(node)
+        return record ? [record] : []
+      })
+    : []
+}
+
+function readReviewRequests(connection: unknown): RawReviewRequest[] {
+  return readNodes(connection).flatMap((node): RawReviewRequest[] => {
+    const reviewer = asRecord(node.requestedReviewer)
+    if (reviewer?.__typename === 'User') {
+      const login = readString(reviewer.login)
+      return login
+        ? [
+            {
+              kind: 'user',
+              login,
+              name: readString(reviewer.name),
+              avatarUrl: readString(reviewer.avatarUrl)
+            }
+          ]
+        : []
+    }
+    if (reviewer?.__typename === 'Team') {
+      const slug = readString(reviewer.slug)
+      return slug ? [{ kind: 'team', login: slug, name: readString(reviewer.name) }] : []
+    }
+    return []
+  })
+}
+
+function readReviews(connection: unknown): RawReview[] {
+  return readNodes(connection).flatMap((node) => {
+    const author = asRecord(node.author)
+    const login = readString(author?.login)
+    const state = readString(node.state)
+    return login && state ? [{ login, avatarUrl: readString(author?.avatarUrl), state }] : []
+  })
 }
 
 export async function getPullRequestReviewContext(
@@ -88,6 +135,7 @@ export async function getPullRequestReviewContext(
   viewerLatestReviewState: string | null
   viewerHasReviewRequest: boolean
   viewerLatestReviewCommit: string | null
+  reviewers: PullRequestReviewer[]
 }> {
   const { ownerRepo, ghOptions } = await resolveGitHubRepoExecution(
     request.repoPath,
@@ -99,7 +147,8 @@ export async function getPullRequestReviewContext(
       viewerDidAuthor: false,
       viewerLatestReviewState: null,
       viewerHasReviewRequest: false,
-      viewerLatestReviewCommit: null
+      viewerLatestReviewCommit: null,
+      reviewers: []
     }
   }
   try {
@@ -113,7 +162,8 @@ export async function getPullRequestReviewContext(
       viewerDidAuthor: facts?.viewerDidAuthor === true,
       viewerLatestReviewState: facts?.viewerLatestReviewState ?? null,
       viewerHasReviewRequest: facts?.viewerHasReviewRequest === true,
-      viewerLatestReviewCommit: facts?.viewerLatestReviewCommit ?? null
+      viewerLatestReviewCommit: facts?.viewerLatestReviewCommit ?? null,
+      reviewers: facts?.reviewers ?? []
     }
   } catch {
     // Why false on failure: a lookup that did not answer must not hide a button the
@@ -122,7 +172,8 @@ export async function getPullRequestReviewContext(
       viewerDidAuthor: false,
       viewerLatestReviewState: null,
       viewerHasReviewRequest: false,
-      viewerLatestReviewCommit: null
+      viewerLatestReviewCommit: null,
+      reviewers: []
     }
   }
 }
@@ -178,7 +229,6 @@ export async function submitReviewVerdict(
     }
     // Why evicted: the viewer's latest review is part of these facts, and submitting is
     // exactly what changes it.
-    nodeIdCache.delete(`${ownerRepo.owner}/${ownerRepo.repo}#${request.prNumber}`)
     const added = asRecord(asRecord(asRecord(parsed)?.data)?.addPullRequestReview)
     const review = asRecord(added?.pullRequestReview)
     return {

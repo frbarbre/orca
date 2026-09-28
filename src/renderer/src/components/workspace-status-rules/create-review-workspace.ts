@@ -1,6 +1,8 @@
 import { useAppStore } from '@/store'
 import { resolveGitHubPrStartPointForRepo } from '@/lib/github-pr-start-point'
 import { launchAgentBackgroundSession } from '@/lib/launch-agent-background-session'
+import { ensureHooksConfirmed } from '@/lib/ensure-hooks-confirmed'
+import { launchWorktreeBackgroundTerminals } from '@/lib/launch-worktree-background-terminals'
 import type { ReviewSnapshotPullRequest } from '../../../../shared/github/review-status-snapshot-types'
 import type { WorkspaceStatusRuleConfig } from '../../../../shared/workspace-status-rule-config'
 import {
@@ -60,13 +62,15 @@ export async function createReviewWorkspace(
       headRefName: pr.headRefName,
       baseRefName: pr.baseRefName
     })
+    // Why the trust check: setup runs the orca.yaml checked out from the pull request, so it gets
+    // the same gate as a workspace created by hand -- a trusted script runs without asking, and a
+    // changed one prompts instead of running someone else's commands.
+    const setupDecision = await ensureHooksConfirmed(store, repoId, 'setup')
     const created = await store.createWorktree(
       repoId,
       reviewWorkspaceName(pr),
       startPoint.baseBranch,
-      // Why run: a review workspace needs the same setup (dependencies, env files) as any other
-      // checkout, and nobody is there to answer an ask, so the project's setup script always runs.
-      'run',
+      setupDecision,
       undefined,
       'unknown',
       pr.title,
@@ -91,6 +95,17 @@ export async function createReviewWorkspace(
       undefined,
       sinceReviewCommit ?? startPoint.compareBaseRef
     )
+    // Why here and not left to main: main only writes the setup runner; like every other create
+    // path, the caller opens the Setup tab. Not awaited, so the review agent starts alongside it.
+    if (created.setup || created.defaultTabs) {
+      void launchWorktreeBackgroundTerminals({
+        worktreeId: created.worktree.id,
+        setup: created.setup,
+        defaultTabs: created.defaultTabs
+      }).catch((error) => {
+        console.warn('[workspace-status-rules] review workspace setup failed:', error)
+      })
+    }
     await launchAgentBackgroundSession({
       agent: config.reviewInbox.agent,
       worktreeId: created.worktree.id,

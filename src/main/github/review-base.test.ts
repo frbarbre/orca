@@ -98,6 +98,26 @@ describe('resolveReviewBase', () => {
     expect(compare.entries.map((entry) => entry.path)).toEqual(['feature.ts'])
   })
 
+  it('leaves out what merging the target branch in brought along', async () => {
+    git('switch', '-q', '-c', 'feature')
+    const reviewed = commitFile('feature.ts', 'export const f = 1\n', 'feature')
+    commitFile('feature.ts', 'export const f = 2\n', 'address review')
+    git('switch', '-q', 'main')
+    commitFile('backend.py', 'x = 1\n', 'unrelated main work')
+    git('switch', '-q', 'feature')
+    git('merge', '-q', '--no-edit', 'main')
+
+    const result = await resolveReviewBase({
+      worktreePath: repo,
+      reviewedCommit: reviewed,
+      targetRef: 'main'
+    })
+
+    expect(result.kind).toBe('interdiff')
+    const baseRef = result.kind === 'interdiff' ? result.baseRef : ''
+    expect(git('diff', '--name-only', baseRef, 'HEAD')).toBe('feature.ts')
+  })
+
   it('replaces the previous interdiff base when it is rebuilt', async () => {
     git('switch', '-q', '-c', 'feature')
     const reviewed = commitFile('feature.ts', 'export const f = 1\n', 'feature')

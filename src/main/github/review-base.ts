@@ -10,8 +10,8 @@ import {
 /**
  * The base a "since last review" compare should use for one review workspace.
  *
- * When the reviewed commit is still in the branch, that commit is the base. When the author has
- * rebased since, the reviewed commit is no longer an ancestor and a compare against it pulls in
+ * When the reviewed commit is still in the branch on the same base, that commit is the base. When
+ * the author has since rebased, or merged the target branch in, a compare against it pulls in
  * everything the target branch gained meanwhile. So the reviewed version is replayed onto the
  * branch's current base -- an interdiff base -- and saved under refs/orca/review-base/, which the
  * branch compare treats as an exact base rather than looking for a merge base.
@@ -31,12 +31,14 @@ export async function resolveReviewBase(
   } catch {
     return { kind: 'missing' }
   }
-  if (await isAncestor(git, reviewed, 'HEAD')) {
-    return { kind: 'reviewed', baseRef: reviewed }
-  }
-
   const reviewedBase = await git(['merge-base', reviewed, request.targetRef])
   const currentBase = await git(['merge-base', 'HEAD', request.targetRef])
+  // Why both conditions: a rebase drops the reviewed commit from the branch, and merging the
+  // target branch in keeps it but moves the base; either way, comparing against the reviewed
+  // commit would show everything the target branch gained as if the author wrote it.
+  if (reviewedBase === currentBase && (await isAncestor(git, reviewed, 'HEAD'))) {
+    return { kind: 'reviewed', baseRef: reviewed }
+  }
   const { tree, conflicted } = await replayOnto(git, reviewedBase, currentBase, reviewed)
   const commit = await git([
     '-c',

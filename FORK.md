@@ -233,8 +233,9 @@ New files (no conflict unless upstream adds the same path):
 - `src/shared/workspace-status-rule-config.ts` — config type, defaults, persistence normalization.
 - `src/main/github/review-base.ts` (+ a real-git test), `src/shared/github/review-base.ts`,
   `src/renderer/src/components/pending-review/use-review-base.ts` — the interdiff. When the author
-  rebased after your review, the reviewed commit is no longer in the branch and comparing against it
-  pulls in everything the target branch gained. The reviewed version is replayed onto the branch's
+  rebased after your review, or merged the target branch in, comparing against the reviewed commit
+  pulls in everything the target branch gained. The test is whether the merge base with the target
+  moved, not whether the reviewed commit left the branch: a merge keeps it in the branch. The reviewed version is replayed onto the branch's
   current base (`git merge-tree --merge-base`, then `commit-tree`) and saved as
   `refs/orca/review-base/<worktree>-<commit>`; a rebuild after another force-push gets a new name,
   because the branch compare caches by base ref. Local worktrees only: a remote runtime or SSH host

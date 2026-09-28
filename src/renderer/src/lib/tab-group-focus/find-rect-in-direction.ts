@@ -1,7 +1,7 @@
-import type { PaneFocusDirection } from '../../../../shared/keybindings/directional-pane-focus'
+import type { FocusDirection } from '../../../../shared/keybindings/directional-group-focus'
 
-export type PaneBounds = {
-  id: number
+export type RectBounds = {
+  id: string
   left: number
   top: number
   right: number
@@ -15,18 +15,18 @@ function overlap(startA: number, endA: number, startB: number, endB: number): nu
   return Math.max(0, Math.min(endA, endB) - Math.max(startA, startB))
 }
 
-export function findPaneInDirection(
-  panes: readonly PaneBounds[],
-  activeId: number,
-  direction: PaneFocusDirection
-): number | null {
-  const active = panes.find((pane) => pane.id === activeId)
+export function findRectInDirection(
+  rects: readonly RectBounds[],
+  activeId: string,
+  direction: FocusDirection
+): string | null {
+  const active = rects.find((rect) => rect.id === activeId)
   if (!active) {
     return null
   }
   const horizontal = direction === 'left' || direction === 'right'
-  let best: { id: number; gap: number; shared: number } | null = null
-  for (const pane of panes) {
+  let best: { id: string; gap: number; shared: number } | null = null
+  for (const pane of rects) {
     if (pane.id === activeId) {
       continue
     }

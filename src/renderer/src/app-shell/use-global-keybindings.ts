@@ -25,7 +25,8 @@ import {
   type KeybindingActionId,
   type KeybindingMatchOptions
 } from '../../../shared/keybindings'
-import { resolveDirectionalPaneFocus } from '../../../shared/keybindings/directional-pane-focus'
+import { resolveDirectionalGroupFocus } from '../../../shared/keybindings/directional-group-focus'
+import { focusTabGroupInDirection } from '@/lib/tab-group-focus/focus-tab-group-in-direction'
 import { PLUGIN_COMMAND_ALIAS_ACTION_IDS } from '../../../shared/plugins/plugin-command-actions'
 import {
   ModifierDoubleTapDetector,
@@ -188,6 +189,25 @@ export function useGlobalKeybindings(args: {
         return
       }
 
+      const groupFocusDirection = resolveDirectionalGroupFocus(input, shortcutPlatform, keybindings)
+      if (groupFocusDirection && !creationLayoutActive && !isFloatingWorkspacePanelFocused()) {
+        if (focusTabGroupInDirection(groupFocusDirection) !== 'single-group') {
+          input.preventDefault()
+          return
+        }
+        // Why: with a single group the chord keeps worktree history's meaning, which main left to us.
+        const historyAction =
+          groupFocusDirection === 'left'
+            ? 'worktree.history.back'
+            : groupFocusDirection === 'right'
+              ? 'worktree.history.forward'
+              : null
+        if (historyAction && matchShortcut(historyAction)) {
+          createAppCommandHandlers(state, input, context).get(historyAction)?.()
+          return
+        }
+      }
+
       // Skip editable surfaces so TipTap's Cmd+B bold works; this renderer-side fallback covers the blur→press IPC race (docs/markdown-cmd-b-bold-design.md).
       if (isEditableTarget(input.target)) {
         return
@@ -234,14 +254,6 @@ export function useGlobalKeybindings(args: {
           })
           return
         }
-      }
-
-      // Why: the pane-focus chords default to worktree history's; inside a terminal the pane move wins.
-      if (
-        context === 'terminal' &&
-        resolveDirectionalPaneFocus(input, shortcutPlatform, keybindings)
-      ) {
-        return
       }
 
       const handlers = createAppCommandHandlers(state, input, context)

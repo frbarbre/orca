@@ -9,7 +9,6 @@ import {
   syncTerminalScrollIntentFromViewport
 } from '@/lib/pane-manager/terminal-scroll-intent'
 import type { resolveTerminalKeyboardShortcutAction } from './terminal-keyboard-shortcut-matching'
-import { findPaneInDirection } from '@/lib/pane-manager/pane-in-direction'
 
 type TerminalShortcutAction = NonNullable<ReturnType<typeof resolveTerminalKeyboardShortcutAction>>
 
@@ -155,35 +154,6 @@ export function dispatchTerminalShortcutAction(
     manager.setActivePane(panes[(currentIdx + dir + panes.length) % panes.length].id, {
       focus: true
     })
-    return
-  }
-  if (action.type === 'focusPaneInDirection') {
-    const panes = manager.getPanes()
-    if (panes.length < 2) {
-      return
-    }
-    event.preventDefault()
-    event.stopImmediatePropagation()
-    if (expandedPaneIdRef.current !== null) {
-      setExpandedPane(null)
-      restoreExpandedLayout()
-      refreshPaneSizes(true)
-      persistLayoutSnapshot()
-    }
-    const keyTarget = event.target
-    const eventPane =
-      keyTarget instanceof Node
-        ? panes.find((pane) => pane.container.contains(keyTarget))
-        : undefined
-    const activeId = eventPane?.id ?? manager.getActivePane()?.id ?? panes[0].id
-    const bounds = panes.map((pane) => {
-      const { left, top, right, bottom } = pane.container.getBoundingClientRect()
-      return { id: pane.id, left, top, right, bottom }
-    })
-    const targetId = findPaneInDirection(bounds, activeId, action.direction)
-    if (targetId !== null) {
-      manager.setActivePane(targetId, { focus: true })
-    }
     return
   }
   if (action.type === 'equalizePaneSizes') {

@@ -484,23 +484,27 @@ Modified files, and what to re-apply:
 | `src/renderer/src/web/preload-api/web-app-api.ts`            | The stub returning nulls — the web client has no `~/.orca`, and the type requires the member.                                                                                                                                  |
 | `src/renderer/.../editor/DiffViewer.tsx`, `MonacoEditor.tsx` | `editorThemeName(...)` in place of the `'vs-dark' : 'vs'` ternary, plus the `ensureCustomEditorThemes()` effect. Both need the effect: `defineTheme` lands after first paint, and Monaco ignores a theme it does not yet know. |
 
-### 6. Terminal: move between panes by direction
+### 6. Move between tab groups by direction
 
-Cmd+Option+Arrow on macOS moves focus to the pane on that side, as Warp and tmux do. The target is
-the pane with the nearest edge that shares part of the active pane's side, and there is no
-wrap-around. Linux and Windows ship unbound, since Ctrl+Alt+Arrow is the desktop's workspace switch
-there and upstream tests pin it to the shell.
+Cmd+Option+Arrow on macOS moves focus to the tab group on that side, as Warp does between its
+panes. The target is the group with the nearest edge that shares part of the current group's side,
+with no wrap-around; its active tab is activated and takes keyboard focus, and an empty group takes
+focus itself. Linux and Windows ship unbound, since Ctrl+Alt+Arrow is the desktop's workspace
+switch there.
 
-The chords are worktree history's defaults too. Inside a focused terminal the pane move wins, at
-both places that would otherwise take it first (main's `before-input-event` and the renderer's
-global keydown). Anywhere else, worktree history still works as before.
+The chords are worktree history's defaults too. Main yields them to the renderer, which alone knows
+the layout: with two or more groups the arrows move between groups, and with a single group
+Cmd+Option+Left/Right still go back and forward through worktree history.
+
+Terminals, browsers and chats render in overlay layers above the group body rather than inside it,
+so both "which group has focus" and "focus this group's content" are decided by geometry.
 
 | File | What is ours |
 | --- | --- |
-| `src/shared/keybindings/definitions-pane-direction.ts`, `directional-pane-focus.ts` | The four actions and their matcher. |
-| `src/renderer/src/lib/pane-manager/pane-in-direction.ts` (+ test) | `findPaneInDirection`. |
-| `terminal-pane/terminal-shortcut-policy.ts` (+ `-pane-direction` test), `terminal-keyboard-action-dispatch.ts` | `focusPaneInDirection`. |
-| `src/main/window/main-window-shortcut-routing.ts`, `app-shell/use-global-keybindings.ts` | Yielding the chord to a focused terminal. |
+| `src/shared/keybindings/definitions-group-direction.ts`, `directional-group-focus.ts` | The four actions and their matcher. |
+| `src/renderer/src/lib/tab-group-focus/` (+ tests) | `findRectInDirection` and `focusTabGroupInDirection`. |
+| `src/main/window/main-window-shortcut-routing.ts` | Yielding the chord to the renderer. |
+| `app-shell/use-global-keybindings.ts` | Running the move, and the single-group history fallback. |
 
 ## Verify
 

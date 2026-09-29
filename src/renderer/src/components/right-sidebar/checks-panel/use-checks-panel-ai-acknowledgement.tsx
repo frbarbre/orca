@@ -21,6 +21,7 @@ import { clearPRCommentsListSelection } from '../pr-comments-list-selection'
 import { translate } from '@/i18n/i18n'
 import type { ChecksAgentComposerState } from './panel-state-types'
 import type { ChecksPanelReview } from '../checks-panel-review'
+import { shouldAcknowledgeSentPRCommentsOnHost } from './sent-pr-comment-acknowledgement'
 
 type ChecksPanelAiAcknowledgementInput = Pick<
   ChecksPanelControllerState,
@@ -85,6 +86,15 @@ export function useChecksPanelAiAcknowledgement(model: ChecksPanelAiAcknowledgem
   const resolveSelectedThreadsAfterLaunch = useCallback(
     async (resolution: NonNullable<ChecksAgentComposerState['commentResolution']>) => {
       clearSentCommentSelection(resolution.reviewContextKey)
+      if (!shouldAcknowledgeSentPRCommentsOnHost()) {
+        toast.success(
+          translate(
+            'auto.components.right.sidebar.ChecksPanel.agentStartedCommentsOpen',
+            'Started the agent. The comments stay open on the pull request.'
+          )
+        )
+        return
+      }
       // Why: ignore headSha churn; only abort resolve/UI refresh if the user left this PR/panel.
       const launchStableKey = checksPanelReviewStableKey(resolution.reviewContextKey)
       // Why: the host calls keep the snapshotted target, but every UI mutation must belong

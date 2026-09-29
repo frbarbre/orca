@@ -165,6 +165,16 @@ const ISSUE_WORKTREE_CARD_PROPERTY_OPTIONS: WorktreeCardPropertyOption[] = [
     }
   },
   {
+    id: 'linear-title',
+    properties: ['linear-title'],
+    get label() {
+      return translate(
+        'auto.components.sidebar.SidebarWorkspaceOptionsMenu.linearTitle',
+        'Linear title'
+      )
+    }
+  },
+  {
     id: 'jira-issue',
     properties: ['jira-issue'],
     get label() {

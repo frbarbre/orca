@@ -34,6 +34,7 @@ export function useWorktreeCardController(props: ResolvedWorktreeCardProps) {
   const showStatus = foundation.cardProps.includes('status')
   const showIssue = foundation.cardProps.includes('issue')
   const showLinearIssue = foundation.cardProps.includes('linear-issue')
+  const showLinearTitle = foundation.cardProps.includes('linear-title')
   const showJiraIssue = foundation.cardProps.includes('jira-issue')
   const showPR = foundation.cardProps.includes('pr')
   const showAutomation = foundation.cardProps.includes('automation')
@@ -62,7 +63,7 @@ export function useWorktreeCardController(props: ResolvedWorktreeCardProps) {
     showIssue,
     issueCacheKey: review.issueCacheKey,
     fetchIssue: foundation.fetchIssue,
-    showLinearIssue,
+    showLinearIssue: showLinearIssue || showLinearTitle,
     fetchLinearIssue: foundation.fetchLinearIssue
   })
 
@@ -149,6 +150,7 @@ export function useWorktreeCardController(props: ResolvedWorktreeCardProps) {
     showStatus,
     showIssue,
     showLinearIssue,
+    showLinearTitle,
     showJiraIssue,
     showPR,
     showAutomation,

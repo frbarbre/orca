@@ -3,6 +3,7 @@ import React from 'react'
 import { cn } from '@/lib/utils'
 import { WorktreeCardHeader } from './worktree-card-header'
 import { WorktreeCardMetaRow } from './worktree-card-meta-row'
+import { WorktreeCardLinearTitle } from './worktree-card-linear-title'
 import { WorktreeCardDetailsHover } from './WorktreeCardMeta'
 import { WorktreeCardPortsDetails } from './WorktreeCardPorts'
 import type { WorktreeCardPresentation } from './worktree-card-presentation'
@@ -71,6 +72,11 @@ export function WorktreeCardParentContent({
     >
       <WorktreeCardHeader card={card} presentation={presentation} />
       {presentation.hasMetaRow && <WorktreeCardMetaRow card={card} presentation={presentation} />}
+      <WorktreeCardLinearTitle
+        enabled={card.showLinearTitle}
+        title={linearIssue?.title}
+        tooltipEnabled={!hasHoverDetails}
+      />
     </div>
   )
   // Why: status glyphs and agent rows own their tooltips; only identity content should open the larger details card.

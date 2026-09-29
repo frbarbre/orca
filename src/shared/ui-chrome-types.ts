@@ -35,6 +35,7 @@ export type WorktreeCardProperty =
   // Task metadata on workspace cards; provider-specific persisted values kept for older profiles.
   | 'issue'
   | 'linear-issue'
+  | 'linear-title'
   | 'jira-issue'
   | 'pr'
   | 'automation'

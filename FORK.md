@@ -511,6 +511,19 @@ so both "which group has focus" and "focus this group's content" are decided by 
 | `src/main/window/main-window-shortcut-routing.ts` | Yielding the chord to the renderer. |
 | `app-shell/use-global-keybindings.ts` | Running the move, and the single-group history fallback. |
 
+### 7. Linear title on workspace cards
+
+Card display → "Linear title" adds the linked Linear issue's title as a line under the card's
+branch row. Off by default. It reuses the card's existing Linear fetch, which now also runs when
+only the title is shown.
+
+| File | What is ours |
+| --- | --- |
+| `src/shared/ui-chrome-types.ts`, `src/shared/worktree/card-properties.ts` | `'linear-title'` in the union and in `WORKTREE_CARD_PROPERTIES`. |
+| `sidebar/sidebar-workspace-option-items.ts` | The menu option. |
+| `sidebar/use-worktree-card-controller.ts` | `showLinearTitle`, and fetching for it. |
+| `sidebar/worktree-card-parent-content.tsx`, `worktree-card-linear-title.tsx` (+ test) | The row. |
+
 ## Verify
 
 Verify runs on GitHub, not locally: `fork-verify.yml` runs it on every pull request against `main`,

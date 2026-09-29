@@ -49,6 +49,7 @@ export const WORKTREE_CARD_PROPERTIES = [
   'branch',
   'issue',
   'linear-issue',
+  'linear-title',
   'jira-issue',
   'pr',
   'automation',

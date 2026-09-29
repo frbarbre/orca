@@ -12263,6 +12263,14 @@
           "conflictsDescription": "GitHub cannot merge the branch into its base without resolving conflicts. Leave unset to skip.",
           "resolveConflicts": "Resolve conflicts with an agent",
           "resolveConflictsDescription": "When one of your pull requests lands in the Conflicts column, starts an agent in its workspace that merges the base branch, resolves the conflicts and pushes. Never force-pushes."
+        },
+        "workspaceActions": {
+          "commitAndPush": "Commit & push",
+          "createPr": "Create PR",
+          "ready": "Ready for review",
+          "review": "Review",
+          "title": "Top bar actions",
+          "description": "Prompts for the buttons beside the right sidebar toggle. Supports {{branch}}, {{baseRef}}, {{worktreePath}}, {{prNumber}}, {{prUrl}}, {{prTitle}}, {{draftMode}}, {{templateRule}} and {{prInstructions}}. Resolve conflicts uses the Source Control conflict template. Clear a box to go back to the built-in prompt."
         }
       },
       "right": {
@@ -17496,6 +17504,19 @@
         "reviewTabTitle": "Review #{{number}}",
         "conflictTabTitle": "Resolve conflicts #{{number}}",
         "conflictAgentFailed": "Could not start an agent for the conflicts in {{name}}: {{reason}}"
+      },
+      "workspaceActions": {
+        "commitAndPush": "Commit & push",
+        "resolveConflicts": "Resolve conflicts",
+        "readyForReview": "Ready for review",
+        "createPr": "Create PR",
+        "review": "Review",
+        "reviewTab": "Review #{{number}}",
+        "commitTab": "Commit & push",
+        "conflictsTab": "Resolve conflicts",
+        "readyTab": "Ready for review",
+        "createPrTab": "Create PR",
+        "launchFailed": "Could not start the agent: {{reason}}"
       }
     },
     "i18n": {

@@ -7,6 +7,7 @@ import type {
   WorkspaceStatusRuleConfig
 } from '../../../../shared/workspace-status-rule-config'
 import { SettingsRow, SettingsSwitchRow } from './SettingsFormControls'
+import { WorkspaceActionPromptsSection } from './WorkspaceActionPromptsSection'
 import { ConditionRows, NewWorkspaceStatusRow, ProjectScopeRow } from './PullRequestStatusRuleRows'
 
 export function PullRequestStatusRulesSection(): React.JSX.Element {
@@ -210,6 +211,7 @@ export function PullRequestStatusRulesSection(): React.JSX.Element {
           ) : null}
         </>
       ) : null}
+      <WorkspaceActionPromptsSection />
     </section>
   )
 }

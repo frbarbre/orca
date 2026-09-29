@@ -1,6 +1,10 @@
 import { isTuiAgent } from './tui-agent-config'
 import type { TuiAgent } from './tui-agent'
 import type { WorkspaceStatus } from './worktree/types'
+import {
+  WORKSPACE_ACTION_PROMPT_IDS,
+  type WorkspaceActionPromptId
+} from './workspace-action-prompts'
 
 /** Evaluation order. The first condition a pull request satisfies wins. */
 export const WORKSPACE_STATUS_RULE_CONDITIONS = [
@@ -43,6 +47,8 @@ export type WorkspaceStatusRuleConfig = {
   onReviewed: 'delete' | 'none'
   /** Starts an agent to merge the base branch and push when your pull request lands in Conflicts. */
   resolveConflictsWithAgent: boolean
+  /** The top bar's action buttons; an empty or missing entry uses the built-in prompt. */
+  actionPrompts: Partial<Record<WorkspaceActionPromptId, string>>
   reviewInbox: WorkspaceStatusRuleReviewInbox
   /** `owner/repo#number` keys already acted on, so a create never repeats. */
   handledPullRequests: string[]
@@ -92,6 +98,7 @@ export function cloneDefaultWorkspaceStatusRuleConfig(): WorkspaceStatusRuleConf
     onResolved: 'none',
     onReviewed: 'none',
     resolveConflictsWithAgent: false,
+    actionPrompts: {},
     reviewInbox: {
       enabled: false,
       agent: 'claude',
@@ -175,6 +182,20 @@ function sanitizeReviewInbox(value: unknown): WorkspaceStatusRuleReviewInbox {
   }
 }
 
+const MAX_ACTION_PROMPT_LENGTH = 8000
+
+function sanitizeActionPrompts(value: unknown): Partial<Record<WorkspaceActionPromptId, string>> {
+  const raw = asRecord(value)
+  const prompts: Partial<Record<WorkspaceActionPromptId, string>> = {}
+  for (const id of WORKSPACE_ACTION_PROMPT_IDS) {
+    const prompt = raw?.[id]
+    if (typeof prompt === 'string' && prompt.trim()) {
+      prompts[id] = prompt.slice(0, MAX_ACTION_PROMPT_LENGTH)
+    }
+  }
+  return prompts
+}
+
 function sanitizeHandledPullRequests(value: unknown): string[] {
   if (!Array.isArray(value)) {
     return []
@@ -214,6 +235,7 @@ export function normalizeWorkspaceStatusRuleConfig(value: unknown): WorkspaceSta
     onResolved: raw.onResolved === 'delete' ? 'delete' : 'none',
     onReviewed: raw.onReviewed === 'delete' ? 'delete' : 'none',
     resolveConflictsWithAgent: raw.resolveConflictsWithAgent === true,
+    actionPrompts: sanitizeActionPrompts(raw.actionPrompts),
     reviewInbox: sanitizeReviewInbox(raw.reviewInbox),
     handledPullRequests:
       raw.ledgerVersion === SEED_LEDGER_VERSION

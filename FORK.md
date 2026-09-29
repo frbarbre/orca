@@ -581,6 +581,22 @@ agent starts. The fork skips that: `use-checks-panel-ai-acknowledgement.tsx` ret
 the queue when `shouldAcknowledgeSentPRCommentsOnHost()` (`sent-pr-comment-acknowledgement.ts`)
 says no, which it always does. Upstream's acknowledgement code is left intact below the early return.
 
+### 13. Top bar actions: the next step for the workspace, and Review
+
+Beside the right sidebar toggle (`right-sidebar/index.tsx` composes them into `closeButton`),
+`workspace-actions/WorkspaceActionButtons.tsx` shows the one next step for the active workspace and,
+when the branch has an open or draft pull request, a Review button. Each launches the review-inbox
+agent in a new tab with a prompt:
+
+- Priority (`src/shared/workspace-action.ts`, + test): a merge stopped on conflicts, then uncommitted
+  or unpushed work (Commit & push), then pull request conflicts, then a draft (Ready for review),
+  then no pull request (Create PR). Nothing on the default branch or an open, clean pull request.
+- Prompts (`src/shared/workspace-action-prompts.ts`, + test) are editable under Automations → Top bar
+  actions and stored in `workspaceStatusRules.actionPrompts`; Create PR fills in the Source Control
+  PR instructions and PR creation defaults (draft, template). Resolve conflicts uses upstream's
+  conflict prompts and the Source Control `resolveConflicts` template instead.
+- GitHub pull requests only (read from `prCache`).
+
 ## Verify
 
 Verify runs on GitHub, not locally: `fork-verify.yml` runs it on every pull request against `main`,

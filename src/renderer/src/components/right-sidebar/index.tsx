@@ -27,6 +27,7 @@ import { RightSidebarTopActivityBar } from './right-sidebar-top-activity-bar'
 import { useRightSidebarActivityItems } from './use-right-sidebar-activity-items'
 import { useRightSidebarTabRouting } from './use-right-sidebar-tab-routing'
 import { useWindowWidth } from './use-window-width'
+import { WorkspaceActionButtons } from './workspace-actions/WorkspaceActionButtons'
 
 const ACTIVITY_BAR_SIDE_WIDTH = 40
 
@@ -112,28 +113,31 @@ function RightSidebarInner(): React.JSX.Element {
   ))
 
   const closeButton = rightSidebarOpen ? (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <button
-          type="button"
-          className="sidebar-toggle mr-1"
-          onClick={toggleRightSidebar}
-          aria-label={translate(
-            'auto.components.right.sidebar.index.e8e2e4ce74',
-            'Toggle right sidebar'
+    <>
+      <WorkspaceActionButtons />
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button
+            type="button"
+            className="sidebar-toggle mr-1"
+            onClick={toggleRightSidebar}
+            aria-label={translate(
+              'auto.components.right.sidebar.index.e8e2e4ce74',
+              'Toggle right sidebar'
+            )}
+          >
+            <PanelRight size={16} />
+          </button>
+        </TooltipTrigger>
+        <TooltipContent side="bottom" sideOffset={6}>
+          {translate(
+            'auto.components.right.sidebar.index.9fffaf17c1',
+            'Toggle right sidebar ({{value0}})',
+            { value0: rightSidebarShortcut }
           )}
-        >
-          <PanelRight size={16} />
-        </button>
-      </TooltipTrigger>
-      <TooltipContent side="bottom" sideOffset={6}>
-        {translate(
-          'auto.components.right.sidebar.index.9fffaf17c1',
-          'Toggle right sidebar ({{value0}})',
-          { value0: rightSidebarShortcut }
-        )}
-      </TooltipContent>
-    </Tooltip>
+        </TooltipContent>
+      </Tooltip>
+    </>
   ) : null
 
   return (

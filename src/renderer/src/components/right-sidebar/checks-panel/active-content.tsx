@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { Check, LoaderCircle, Pencil, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { DetachedHeadBadge } from '@/components/DetachedHeadBadge'
@@ -16,6 +16,7 @@ import { PRTriageStrip } from './triage-strip'
 import { ConflictingFilesSection, MergeConflictNotice } from './conflict-summary'
 import { ChecksList } from './checks-list'
 import { PRCommentsList } from './comments-list'
+import { publishPRCommentQueueContext } from '../pr-comment-queue-context'
 import { translate } from '@/i18n/i18n'
 import type { ChecksPanelReview } from '../checks-panel-review'
 import type { ChecksPanelHostedReviewModifierDestination } from '../checks-panel-hosted-review-click-routing'
@@ -104,6 +105,11 @@ export function ChecksPanelActiveContent({
     titleSaving,
     setTitleDraft
   } = model
+  useEffect(() => {
+    if (activeWorktreeId && stateRequestKey) {
+      publishPRCommentQueueContext(activeWorktreeId, stateRequestKey)
+    }
+  }, [activeWorktreeId, stateRequestKey])
   if (!activeReview) {
     return null
   }

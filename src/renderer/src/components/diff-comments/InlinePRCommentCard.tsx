@@ -1,9 +1,10 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { MessageSquare } from 'lucide-react'
+import { MessageSquare, Sparkles } from 'lucide-react'
 import { getPRCommentGroupActionState } from '@/lib/pr-comment-action-state'
 import { getPRCommentPresentationClasses } from '@/components/right-sidebar/pr-comment-presentation'
 import { PRCommentGroupView } from '@/components/right-sidebar/checks-panel/comment-group'
 import { NotesSendMenu } from '@/components/editor/NotesSendMenu'
+import { usePRCommentQueueToggle } from '@/components/right-sidebar/pr-comment-queue-context'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
 import { translate } from '@/i18n/i18n'
@@ -74,6 +75,7 @@ export function InlinePRCommentCard({
   const [manualExpanded, setManualExpanded] = useState<boolean | null>(null)
   const expanded = manualExpanded ?? !resolved
   const [replyingCommentId, setReplyingCommentId] = useState<number | null>(null)
+  const queue = usePRCommentQueueToggle(worktreeId, group)
   const observerRef = useRef<ResizeObserver | null>(null)
 
   // Why a callback ref rather than useRef + an effect: the collapsed bar and the expanded card are
@@ -168,7 +170,7 @@ export function InlinePRCommentCard({
             // has no meaning next to a single thread in a diff. The send menu below is the per-thread
             // equivalent.
             actionState={getPRCommentGroupActionState(group)}
-            isQueued={false}
+            isQueued={queue?.queued ?? false}
             now={now}
             presentation={presentation}
             onResolve={onResolve}
@@ -209,6 +211,22 @@ export function InlinePRCommentCard({
               triggerAccentIcon={false}
               onDelivered={() => undefined}
             />
+            {queue ? (
+              <button
+                type="button"
+                aria-pressed={queue.queued}
+                onClick={queue.toggle}
+                className={cn(
+                  'inline-flex items-center gap-1 rounded-none px-2 py-1 text-[11px] transition-colors hover:bg-accent/40',
+                  queue.queued ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'
+                )}
+              >
+                <Sparkles className="size-3" />
+                {queue.queued
+                  ? translate('auto.components.diff.comments.InlinePRCommentCard.queued', 'Queued')
+                  : translate('auto.components.diff.comments.InlinePRCommentCard.queue', 'Queue')}
+              </button>
+            ) : null}
             {replyingCommentId === null ? (
               <button
                 type="button"

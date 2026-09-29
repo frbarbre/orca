@@ -554,6 +554,15 @@ field in its census fixture — re-apply after taking upstream's version.
 `tab.runQuickCommand` runs the tab group's Run-button command (`use-run-quick-command-shortcut.ts`).
 It ships unbound because Cmd+R is upstream's `tab.rename`; bind it in keybindings.json.
 
+### 10. Queue inline pull-request comments for the agent
+
+Inline review threads in the diff get the PR panel's "Queue" toggle beside "Send to an agent"; the
+panel keeps its "send queued comments" action. `pr-comments-list-selection.ts` now notifies
+subscribers when the queue changes (so panel and diff stay in step), and exports a setter for one
+thread. The panel's queue key folds in the pull request head, so the panel publishes it per
+workspace (`pr-comment-queue-context.ts`, from `checks-panel/active-content.tsx`) and inline cards
+read it from there — the toggle appears once the panel has shown that workspace's pull request.
+
 ## Verify
 
 Verify runs on GitHub, not locally: `fork-verify.yml` runs it on every pull request against `main`,

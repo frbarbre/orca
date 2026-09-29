@@ -15731,7 +15731,9 @@
             "thisThread": "This comment",
             "sendHint": "Send to an agent",
             "reply": "Reply",
-            "collapse": "Collapse"
+            "collapse": "Collapse",
+            "queued": "Queued",
+            "queue": "Queue"
           },
           "useDiffReviewComment": {
             "noPullRequest": "This diff is not part of a pull request.",

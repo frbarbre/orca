@@ -38,6 +38,46 @@ const persistedSelectionByContextKey = new Map<
   { isSelectingForAI: boolean; selectedGroupIds: Set<string> }
 >()
 
+const selectionListeners = new Set<() => void>()
+
+function notifySelectionListeners(): void {
+  for (const listener of selectionListeners) {
+    listener()
+  }
+}
+
+export function subscribePRCommentsListSelection(listener: () => void): () => void {
+  selectionListeners.add(listener)
+  return () => {
+    selectionListeners.delete(listener)
+  }
+}
+
+export function readPRCommentsListSelectedGroupIds(
+  contextKey: string | undefined
+): ReadonlySet<string> {
+  return (
+    (contextKey ? persistedSelectionByContextKey.get(contextKey)?.selectedGroupIds : undefined) ??
+    EMPTY_SELECTED_GROUP_IDS
+  )
+}
+
+// Why outside the hook: inline diff cards queue a thread without mounting the panel's list.
+export function setPRCommentsListGroupQueued(
+  contextKey: string,
+  groupId: string,
+  queued: boolean
+): void {
+  const current = readSelectionState(contextKey)
+  const next = new Set(current.selectedGroupIds)
+  if (queued) {
+    next.add(groupId)
+  } else {
+    next.delete(groupId)
+  }
+  persistSelectionState({ contextKey, isSelectingForAI: true, selectedGroupIds: next })
+}
+
 function trimPersistedSelectionContexts(): void {
   while (persistedSelectionByContextKey.size > MAX_PERSISTED_PR_COMMENTS_LIST_SELECTIONS) {
     const oldestContextKey = persistedSelectionByContextKey.keys().next().value
@@ -54,6 +94,7 @@ function persistSelectionState(state: PRCommentsListSelectionState): void {
   }
   if (state.selectedGroupIds.size === 0) {
     persistedSelectionByContextKey.delete(state.contextKey)
+    notifySelectionListeners()
     return
   }
   persistedSelectionByContextKey.delete(state.contextKey)
@@ -62,6 +103,7 @@ function persistSelectionState(state: PRCommentsListSelectionState): void {
     selectedGroupIds: new Set(state.selectedGroupIds)
   })
   trimPersistedSelectionContexts()
+  notifySelectionListeners()
 }
 
 function refreshPersistedSelectionContext(contextKey: string | undefined): void {
@@ -88,6 +130,7 @@ function readSelectionState(contextKey: string | undefined): PRCommentsListSelec
 export function clearPRCommentsListSelection(contextKey: string | undefined): void {
   if (contextKey) {
     persistedSelectionByContextKey.delete(contextKey)
+    notifySelectionListeners()
   }
 }
 
@@ -128,6 +171,14 @@ export function usePRCommentsListSelection(
     persistSelectionState(next)
     setRenderedSelectionState(next)
   }, [])
+
+  useEffect(
+    () =>
+      subscribePRCommentsListSelection(() =>
+        setRenderedSelectionState(readSelectionState(selectionContextKey))
+      ),
+    [selectionContextKey]
+  )
 
   useEffect(() => {
     // Why: only a committed context may affect LRU order; render can be

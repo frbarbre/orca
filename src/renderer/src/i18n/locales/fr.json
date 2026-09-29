@@ -13062,11 +13062,6 @@
               "comment": {
                 "composer": {
                   "9bca633dee": "Annuler",
-                  "cf5a7aba6f": "Liste",
-                  "d6d9c3c947": "Citation",
-                  "f49e0a21e0": "Code",
-                  "542bf6a7e2": "Italique",
-                  "256300f8ea": "Gras",
                   "87aff03d63": "Envoi…",
                   "commentTooLarge": "Le commentaire est trop volumineux pour être envoyé sans risque."
                 }

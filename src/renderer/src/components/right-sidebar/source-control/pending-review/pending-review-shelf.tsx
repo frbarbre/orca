@@ -1,8 +1,7 @@
-import React, { useRef, useState } from 'react'
+import React, { useState } from 'react'
 import { Check, MessageCircle, ScanEye, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
-import { Textarea } from '@/components/ui/textarea'
 import { translate } from '@/i18n/i18n'
 import { cn } from '@/lib/utils'
 import {
@@ -16,8 +15,7 @@ import { SectionHeader } from '../listing/section-header'
 import { PendingReviewReviewers } from './pending-review-reviewers'
 import { useReviewDiffBase } from '@/components/pending-review/use-review-diff-base'
 import { usePendingReviewSummary } from '@/components/pending-review/pending-review-summary-store'
-import { useMentionAutocomplete } from '@/components/github/github-mention-autocomplete'
-import { useReviewAssetAttachments } from '@/components/github/use-review-asset-attachments'
+import { ReviewMarkdownComposer } from '@/components/github/ReviewMarkdownComposer'
 import { PendingReviewDiffBaseSelect } from './pending-review-diff-base-select'
 
 const VERDICTS: {
@@ -67,21 +65,11 @@ export function SourceControlPendingReviewShelf({
   // the form below is the thing a reviewer comes here to use.
   const [expanded, setExpanded] = useState(false)
   const [body, setBody] = usePendingReviewSummary(worktreeId)
-  const summaryRef = useRef<HTMLTextAreaElement | null>(null)
-  const mention = useMentionAutocomplete({
-    value: body,
-    setValue: setBody,
-    textareaRef: summaryRef
-  })
-  const attachments = useReviewAssetAttachments({
-    value: body,
-    setValue: setBody,
-    textareaRef: summaryRef
-  })
+  const [uploading, setUploading] = useState(false)
   const [submitting, setSubmitting] = useState<ReviewVerdict | null>(null)
 
   const submit = async (verdict: ReviewVerdict): Promise<void> => {
-    if (attachments.uploading) {
+    if (uploading) {
       return
     }
     setSubmitting(verdict)
@@ -211,29 +199,17 @@ export function SourceControlPendingReviewShelf({
       ) : null}
       <div className="px-3 pt-2 pb-2">
         <div className="relative rounded-md border border-input bg-background shadow-xs dark:bg-input/30">
-          {mention.list}
-          <Textarea
-            ref={summaryRef}
+          <ReviewMarkdownComposer
             value={body}
+            onChange={(next) => setBody(next)}
             placeholder={translate(
               'auto.components.sourceControl.pendingReview.bodyPlaceholder',
               'Add review summary…'
             )}
-            onChange={(event) => {
-              setBody(event.target.value)
-              mention.sync(event.currentTarget)
-            }}
-            onKeyDown={mention.handleKeyDown}
-            onKeyUp={mention.onKeyUp}
-            onBlur={mention.close}
-            {...attachments.dropTargetProps}
-            onPaste={attachments.onPaste}
-            onDragOver={attachments.onDragOver}
-            onDrop={attachments.onDrop}
-            variant="seamless"
-            className="min-h-16 resize-none"
+            onUploadingChange={setUploading}
+            minHeightClassName="min-h-16"
+            className="[&_.github-markdown-composer]:border-0 [&_.github-markdown-composer]:bg-transparent [&_.github-markdown-composer]:shadow-none"
           />
-          {attachments.previews}
           <div className="flex flex-wrap items-center justify-end gap-0.5 px-1.5 pb-1.5">
             {verdicts.map((verdict) => (
               <Button
@@ -242,7 +218,7 @@ export function SourceControlPendingReviewShelf({
                 variant="ghost"
                 disabled={
                   submitting !== null ||
-                  attachments.uploading ||
+                  uploading ||
                   !canSubmitReviewVerdict({
                     verdict: verdict.id,
                     body,

@@ -187,10 +187,8 @@ describe('CommentMarkdown link click handler', () => {
     expect(event.defaultPrevented).toBe(true)
   })
 
-  it('lets callers intercept rendered document images', () => {
-    const onLinkClick = vi.fn((event: React.MouseEvent<HTMLElement>) => {
-      event.preventDefault()
-    })
+  it('opens rendered document images full screen instead of handing them to the link handler', () => {
+    const onLinkClick = vi.fn()
     container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)
@@ -207,14 +205,12 @@ describe('CommentMarkdown link click handler', () => {
 
     const image = container.querySelector<HTMLImageElement>('img[alt="diagram"]')
     expect(image?.getAttribute('src')).toBe('assets/diagram.png')
-    const event = new window.MouseEvent('click', { bubbles: true, cancelable: true })
-
     act(() => {
-      image?.dispatchEvent(event)
+      image?.closest('button')?.click()
     })
 
-    expect(onLinkClick).toHaveBeenCalledWith(expect.any(Object), 'assets/diagram.png')
-    expect(event.defaultPrevented).toBe(true)
+    expect(onLinkClick).not.toHaveBeenCalled()
+    expect(document.querySelector('[role="dialog"] img[alt="diagram"]')).not.toBeNull()
   })
 
   it('linkifies bare POSIX and Windows document paths without an extension allowlist', () => {

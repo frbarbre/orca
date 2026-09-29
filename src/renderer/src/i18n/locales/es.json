@@ -11352,11 +11352,6 @@
               "comment": {
                 "composer": {
                   "9bca633dee": "Cancelar",
-                  "cf5a7aba6f": "Lista",
-                  "d6d9c3c947": "Cita",
-                  "f49e0a21e0": "Código",
-                  "542bf6a7e2": "Cursiva",
-                  "256300f8ea": "Negrita",
                   "87aff03d63": "Enviando...",
                   "commentTooLarge": "El comentario es demasiado grande para enviarlo de forma segura."
                 }

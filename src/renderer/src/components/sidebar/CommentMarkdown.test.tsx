@@ -107,20 +107,20 @@ describe('CommentMarkdown', () => {
 
   it('adds an expand control to compact images only when requested', () => {
     const markup = renderToStaticMarkup(
-      <CommentMarkdown expandImages content="See this: ![ui.png](data:image/png;base64,abc123)" />
+      <CommentMarkdown content="See this: ![ui.png](data:image/png;base64,abc123)" />
     )
 
     expect(markup).toContain('aria-label="Expand image"')
     expect(markup).toContain('max-h-32')
   })
 
-  it('renders bare GitHub user attachment links as document videos', () => {
+  it('renders bare GitHub user attachment links as videos that open full screen', () => {
     const url = 'https://github.com/user-attachments/assets/ce11040a-fb66-4289-927f-547b16dfc488'
     const markup = renderToStaticMarkup(<CommentMarkdown variant="document" content={url} />)
 
     expect(markup).toContain('<video')
     expect(markup).toContain(`src="${url}"`)
-    expect(markup).toContain('controls=""')
+    expect(markup).toContain('aria-label="Play video"')
     expect(markup).not.toContain(`href="${url}" class="break-all`)
   })
 

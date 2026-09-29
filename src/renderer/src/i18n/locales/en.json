@@ -2808,8 +2808,9 @@
           "member": "Member"
         },
         "reviewAssets": {
-          "failed": "Could not upload {{name}}.",
-          "uploading": "Uploading {{name}}…"
+          "notConfigured": "Uploads are not set up on this computer.",
+          "uploadingLine": "Uploading {{name}}…",
+          "uploadFailed": "Could not upload {{name}}. {{reason}}"
         }
       },
       "linear": {
@@ -6318,7 +6319,8 @@
         "MarkdownImageLightbox": {
           "image": "Image",
           "expand": "Expand image",
-          "close": "Close"
+          "close": "Close",
+          "expandVideo": "Play video"
         },
         "WorktreeDeveloperMenu": {
           "developer": "Developer",
@@ -13124,6 +13126,9 @@
                   "title": "{{reviewLabelCap}} not supported here",
                   "body": "This repository provider does not support creating a {{reviewLabel}} from Orca."
                 }
+              },
+              "commentEditor": {
+                "placeholder": "Edit comment"
               }
             }
           },
@@ -13192,11 +13197,6 @@
               "comment": {
                 "composer": {
                   "9bca633dee": "Cancel",
-                  "cf5a7aba6f": "List",
-                  "d6d9c3c947": "Quote",
-                  "f49e0a21e0": "Code",
-                  "542bf6a7e2": "Italic",
-                  "256300f8ea": "Bold",
                   "87aff03d63": "Sending...",
                   "commentTooLarge": "Comment is too large to submit safely."
                 }

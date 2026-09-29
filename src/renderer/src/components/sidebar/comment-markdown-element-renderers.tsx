@@ -9,6 +9,7 @@ import {
   isGitHubUserAttachmentVideoLink
 } from './comment-markdown-github-attachment-media'
 import { ExpandableMarkdownImage } from './MarkdownImageLightbox'
+import { isReviewAssetImageUrl } from '../../../../shared/github/review-asset'
 
 export type CommentMarkdownLinkClickHandler = (
   event: React.MouseEvent<HTMLElement>,
@@ -66,38 +67,33 @@ function handleMarkdownAnchorAuxClick(
   }
 }
 
-function handleMarkdownImageClick(
-  event: React.MouseEvent<HTMLImageElement>,
-  src: string | undefined,
-  onLinkClick: CommentMarkdownLinkClickHandler | undefined
-): void {
-  if (!onLinkClick) {
-    return
-  }
-  event.stopPropagation()
-  onLinkClick(event, src)
-}
+const COMPACT_MEDIA_CLASS =
+  'max-h-32 max-w-full rounded-sm object-contain outline outline-1 outline-border/70'
 
 export function createCompactCommentMarkdownComponents(
-  onLinkClick?: CommentMarkdownLinkClickHandler,
-  expandImages = false
+  onLinkClick?: CommentMarkdownLinkClickHandler
 ): Components {
   return {
     // Strip <p> wrappers to avoid double margins in the tight card layout.
     p: ({ children }) => <span className="comment-md-p">{children}</span>,
     // Open links externally — sidebar is not a navigation context.
-    a: ({ href, children }) => (
-      <a
-        href={href || undefined}
-        target="_blank"
-        rel="noreferrer"
-        className="underline underline-offset-2 text-foreground/80 hover:text-foreground"
-        onClick={(e) => handleMarkdownAnchorClick(e, href, onLinkClick)}
-        onAuxClick={(e) => handleMarkdownAnchorAuxClick(e, href, onLinkClick)}
-      >
-        {children}
-      </a>
-    ),
+    a: ({ href, children }) =>
+      isGitHubUserAttachmentVideoLink(href, children) ? (
+        <GitHubUserAttachmentVideo href={href} className={COMPACT_MEDIA_CLASS}>
+          {children}
+        </GitHubUserAttachmentVideo>
+      ) : (
+        <a
+          href={href || undefined}
+          target="_blank"
+          rel="noreferrer"
+          className="underline underline-offset-2 text-foreground/80 hover:text-foreground"
+          onClick={(e) => handleMarkdownAnchorClick(e, href, onLinkClick)}
+          onAuxClick={(e) => handleMarkdownAnchorAuxClick(e, href, onLinkClick)}
+        >
+          {children}
+        </a>
+      ),
     // Why: react-markdown calls the `code` component for both inline `code`
     // and the <code> inside fenced blocks (<pre><code>…</code></pre>). We
     // always apply inline-code styling here; the wrapper div uses a CSS
@@ -172,7 +168,11 @@ export function createCompactCommentMarkdownComponents(
     // like "Image #1"; compact cards inline app-managed thumbnails without
     // auto-fetching arbitrary remote image URLs.
     img: ({ alt, src }) => {
-      if (!isTrustedCompactImageSrc(src)) {
+      if (isGitHubUserAttachmentUrl(src)) {
+        return <GitHubUserAttachmentImage src={src} alt={alt} className={COMPACT_MEDIA_CLASS} />
+      }
+      // Why trusted: the review-assets bucket only holds what Orca users uploaded for review comments.
+      if (!isTrustedCompactImageSrc(src) && !isReviewAssetImageUrl(src)) {
         if (!src) {
           return alt ? <span>{alt}</span> : null
         }
@@ -190,36 +190,13 @@ export function createCompactCommentMarkdownComponents(
         )
       }
 
-      if (expandImages) {
-        return (
-          <ExpandableMarkdownImage
-            src={src}
-            alt={alt}
-            triggerClassName="my-1"
-            className="max-h-32 max-w-full rounded-sm object-contain outline outline-1 outline-border/70"
-          />
-        )
-      }
-
-      const image = (
-        <img
+      return (
+        <ExpandableMarkdownImage
           src={src}
-          alt={alt ?? ''}
-          className="my-1 max-h-32 max-w-full rounded-sm object-contain outline outline-1 outline-border/70"
+          alt={alt}
+          triggerClassName="my-1"
+          className={COMPACT_MEDIA_CLASS}
         />
-      )
-      return src ? (
-        <a
-          href={src || undefined}
-          target="_blank"
-          rel="noreferrer"
-          onClick={(e) => handleMarkdownAnchorClick(e, src, onLinkClick)}
-          onAuxClick={(e) => handleMarkdownAnchorAuxClick(e, src, onLinkClick)}
-        >
-          {image}
-        </a>
-      ) : (
-        image
       )
     },
     // Why: GFM tables in a ~200px sidebar would overflow badly. Wrapping in an
@@ -315,21 +292,6 @@ export function createDocumentCommentMarkdownComponents(
       }
       // Why: Jira/Linear/GitHub document bodies often embed screenshots; open a
       // viewport-centered lightbox so the preview is not trapped in the drawer.
-      if (onLinkClick) {
-        const imageClassName = [
-          'my-3 max-h-96 max-w-full rounded-md object-contain',
-          'outline outline-1 outline-black/10 dark:outline-white/10',
-          'cursor-pointer'
-        ].join(' ')
-        return (
-          <img
-            src={src}
-            alt={alt ?? ''}
-            className={imageClassName}
-            onClick={(e) => handleMarkdownImageClick(e, src, onLinkClick)}
-          />
-        )
-      }
       return (
         <ExpandableMarkdownImage
           src={src}

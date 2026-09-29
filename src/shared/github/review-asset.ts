@@ -21,27 +21,26 @@ export function reviewAssetKind(contentType: string): ReviewAssetKind | null {
   return VIDEO_TYPES.has(type) ? 'video' : null
 }
 
-// Why a bare URL for video: GitHub strips <video> tags from comments, and a link on its own line
-// is the form both GitHub and Orca turn into something you can open or play.
-export function reviewAssetMarkdown(kind: ReviewAssetKind, name: string, url: string): string {
-  const label = name.replace(/[[\]]/g, '')
-  return kind === 'image' ? `![${label}](${url})` : `\n${url}\n`
-}
-
 export const REVIEW_ASSET_PUBLIC_HOST = 'helios-review-assets.fsn1.your-objectstorage.com'
 
-export function isReviewAssetVideoUrl(href: string | undefined): href is string {
+function reviewAssetPath(href: string | undefined): string | null {
   if (!href) {
-    return false
+    return null
   }
   try {
     const url = new URL(href)
-    return (
-      url.protocol === 'https:' &&
-      url.hostname === REVIEW_ASSET_PUBLIC_HOST &&
-      /\.(mp4|mov|webm)$/i.test(url.pathname)
-    )
+    return url.protocol === 'https:' && url.hostname === REVIEW_ASSET_PUBLIC_HOST
+      ? url.pathname
+      : null
   } catch {
-    return false
+    return null
   }
+}
+
+export function isReviewAssetImageUrl(href: string | undefined): href is string {
+  return /\.(png|jpe?g|gif|webp)$/i.test(reviewAssetPath(href) ?? '')
+}
+
+export function isReviewAssetVideoUrl(href: string | undefined): href is string {
+  return /\.(mp4|mov|webm)$/i.test(reviewAssetPath(href) ?? '')
 }

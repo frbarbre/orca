@@ -1,10 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useEditor } from '@tiptap/react'
-import type { Editor } from '@tiptap/react'
+import type { AnyExtension, Editor } from '@tiptap/react'
 import Placeholder from '@tiptap/extension-placeholder'
-import { ImageIcon, Paperclip } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { Paperclip } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { isScreenSubmitShortcut } from '@/lib/screen-submit-shortcut'
 import { createRichMarkdownExtensions } from '@/components/editor/rich-markdown-extensions'
@@ -25,7 +23,7 @@ import {
   GitHubMarkdownComposerTabbar,
   type ComposerTab
 } from '@/components/github/github-markdown-composer-tabbar'
-import { hasBoundedGitHubMarkdownImageUrlText } from '@/components/github/github-markdown-image-url'
+import { GitHubMarkdownComposerImageRow } from '@/components/github/github-markdown-composer-image-row'
 import { useImageInput } from '@/components/github/use-image-input'
 import type { GitHubOwnerRepo } from '../../../../shared/github/pull-request-types'
 import { translate } from '@/i18n/i18n'
@@ -34,6 +32,8 @@ import {
   getRichMarkdownSpellcheckAttribute,
   useRichMarkdownSpellcheckAttribute
 } from '@/components/editor/rich-markdown-spellcheck'
+
+const NO_EXTRA_EXTENSIONS: readonly AnyExtension[] = []
 
 type GitHubMarkdownComposerProps = {
   value: string
@@ -46,6 +46,9 @@ type GitHubMarkdownComposerProps = {
   onSubmitShortcut?: () => void
   layout?: 'stacked' | 'tabbed'
   previewGithubRepo?: GitHubOwnerRepo | null
+  editorExtensions?: readonly AnyExtension[]
+  growWithContent?: boolean
+  showToolbar?: boolean
 }
 
 export function GitHubMarkdownComposer({
@@ -58,7 +61,10 @@ export function GitHubMarkdownComposer({
   autoFocus = false,
   onSubmitShortcut,
   layout = 'stacked',
-  previewGithubRepo = null
+  previewGithubRepo = null,
+  editorExtensions = NO_EXTRA_EXTENSIONS,
+  growWithContent = false,
+  showToolbar = true
 }: GitHubMarkdownComposerProps): React.JSX.Element {
   const rootRef = useRef<HTMLDivElement | null>(null)
   const editorRef = useRef<Editor | null>(null)
@@ -98,9 +104,10 @@ export function GitHubMarkdownComposer({
       Placeholder.configure({
         includeChildren: true,
         placeholder
-      })
+      }),
+      ...editorExtensions
     ],
-    [codec, placeholder]
+    [codec, editorExtensions, placeholder]
   )
 
   const openLinkEditor = useCallback(() => {
@@ -294,51 +301,22 @@ export function GitHubMarkdownComposer({
   )
 
   const imageInputRow = imageInputOpen ? (
-    <form
-      className="github-markdown-composer-image-row"
-      onSubmit={(event) => {
-        event.preventDefault()
-        insertImageUrl()
-      }}
-    >
-      <ImageIcon className="size-3.5 shrink-0 text-muted-foreground" />
-      <Input
-        ref={imageInputRef}
-        value={imageUrl}
-        onChange={(event) => setImageUrl(event.target.value)}
-        onKeyDown={(event) => {
-          if (isScreenSubmitShortcut(event)) {
-            event.preventDefault()
-            event.stopPropagation()
-            insertImageUrl()
-            return
-          }
-          if (event.key === 'Escape') {
-            event.preventDefault()
-            event.stopPropagation()
-            setImageInputOpen(false)
-          }
-        }}
-        placeholder={translate(
-          'auto.components.github.GitHubMarkdownComposer.f24783f470',
-          'https://...'
-        )}
-        disabled={disabled}
-        className="h-8 min-w-0 text-xs"
-      />
-      <Button
-        type="submit"
-        size="xs"
-        disabled={disabled || !hasBoundedGitHubMarkdownImageUrlText(imageUrl)}
-      >
-        {translate('auto.components.github.GitHubMarkdownComposer.e3bd59143c', 'Insert')}
-      </Button>
-      <Button type="button" variant="ghost" size="xs" onClick={() => setImageInputOpen(false)}>
-        {translate('auto.components.github.GitHubMarkdownComposer.015b4e607d', 'Cancel')}
-      </Button>
-    </form>
+    <GitHubMarkdownComposerImageRow
+      imageUrl={imageUrl}
+      imageInputRef={imageInputRef}
+      disabled={disabled}
+      setImageUrl={setImageUrl}
+      onInsert={insertImageUrl}
+      onClose={() => setImageInputOpen(false)}
+    />
   ) : null
-  const editorPane = <GitHubMarkdownComposerEditorPane disabled={disabled} editor={editor} />
+  const editorPane = (
+    <GitHubMarkdownComposerEditorPane
+      disabled={disabled}
+      editor={editor}
+      growWithContent={growWithContent}
+    />
+  )
   const previewPane = (
     <GitHubMarkdownComposerPreviewPane
       value={value}
@@ -376,9 +354,9 @@ export function GitHubMarkdownComposer({
         <GitHubMarkdownComposerTabbar activeTab={activeTab} onTabChange={setActiveTab}>
           {toolbar}
         </GitHubMarkdownComposerTabbar>
-      ) : (
+      ) : showToolbar ? (
         toolbar
-      )}
+      ) : null}
       {imageInputRow}
       {isTabbed ? (activeTab === 'write' ? editorPane : previewPane) : editorPane}
       {attachmentFooter}

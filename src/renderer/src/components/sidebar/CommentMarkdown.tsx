@@ -188,7 +188,6 @@ type CommentMarkdownProps = React.ComponentPropsWithoutRef<'div'> & {
   onLinkClick?: CommentMarkdownLinkClickHandler
   allowFileUriLinks?: boolean
   linkifyFilePaths?: boolean
-  expandImages?: boolean
   renderCodeBlock?: DocumentCodeBlockRenderer
 }
 
@@ -205,7 +204,6 @@ const CommentMarkdown = React.memo(
       onLinkClick,
       allowFileUriLinks = false,
       linkifyFilePaths = false,
-      expandImages = false,
       renderCodeBlock,
       ...rest
     },
@@ -217,14 +215,12 @@ const CommentMarkdown = React.memo(
           ? renderCodeBlock
             ? createDocumentCommentMarkdownComponents(undefined, renderCodeBlock)
             : documentCommentMarkdownComponents
-          : expandImages
-            ? createCompactCommentMarkdownComponents(undefined, true)
-            : compactCommentMarkdownComponents
+          : compactCommentMarkdownComponents
       }
       return variant === 'document'
         ? createDocumentCommentMarkdownComponents(onLinkClick, renderCodeBlock)
-        : createCompactCommentMarkdownComponents(onLinkClick, expandImages)
-    }, [expandImages, renderCodeBlock, variant, onLinkClick])
+        : createCompactCommentMarkdownComponents(onLinkClick)
+    }, [renderCodeBlock, variant, onLinkClick])
     const activeRemarkPlugins = React.useMemo(() => {
       const plugins = linkifyFilePaths
         ? [...remarkPlugins, remarkNativeChatFileLinks]

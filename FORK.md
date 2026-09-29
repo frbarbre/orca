@@ -615,11 +615,21 @@ The pick is kept per workspace for the session.
 ### 15. Paste and drop images and videos into review comments
 
 Every GitHub-bound comment box (PR panel comments and replies, inline thread replies, the comment
-edit box, the diff's new-comment popover in review modes, and the review summary) takes pasted or
-dropped PNG/JPEG/GIF/WebP/MP4/MOV/WebM. `github/use-review-asset-attachments.tsx` inserts an
-`![Uploading …](uploading:<id>)` placeholder at the caret, shows a local preview with a spinner, and
-swaps in `![name](url)` (images) or a bare link on its own line (videos — GitHub strips `<video>`) when
-the upload lands. Its `uploading` flag holds every submit button and Enter-to-send.
+edit box, the diff's new-comment popover in every mode, and the review summary) is
+`github/ReviewMarkdownComposer.tsx`: upstream's TipTap `GitHubMarkdownComposer` with its toolbar
+hidden (`showToolbar={false}`), grown to its content instead of scrolling (`growWithContent`), and two
+extensions passed through the new `editorExtensions` prop:
+
+- `review-asset-upload-extension.ts` takes pasted or dropped PNG/JPEG/GIF/WebP/MP4/MOV/WebM. An
+  image shows at once from a `blob:` preview and swaps to its public URL when the upload lands; a
+  video shows as a line that becomes its bare link (GitHub strips `<video>`). A pending counter drives
+  `onUploadingChange`, which holds every submit. It is off for agent notes, which stay local.
+- `review-mention-extension.ts` reports an `@query` before the caret; the wrapper shows the shared
+  `GitHubMentionList` of the active repository's members.
+
+A focused contenteditable is not an owned text control, so the app-menu Cmd+V routing
+(`lib/app-menu-paste.ts`) falls back to native paste, and the paste event carries the clipboard image.
+The old textarea boxes read clipboard text only, which is why screenshots never pasted into them.
 
 Uploads go through `main/github/review-asset-upload.ts`: it reads `review-assets.json` (endpoint +
 token, mode 600) from userData, asks the Helios signer for a presigned PUT, and uploads the bytes. The
@@ -628,8 +638,15 @@ only issues 15-minute URLs for one new object in the public `helios-review-asset
 `storage/review-assets`), with the content type and length signed in and a media-only allow-list.
 
 The preload's document-level file-drop handler skips `[data-review-asset-drop]` elements
-(`preload-runtime-support.ts`) so these boxes receive the File objects. Orca plays bare video links
-from the bucket inline (`comment-markdown-github-attachment-media.tsx`).
+(`preload-runtime-support.ts`) so these boxes receive the File objects.
+
+Rendering: the compact comment markdown (PR panel, inline diff threads) trusts images from the bucket
+host (`isReviewAssetImageUrl`) and GitHub user attachments besides its app-managed `blob:`/`data:`
+images; every other remote image still renders as a link. Bare video links from the bucket or GitHub
+attachments render as videos in both the compact and document renderers. Every image and video opens
+full screen on click (`MarkdownImageLightbox.tsx`: `ExpandableMarkdownImage`,
+`ExpandableMarkdownVideo`), which replaced the old compact `expandImages` opt-in and the document
+renderer's hand-off of image clicks to `onLinkClick`.
 
 ## Verify
 

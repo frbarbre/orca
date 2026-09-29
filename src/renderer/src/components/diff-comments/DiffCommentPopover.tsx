@@ -9,12 +9,11 @@ import {
   hasBoundedCommentBodyText
 } from '@/lib/comment-body-submit-state'
 import { translate } from '@/i18n/i18n'
-import { useMentionAutocomplete } from '@/components/github/github-mention-autocomplete'
-import { useReviewAssetAttachments } from '@/components/github/use-review-asset-attachments'
+import { ReviewMarkdownComposer } from '@/components/github/ReviewMarkdownComposer'
 import { installOpenDraftAddReviewNoteGuard } from '../editor/editor-shortcuts'
 import { resolveDiffCommentPopoverTop } from './diff-comment-popover-position'
 
-// Why: a DOM sibling overlay rather than a Monaco content widget, so it can own a React auto-resizing textarea.
+// Why: a DOM sibling overlay rather than a Monaco content widget, so it can own a React rich editor.
 
 /** Where a new comment on this line goes: Orca's own note for an agent, or GitHub's review. */
 export type DiffCommentMode = 'note' | 'review' | 'pending'
@@ -125,7 +124,7 @@ export function DiffCommentPopover({
     measureResolvedTop()
   }, [top, lineHeight, measureResolvedTop])
 
-  // Why: observe textarea auto-grow and pane resize so a growing draft re-resolves and never clips at the bottom.
+  // Why: observe editor auto-grow and pane resize so a growing draft re-resolves and never clips at the bottom.
   useEffect(() => {
     const popover = popoverRef.current
     const container = popover?.parentElement
@@ -138,26 +137,7 @@ export function DiffCommentPopover({
     return () => observer.disconnect()
   }, [measureResolvedTop])
 
-  const mentionTextareaRef = useRef<HTMLTextAreaElement | null>(null)
-  const focusTextareaRef = useCallback((textarea: HTMLTextAreaElement | null): void => {
-    mentionTextareaRef.current = textarea
-    // Why: focus on mount via the ref callback so no post-render Effect is needed.
-    textarea?.focus()
-  }, [])
-  const mention = useMentionAutocomplete({
-    value: body,
-    setValue: setBody,
-    textareaRef: mentionTextareaRef,
-    // Why off for notes: an @ in a note for the agent tags nobody.
-    enabled: Boolean(mode && mode !== 'note')
-  })
-  // Why GitHub modes only: uploads land in a public bucket, and a note for the agent stays local.
-  const attachments = useReviewAssetAttachments({
-    value: body,
-    setValue: setBody,
-    textareaRef: mentionTextareaRef,
-    enabled: Boolean(mode && mode !== 'note')
-  })
+  const [uploading, setUploading] = useState(false)
 
   // Why: consume the add-review-note chord on the popover subtree, not window, so a repeat chord doesn't remount the draft.
   useEffect(() => {
@@ -190,13 +170,8 @@ export function DiffCommentPopover({
     }
   }, [])
 
-  const autoResize = (el: HTMLTextAreaElement): void => {
-    el.style.height = 'auto'
-    el.style.height = `${Math.min(el.scrollHeight, 240)}px`
-  }
-
   const handleSubmit = async (): Promise<void> => {
-    if (submitting || attachments.uploading) {
+    if (submitting || uploading) {
       return
     }
     const bodyState = getCommentBodySubmitState(body)
@@ -264,46 +239,20 @@ export function DiffCommentPopover({
             onChange={onModeChange}
           />
         ) : null}
-        <div className="relative">
-          {mention.list}
-          <textarea
-            ref={focusTextareaRef}
-            className="orca-diff-comment-popover-textarea"
-            placeholder={placeholder}
-            value={body}
-            onChange={(e) => {
-              setBody(e.target.value)
-              autoResize(e.currentTarget)
-              mention.sync(e.currentTarget)
-            }}
-            onKeyUp={mention.onKeyUp}
-            onBlur={mention.close}
-            {...attachments.dropTargetProps}
-            onPaste={attachments.onPaste}
-            onDragOver={attachments.onDragOver}
-            onDrop={attachments.onDrop}
-            onKeyDown={(e) => {
-              if (mention.handleKeyDown(e)) {
-                return
-              }
-              if (e.key === 'Escape') {
-                e.preventDefault()
-                onCancel()
-                return
-              }
-              // Why: Shift+Enter inserts a newline; skip isComposing so IME composition Enter doesn't submit a half-typed CJK note.
-              if (e.key === 'Enter' && !e.nativeEvent.isComposing && !e.shiftKey) {
-                e.preventDefault()
-                if (submitting) {
-                  return
-                }
-                void handleSubmit()
-              }
-            }}
-            rows={3}
-          />
-          {attachments.previews}
-        </div>
+        <ReviewMarkdownComposer
+          value={body}
+          onChange={setBody}
+          placeholder={placeholder}
+          autoFocus
+          // Why GitHub modes only: an @ in a note for the agent tags nobody, and uploads are public.
+          mentions={Boolean(mode && mode !== 'note')}
+          uploads={Boolean(mode && mode !== 'note')}
+          onUploadingChange={setUploading}
+          onSubmitShortcut={() => void handleSubmit()}
+          onEscape={onCancel}
+          minHeightClassName="min-h-16"
+          className="orca-diff-comment-popover-composer"
+        />
         <div className="orca-diff-comment-popover-footer">
           <Button variant="ghost" size="sm" onClick={onCancel}>
             {translate('auto.components.diff.comments.DiffCommentPopover.2b3ce6d394', 'Cancel')}
@@ -311,7 +260,7 @@ export function DiffCommentPopover({
           <Button
             size="sm"
             onClick={handleSubmit}
-            disabled={submitting || !canSubmitComment || attachments.uploading}
+            disabled={submitting || !canSubmitComment || uploading}
           >
             {submitting ? submittingLabel : submitLabel}
             {!submitting && <CornerDownLeft className="ml-1 size-3 opacity-70" />}

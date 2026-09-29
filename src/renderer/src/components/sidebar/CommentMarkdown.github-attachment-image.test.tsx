@@ -35,16 +35,16 @@ describe('CommentMarkdown GitHub attachment images', () => {
     container = null
   })
 
-  it('renders GitHub user attachment document images as openable links', () => {
+  it('renders GitHub user attachment document images as images that open full screen', () => {
     const mounted = renderCommentMarkdown(`![Private issue screenshot](${attachmentUrl})`)
 
-    const link = mounted.querySelector<HTMLAnchorElement>(`a[href="${attachmentUrl}"]`)
-    const image = link?.querySelector<HTMLImageElement>('img')
+    const trigger = mounted.querySelector<HTMLButtonElement>('button[aria-label="Expand image"]')
+    const image = trigger?.querySelector<HTMLImageElement>('img')
 
-    expect(link).not.toBeNull()
-    expect(link?.className).toContain('inline-block')
     expect(image?.src).toBe(attachmentUrl)
     expect(image?.alt).toBe('Private issue screenshot')
+    act(() => trigger?.click())
+    expect(document.querySelector('[role="dialog"]')).not.toBeNull()
   })
 
   it('falls back to a text link when a GitHub user attachment image cannot load', () => {

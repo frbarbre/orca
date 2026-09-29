@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { isReviewAssetVideoUrl, reviewAssetKind, reviewAssetMarkdown } from './review-asset'
+import { isReviewAssetImageUrl, isReviewAssetVideoUrl, reviewAssetKind } from './review-asset'
 
 describe('review assets', () => {
   it('accepts images and videos only', () => {
@@ -7,13 +7,6 @@ describe('review assets', () => {
     expect(reviewAssetKind('video/quicktime')).toBe('video')
     expect(reviewAssetKind('text/html')).toBeNull()
     expect(reviewAssetKind('image/svg+xml')).toBeNull()
-  })
-
-  it('writes an image as markdown and a video as a bare link GitHub and Orca can open', () => {
-    expect(reviewAssetMarkdown('image', 'a [b].png', 'https://x/a.png')).toBe(
-      '![a b.png](https://x/a.png)'
-    )
-    expect(reviewAssetMarkdown('video', 'c.mp4', 'https://x/c.mp4')).toBe('\nhttps://x/c.mp4\n')
   })
 
   it('recognises videos in the review assets bucket', () => {
@@ -25,6 +18,16 @@ describe('review assets', () => {
     expect(isReviewAssetVideoUrl('https://evil.example/assets/a.mp4')).toBe(false)
     expect(
       isReviewAssetVideoUrl('https://helios-review-assets.fsn1.your-objectstorage.com/assets/a.png')
+    ).toBe(false)
+  })
+
+  it('recognises images in the review assets bucket, and nothing hosted elsewhere', () => {
+    const bucket = 'https://helios-review-assets.fsn1.your-objectstorage.com/assets/2026/09'
+    expect(isReviewAssetImageUrl(`${bucket}/a.png`)).toBe(true)
+    expect(isReviewAssetImageUrl(`${bucket}/a.mp4`)).toBe(false)
+    expect(isReviewAssetImageUrl('https://evil.example/assets/a.png')).toBe(false)
+    expect(
+      isReviewAssetImageUrl(`http://helios-review-assets.fsn1.your-objectstorage.com/a.png`)
     ).toBe(false)
   })
 })

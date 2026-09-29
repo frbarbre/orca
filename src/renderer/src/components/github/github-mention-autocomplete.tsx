@@ -1,16 +1,14 @@
-import React, { useCallback, useId, useMemo, useState } from 'react'
+import React, { useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import { cn } from '@/lib/utils'
 import { useAppStore } from '@/store'
 import { useRepoAssignees } from '@/hooks/useIssueMetadata'
-import { filterGitHubMentionOptions } from './github-mention-option-filter'
 import { GitHubUserAvatar } from './github-user-avatar'
-import { findMentionQuery } from '@/components/pull-request-page/mentions/query'
-import type { MentionOption, MentionQuery } from '@/components/pull-request-page/page-types'
+import type { MentionOption } from '@/components/pull-request-page/page-types'
 import { translate } from '@/i18n/i18n'
 
 // Why the active workspace: every comment box this feeds belongs to the pull request of the workspace on screen.
-function useActiveRepoMentionOptions(wanted: boolean): MentionOption[] {
+export function useActiveRepoMentionOptions(wanted: boolean): MentionOption[] {
   const repo = useAppStore((state) => {
     const worktree = state.activeWorktreeId
       ? state.getKnownWorktreeById(state.activeWorktreeId)
@@ -36,162 +34,63 @@ function useActiveRepoMentionOptions(wanted: boolean): MentionOption[] {
 
 const LIST_MAX_HEIGHT_PX = 256
 
-export type MentionAutocomplete = {
-  sync: (textarea: HTMLTextAreaElement) => void
-  close: () => void
-  /** True when the key was used to drive the suggestion list, so the caller skips its own handling. */
-  handleKeyDown: (event: React.KeyboardEvent<HTMLTextAreaElement>) => boolean
-  onKeyUp: (event: React.KeyboardEvent<HTMLTextAreaElement>) => void
-  list: React.JSX.Element | null
-}
-
-export function useMentionAutocomplete({
-  value,
-  setValue,
-  textareaRef,
-  enabled = true,
-  options: providedOptions
+export function GitHubMentionList({
+  options,
+  activeIndex,
+  anchor,
+  onPick
 }: {
-  value: string
-  setValue: (next: string) => void
-  textareaRef: React.RefObject<HTMLTextAreaElement | null>
-  enabled?: boolean
-  /** Defaults to the members of the active workspace's repository. */
-  options?: readonly MentionOption[]
-}): MentionAutocomplete {
-  const listboxId = useId()
-  const [rawQuery, setQuery] = useState<MentionQuery | null>(null)
-  const query = enabled ? rawQuery : null
-  const [activeIndex, setActiveIndex] = useState(0)
-  const [anchor, setAnchor] = useState<DOMRect | null>(null)
-  const repoOptions = useActiveRepoMentionOptions(!providedOptions && query !== null)
-  const options = providedOptions ?? repoOptions
-  const suggestions = useMemo(
-    () => (query ? filterGitHubMentionOptions([...options], query.query) : []),
-    [options, query]
-  )
-  const open = query !== null && suggestions.length > 0
-
-  const sync = useCallback((textarea: HTMLTextAreaElement) => {
-    const next = findMentionQuery(textarea.value, textarea.selectionStart)
-    setQuery(next)
-    setActiveIndex(0)
-    if (next) {
-      setAnchor(textarea.getBoundingClientRect())
-    }
-  }, [])
-  const close = useCallback(() => setQuery(null), [])
-
-  const insert = useCallback(
-    (option: MentionOption) => {
-      const textarea = textareaRef.current
-      const caret = textarea?.selectionStart ?? value.length
-      const current = findMentionQuery(value, caret)
-      if (!current) {
-        return
-      }
-      const suffix = value[caret] && /\s/.test(value[caret]) ? '' : ' '
-      const inserted = `@${option.login}${suffix}`
-      const next = `${value.slice(0, current.atIndex)}${inserted}${value.slice(caret)}`
-      const nextCaret = current.atIndex + inserted.length
-      setValue(next)
-      setQuery(null)
-      requestAnimationFrame(() => {
-        textarea?.focus()
-        textarea?.setSelectionRange(nextCaret, nextCaret)
-      })
-    },
-    [setValue, textareaRef, value]
-  )
-
-  const handleKeyDown = useCallback(
-    (event: React.KeyboardEvent<HTMLTextAreaElement>): boolean => {
-      if (!open) {
-        return false
-      }
-      if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
-        event.preventDefault()
-        const step = event.key === 'ArrowDown' ? 1 : -1
-        setActiveIndex((current) => (current + step + suggestions.length) % suggestions.length)
-        return true
-      }
-      if (event.key === 'Enter' || event.key === 'Tab') {
-        event.preventDefault()
-        insert(suggestions[activeIndex] ?? suggestions[0])
-        return true
-      }
-      if (event.key === 'Escape') {
-        event.preventDefault()
-        event.stopPropagation()
-        setQuery(null)
-        return true
-      }
-      return false
-    },
-    [activeIndex, insert, open, suggestions]
-  )
-
-  const onKeyUp = useCallback(
-    (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
-      if (!['ArrowDown', 'ArrowUp', 'Enter', 'Tab', 'Escape'].includes(event.key)) {
-        sync(event.currentTarget)
-      }
-    },
-    [sync]
-  )
-
+  options: readonly MentionOption[]
+  activeIndex: number
+  anchor: { left: number; top: number; bottom: number }
+  onPick: (option: MentionOption) => void
+}): React.JSX.Element {
+  const placeAbove = anchor.top > LIST_MAX_HEIGHT_PX + 12
   // Why a portal: comment boxes sit inside rounded, overflow-hidden frames and Monaco view zones, which clip anything drawn outside them.
-  const placeAbove = anchor ? anchor.top > LIST_MAX_HEIGHT_PX + 12 : true
-  const list =
-    open && anchor
-      ? createPortal(
-          <div
-            id={listboxId}
-            role="listbox"
-            style={{
-              position: 'fixed',
-              left: anchor.left,
-              width: Math.max(anchor.width, 220),
-              maxHeight: LIST_MAX_HEIGHT_PX,
-              ...(placeAbove
-                ? { bottom: window.innerHeight - anchor.top + 6 }
-                : { top: anchor.bottom + 6 })
-            }}
-            className="z-[1000] overflow-y-auto rounded-md border border-border/70 bg-popover p-1 text-popover-foreground shadow-lg scrollbar-sleek"
-          >
-            {suggestions.map((option, index) => (
-              <button
-                key={option.login}
-                role="option"
-                aria-selected={index === activeIndex}
-                type="button"
-                onMouseDown={(event) => {
-                  event.preventDefault()
-                  insert(option)
-                }}
-                className={cn(
-                  'flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left text-[12px]',
-                  index === activeIndex && 'bg-accent text-accent-foreground'
-                )}
-              >
-                <GitHubUserAvatar
-                  login={option.login}
-                  name={option.name}
-                  avatarUrl={option.avatarUrl}
-                  className="size-5"
-                />
-                <span className="flex min-w-0 flex-1 items-baseline gap-1.5">
-                  <span className="shrink-0 font-medium">@{option.login}</span>
-                  {option.name ? (
-                    <span className="truncate text-muted-foreground">{option.name}</span>
-                  ) : null}
-                </span>
-              </button>
-            ))}
-          </div>,
-          document.body
-        )
-      : null
-
-  return { sync, close, handleKeyDown, onKeyUp, list }
+  return createPortal(
+    <div
+      role="listbox"
+      style={{
+        position: 'fixed',
+        left: anchor.left,
+        width: 260,
+        maxHeight: LIST_MAX_HEIGHT_PX,
+        ...(placeAbove
+          ? { bottom: window.innerHeight - anchor.top + 4 }
+          : { top: anchor.bottom + 4 })
+      }}
+      className="z-[1000] overflow-y-auto rounded-md border border-border/70 bg-popover p-1 text-popover-foreground shadow-lg scrollbar-sleek"
+    >
+      {options.map((option, index) => (
+        <button
+          key={option.login}
+          role="option"
+          aria-selected={index === activeIndex}
+          type="button"
+          onMouseDown={(event) => {
+            event.preventDefault()
+            onPick(option)
+          }}
+          className={cn(
+            'flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left text-[12px]',
+            index === activeIndex && 'bg-accent text-accent-foreground'
+          )}
+        >
+          <GitHubUserAvatar
+            login={option.login}
+            name={option.name}
+            avatarUrl={option.avatarUrl}
+            className="size-5"
+          />
+          <span className="flex min-w-0 flex-1 items-baseline gap-1.5">
+            <span className="shrink-0 font-medium">@{option.login}</span>
+            {option.name ? (
+              <span className="truncate text-muted-foreground">{option.name}</span>
+            ) : null}
+          </span>
+        </button>
+      ))}
+    </div>,
+    document.body
+  )
 }

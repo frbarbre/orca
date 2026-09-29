@@ -1,5 +1,6 @@
 import React from 'react'
 import { isReviewAssetVideoUrl } from '../../../../shared/github/review-asset'
+import { ExpandableMarkdownImage, ExpandableMarkdownVideo } from './MarkdownImageLightbox'
 
 export function isGitHubUserAttachmentUrl(href: string | undefined): href is string {
   if (!href) {
@@ -56,10 +57,12 @@ function AttachmentFallbackLink({
 
 export function GitHubUserAttachmentVideo({
   href,
-  children
+  children,
+  className = 'max-h-[28rem] max-w-full rounded-md bg-black/80 outline outline-1 outline-black/10 dark:outline-white/10'
 }: {
   href: string
   children: React.ReactNode
+  className?: string
 }): React.ReactElement {
   const [failed, setFailed] = React.useState(false)
 
@@ -68,53 +71,38 @@ export function GitHubUserAttachmentVideo({
   }
 
   return (
-    <video
+    <ExpandableMarkdownVideo
       src={href}
-      controls
-      preload="metadata"
-      playsInline
-      className="my-3 max-h-[28rem] max-w-full rounded-md bg-black/80 outline outline-1 outline-black/10 dark:outline-white/10"
-      onClick={(e) => e.stopPropagation()}
+      label={React.Children.toArray(children).join('').trim() || href}
+      className={className}
       onError={() => setFailed(true)}
-    >
-      <a href={href} target="_blank" rel="noreferrer">
-        {children}
-      </a>
-    </video>
+    />
   )
 }
 
 export function GitHubUserAttachmentImage({
   src,
-  alt
+  alt,
+  className = 'max-h-96 max-w-full rounded-md object-contain outline outline-1 outline-black/10 dark:outline-white/10'
 }: {
   src: string
   alt: string | undefined
+  className?: string
 }): React.ReactElement {
   const [failed, setFailed] = React.useState(false)
-  const label = alt?.trim() || src
 
   // Why: private-repo attachment images can't load cross-origin without the
-  // user's GitHub session cookies, so wrap in a top-level link (opening the
-  // URL where that session exists) and drop to a text link on load error.
+  // user's GitHub session cookies, so drop to a link that opens where that session exists.
   if (failed) {
-    return <AttachmentFallbackLink href={src}>{label}</AttachmentFallbackLink>
+    return <AttachmentFallbackLink href={src}>{alt?.trim() || src}</AttachmentFallbackLink>
   }
 
   return (
-    <a
-      href={src}
-      target="_blank"
-      rel="noreferrer"
-      className="inline-block max-w-full"
-      onClick={(e) => e.stopPropagation()}
-    >
-      <img
-        src={src}
-        alt={alt ?? ''}
-        className="my-3 max-h-96 max-w-full rounded-md object-contain outline outline-1 outline-black/10 dark:outline-white/10"
-        onError={() => setFailed(true)}
-      />
-    </a>
+    <ExpandableMarkdownImage
+      src={src}
+      alt={alt}
+      className={className}
+      onError={() => setFailed(true)}
+    />
   )
 }

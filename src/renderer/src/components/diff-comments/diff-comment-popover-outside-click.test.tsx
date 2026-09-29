@@ -6,6 +6,17 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { COMMENT_BODY_NONBLANK_SCAN_MAX_BYTES } from '@/lib/comment-body-submit-state'
 import { DiffCommentPopover } from './DiffCommentPopover'
 
+// Why a stand-in: this covers the popover's dismiss rules, not the rich editor inside it.
+vi.mock('@/components/github/ReviewMarkdownComposer', () => ({
+  ReviewMarkdownComposer: ({
+    value,
+    onChange
+  }: {
+    value: string
+    onChange: (value: string) => void
+  }) => <textarea value={value} onChange={(event) => onChange(event.target.value)} />
+}))
+
 const roots: Root[] = []
 
 async function renderPopover(args: {

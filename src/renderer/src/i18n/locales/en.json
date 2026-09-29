@@ -12250,7 +12250,9 @@
           "reviewDescription": "Open, not a draft, and none of the conditions above apply.",
           "pmTeamPlaceholder": "org/team-slug",
           "newWorkspace": "New workspaces start in",
-          "newWorkspaceDescription": "Where a workspace Orca creates in these projects goes before it has a pull request. Workspaces that already exist keep their column."
+          "newWorkspaceDescription": "Where a workspace Orca creates in these projects goes before it has a pull request. Workspaces that already exist keep their column.",
+          "conflicts": "Has merge conflicts",
+          "conflictsDescription": "GitHub cannot merge the branch into its base without resolving conflicts. Leave unset to skip."
         }
       },
       "right": {

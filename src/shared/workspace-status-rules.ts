@@ -47,7 +47,8 @@ function awaitsPmApproval(
 
 export function resolveWorkspaceStatusRuleCondition(
   pr: ReviewSnapshotPullRequest,
-  config: Pick<WorkspaceStatusRuleConfig, 'mergingCheckName'>,
+  config: Pick<WorkspaceStatusRuleConfig, 'mergingCheckName'> &
+    Partial<Pick<WorkspaceStatusRuleConfig, 'statusByCondition'>>,
   pmTeamLogins: ReadonlySet<string>,
   viewerLogin: string | null
 ): WorkspaceStatusRuleCondition | null {
@@ -62,6 +63,15 @@ export function resolveWorkspaceStatusRuleCondition(
   // would satisfy "ready for review" and be pulled into your own review column.
   if (viewerLogin && pr.author && pr.author.toLowerCase() !== viewerLogin.toLowerCase()) {
     return 'reviewing'
+  }
+  if (config.statusByCondition?.conflicts) {
+    if (pr.mergeable === 'CONFLICTING') {
+      return 'conflicts'
+    }
+    // Why: GitHub reports UNKNOWN while it recomputes after a push; holding the card avoids a bounce out of Conflicts and back.
+    if (pr.mergeable === 'UNKNOWN') {
+      return null
+    }
   }
   if (pr.isDraft) {
     return 'draft'

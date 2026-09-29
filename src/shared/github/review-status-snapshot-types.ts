@@ -29,6 +29,8 @@ export type ReviewSnapshotCheck = {
   state: CheckStatus
 }
 
+export type ReviewSnapshotMergeable = 'MERGEABLE' | 'CONFLICTING' | 'UNKNOWN'
+
 export type ReviewSnapshotPullRequest = {
   repo: GitHubRepositoryIdentity
   number: number
@@ -37,6 +39,7 @@ export type ReviewSnapshotPullRequest = {
   author: string | null
   isDraft: boolean
   state: ReviewSnapshotPRState
+  mergeable?: ReviewSnapshotMergeable
   headRefName: string
   baseRefName: string
   headRefOid: string

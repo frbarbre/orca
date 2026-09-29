@@ -6,6 +6,7 @@ const StatusByCondition = z.object({
   merged: OptionalStatus,
   closed: OptionalStatus,
   reviewing: OptionalStatus,
+  conflicts: OptionalStatus,
   draft: OptionalStatus,
   'changes-requested': OptionalStatus,
   merging: OptionalStatus,

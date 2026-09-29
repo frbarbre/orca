@@ -2,6 +2,7 @@ import type { CheckStatus } from '../../shared/github/pull-request-types'
 import type {
   ReviewSnapshotCheck,
   ReviewSnapshotLatestReview,
+  ReviewSnapshotMergeable,
   ReviewSnapshotPRState,
   ReviewSnapshotPullRequest,
   ReviewSnapshotRequestedReviewer,
@@ -123,6 +124,10 @@ function mapPRState(value: string): ReviewSnapshotPRState {
   return state === 'MERGED' || state === 'CLOSED' ? state : 'OPEN'
 }
 
+function mapMergeable(value: string): ReviewSnapshotMergeable {
+  return value === 'MERGEABLE' || value === 'CONFLICTING' ? value : 'UNKNOWN'
+}
+
 export function mapReviewSnapshotPullRequest(value: unknown): ReviewSnapshotPullRequest | null {
   const pr = asRecord(value)
   const repository = asRecord(pr?.repository)
@@ -140,6 +145,7 @@ export function mapReviewSnapshotPullRequest(value: unknown): ReviewSnapshotPull
     author: asString(asRecord(pr.author)?.login) || null,
     isDraft: pr.isDraft === true,
     state: mapPRState(asString(pr.state)),
+    mergeable: mapMergeable(asString(pr.mergeable)),
     headRefName: asString(pr.headRefName),
     baseRefName: asString(pr.baseRefName),
     headRefOid: asString(pr.headRefOid),

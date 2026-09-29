@@ -33,6 +33,13 @@ export function getPullRequestStatusRuleCopy(): Record<
         'Somebody else opened the pull request. Stays here until it merges.'
       )
     },
+    conflicts: {
+      label: translate('auto.components.settings.prRules.conflicts', 'Has merge conflicts'),
+      description: translate(
+        'auto.components.settings.prRules.conflictsDescription',
+        'GitHub cannot merge the branch into its base without resolving conflicts. Leave unset to skip.'
+      )
+    },
     draft: {
       label: translate('auto.components.settings.prRules.draft', 'Pull request is a draft'),
       description: translate(

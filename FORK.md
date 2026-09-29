@@ -212,6 +212,11 @@ Watches each workspace's linked pull request and sets its board column, deletes 
 its pull request is merged or closed, and opens a review workspace when someone asks you to review.
 Configured per project under Settings → Automations.
 
+**Conflicts** comes right after "You are the reviewer", so your own pull request with merge conflicts
+lands there even as a draft. It reads GitHub's `mergeable`; while that is `UNKNOWN` (recomputing
+after a push) the card holds still for a poll instead of bouncing out and back. Left unmapped, the
+condition is skipped and nothing changes.
+
 The reviewed commit is read from `latestOpinionatedReviews` as well as `latestReviews`: GitHub
 leaves a re-requested reviewer out of `latestReviews`, and the re-request is exactly when that
 commit is needed. The inbox ledger keys a re-request on it (`owner/repo#n@<sha>`), so a pull request

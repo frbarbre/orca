@@ -16,7 +16,9 @@ function pendingUserReviewerLogins(pr: ReviewSnapshotPullRequest): string[] {
 // the review alone would pin a PR in Changes Requested forever.
 function hasUnansweredChangeRequest(pr: ReviewSnapshotPullRequest): boolean {
   const pending = new Set(pendingUserReviewerLogins(pr))
-  return pr.latestReviews.some(
+  // Why the opinionated list: latestReviews keeps only each reviewer's newest review, so a plain
+  // comment after requesting changes hides the request that is still in force.
+  return (pr.latestOpinionatedReviews ?? pr.latestReviews).some(
     (review) => review.state === 'CHANGES_REQUESTED' && !pending.has(review.login.toLowerCase())
   )
 }
@@ -110,9 +112,10 @@ export function readViewerReviewStanding(
   }
   const byViewer = (entry: { login: string }): boolean => entry.login.toLowerCase() === viewer
   const review = pr.latestReviews.find(byViewer)
+  const verdict = pr.latestOpinionatedReviews?.find(byViewer)?.state ?? review?.state
   const isOwed = pendingUserReviewerLogins(pr).includes(viewer)
   return {
-    isFinished: !isOwed && (review?.state === 'APPROVED' || review?.state === 'CHANGES_REQUESTED'),
+    isFinished: !isOwed && (verdict === 'APPROVED' || verdict === 'CHANGES_REQUESTED'),
     isOwed,
     commitOid: review?.commitOid ?? pr.latestOpinionatedReviews?.find(byViewer)?.commitOid ?? null
   }

@@ -77,3 +77,47 @@ describe('the conflicts condition', () => {
     }
   })
 })
+
+describe('the changes-requested condition', () => {
+  it('keeps a change request in force after the reviewer adds a plain comment', () => {
+    expect(
+      resolveWorkspaceStatusRuleCondition(
+        makePR({
+          latestReviews: [{ login: 'madsenmm', state: 'COMMENTED', commitOid: null }],
+          latestOpinionatedReviews: [
+            { login: 'madsenmm', state: 'CHANGES_REQUESTED', commitOid: null }
+          ]
+        }),
+        unmapped,
+        noPmTeam,
+        viewer
+      )
+    ).toBe('changes-requested')
+  })
+
+  it('clears once the reviewer approves, or is asked again', () => {
+    expect(
+      resolveWorkspaceStatusRuleCondition(
+        makePR({
+          latestOpinionatedReviews: [{ login: 'madsenmm', state: 'APPROVED', commitOid: null }]
+        }),
+        unmapped,
+        noPmTeam,
+        viewer
+      )
+    ).toBe('review')
+    expect(
+      resolveWorkspaceStatusRuleCondition(
+        makePR({
+          requestedReviewers: [{ kind: 'user', login: 'madsenmm' }],
+          latestOpinionatedReviews: [
+            { login: 'madsenmm', state: 'CHANGES_REQUESTED', commitOid: null }
+          ]
+        }),
+        unmapped,
+        noPmTeam,
+        viewer
+      )
+    ).toBe('review')
+  })
+})

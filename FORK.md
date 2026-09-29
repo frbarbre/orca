@@ -563,6 +563,21 @@ thread. The panel's queue key folds in the pull request head, so the panel publi
 workspace (`pr-comment-queue-context.ts`, from `checks-panel/active-content.tsx`) and inline cards
 read it from there — the toggle appears once the panel has shown that workspace's pull request.
 
+### 11. @-mentions in pull request comment boxes
+
+Typing `@` in the PR panel's comment and reply boxes (also used by inline threads), the diff's
+new-comment popover (review modes only, not agent notes) and the review summary lists the
+repository's assignable members; Enter or Tab inserts `@login `. `github-mention-autocomplete.tsx`
+lifts the behaviour of the pull request page's `MentionTextarea` into a hook, so each box keeps its
+own textarea, and fetches members through `useRepoAssignees` only once `@` is typed.
+
+### 12. Sending comments to an agent leaves them open
+
+Upstream resolves every sent thread it can, and posts "Fixing" replies on the rest, as soon as the
+agent starts. The fork skips that: `use-checks-panel-ai-acknowledgement.tsx` returns after clearing
+the queue when `shouldAcknowledgeSentPRCommentsOnHost()` (`sent-pr-comment-acknowledgement.ts`)
+says no, which it always does. Upstream's acknowledgement code is left intact below the early return.
+
 ## Verify
 
 Verify runs on GitHub, not locally: `fork-verify.yml` runs it on every pull request against `main`,

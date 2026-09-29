@@ -14,6 +14,7 @@ import {
   scheduleRightPanelCommentFocusTimer
 } from './right-panel-comment-focus-timers'
 import { translate } from '@/i18n/i18n'
+import { useMentionAutocomplete } from '@/components/github/github-mention-autocomplete'
 
 export type RightPanelCommentSubmitResult = { ok: true } | { ok: false; error: string }
 
@@ -87,6 +88,11 @@ export function RightPanelCommentComposer({
   const autoFocusTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const selectionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const isMac = navigator.userAgent.includes('Mac')
+  const mention = useMentionAutocomplete({
+    value: body,
+    setValue: setBody,
+    textareaRef
+  })
 
   useEffect(() => {
     const textarea = textareaRef.current
@@ -241,19 +247,34 @@ export function RightPanelCommentComposer({
       onClick={stopPropagation}
       onMouseDown={stopPropagation}
     >
-      <textarea
-        ref={setTextareaRef}
-        value={body}
-        rows={3}
-        className="block max-h-44 min-h-20 w-full min-w-0 resize-none bg-transparent px-2.5 py-2 text-[12px] leading-relaxed text-foreground outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-60"
-        placeholder={placeholder}
-        disabled={disabled || submitting}
-        aria-invalid={Boolean(error)}
-        title={disabled ? disabledReason : undefined}
-        onChange={(event) => setBody(event.target.value)}
-        onKeyDown={handleKeyDown}
-        onClick={stopPropagation}
-      />
+      <div className="relative">
+        {mention.list}
+        <textarea
+          ref={setTextareaRef}
+          value={body}
+          rows={3}
+          className="block max-h-44 min-h-20 w-full min-w-0 resize-none bg-transparent px-2.5 py-2 text-[12px] leading-relaxed text-foreground outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-60"
+          placeholder={placeholder}
+          disabled={disabled || submitting}
+          aria-invalid={Boolean(error)}
+          title={disabled ? disabledReason : undefined}
+          onChange={(event) => {
+            setBody(event.target.value)
+            mention.sync(event.currentTarget)
+          }}
+          onKeyDown={(event) => {
+            if (!mention.handleKeyDown(event)) {
+              handleKeyDown(event)
+            }
+          }}
+          onKeyUp={mention.onKeyUp}
+          onBlur={mention.close}
+          onClick={(event) => {
+            stopPropagation(event)
+            mention.sync(event.currentTarget)
+          }}
+        />
+      </div>
       <div className="flex min-w-0 items-center gap-0.5 border-t border-border px-2 py-1">
         {toolbar.map(({ action, label, icon: Icon }) => (
           <Tooltip key={action}>

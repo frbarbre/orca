@@ -9,6 +9,7 @@ import {
   hasBoundedCommentBodyText
 } from '@/lib/comment-body-submit-state'
 import { translate } from '@/i18n/i18n'
+import { useMentionAutocomplete } from '@/components/github/github-mention-autocomplete'
 import { installOpenDraftAddReviewNoteGuard } from '../editor/editor-shortcuts'
 import { resolveDiffCommentPopoverTop } from './diff-comment-popover-position'
 
@@ -136,10 +137,19 @@ export function DiffCommentPopover({
     return () => observer.disconnect()
   }, [measureResolvedTop])
 
+  const mentionTextareaRef = useRef<HTMLTextAreaElement | null>(null)
   const focusTextareaRef = useCallback((textarea: HTMLTextAreaElement | null): void => {
+    mentionTextareaRef.current = textarea
     // Why: focus on mount via the ref callback so no post-render Effect is needed.
     textarea?.focus()
   }, [])
+  const mention = useMentionAutocomplete({
+    value: body,
+    setValue: setBody,
+    textareaRef: mentionTextareaRef,
+    // Why off for notes: an @ in a note for the agent tags nobody.
+    enabled: Boolean(mode && mode !== 'note')
+  })
 
   // Why: consume the add-review-note chord on the popover subtree, not window, so a repeat chord doesn't remount the draft.
   useEffect(() => {
@@ -246,32 +256,41 @@ export function DiffCommentPopover({
             onChange={onModeChange}
           />
         ) : null}
-        <textarea
-          ref={focusTextareaRef}
-          className="orca-diff-comment-popover-textarea"
-          placeholder={placeholder}
-          value={body}
-          onChange={(e) => {
-            setBody(e.target.value)
-            autoResize(e.currentTarget)
-          }}
-          onKeyDown={(e) => {
-            if (e.key === 'Escape') {
-              e.preventDefault()
-              onCancel()
-              return
-            }
-            // Why: Shift+Enter inserts a newline; skip isComposing so IME composition Enter doesn't submit a half-typed CJK note.
-            if (e.key === 'Enter' && !e.nativeEvent.isComposing && !e.shiftKey) {
-              e.preventDefault()
-              if (submitting) {
+        <div className="relative">
+          {mention.list}
+          <textarea
+            ref={focusTextareaRef}
+            className="orca-diff-comment-popover-textarea"
+            placeholder={placeholder}
+            value={body}
+            onChange={(e) => {
+              setBody(e.target.value)
+              autoResize(e.currentTarget)
+              mention.sync(e.currentTarget)
+            }}
+            onKeyUp={mention.onKeyUp}
+            onBlur={mention.close}
+            onKeyDown={(e) => {
+              if (mention.handleKeyDown(e)) {
                 return
               }
-              void handleSubmit()
-            }
-          }}
-          rows={3}
-        />
+              if (e.key === 'Escape') {
+                e.preventDefault()
+                onCancel()
+                return
+              }
+              // Why: Shift+Enter inserts a newline; skip isComposing so IME composition Enter doesn't submit a half-typed CJK note.
+              if (e.key === 'Enter' && !e.nativeEvent.isComposing && !e.shiftKey) {
+                e.preventDefault()
+                if (submitting) {
+                  return
+                }
+                void handleSubmit()
+              }
+            }}
+            rows={3}
+          />
+        </div>
         <div className="orca-diff-comment-popover-footer">
           <Button variant="ghost" size="sm" onClick={onCancel}>
             {translate('auto.components.diff.comments.DiffCommentPopover.2b3ce6d394', 'Cancel')}

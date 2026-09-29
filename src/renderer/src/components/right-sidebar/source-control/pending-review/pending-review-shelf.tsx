@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useRef, useState } from 'react'
 import { Check, GitPullRequest, MessageCircle, ScanEye, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -16,6 +16,7 @@ import { SectionHeader } from '../listing/section-header'
 import { PendingReviewReviewers } from './pending-review-reviewers'
 import { useReviewDiffBase } from '@/components/pending-review/use-review-diff-base'
 import { usePendingReviewSummary } from '@/components/pending-review/pending-review-summary-store'
+import { useMentionAutocomplete } from '@/components/github/github-mention-autocomplete'
 import { SegmentedTabs } from '@/components/ui/segmented-tabs'
 
 const VERDICTS: {
@@ -65,6 +66,12 @@ export function SourceControlPendingReviewShelf({
   // the form below is the thing a reviewer comes here to use.
   const [expanded, setExpanded] = useState(false)
   const [body, setBody] = usePendingReviewSummary(worktreeId)
+  const summaryRef = useRef<HTMLTextAreaElement | null>(null)
+  const mention = useMentionAutocomplete({
+    value: body,
+    setValue: setBody,
+    textareaRef: summaryRef
+  })
   const [submitting, setSubmitting] = useState<ReviewVerdict | null>(null)
 
   const submit = async (verdict: ReviewVerdict): Promise<void> => {
@@ -219,14 +226,22 @@ export function SourceControlPendingReviewShelf({
         </div>
       ) : null}
       <div className="px-3 pt-2 pb-2">
-        <div className="rounded-md border border-input bg-background shadow-xs dark:bg-input/30">
+        <div className="relative rounded-md border border-input bg-background shadow-xs dark:bg-input/30">
+          {mention.list}
           <Textarea
+            ref={summaryRef}
             value={body}
             placeholder={translate(
               'auto.components.sourceControl.pendingReview.bodyPlaceholder',
               'Add review summary…'
             )}
-            onChange={(event) => setBody(event.target.value)}
+            onChange={(event) => {
+              setBody(event.target.value)
+              mention.sync(event.currentTarget)
+            }}
+            onKeyDown={mention.handleKeyDown}
+            onKeyUp={mention.onKeyUp}
+            onBlur={mention.close}
             variant="seamless"
             className="min-h-16 resize-none"
           />

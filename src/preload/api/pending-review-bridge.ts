@@ -11,5 +11,7 @@ export const pendingReviewApi: PendingReviewApi = {
     ipcRenderer.invoke('pending-review:summary-write', worktreeId, text),
   updateComment: (request) => ipcRenderer.invoke('pending-review:update-comment', request),
   resolveBase: (request) => ipcRenderer.invoke('pending-review:resolve-base', request),
-  context: (request) => ipcRenderer.invoke('pending-review:context', request)
+  context: (request) => ipcRenderer.invoke('pending-review:context', request),
+  uploadAsset: (request) => ipcRenderer.invoke('pending-review:asset-upload', request),
+  assetUploadConfigured: () => ipcRenderer.invoke('pending-review:asset-configured')
 }

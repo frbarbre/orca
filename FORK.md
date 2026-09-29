@@ -612,6 +612,25 @@ branch through `resolveReviewBase`, so a commit picked after a rebase or a merge
 gets an interdiff, and marks the commit as a reviewed base so upstream's pinned-sha repair leaves it.
 The pick is kept per workspace for the session.
 
+### 15. Paste and drop images and videos into review comments
+
+Every GitHub-bound comment box (PR panel comments and replies, inline thread replies, the comment
+edit box, the diff's new-comment popover in review modes, and the review summary) takes pasted or
+dropped PNG/JPEG/GIF/WebP/MP4/MOV/WebM. `github/use-review-asset-attachments.tsx` inserts an
+`![Uploading …](uploading:<id>)` placeholder at the caret, shows a local preview with a spinner, and
+swaps in `![name](url)` (images) or a bare link on its own line (videos — GitHub strips `<video>`) when
+the upload lands. Its `uploading` flag holds every submit button and Enter-to-send.
+
+Uploads go through `main/github/review-asset-upload.ts`: it reads `review-assets.json` (endpoint +
+token, mode 600) from userData, asks the Helios signer for a presigned PUT, and uploads the bytes. The
+S3 keys never leave the cluster; the signer (helios-k8s `applications/base/review-assets`, tailnet-only)
+only issues 15-minute URLs for one new object in the public `helios-review-assets` bucket (helios-iac
+`storage/review-assets`), with the content type and length signed in and a media-only allow-list.
+
+The preload's document-level file-drop handler skips `[data-review-asset-drop]` elements
+(`preload-runtime-support.ts`) so these boxes receive the File objects. Orca plays bare video links
+from the bucket inline (`comment-markdown-github-attachment-media.tsx`).
+
 ## Verify
 
 Verify runs on GitHub, not locally: `fork-verify.yml` runs it on every pull request against `main`,

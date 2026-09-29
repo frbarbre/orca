@@ -399,7 +399,8 @@
       },
       "pendingReview": {
         "submitDesktopOnly": "Reviews are submitted from the desktop app.",
-        "editDesktopOnly": "Comments are edited from the desktop app."
+        "editDesktopOnly": "Comments are edited from the desktop app.",
+        "attachDesktopOnly": "Attachments are uploaded from the desktop app."
       }
     },
     "store": {
@@ -2805,6 +2806,10 @@
         },
         "mentions": {
           "member": "Member"
+        },
+        "reviewAssets": {
+          "failed": "Could not upload {{name}}.",
+          "uploading": "Uploading {{name}}…"
         }
       },
       "linear": {

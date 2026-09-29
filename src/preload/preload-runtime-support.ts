@@ -114,6 +114,10 @@ export function installNativeFileDropHandlers(): void {
       if (event.dataTransfer?.types.includes(ORCA_INTERNAL_FILE_DRAG_TYPE)) {
         return
       }
+      // Why: comment boxes upload dropped images and videos themselves, from the File objects.
+      if (event.target instanceof Element && event.target.closest('[data-review-asset-drop]')) {
+        return
+      }
       event.preventDefault()
       event.stopPropagation()
       const files = event.dataTransfer?.files

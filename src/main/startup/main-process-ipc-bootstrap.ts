@@ -26,6 +26,8 @@ import type {
 import type { ReviewStatusSnapshotRequest } from '../../shared/github/review-status-snapshot-types'
 import type { SyncReviewHeadRequest } from '../../shared/github/review-head-sync'
 import { syncReviewHead } from '../github/review-head-sync'
+import { isReviewAssetUploadConfigured, uploadReviewAsset } from '../github/review-asset-upload'
+import type { UploadReviewAssetRequest } from '../../shared/github/review-asset'
 
 export function registerMainProcessIpcHandlers(): void {
   // Why read per call rather than caching: dropping a theme file in and reloading the window is the
@@ -95,6 +97,11 @@ export function registerMainProcessIpcHandlers(): void {
     'pending-review:update-comment',
     (_event, request: UpdatePublishedCommentRequest) => updatePublishedReviewComment(request)
   )
+
+  ipcMain.handle('pending-review:asset-upload', (_event, request: UploadReviewAssetRequest) =>
+    uploadReviewAsset(request)
+  )
+  ipcMain.handle('pending-review:asset-configured', () => isReviewAssetUploadConfigured())
 
   ipcMain.handle(
     'pending-review:context',

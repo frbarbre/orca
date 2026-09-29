@@ -17,6 +17,7 @@ import { PendingReviewReviewers } from './pending-review-reviewers'
 import { useReviewDiffBase } from '@/components/pending-review/use-review-diff-base'
 import { usePendingReviewSummary } from '@/components/pending-review/pending-review-summary-store'
 import { useMentionAutocomplete } from '@/components/github/github-mention-autocomplete'
+import { useReviewAssetAttachments } from '@/components/github/use-review-asset-attachments'
 import { PendingReviewDiffBaseSelect } from './pending-review-diff-base-select'
 
 const VERDICTS: {
@@ -72,9 +73,17 @@ export function SourceControlPendingReviewShelf({
     setValue: setBody,
     textareaRef: summaryRef
   })
+  const attachments = useReviewAssetAttachments({
+    value: body,
+    setValue: setBody,
+    textareaRef: summaryRef
+  })
   const [submitting, setSubmitting] = useState<ReviewVerdict | null>(null)
 
   const submit = async (verdict: ReviewVerdict): Promise<void> => {
+    if (attachments.uploading) {
+      return
+    }
     setSubmitting(verdict)
     const result = await submitter.submit(verdict, body.trim())
     setSubmitting(null)
@@ -217,9 +226,14 @@ export function SourceControlPendingReviewShelf({
             onKeyDown={mention.handleKeyDown}
             onKeyUp={mention.onKeyUp}
             onBlur={mention.close}
+            {...attachments.dropTargetProps}
+            onPaste={attachments.onPaste}
+            onDragOver={attachments.onDragOver}
+            onDrop={attachments.onDrop}
             variant="seamless"
             className="min-h-16 resize-none"
           />
+          {attachments.previews}
           <div className="flex flex-wrap items-center justify-end gap-0.5 px-1.5 pb-1.5">
             {verdicts.map((verdict) => (
               <Button
@@ -228,6 +242,7 @@ export function SourceControlPendingReviewShelf({
                 variant="ghost"
                 disabled={
                   submitting !== null ||
+                  attachments.uploading ||
                   !canSubmitReviewVerdict({
                     verdict: verdict.id,
                     body,

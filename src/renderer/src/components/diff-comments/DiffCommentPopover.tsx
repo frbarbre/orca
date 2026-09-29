@@ -10,6 +10,7 @@ import {
 } from '@/lib/comment-body-submit-state'
 import { translate } from '@/i18n/i18n'
 import { useMentionAutocomplete } from '@/components/github/github-mention-autocomplete'
+import { useReviewAssetAttachments } from '@/components/github/use-review-asset-attachments'
 import { installOpenDraftAddReviewNoteGuard } from '../editor/editor-shortcuts'
 import { resolveDiffCommentPopoverTop } from './diff-comment-popover-position'
 
@@ -150,6 +151,13 @@ export function DiffCommentPopover({
     // Why off for notes: an @ in a note for the agent tags nobody.
     enabled: Boolean(mode && mode !== 'note')
   })
+  // Why GitHub modes only: uploads land in a public bucket, and a note for the agent stays local.
+  const attachments = useReviewAssetAttachments({
+    value: body,
+    setValue: setBody,
+    textareaRef: mentionTextareaRef,
+    enabled: Boolean(mode && mode !== 'note')
+  })
 
   // Why: consume the add-review-note chord on the popover subtree, not window, so a repeat chord doesn't remount the draft.
   useEffect(() => {
@@ -188,7 +196,7 @@ export function DiffCommentPopover({
   }
 
   const handleSubmit = async (): Promise<void> => {
-    if (submitting) {
+    if (submitting || attachments.uploading) {
       return
     }
     const bodyState = getCommentBodySubmitState(body)
@@ -270,6 +278,10 @@ export function DiffCommentPopover({
             }}
             onKeyUp={mention.onKeyUp}
             onBlur={mention.close}
+            {...attachments.dropTargetProps}
+            onPaste={attachments.onPaste}
+            onDragOver={attachments.onDragOver}
+            onDrop={attachments.onDrop}
             onKeyDown={(e) => {
               if (mention.handleKeyDown(e)) {
                 return
@@ -290,12 +302,17 @@ export function DiffCommentPopover({
             }}
             rows={3}
           />
+          {attachments.previews}
         </div>
         <div className="orca-diff-comment-popover-footer">
           <Button variant="ghost" size="sm" onClick={onCancel}>
             {translate('auto.components.diff.comments.DiffCommentPopover.2b3ce6d394', 'Cancel')}
           </Button>
-          <Button size="sm" onClick={handleSubmit} disabled={submitting || !canSubmitComment}>
+          <Button
+            size="sm"
+            onClick={handleSubmit}
+            disabled={submitting || !canSubmitComment || attachments.uploading}
+          >
             {submitting ? submittingLabel : submitLabel}
             {!submitting && <CornerDownLeft className="ml-1 size-3 opacity-70" />}
           </Button>

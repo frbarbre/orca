@@ -38,7 +38,16 @@ export function createWebPendingReviewApi(): Pick<PreloadApi, 'pendingReview'> {
           reviewers: [],
           commits: [],
           viewerReviews: []
-        })
+        }),
+      uploadAsset: () =>
+        Promise.resolve({
+          ok: false as const,
+          error: translate(
+            'auto.web.pendingReview.attachDesktopOnly',
+            'Attachments are uploaded from the desktop app.'
+          )
+        }),
+      assetUploadConfigured: () => Promise.resolve(false)
     }
   }
 }

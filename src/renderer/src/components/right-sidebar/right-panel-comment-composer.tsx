@@ -15,6 +15,7 @@ import {
 } from './right-panel-comment-focus-timers'
 import { translate } from '@/i18n/i18n'
 import { useMentionAutocomplete } from '@/components/github/github-mention-autocomplete'
+import { useReviewAssetAttachments } from '@/components/github/use-review-asset-attachments'
 
 export type RightPanelCommentSubmitResult = { ok: true } | { ok: false; error: string }
 
@@ -93,6 +94,7 @@ export function RightPanelCommentComposer({
     setValue: setBody,
     textareaRef
   })
+  const attachments = useReviewAssetAttachments({ value: body, setValue: setBody, textareaRef })
 
   useEffect(() => {
     const textarea = textareaRef.current
@@ -146,7 +148,7 @@ export function RightPanelCommentComposer({
 
   const submit = useCallback(async () => {
     const bodyState = getCommentBodySubmitState(body)
-    if (bodyState.status === 'empty' || submitting || disabled) {
+    if (bodyState.status === 'empty' || submitting || disabled || attachments.uploading) {
       return
     }
     if (bodyState.status === 'too-large-leading-whitespace') {
@@ -173,7 +175,7 @@ export function RightPanelCommentComposer({
     } finally {
       setSubmitting(false)
     }
-  }, [body, disabled, onCancel, onSubmit, submitting])
+  }, [attachments.uploading, body, disabled, onCancel, onSubmit, submitting])
   const canSubmitComment = hasBoundedCommentBodyText(body)
 
   const handleKeyDown = useCallback(
@@ -269,11 +271,16 @@ export function RightPanelCommentComposer({
           }}
           onKeyUp={mention.onKeyUp}
           onBlur={mention.close}
+          {...attachments.dropTargetProps}
+          onPaste={attachments.onPaste}
+          onDragOver={attachments.onDragOver}
+          onDrop={attachments.onDrop}
           onClick={(event) => {
             stopPropagation(event)
             mention.sync(event.currentTarget)
           }}
         />
+        {attachments.previews}
       </div>
       <div className="flex min-w-0 items-center gap-0.5 border-t border-border px-2 py-1">
         {toolbar.map(({ action, label, icon: Icon }) => (
@@ -316,7 +323,7 @@ export function RightPanelCommentComposer({
               type="button"
               size="xs"
               aria-label={submitLabel}
-              disabled={disabled || submitting || !canSubmitComment}
+              disabled={disabled || submitting || !canSubmitComment || attachments.uploading}
               onClick={() => void submit()}
             >
               {submitting

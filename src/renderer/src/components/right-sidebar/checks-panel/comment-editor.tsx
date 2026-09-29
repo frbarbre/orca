@@ -1,5 +1,6 @@
 import React, { useCallback, useRef } from 'react'
 import { useMentionAutocomplete } from '@/components/github/github-mention-autocomplete'
+import { useReviewAssetAttachments } from '@/components/github/use-review-asset-attachments'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { translate } from '@/i18n/i18n'
@@ -34,6 +35,12 @@ export function CommentEditor({
     setValue: onDraftChange,
     textareaRef
   })
+  const attachments = useReviewAssetAttachments({
+    value: draft,
+    setValue: onDraftChange,
+    textareaRef
+  })
+  const canSaveNow = canSave && !attachments.uploading
   const grow = useCallback((element: HTMLTextAreaElement | null): void => {
     textareaRef.current = element
     if (!element) {
@@ -61,6 +68,10 @@ export function CommentEditor({
         }}
         onKeyUp={mention.onKeyUp}
         onBlur={mention.close}
+        {...attachments.dropTargetProps}
+        onPaste={attachments.onPaste}
+        onDragOver={attachments.onDragOver}
+        onDrop={attachments.onDrop}
         onKeyDown={(event) => {
           if (mention.handleKeyDown(event)) {
             return
@@ -68,7 +79,7 @@ export function CommentEditor({
           // Why a modifier: Enter on its own belongs to the comment, which is prose.
           if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) {
             event.preventDefault()
-            if (canSave) {
+            if (canSaveNow) {
               onSubmit()
             }
           }
@@ -78,11 +89,12 @@ export function CommentEditor({
           presentation.commentEditorText
         )}
       />
+      {attachments.previews}
       <div className="flex justify-end gap-1">
         <Button type="button" variant="ghost" size="xs" disabled={submitting} onClick={onCancel}>
           {translate('auto.components.right.sidebar.checks.panel.content.b062f55f29', 'Cancel')}
         </Button>
-        <Button type="button" size="xs" disabled={!canSave} onClick={() => onSubmit()}>
+        <Button type="button" size="xs" disabled={!canSaveNow} onClick={() => onSubmit()}>
           {translate('auto.components.right.sidebar.checks.panel.content.f6a40263ff', 'Save')}
         </Button>
       </div>

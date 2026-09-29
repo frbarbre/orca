@@ -1,4 +1,5 @@
 import React from 'react'
+import { isReviewAssetVideoUrl } from '../../../../shared/github/review-asset'
 
 export function isGitHubUserAttachmentUrl(href: string | undefined): href is string {
   if (!href) {
@@ -25,7 +26,10 @@ export function isGitHubUserAttachmentVideoLink(
   href: string | undefined,
   children: React.ReactNode
 ): href is string {
-  return isGitHubUserAttachmentUrl(href) && isBareAutolink(children, href)
+  return (
+    (isGitHubUserAttachmentUrl(href) || isReviewAssetVideoUrl(href)) &&
+    isBareAutolink(children, href)
+  )
 }
 
 // Shared fallback link for attachments that can't render inline (see the image

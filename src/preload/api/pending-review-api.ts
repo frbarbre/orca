@@ -15,6 +15,10 @@ import type {
   PullRequestCommitSummary,
   ViewerReviewSummary
 } from '../../shared/github/review-history'
+import type {
+  UploadReviewAssetRequest,
+  UploadReviewAssetResult
+} from '../../shared/github/review-asset'
 
 export type PendingReviewContextRequest = Pick<
   SubmitReviewVerdictRequest,
@@ -46,4 +50,7 @@ export type PendingReviewApi = {
     commits: PullRequestCommitSummary[]
     viewerReviews: ViewerReviewSummary[]
   }>
+  /** Uploads a pasted or dropped image or video to the public review-assets bucket. */
+  uploadAsset: (request: UploadReviewAssetRequest) => Promise<UploadReviewAssetResult>
+  assetUploadConfigured: () => Promise<boolean>
 }

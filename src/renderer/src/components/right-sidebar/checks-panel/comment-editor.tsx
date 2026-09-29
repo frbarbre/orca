@@ -1,4 +1,5 @@
-import React, { useCallback } from 'react'
+import React, { useCallback, useRef } from 'react'
+import { useMentionAutocomplete } from '@/components/github/github-mention-autocomplete'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { translate } from '@/i18n/i18n'
@@ -27,7 +28,14 @@ export function CommentEditor({
 }): React.JSX.Element {
   // Why measured rather than counted from the text: a wrapped line is as tall as two, and
   // the card in a diff view zone is resized from its rendered height.
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null)
+  const mention = useMentionAutocomplete({
+    value: draft,
+    setValue: onDraftChange,
+    textareaRef
+  })
   const grow = useCallback((element: HTMLTextAreaElement | null): void => {
+    textareaRef.current = element
     if (!element) {
       return
     }
@@ -37,6 +45,7 @@ export function CommentEditor({
 
   return (
     <>
+      {mention.list}
       <textarea
         autoFocus
         ref={grow}
@@ -44,9 +53,18 @@ export function CommentEditor({
         onChange={(event) => {
           onDraftChange(event.target.value)
           grow(event.currentTarget)
+          mention.sync(event.currentTarget)
         }}
-        onClick={(event) => event.stopPropagation()}
+        onClick={(event) => {
+          event.stopPropagation()
+          mention.sync(event.currentTarget)
+        }}
+        onKeyUp={mention.onKeyUp}
+        onBlur={mention.close}
         onKeyDown={(event) => {
+          if (mention.handleKeyDown(event)) {
+            return
+          }
           // Why a modifier: Enter on its own belongs to the comment, which is prose.
           if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) {
             event.preventDefault()

@@ -565,9 +565,12 @@ read it from there — the toggle appears once the panel has shown that workspac
 
 ### 11. @-mentions in pull request comment boxes
 
-Typing `@` in the PR panel's comment and reply boxes (also used by inline threads), the diff's
+Typing `@` in the PR panel's comment and reply boxes (also used by inline threads), the comment
+edit box (`checks-panel/comment-editor.tsx`, posted comments and queued drafts), the diff's
 new-comment popover (review modes only, not agent notes) and the review summary lists the
-repository's assignable members; Enter or Tab inserts `@login `. `github-mention-autocomplete.tsx`
+repository's assignable members; Enter or Tab inserts `@login `. The list is portalled to the
+body and anchored to the textarea, because every one of these boxes sits in an overflow-hidden
+frame or a Monaco view zone. `github-mention-autocomplete.tsx`
 lifts the behaviour of the pull request page's `MentionTextarea` into a hook, so each box keeps its
 own textarea, and fetches members through `useRepoAssignees` only once `@` is typed.
 

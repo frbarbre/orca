@@ -1,4 +1,5 @@
 import React, { useCallback, useId, useMemo, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { cn } from '@/lib/utils'
 import { useAppStore } from '@/store'
 import { useRepoAssignees } from '@/hooks/useIssueMetadata'
@@ -33,6 +34,8 @@ function useActiveRepoMentionOptions(wanted: boolean): MentionOption[] {
   )
 }
 
+const LIST_MAX_HEIGHT_PX = 256
+
 export type MentionAutocomplete = {
   sync: (textarea: HTMLTextAreaElement) => void
   close: () => void
@@ -60,6 +63,7 @@ export function useMentionAutocomplete({
   const [rawQuery, setQuery] = useState<MentionQuery | null>(null)
   const query = enabled ? rawQuery : null
   const [activeIndex, setActiveIndex] = useState(0)
+  const [anchor, setAnchor] = useState<DOMRect | null>(null)
   const repoOptions = useActiveRepoMentionOptions(!providedOptions && query !== null)
   const options = providedOptions ?? repoOptions
   const suggestions = useMemo(
@@ -69,8 +73,12 @@ export function useMentionAutocomplete({
   const open = query !== null && suggestions.length > 0
 
   const sync = useCallback((textarea: HTMLTextAreaElement) => {
-    setQuery(findMentionQuery(textarea.value, textarea.selectionStart))
+    const next = findMentionQuery(textarea.value, textarea.selectionStart)
+    setQuery(next)
     setActiveIndex(0)
+    if (next) {
+      setAnchor(textarea.getBoundingClientRect())
+    }
   }, [])
   const close = useCallback(() => setQuery(null), [])
 
@@ -132,43 +140,58 @@ export function useMentionAutocomplete({
     [sync]
   )
 
-  const list = open ? (
-    <div
-      id={listboxId}
-      role="listbox"
-      className="absolute right-0 bottom-[calc(100%+6px)] left-0 z-50 max-h-64 overflow-y-auto rounded-md border border-border/70 bg-popover p-1 text-popover-foreground shadow-lg scrollbar-sleek"
-    >
-      {suggestions.map((option, index) => (
-        <button
-          key={option.login}
-          role="option"
-          aria-selected={index === activeIndex}
-          type="button"
-          onMouseDown={(event) => {
-            event.preventDefault()
-            insert(option)
-          }}
-          className={cn(
-            'flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left text-[12px]',
-            index === activeIndex && 'bg-accent text-accent-foreground'
-          )}
-        >
-          <GitHubUserAvatar
-            login={option.login}
-            name={option.name}
-            avatarUrl={option.avatarUrl}
-            className="size-5"
-          />
-          <span className="flex min-w-0 flex-1 items-baseline gap-1.5">
-            <span className="shrink-0 font-medium">@{option.login}</span>
-            {option.name ? (
-              <span className="truncate text-muted-foreground">{option.name}</span>
-            ) : null}
-          </span>
-        </button>
-      ))}
-    </div>
-  ) : null
+  // Why a portal: comment boxes sit inside rounded, overflow-hidden frames and Monaco view zones, which clip anything drawn outside them.
+  const placeAbove = anchor ? anchor.top > LIST_MAX_HEIGHT_PX + 12 : true
+  const list =
+    open && anchor
+      ? createPortal(
+          <div
+            id={listboxId}
+            role="listbox"
+            style={{
+              position: 'fixed',
+              left: anchor.left,
+              width: Math.max(anchor.width, 220),
+              maxHeight: LIST_MAX_HEIGHT_PX,
+              ...(placeAbove
+                ? { bottom: window.innerHeight - anchor.top + 6 }
+                : { top: anchor.bottom + 6 })
+            }}
+            className="z-[1000] overflow-y-auto rounded-md border border-border/70 bg-popover p-1 text-popover-foreground shadow-lg scrollbar-sleek"
+          >
+            {suggestions.map((option, index) => (
+              <button
+                key={option.login}
+                role="option"
+                aria-selected={index === activeIndex}
+                type="button"
+                onMouseDown={(event) => {
+                  event.preventDefault()
+                  insert(option)
+                }}
+                className={cn(
+                  'flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left text-[12px]',
+                  index === activeIndex && 'bg-accent text-accent-foreground'
+                )}
+              >
+                <GitHubUserAvatar
+                  login={option.login}
+                  name={option.name}
+                  avatarUrl={option.avatarUrl}
+                  className="size-5"
+                />
+                <span className="flex min-w-0 flex-1 items-baseline gap-1.5">
+                  <span className="shrink-0 font-medium">@{option.login}</span>
+                  {option.name ? (
+                    <span className="truncate text-muted-foreground">{option.name}</span>
+                  ) : null}
+                </span>
+              </button>
+            ))}
+          </div>,
+          document.body
+        )
+      : null
 
   return { sync, close, handleKeyDown, onKeyUp, list }
 }

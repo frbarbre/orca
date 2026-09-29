@@ -4,6 +4,10 @@ import { useAppStore } from '@/store'
 import { usePRCommentScope } from '@/components/pr-comments/use-pr-comment-scope'
 import type { ReviewVerdict } from '../../../../shared/github/pending-review-comment'
 import type { PullRequestReviewer } from '../../../../shared/github/pull-request-reviewers'
+import type {
+  PullRequestCommitSummary,
+  ViewerReviewSummary
+} from '../../../../shared/github/review-history'
 import type { PendingReviewQueue } from './use-pending-review-queue'
 import { translate } from '@/i18n/i18n'
 
@@ -22,6 +26,9 @@ export type ReviewVerdictSubmitter = {
   baseRefName: string | null
   /** Who is asked to review and where each of them stands; null while that is still loading. */
   reviewers: PullRequestReviewer[] | null
+  /** The pull request's commits and every review you submitted on it, for picking a diff base. */
+  commits: PullRequestCommitSummary[]
+  viewerReviews: ViewerReviewSummary[]
   /** Asks a reviewer who already reviewed to look again. */
   rerequest: (login: string) => Promise<boolean>
   submit: (verdict: ReviewVerdict, body: string) => Promise<{ ok: boolean; error?: string }>
@@ -29,12 +36,17 @@ export type ReviewVerdictSubmitter = {
 
 type PendingReviewContext = Awaited<ReturnType<typeof window.api.pendingReview.context>>
 
+const NO_COMMITS: PullRequestCommitSummary[] = []
+const NO_REVIEWS: ViewerReviewSummary[] = []
+
 const EMPTY_CONTEXT: PendingReviewContext = {
   viewerDidAuthor: false,
   viewerLatestReviewState: null,
   viewerHasReviewRequest: false,
   viewerLatestReviewCommit: null,
-  reviewers: []
+  reviewers: [],
+  commits: [],
+  viewerReviews: []
 }
 
 export function useSubmitReviewVerdict(
@@ -160,6 +172,8 @@ export function useSubmitReviewVerdict(
     viewerLatestReviewCommit: context?.viewerLatestReviewCommit ?? null,
     baseRefName: scope.pr?.baseRefName ?? null,
     reviewers: contextKey === null ? [] : (context?.reviewers ?? null),
+    commits: context?.commits ?? NO_COMMITS,
+    viewerReviews: context?.viewerReviews ?? NO_REVIEWS,
     rerequest,
     submit
   }

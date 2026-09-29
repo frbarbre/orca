@@ -1,19 +1,40 @@
-import { useCallback, useEffect, useMemo } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useAppStore } from '@/store'
 import { useCommitResolves } from './use-commit-resolves'
 import { markReviewedCommit } from '@/lib/reviewed-commit-bases'
-import { isReviewBaseRef } from '../../../../shared/github/review-base'
 import { useReviewBase } from './use-review-base'
 
-export type ReviewDiffBase = 'since-review' | 'whole'
+/** `commit:<oid>` and `review:<oid>` compare against that commit, replayed onto the branch if needed. */
+export type ReviewDiffBase = 'since-review' | 'whole' | `commit:${string}` | `review:${string}`
+
+export function isReviewDiffBase(value: string): value is ReviewDiffBase {
+  return (
+    value === 'since-review' ||
+    value === 'whole' ||
+    value.startsWith('commit:') ||
+    value.startsWith('review:')
+  )
+}
+
+// Why kept per workspace for the session: the picker is a reading choice, and switching tabs or
+// workspaces must not throw it back to the default.
+const selectionByWorktree = new Map<string, ReviewDiffBase>()
+
+function selectedCommit(value: ReviewDiffBase, lastReviewedCommit: string | null): string | null {
+  if (value === 'whole') {
+    return null
+  }
+  if (value === 'since-review') {
+    return lastReviewedCommit
+  }
+  return value.slice(value.indexOf(':') + 1)
+}
 
 /**
- * Which end of the diff the workspace is comparing against, and how to switch it.
+ * Which point the workspace's diff starts from, and how to change it.
  *
- * Why the whole pull request stays reachable: a force-push can strip the commit you last
- * reviewed off the remote, and you sometimes just want to read the change entire, so the
- * base the pull request targets is always the other tab rather than a fallback you cannot
- * choose.
+ * Why every choice but the target branch goes through the review base: a commit picked after the
+ * author rebased, or merged the target in, would otherwise pull in everything the target gained.
  */
 export function useReviewDiffBase(
   worktreeId: string | null,
@@ -32,29 +53,23 @@ export function useReviewDiffBase(
   const updateWorktreeMeta = useAppStore((state) => state.updateWorktreeMeta)
   const wholeRef = baseRefName ? `refs/remotes/origin/${baseRefName}` : null
   const currentBaseRef = worktree?.baseRef ?? null
-  const resolution = useCommitResolves(worktreeId, lastReviewedCommit)
-  useEffect(() => {
-    markReviewedCommit(lastReviewedCommit)
-  }, [lastReviewedCommit])
-  const reviewBase = useReviewBase(
-    worktree?.path ?? null,
-    worktree?.head ?? null,
-    lastReviewedCommit,
-    wholeRef
-  )
-  const missing = reviewBase?.kind === 'missing' || resolution === 'missing'
-  // Why the fallback to the commit: a workspace the desktop cannot run git in has no interdiff,
-  // and comparing against the reviewed commit is still right as long as nobody rebased.
-  const sinceReviewRef =
-    reviewBase && reviewBase.kind !== 'missing' ? reviewBase.baseRef : lastReviewedCommit
-  const onReviewBase =
-    currentBaseRef !== null &&
-    (currentBaseRef === lastReviewedCommit || isReviewBaseRef(currentBaseRef))
+  const [, setVersion] = useState(0)
+  const picked = worktreeId ? (selectionByWorktree.get(worktreeId) ?? null) : null
+  const fallback: ReviewDiffBase =
+    lastReviewedCommit && currentBaseRef !== wholeRef ? 'since-review' : 'whole'
+  const requested = picked ?? fallback
 
-  const value: ReviewDiffBase = useMemo(
-    () => (!missing && onReviewBase ? 'since-review' : 'whole'),
-    [missing, onReviewBase]
-  )
+  const resolution = useCommitResolves(worktreeId, lastReviewedCommit)
+  const sinceReviewMissing = resolution === 'missing'
+  const value: ReviewDiffBase =
+    requested === 'since-review' && (!lastReviewedCommit || sinceReviewMissing)
+      ? 'whole'
+      : requested
+  const commit = selectedCommit(value, lastReviewedCommit)
+  useEffect(() => {
+    markReviewedCommit(commit)
+  }, [commit])
+  const reviewBase = useReviewBase(worktree?.path ?? null, worktree?.head ?? null, commit, wholeRef)
 
   const writeBaseRef = useCallback(
     (baseRef: string | null) => {
@@ -71,32 +86,36 @@ export function useReviewDiffBase(
     [currentBaseRef, updateWorktreeMeta, worktree?.hostId, worktreeId]
   )
 
+  // Why the commit itself when nothing resolved: a workspace the desktop cannot run git in has no
+  // interdiff, and comparing against the commit is still right as long as nobody rebased.
+  const canResolve = Boolean(window.api?.pendingReview?.resolveBase)
+  useEffect(() => {
+    if (!commit || reviewBase?.kind === 'missing') {
+      writeBaseRef(wholeRef)
+      return
+    }
+    if (reviewBase) {
+      writeBaseRef(reviewBase.baseRef)
+    } else if (!canResolve) {
+      writeBaseRef(commit)
+    }
+  }, [canResolve, commit, reviewBase, wholeRef, writeBaseRef])
+
   const setValue = useCallback(
-    (next: ReviewDiffBase) => writeBaseRef(next === 'since-review' ? sinceReviewRef : wholeRef),
-    [sinceReviewRef, wholeRef, writeBaseRef]
+    (next: ReviewDiffBase) => {
+      if (worktreeId) {
+        selectionByWorktree.set(worktreeId, next)
+      }
+      setVersion((version) => version + 1)
+    },
+    [worktreeId]
   )
 
-  // Why follow the resolved base: a rebase since the review turns the reviewed commit into the
-  // wrong base, and another force-push rebuilds the interdiff under a new ref.
-  useEffect(() => {
-    if (onReviewBase && reviewBase && reviewBase.kind !== 'missing') {
-      writeBaseRef(reviewBase.baseRef)
-    }
-  }, [onReviewBase, reviewBase, writeBaseRef])
-
-  // Why repair rather than only disable: the workspace can already be parked on the commit
-  // that has since been force-pushed away, and leaving it there is a diff that never loads.
-  useEffect(() => {
-    if (missing && onReviewBase) {
-      writeBaseRef(wholeRef)
-    }
-  }, [missing, onReviewBase, wholeRef, writeBaseRef])
-
   return {
-    available: Boolean(lastReviewedCommit && wholeRef),
+    available: Boolean(wholeRef),
     value,
     setValue,
-    sinceReviewMissing: missing,
+    sinceReviewMissing,
     wholeRef
   }
 }

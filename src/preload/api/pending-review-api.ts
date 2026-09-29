@@ -11,6 +11,10 @@ import type {
   ResolveReviewBaseRequest,
   ResolveReviewBaseResult
 } from '../../shared/github/review-base'
+import type {
+  PullRequestCommitSummary,
+  ViewerReviewSummary
+} from '../../shared/github/review-history'
 
 export type PendingReviewContextRequest = Pick<
   SubmitReviewVerdictRequest,
@@ -39,5 +43,7 @@ export type PendingReviewApi = {
     viewerHasReviewRequest: boolean
     viewerLatestReviewCommit: string | null
     reviewers: PullRequestReviewer[]
+    commits: PullRequestCommitSummary[]
+    viewerReviews: ViewerReviewSummary[]
   }>
 }

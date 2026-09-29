@@ -17471,14 +17471,16 @@
           "title": "Pending review",
           "diffBaseLabel": "What the diff compares against",
           "sinceReview": "Since last review",
-          "sinceReviewMissing": "The commit you last reviewed is no longer in this checkout.",
-          "wholePr": "Whole pull request",
           "bodyPlaceholder": "Add review summary…",
           "submitting": "Sending…",
           "onlyComment": "Only comment",
           "requestChanges": "Request changes",
           "approve": "Approve",
-          "submitFailed": "Could not submit the review."
+          "submitFailed": "Could not submit the review.",
+          "reviewTag": "Review {{n}}",
+          "sinceReviewN": "Since your last review (Review {{n}})",
+          "rebasedAway": "Reviewed before a rebase",
+          "targetBranch": "{{branch}} · target branch"
         },
         "reviewers": {
           "pending": "Awaiting review",

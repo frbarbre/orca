@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react'
-import { Check, GitPullRequest, MessageCircle, ScanEye, X } from 'lucide-react'
+import { Check, MessageCircle, ScanEye, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
@@ -17,7 +17,7 @@ import { PendingReviewReviewers } from './pending-review-reviewers'
 import { useReviewDiffBase } from '@/components/pending-review/use-review-diff-base'
 import { usePendingReviewSummary } from '@/components/pending-review/pending-review-summary-store'
 import { useMentionAutocomplete } from '@/components/github/github-mention-autocomplete'
-import { SegmentedTabs } from '@/components/ui/segmented-tabs'
+import { PendingReviewDiffBaseSelect } from './pending-review-diff-base-select'
 
 const VERDICTS: {
   id: ReviewVerdict
@@ -177,38 +177,13 @@ export function SourceControlPendingReviewShelf({
         <div className="px-3 pt-2">
           {/* Why here and not in the base-ref dialog: this is a reading choice a reviewer
               makes repeatedly while working through a pull request, not repo configuration. */}
-          <SegmentedTabs
-            ariaLabel={translate(
-              'auto.components.sourceControl.pendingReview.diffBaseLabel',
-              'What the diff compares against'
-            )}
-            options={[
-              {
-                id: 'since-review' as const,
-                Icon: ScanEye,
-                label: translate(
-                  'auto.components.sourceControl.pendingReview.sinceReview',
-                  'Since last review'
-                ),
-                disabledReason: diffBase.sinceReviewMissing
-                  ? translate(
-                      'auto.components.sourceControl.pendingReview.sinceReviewMissing',
-                      'The commit you last reviewed is no longer in this checkout.'
-                    )
-                  : undefined
-              },
-              {
-                id: 'whole' as const,
-                Icon: GitPullRequest,
-                label: translate(
-                  'auto.components.sourceControl.pendingReview.wholePr',
-                  'Whole pull request'
-                )
-              }
-            ]}
-            fullWidth
+          <PendingReviewDiffBaseSelect
             value={diffBase.value}
             onChange={diffBase.setValue}
+            commits={submitter.commits}
+            viewerReviews={submitter.viewerReviews}
+            baseRefName={submitter.baseRefName ?? ''}
+            sinceReviewDisabled={diffBase.sinceReviewMissing}
           />
         </div>
       ) : null}

@@ -12,6 +12,12 @@ import {
   type RawReview,
   type RawReviewRequest
 } from '../../shared/github/pull-request-reviewers'
+import {
+  buildViewerReviewHistory,
+  type PullRequestCommitSummary,
+  type ViewerReviewSummary
+} from '../../shared/github/review-history'
+import { readCommits, readReviewHistory } from './review-history-parsing'
 
 function asRecord(value: unknown): Record<string, unknown> | null {
   return value && typeof value === 'object' && !Array.isArray(value) ? { ...value } : null
@@ -27,6 +33,8 @@ type PullRequestFacts = {
   /** The commit the reviewer last reviewed, which a diff can be based on. */
   viewerLatestReviewCommit: string | null
   reviewers: PullRequestReviewer[]
+  commits: PullRequestCommitSummary[]
+  viewerReviews: ViewerReviewSummary[]
 }
 
 function firstGraphQLError(payload: unknown): string | null {
@@ -76,7 +84,12 @@ async function resolvePullRequestFacts(
       latestReviews: readReviews(pullRequest?.latestReviews),
       latestOpinionatedReviews: readReviews(pullRequest?.latestOpinionatedReviews),
       authorLogin: readString(asRecord(pullRequest?.author)?.login)
-    })
+    }),
+    commits: readCommits(pullRequest?.commits),
+    viewerReviews: buildViewerReviewHistory(
+      readReviewHistory(pullRequest?.reviews),
+      readString(asRecord(data?.viewer)?.login)
+    )
   }
   return facts
 }
@@ -136,6 +149,8 @@ export async function getPullRequestReviewContext(
   viewerHasReviewRequest: boolean
   viewerLatestReviewCommit: string | null
   reviewers: PullRequestReviewer[]
+  commits: PullRequestCommitSummary[]
+  viewerReviews: ViewerReviewSummary[]
 }> {
   const { ownerRepo, ghOptions } = await resolveGitHubRepoExecution(
     request.repoPath,
@@ -148,7 +163,9 @@ export async function getPullRequestReviewContext(
       viewerLatestReviewState: null,
       viewerHasReviewRequest: false,
       viewerLatestReviewCommit: null,
-      reviewers: []
+      reviewers: [],
+      commits: [],
+      viewerReviews: []
     }
   }
   try {
@@ -163,7 +180,9 @@ export async function getPullRequestReviewContext(
       viewerLatestReviewState: facts?.viewerLatestReviewState ?? null,
       viewerHasReviewRequest: facts?.viewerHasReviewRequest === true,
       viewerLatestReviewCommit: facts?.viewerLatestReviewCommit ?? null,
-      reviewers: facts?.reviewers ?? []
+      reviewers: facts?.reviewers ?? [],
+      commits: facts?.commits ?? [],
+      viewerReviews: facts?.viewerReviews ?? []
     }
   } catch {
     // Why false on failure: a lookup that did not answer must not hide a button the
@@ -173,7 +192,9 @@ export async function getPullRequestReviewContext(
       viewerLatestReviewState: null,
       viewerHasReviewRequest: false,
       viewerLatestReviewCommit: null,
-      reviewers: []
+      reviewers: [],
+      commits: [],
+      viewerReviews: []
     }
   }
 }

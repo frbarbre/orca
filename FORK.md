@@ -597,6 +597,21 @@ agent in a new tab with a prompt:
   conflict prompts and the Source Control `resolveConflicts` template instead.
 - GitHub pull requests only (read from `prCache`).
 
+### 14. Pick where the review diff starts
+
+The shelf's "Since last review / Whole pull request" tabs are a select
+(`pending-review/pending-review-diff-base-select.tsx`): "Since your last review" on top (the
+default), then the pull request's commits newest first, each tagged with the reviews you left on it
+("Review 1", "Review 2"…), reviews whose commit a rebase removed, and the pull request's target
+branch last — the branch it merges into, which for a stacked PR is the one below, not `main`.
+
+The PR context query also fetches `commits(last: 100)`, `reviews(last: 100)` and `viewer { login }`
+(`main/github/review-history-parsing.ts`); `src/shared/github/review-history.ts` (+ test) numbers the
+viewer's reviews and builds the options. `use-review-diff-base.ts` routes every choice but the target
+branch through `resolveReviewBase`, so a commit picked after a rebase or a merge of the target still
+gets an interdiff, and marks the commit as a reviewed base so upstream's pinned-sha repair leaves it.
+The pick is kept per workspace for the session.
+
 ## Verify
 
 Verify runs on GitHub, not locally: `fork-verify.yml` runs it on every pull request against `main`,

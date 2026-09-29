@@ -48,6 +48,16 @@ export function isDetachedHeadWorkspace(worktree: Worktree): boolean {
   return getWorktreeGitIdentityDisplay(worktree)?.kind === 'detached'
 }
 
+const TEMPORARY_CHECKOUT_PATH =
+  /^(?:\/private)?\/(?:tmp|var\/folders)\/|[\\/]AppData[\\/]Local[\\/]Temp[\\/]/i
+
+// Why: agents and scripts run `git worktree add` into temp folders, and git reports those checkouts as worktrees of the repo.
+export function isTemporaryCheckoutWorkspace(
+  worktree: Pick<Worktree, 'path' | 'isMainWorktree'>
+): boolean {
+  return !worktree.isMainWorktree && TEMPORARY_CHECKOUT_PATH.test(worktree.path)
+}
+
 /** Inputs describing sidebar filter settings that the Clear Filters path owns. */
 export type SidebarFilterState = {
   showSleepingWorkspaces: boolean
@@ -56,6 +66,7 @@ export type SidebarFilterState = {
   hideAutomationGeneratedWorkspaces: boolean
   hideCliCreatedWorkspaces: boolean
   hideDetachedHeadWorkspaces: boolean
+  hideTemporaryCheckoutWorkspaces?: boolean
   hideWorkspacesFromOtherDevices: boolean
   /** Keeps each project's main workspace out of the "Hide sleeping" sweep; absent means on. */
   alwaysShowDefaultBranchWorkspace?: boolean

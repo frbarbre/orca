@@ -24,6 +24,8 @@ import type {
   UpdatePublishedCommentRequest
 } from '../../shared/github/pending-review-comment'
 import type { ReviewStatusSnapshotRequest } from '../../shared/github/review-status-snapshot-types'
+import type { SyncReviewHeadRequest } from '../../shared/github/review-head-sync'
+import { syncReviewHead } from '../github/review-head-sync'
 
 export function registerMainProcessIpcHandlers(): void {
   // Why read per call rather than caching: dropping a theme file in and reloading the window is the
@@ -68,6 +70,21 @@ export function registerMainProcessIpcHandlers(): void {
       }
       const worktreePath = await resolveRegisteredWorktreePath(request.worktreePath, store)
       return resolveReviewBase(
+        { ...request, worktreePath },
+        getLocalGitOptionsForRegisteredWorktree(store, request.worktreePath, worktreePath)
+      )
+    }
+  )
+
+  ipcMain.handle(
+    'review-status-rules:sync-review-head',
+    async (_event, request: SyncReviewHeadRequest) => {
+      const store = state.store
+      if (!store) {
+        throw new Error('The store is not ready.')
+      }
+      const worktreePath = await resolveRegisteredWorktreePath(request.worktreePath, store)
+      return syncReviewHead(
         { ...request, worktreePath },
         getLocalGitOptionsForRegisteredWorktree(store, request.worktreePath, worktreePath)
       )

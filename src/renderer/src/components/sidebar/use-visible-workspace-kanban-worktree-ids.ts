@@ -33,6 +33,7 @@ export function useVisibleWorkspaceKanbanWorktreeIds({
   const hideAutomationGeneratedWorkspaces = useAppStore((s) => s.hideAutomationGeneratedWorkspaces)
   const hideCliCreatedWorkspaces = useAppStore((s) => s.hideCliCreatedWorkspaces)
   const hideDetachedHeadWorkspaces = useAppStore((s) => s.hideDetachedHeadWorkspaces)
+  const hideTemporaryCheckoutWorkspaces = useAppStore((s) => s.hideTemporaryCheckoutWorkspaces)
   const hideWorkspacesFromOtherDevices = useAppStore((s) => s.hideWorkspacesFromOtherDevices)
   const runtimeEnvironments = useAppStore((s) =>
     s.hideWorkspacesFromOtherDevices ? s.runtimeEnvironments : EMPTY_RUNTIME_ENVIRONMENTS
@@ -91,6 +92,7 @@ export function useVisibleWorkspaceKanbanWorktreeIds({
         hideAutomationGeneratedWorkspaces,
         hideCliCreatedWorkspaces,
         hideDetachedHeadWorkspaces,
+        hideTemporaryCheckoutWorkspaces,
         hideWorkspacesFromOtherDevices,
         pairedDeviceIdsByEnvironment: hideWorkspacesFromOtherDevices
           ? getPairedDeviceIdsByEnvironment(runtimeEnvironments, runtimeStatusByEnvironmentId)
@@ -114,6 +116,7 @@ export function useVisibleWorkspaceKanbanWorktreeIds({
     hideAutomationGeneratedWorkspaces,
     hideCliCreatedWorkspaces,
     hideDetachedHeadWorkspaces,
+    hideTemporaryCheckoutWorkspaces,
     hideWorkspacesFromOtherDevices,
     alwaysShowDefaultBranchWorkspace,
     workspaceHostScope,

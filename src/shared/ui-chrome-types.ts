@@ -36,6 +36,7 @@ export type WorktreeCardProperty =
   | 'issue'
   | 'linear-issue'
   | 'linear-title'
+  | 'pr-author'
   | 'jira-issue'
   | 'pr'
   | 'automation'

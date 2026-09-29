@@ -524,6 +524,36 @@ only the title is shown.
 | `sidebar/use-worktree-card-controller.ts` | `showLinearTitle`, and fetching for it. |
 | `sidebar/worktree-card-parent-content.tsx`, `worktree-card-linear-title.tsx` (+ test) | The row. |
 
+### 8. Review workspaces follow the pull request, and other PR automations
+
+Each PR-rules tick also does three smaller things, all in `workspace-status-rules/`:
+
+- **Head sync.** A local review workspace (someone else's open pull request) is moved onto the
+  pull request's current head when it changes, including after a force-push. The main-process
+  helper (`src/main/github/review-head-sync.ts`, real-git test) refuses when the checkout is on
+  another branch or detached, has uncommitted changes, cannot fetch the head, or holds any
+  local-only commit authored by the reviewer's `user.email` (or when that email is unset). The
+  planner is `src/shared/github/review-head-sync.ts`; IPC `review-status-rules:sync-review-head`
+  checks the path is a registered worktree first.
+- **PR author avatars.** `pr-author-store.ts` keeps each linked pull request's author from the
+  snapshot; Card display → "PR author" shows it (`worktree-card-pr-author.tsx`). Only for
+  projects the PR rules cover.
+- **Conflict agent.** With "Resolve conflicts with an agent" on, a workspace entering Conflicts
+  gets an agent on `buildConflictAgentPrompt` — upstream's pull-request conflict prompt with its
+  no-push rule swapped for "push, never force-push" (`launch-conflict-agents.ts`).
+
+### 9. Sidebar: hide temporary checkouts, and Run on a shortcut
+
+"Hide temporary checkouts" hides worktrees under `/tmp`, `/private/tmp`, `/var/folders` or
+`AppData\Local\Temp` (agents' scratch `git worktree add`s). It is threaded beside
+`hideDetachedHeadWorkspaces` everywhere that flag goes, except the jump palette, whose file sits at
+its line cap. The listing reads it from the store rather than `filterState`, so upstream's
+filter-state types and tests stay as they are. `persisted-ui-write-baseline.test.ts` gains the
+field in its census fixture — re-apply after taking upstream's version.
+
+`tab.runQuickCommand` runs the tab group's Run-button command (`use-run-quick-command-shortcut.ts`).
+It ships unbound because Cmd+R is upstream's `tab.rename`; bind it in keybindings.json.
+
 ## Verify
 
 Verify runs on GitHub, not locally: `fork-verify.yml` runs it on every pull request against `main`,

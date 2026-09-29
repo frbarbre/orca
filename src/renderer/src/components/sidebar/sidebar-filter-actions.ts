@@ -17,6 +17,7 @@ export function sidebarHasActiveFilters(state: SidebarFilterState): boolean {
     state.hideAutomationGeneratedWorkspaces ||
     state.hideCliCreatedWorkspaces ||
     state.hideDetachedHeadWorkspaces ||
+    state.hideTemporaryCheckoutWorkspaces ||
     state.hideWorkspacesFromOtherDevices ||
     // Why: turning this off is the only way to narrow the list below the
     // default, so Clear Filters must be able to undo it like any other filter.

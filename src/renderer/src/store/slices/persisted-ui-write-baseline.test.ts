@@ -24,6 +24,7 @@ function makeBaseline(overrides: Partial<PersistedUIWriteBaseline> = {}): Persis
     hideAutomationGeneratedWorkspaces: false,
     hideCliCreatedWorkspaces: false,
     hideDetachedHeadWorkspaces: false,
+    hideTemporaryCheckoutWorkspaces: false,
     hideWorkspacesFromOtherDevices: false,
     alwaysShowDefaultBranchWorkspace: true,
     showDotfilesByWorktree: {},

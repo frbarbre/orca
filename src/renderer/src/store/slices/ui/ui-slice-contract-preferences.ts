@@ -55,7 +55,9 @@ export type UISlicePreferences = {
   hideCliCreatedWorkspaces: boolean
   setHideCliCreatedWorkspaces: (v: boolean) => void
   hideDetachedHeadWorkspaces: boolean
+  hideTemporaryCheckoutWorkspaces: boolean
   setHideDetachedHeadWorkspaces: (v: boolean) => void
+  setHideTemporaryCheckoutWorkspaces: (v: boolean) => void
   hideWorkspacesFromOtherDevices: boolean
   setHideWorkspacesFromOtherDevices: (v: boolean) => void
   alwaysShowDefaultBranchWorkspace: boolean

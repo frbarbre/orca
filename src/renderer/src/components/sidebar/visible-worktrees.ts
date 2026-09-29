@@ -6,6 +6,7 @@ export {
   isAutomationGeneratedWorkspace,
   isCliCreatedWorkspace,
   isDetachedHeadWorkspace,
+  isTemporaryCheckoutWorkspace,
   isSleepingSweepExemptionNarrowingList,
   isSleepingSweepExemptWorkspace
 } from './visible-worktree-kinds'
@@ -15,6 +16,7 @@ import {
   isAutomationGeneratedWorkspace,
   isCliCreatedWorkspace,
   isDetachedHeadWorkspace,
+  isTemporaryCheckoutWorkspace,
   isSleepingSweepExemptWorkspace
 } from './visible-worktree-kinds'
 import {
@@ -76,6 +78,7 @@ export type VisibleWorktreeOptions = {
   hideAutomationGeneratedWorkspaces: boolean
   hideCliCreatedWorkspaces: boolean
   hideDetachedHeadWorkspaces: boolean
+  hideTemporaryCheckoutWorkspaces?: boolean
   hideWorkspacesFromOtherDevices: boolean
   pairedDeviceIdsByEnvironment: ReadonlyMap<string, string>
   alwaysShowDefaultBranchWorkspace?: boolean
@@ -122,6 +125,9 @@ export function computeVisibleWorktrees(
 
   if (opts.hideDetachedHeadWorkspaces) {
     all = all.filter((w) => !isDetachedHeadWorkspace(w))
+  }
+  if (opts.hideTemporaryCheckoutWorkspaces) {
+    all = all.filter((w) => !isTemporaryCheckoutWorkspace(w))
   }
 
   const visibleHostIds =

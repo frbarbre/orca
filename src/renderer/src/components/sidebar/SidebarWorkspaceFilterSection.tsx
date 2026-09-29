@@ -2,6 +2,7 @@ import React from 'react'
 import {
   CalendarClock,
   GitBranch,
+  FolderClock,
   GitCommitHorizontal,
   MonitorSmartphone,
   Moon,
@@ -23,7 +24,11 @@ const SidebarWorkspaceFilterSection = React.memo(function SidebarWorkspaceFilter
   const hideCliCreatedWorkspaces = useAppStore((s) => s.hideCliCreatedWorkspaces)
   const setHideCliCreatedWorkspaces = useAppStore((s) => s.setHideCliCreatedWorkspaces)
   const hideDetachedHeadWorkspaces = useAppStore((s) => s.hideDetachedHeadWorkspaces)
+  const hideTemporaryCheckoutWorkspaces = useAppStore((s) => s.hideTemporaryCheckoutWorkspaces)
   const setHideDetachedHeadWorkspaces = useAppStore((s) => s.setHideDetachedHeadWorkspaces)
+  const setHideTemporaryCheckoutWorkspaces = useAppStore(
+    (s) => s.setHideTemporaryCheckoutWorkspaces
+  )
   const hideWorkspacesFromOtherDevices = useAppStore((s) => s.hideWorkspacesFromOtherDevices)
   const setHideWorkspacesFromOtherDevices = useAppStore((s) => s.setHideWorkspacesFromOtherDevices)
   const runtimeEnvironments = useAppStore((s) => s.runtimeEnvironments)
@@ -121,6 +126,15 @@ const SidebarWorkspaceFilterSection = React.memo(function SidebarWorkspaceFilter
         )}
         checked={hideDetachedHeadWorkspaces}
         onChange={setHideDetachedHeadWorkspaces}
+      />
+      <FilterToggleRow
+        icon={<FolderClock className="size-3.5" />}
+        label={translate(
+          'auto.components.sidebar.SidebarWorkspaceFilterSection.temporaryCheckouts',
+          'Hide temporary checkouts'
+        )}
+        checked={hideTemporaryCheckoutWorkspaces}
+        onChange={setHideTemporaryCheckoutWorkspaces}
       />
     </>
   )

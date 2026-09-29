@@ -35,6 +35,7 @@ export function useWorktreeCardController(props: ResolvedWorktreeCardProps) {
   const showIssue = foundation.cardProps.includes('issue')
   const showLinearIssue = foundation.cardProps.includes('linear-issue')
   const showLinearTitle = foundation.cardProps.includes('linear-title')
+  const showPrAuthor = foundation.cardProps.includes('pr-author')
   const showJiraIssue = foundation.cardProps.includes('jira-issue')
   const showPR = foundation.cardProps.includes('pr')
   const showAutomation = foundation.cardProps.includes('automation')
@@ -151,6 +152,7 @@ export function useWorktreeCardController(props: ResolvedWorktreeCardProps) {
     showIssue,
     showLinearIssue,
     showLinearTitle,
+    showPrAuthor,
     showJiraIssue,
     showPR,
     showAutomation,

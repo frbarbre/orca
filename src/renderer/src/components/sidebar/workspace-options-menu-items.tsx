@@ -32,6 +32,7 @@ export function useWorkspaceOptionsFilterBadge(): {
   const hideAutomationGeneratedWorkspaces = useAppStore((s) => s.hideAutomationGeneratedWorkspaces)
   const hideCliCreatedWorkspaces = useAppStore((s) => s.hideCliCreatedWorkspaces)
   const hideDetachedHeadWorkspaces = useAppStore((s) => s.hideDetachedHeadWorkspaces)
+  const hideTemporaryCheckoutWorkspaces = useAppStore((s) => s.hideTemporaryCheckoutWorkspaces)
   const hideWorkspacesFromOtherDevices = useAppStore((s) => s.hideWorkspacesFromOtherDevices)
   const alwaysShowDefaultBranchWorkspace = useAppStore((s) => s.alwaysShowDefaultBranchWorkspace)
   const filterRepoIds = useAppStore((s) => s.filterRepoIds)
@@ -61,6 +62,7 @@ export function useWorkspaceOptionsFilterBadge(): {
     hideAutomationGeneratedWorkspaces ||
     hideCliCreatedWorkspaces ||
     hideDetachedHeadWorkspaces ||
+    hideTemporaryCheckoutWorkspaces ||
     hideWorkspacesFromOtherDevices ||
     hasSleepingExemptionFilter ||
     hasRepoFilter ||
@@ -71,6 +73,7 @@ export function useWorkspaceOptionsFilterBadge(): {
     (hideAutomationGeneratedWorkspaces ? 1 : 0) +
     (hideCliCreatedWorkspaces ? 1 : 0) +
     (hideDetachedHeadWorkspaces ? 1 : 0) +
+    (hideTemporaryCheckoutWorkspaces ? 1 : 0) +
     (hideWorkspacesFromOtherDevices ? 1 : 0) +
     (hasSleepingExemptionFilter ? 1 : 0) +
     (hasHostVisibilityFilter ? 1 : 0) +

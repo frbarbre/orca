@@ -17,6 +17,7 @@ import type { TerminalQuickCommand } from '../../../../shared/terminal-quick-com
 import { useConfirmationDialog } from '@/components/confirmation-dialog-context'
 import { translate } from '@/i18n/i18n'
 import { TabBarQuickCommandsMenu } from './TabBarQuickCommandsMenu'
+import { useRunQuickCommandShortcut } from './use-run-quick-command-shortcut'
 import {
   flattenTerminalQuickCommandHosts,
   type HostedTerminalQuickCommand,
@@ -156,6 +157,11 @@ export function TabBarQuickCommandsButton({
       historyId: entry.key
     })
   }
+  useRunQuickCommandShortcut({
+    worktreeId,
+    groupId,
+    onRun: repoId && mostRecent ? () => handleRun(mostRecent) : null
+  })
   const editorRepos = editor?.hostId.startsWith('runtime:')
     ? repos.filter((repo) => getRepoExecutionHostId(repo) === editor.hostId)
     : repos

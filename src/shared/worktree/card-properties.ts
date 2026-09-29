@@ -52,6 +52,7 @@ export const WORKTREE_CARD_PROPERTIES = [
   'linear-title',
   'jira-issue',
   'pr',
+  'pr-author',
   'automation',
   'cli',
   'comment',

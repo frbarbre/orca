@@ -4,6 +4,7 @@ import {
   Check,
   FolderPlus,
   GitBranch,
+  FolderClock,
   GitCommitHorizontal,
   ListFilter,
   Moon,
@@ -61,7 +62,11 @@ const SidebarFilter = React.memo(function SidebarFilter({
   const hideCliCreatedWorkspaces = useAppStore((s) => s.hideCliCreatedWorkspaces)
   const setHideCliCreatedWorkspaces = useAppStore((s) => s.setHideCliCreatedWorkspaces)
   const hideDetachedHeadWorkspaces = useAppStore((s) => s.hideDetachedHeadWorkspaces)
+  const hideTemporaryCheckoutWorkspaces = useAppStore((s) => s.hideTemporaryCheckoutWorkspaces)
   const setHideDetachedHeadWorkspaces = useAppStore((s) => s.setHideDetachedHeadWorkspaces)
+  const setHideTemporaryCheckoutWorkspaces = useAppStore(
+    (s) => s.setHideTemporaryCheckoutWorkspaces
+  )
   const alwaysShowDefaultBranchWorkspace = useAppStore((s) => s.alwaysShowDefaultBranchWorkspace)
   const setAlwaysShowDefaultBranchWorkspace = useAppStore(
     (s) => s.setAlwaysShowDefaultBranchWorkspace
@@ -124,6 +129,7 @@ const SidebarFilter = React.memo(function SidebarFilter({
     hideAutomationGeneratedWorkspaces ||
     hideCliCreatedWorkspaces ||
     hideDetachedHeadWorkspaces ||
+    hideTemporaryCheckoutWorkspaces ||
     hasSleepingExemptionFilter ||
     hasRepoFilter
   const activeFilterCount =
@@ -132,6 +138,7 @@ const SidebarFilter = React.memo(function SidebarFilter({
     (hideAutomationGeneratedWorkspaces ? 1 : 0) +
     (hideCliCreatedWorkspaces ? 1 : 0) +
     (hideDetachedHeadWorkspaces ? 1 : 0) +
+    (hideTemporaryCheckoutWorkspaces ? 1 : 0) +
     (hasSleepingExemptionFilter ? 1 : 0) +
     selectedCount
 
@@ -148,6 +155,7 @@ const SidebarFilter = React.memo(function SidebarFilter({
     setHideAutomationGeneratedWorkspaces(false)
     setHideCliCreatedWorkspaces(false)
     setHideDetachedHeadWorkspaces(false)
+    setHideTemporaryCheckoutWorkspaces(false)
     setAlwaysShowDefaultBranchWorkspace(true)
     setFilterRepoIds([])
   }, [
@@ -156,6 +164,7 @@ const SidebarFilter = React.memo(function SidebarFilter({
     setHideAutomationGeneratedWorkspaces,
     setHideCliCreatedWorkspaces,
     setHideDetachedHeadWorkspaces,
+    setHideTemporaryCheckoutWorkspaces,
     setAlwaysShowDefaultBranchWorkspace,
     setFilterRepoIds
   ])
@@ -276,6 +285,15 @@ const SidebarFilter = React.memo(function SidebarFilter({
           )}
           checked={hideDetachedHeadWorkspaces}
           onChange={setHideDetachedHeadWorkspaces}
+        />
+        <FilterToggleRow
+          icon={<FolderClock className="size-3.5" />}
+          label={translate(
+            'auto.components.sidebar.SidebarFilter.temporaryCheckouts',
+            'Hide temporary checkouts'
+          )}
+          checked={hideTemporaryCheckoutWorkspaces}
+          onChange={setHideTemporaryCheckoutWorkspaces}
         />
 
         {canFilterRepos && (

@@ -183,6 +183,13 @@ const ISSUE_WORKTREE_CARD_PROPERTY_OPTIONS: WorktreeCardPropertyOption[] = [
         'Jira issues'
       )
     }
+  },
+  {
+    id: 'pr-author',
+    properties: ['pr-author'],
+    get label() {
+      return translate('auto.components.sidebar.SidebarWorkspaceOptionsMenu.prAuthor', 'PR author')
+    }
   }
 ]
 

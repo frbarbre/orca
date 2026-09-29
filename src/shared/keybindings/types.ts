@@ -80,6 +80,7 @@ export type KeybindingActionId =
   | 'tab.previousTerminal'
   | 'tab.selectByIndex'
   | 'tab.openQuickCommandsMenu'
+  | 'tab.runQuickCommand'
   | 'browser.find'
   | 'browser.back'
   | 'browser.forward'

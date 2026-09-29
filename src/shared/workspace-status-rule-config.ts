@@ -41,6 +41,8 @@ export type WorkspaceStatusRuleConfig = {
   onResolved: 'delete' | 'none'
   /** What to do once you have approved or requested changes on someone else's pull request. */
   onReviewed: 'delete' | 'none'
+  /** Starts an agent to merge the base branch and push when your pull request lands in Conflicts. */
+  resolveConflictsWithAgent: boolean
   reviewInbox: WorkspaceStatusRuleReviewInbox
   /** `owner/repo#number` keys already acted on, so a create never repeats. */
   handledPullRequests: string[]
@@ -89,6 +91,7 @@ export function cloneDefaultWorkspaceStatusRuleConfig(): WorkspaceStatusRuleConf
     pmApprovalTeam: null,
     onResolved: 'none',
     onReviewed: 'none',
+    resolveConflictsWithAgent: false,
     reviewInbox: {
       enabled: false,
       agent: 'claude',
@@ -210,6 +213,7 @@ export function normalizeWorkspaceStatusRuleConfig(value: unknown): WorkspaceSta
     pmApprovalTeam,
     onResolved: raw.onResolved === 'delete' ? 'delete' : 'none',
     onReviewed: raw.onReviewed === 'delete' ? 'delete' : 'none',
+    resolveConflictsWithAgent: raw.resolveConflictsWithAgent === true,
     reviewInbox: sanitizeReviewInbox(raw.reviewInbox),
     handledPullRequests:
       raw.ledgerVersion === SEED_LEDGER_VERSION

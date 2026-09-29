@@ -18,7 +18,10 @@ import {
   getFolderWorkspacePathStatusTitle
 } from './folder-workspace-path-status'
 import { toast } from 'sonner'
-import { isDetachedHeadWorkspace } from '@/components/sidebar/visible-worktrees'
+import {
+  isDetachedHeadWorkspace,
+  isTemporaryCheckoutWorkspace
+} from '@/components/sidebar/visible-worktrees'
 import { revealRepoInProjectFilter } from '@/components/sidebar/project-filter-reveal'
 import type { ExecutionHostId } from '../../../shared/execution-host'
 import { findFolderWorkspaceOwner } from './folder-workspace-runtime-owner'
@@ -287,6 +290,9 @@ export function activateAndRevealWorktree(
     }
     if (state.hideDetachedHeadWorkspaces && isDetachedHeadWorkspace(wt)) {
       state.setHideDetachedHeadWorkspaces(false)
+    }
+    if (state.hideTemporaryCheckoutWorkspaces && isTemporaryCheckoutWorkspace(wt)) {
+      state.setHideTemporaryCheckoutWorkspaces(false)
     }
   }
 

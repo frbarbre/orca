@@ -131,6 +131,18 @@ export function PullRequestStatusRulesSection(): React.JSX.Element {
           />
           <SettingsSwitchRow
             label={translate(
+              'auto.components.settings.prRules.resolveConflicts',
+              'Resolve conflicts with an agent'
+            )}
+            description={translate(
+              'auto.components.settings.prRules.resolveConflictsDescription',
+              'When one of your pull requests lands in the Conflicts column, starts an agent in its workspace that merges the base branch, resolves the conflicts and pushes. Never force-pushes.'
+            )}
+            checked={config.resolveConflictsWithAgent}
+            onChange={() => patch({ resolveConflictsWithAgent: !config.resolveConflictsWithAgent })}
+          />
+          <SettingsSwitchRow
+            label={translate(
               'auto.components.settings.prRules.reviewInbox',
               'Open a workspace when you are asked to review'
             )}

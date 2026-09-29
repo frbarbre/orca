@@ -6,6 +6,7 @@ import type { GitHubRepositoryIdentity } from '../../../../shared/github/pull-re
 import type { WorkspaceStatusRuleTarget } from '../../../../shared/workspace-status-rule-plan'
 import type { NewWorkspaceStatusTarget } from '../../../../shared/workspace-new-status-plan'
 import { getPendingReviewDrafts } from '../pending-review/pending-review-draft-store'
+import type { ReviewHeadSyncCandidate } from '../../../../shared/github/review-head-sync'
 
 export type WorkspaceStatusRuleScope = {
   targets: WorkspaceStatusRuleTarget[]
@@ -100,4 +101,33 @@ export function collectWorkspaceStatusRuleScope(
     scope.linkedPullRequests.push({ repo: pr.prRepo, number: pr.number })
   }
   return scope
+}
+
+export function collectReviewHeadSyncCandidates(
+  state: AppState,
+  targets: readonly WorkspaceStatusRuleTarget[]
+): ReviewHeadSyncCandidate[] {
+  const worktrees = new Map(
+    getIndexedAllWorktrees(state.worktreesByRepo).map((worktree) => [worktree.id, worktree])
+  )
+  const repoMap = getIndexedRepoMap(state.repos)
+  return targets.flatMap((target) => {
+    const worktree = worktrees.get(target.worktreeId)
+    const branch = worktree ? resolveWorktreeBranchLabel(worktree) : null
+    if (!worktree || !branch) {
+      return []
+    }
+    const repo = repoMap.get(worktree.repoId)
+    return [
+      {
+        worktreeId: worktree.id,
+        worktreePath: worktree.path,
+        branch,
+        localHead: worktree.head,
+        isLocal: !repo?.connectionId && (worktree.hostId ?? 'local') === 'local',
+        repo: target.repo,
+        prNumber: target.prNumber
+      }
+    ]
+  })
 }

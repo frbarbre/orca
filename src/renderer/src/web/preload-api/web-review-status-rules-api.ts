@@ -14,7 +14,8 @@ const EMPTY_SNAPSHOT: ReviewStatusSnapshot = {
 export function createWebReviewStatusRulesApi(): Pick<PreloadApi, 'reviewStatusRules'> {
   return {
     reviewStatusRules: {
-      snapshot: () => Promise.resolve({ ...EMPTY_SNAPSHOT, fetchedAt: Date.now() })
+      snapshot: () => Promise.resolve({ ...EMPTY_SNAPSHOT, fetchedAt: Date.now() }),
+      syncReviewHead: () => Promise.resolve({ kind: 'current' })
     }
   }
 }

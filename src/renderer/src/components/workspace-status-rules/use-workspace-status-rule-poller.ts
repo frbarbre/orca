@@ -7,8 +7,12 @@ import { buildWorkspaceStatusRulePlan } from '../../../../shared/workspace-statu
 import { applyWorkspaceStatusRulePlan } from './apply-workspace-status-rule-plan'
 import {
   collectNewWorkspaceStatusTargets,
+  collectReviewHeadSyncCandidates,
   collectWorkspaceStatusRuleScope
 } from './collect-workspace-status-rule-targets'
+import { planReviewHeadSyncs } from '../../../../shared/github/review-head-sync'
+import { setPullRequestAuthors } from './pr-author-store'
+import { launchConflictAgents } from './launch-conflict-agents'
 import { planNewWorkspaceStatusUpdates } from '../../../../shared/workspace-new-status-plan'
 import { loadPendingReviewDrafts } from '../pending-review/pending-review-draft-store'
 
@@ -75,6 +79,19 @@ async function runWorkspaceStatusRuleTick(): Promise<void> {
       : [],
     pmApprovalTeam: config.pmApprovalTeam
   })
+  setPullRequestAuthors(
+    new Map(
+      scope.targets.flatMap((target) => {
+        const author = snapshot.linkedPullRequests.find(
+          (pr) =>
+            pr.number === target.prNumber &&
+            pr.repo.owner.toLowerCase() === target.repo.owner.toLowerCase() &&
+            pr.repo.repo.toLowerCase() === target.repo.repo.toLowerCase()
+        )?.author
+        return author ? [[target.worktreeId, author] as const] : []
+      })
+    )
+  )
   const plan = buildWorkspaceStatusRulePlan({
     targets: scope.targets,
     snapshot,
@@ -82,6 +99,34 @@ async function runWorkspaceStatusRuleTick(): Promise<void> {
     existingBranches: scope.existingBranches
   })
   await applyWorkspaceStatusRulePlan(plan, config)
+  await launchConflictAgents(plan, scope.targets, snapshot, config)
+  await syncReviewWorkspaceHeads(scope.targets, snapshot)
+}
+
+async function syncReviewWorkspaceHeads(
+  targets: Parameters<typeof collectReviewHeadSyncCandidates>[1],
+  snapshot: Parameters<typeof planReviewHeadSyncs>[1]
+): Promise<void> {
+  const syncs = planReviewHeadSyncs(
+    collectReviewHeadSyncCandidates(useAppStore.getState(), targets),
+    snapshot
+  )
+  // Why one at a time: each is a fetch and a reset in a different checkout of the same repository.
+  for (const { worktreeId, ...request } of syncs) {
+    const result = await window.api.reviewStatusRules
+      .syncReviewHead(request)
+      .catch((error: unknown) => {
+        console.warn('[workspace-status-rules] review head sync failed:', worktreeId, error)
+        return null
+      })
+    if (result?.kind === 'skipped') {
+      console.info(
+        '[workspace-status-rules] kept review workspace as is:',
+        worktreeId,
+        result.reason
+      )
+    }
+  }
 }
 
 export function useWorkspaceStatusRulePoller(): void {

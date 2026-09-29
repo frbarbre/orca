@@ -5433,7 +5433,8 @@
           "cliCreated": "Hide CLI-created",
           "detachedHead": "Hide detached HEAD",
           "keepDefaultBranch": "Except default branch",
-          "keepDefaultBranchAria": "Keep the default branch visible while hiding sleeping workspaces"
+          "keepDefaultBranchAria": "Keep the default branch visible while hiding sleeping workspaces",
+          "temporaryCheckouts": "Hide temporary checkouts"
         },
         "SidebarHeader": {
           "projects": "Projects",
@@ -5508,7 +5509,8 @@
           "keepDefaultBranch": "Except default branch",
           "keepDefaultBranchAria": "Keep the default branch visible while hiding sleeping workspaces",
           "otherClients": "Hide other-client workspaces",
-          "otherClientsAria": "Hide workspaces created from other Orca clients on shared remote servers"
+          "otherClientsAria": "Hide workspaces created from other Orca clients on shared remote servers",
+          "temporaryCheckouts": "Hide temporary checkouts"
         },
         "sidebarHostOptions": {
           "3e102f111c": "All hosts",
@@ -5577,7 +5579,8 @@
           "folderPathIdentity": "Branch / folder path",
           "cli": "Orca CLI",
           "workspaceOptions": "Workspace options",
-          "linearTitle": "Linear title"
+          "linearTitle": "Linear title",
+          "prAuthor": "PR author"
         },
         "SshTargetRow": {
           "4677394048": "Connecting…",
@@ -5646,7 +5649,8 @@
           "automationCreated": "Created by automation",
           "branchIdentity": "Branch",
           "branchFolderPathIdentity": "Branch or folder path",
-          "ef18787206": "Queued for deletion"
+          "ef18787206": "Queued for deletion",
+          "prAuthor": "Pull request by {{login}}"
         },
         "WorktreeCardAgents": {
           "1b0a156717": "Agents"
@@ -12253,7 +12257,9 @@
           "newWorkspace": "New workspaces start in",
           "newWorkspaceDescription": "Where a workspace Orca creates in these projects goes before it has a pull request. Workspaces that already exist keep their column.",
           "conflicts": "Has merge conflicts",
-          "conflictsDescription": "GitHub cannot merge the branch into its base without resolving conflicts. Leave unset to skip."
+          "conflictsDescription": "GitHub cannot merge the branch into its base without resolving conflicts. Leave unset to skip.",
+          "resolveConflicts": "Resolve conflicts with an agent",
+          "resolveConflictsDescription": "When one of your pull requests lands in the Conflicts column, starts an agent in its workspace that merges the base branch, resolves the conflicts and pushes. Never force-pushes."
         }
       },
       "right": {
@@ -17481,7 +17487,9 @@
         "reviewing": "Reviewing #{{number}} — {{title}}",
         "createFailed": "Could not open a review workspace for #{{number}}: {{reason}}",
         "noMatchingProject": "No selected project matches {{repo}}.",
-        "reviewTabTitle": "Review #{{number}}"
+        "reviewTabTitle": "Review #{{number}}",
+        "conflictTabTitle": "Resolve conflicts #{{number}}",
+        "conflictAgentFailed": "Could not start an agent for the conflicts in {{name}}: {{reason}}"
       }
     },
     "i18n": {

@@ -5,6 +5,8 @@ import { CliSection } from './CliSection'
 import { GeneralEditorSettingsSection } from './GeneralEditorSettingsSection'
 import { GeneralSupportSection } from './GeneralSupportSection'
 import { GeneralUpdateSettingsSection } from './GeneralUpdateSettingsSection'
+import { SettingsTransferSection } from './SettingsTransferSection'
+import { getSettingsTransferSearchEntries } from './settings-transfer-search'
 import { GeneralWorkspaceSettingsSection } from './GeneralWorkspaceSettingsSection'
 import {
   getGeneralCliSearchEntries,
@@ -271,6 +273,9 @@ export function GeneralPane({
         wslAvailable={wslAvailable}
         wslCapabilitiesLoading={wslCapabilitiesLoading}
       />
+    ) : null,
+    matchesSettingsSearch(searchQuery, getSettingsTransferSearchEntries()) ? (
+      <SettingsTransferSection key="transfer" />
     ) : null,
     matchesSettingsSearch(searchQuery, getGeneralUpdateSearchEntries()) ? (
       <GeneralUpdateSettingsSection key="updates" />

@@ -677,6 +677,27 @@ full screen on click (`MarkdownImageLightbox.tsx`: `ExpandableMarkdownImage`,
 `ExpandableMarkdownVideo`), which replaced the old compact `expandImages` opt-in and the document
 renderer's hand-off of image clicks to `onLinkClick`.
 
+### 16. Share settings: export and import
+
+Settings → General → Share settings writes one JSON file (`format: "orca-settings"`, `version: 1`)
+a colleague imports on their machine. `src/shared/settings-transfer.ts` (+ test) decides what goes:
+
+- **Settings**: everything but a denylist and name patterns (accounts, tokens, cookies, keys,
+  secrets, paths and dirs, machine, proxy, runtime, WSL, devices, telemetry, pairing, repo and host
+  ids, migration/defaulted/dismissed bookkeeping, internal terminal switches), applied at every
+  nesting level, so a portable object still loses a private field such as a sound file's path.
+  Quick commands scoped to a project are dropped; unscoped ones travel.
+- **UI**: an allowlist of preferences — board columns, sidebar grouping and filters, card
+  properties, status bar, zoom — and the status rules minus `repoIds`, the handled-PR ledger and
+  `newWorkspaceStatusSince`.
+- **Files**: `~/.orca/keybindings.json` and `~/.orca/themes/editor-{dark,light}.json`, when they are
+  valid JSON (`main/settings-transfer/settings-transfer.ts`, + test).
+
+Import re-filters the parsed file, so an edited export cannot plant a token or a path. Settings are
+deep-merged onto the importer's own (their private nested fields survive), status rules keep their
+projects and ledger (a new-workspace column only moves workspaces created after the import), and the
+window reloads so every stored value goes through the normal hydration sanitizers.
+
 ## Verify
 
 Verify runs on GitHub, not locally: `fork-verify.yml` runs it on every pull request against `main`,

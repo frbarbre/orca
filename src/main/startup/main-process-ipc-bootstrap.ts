@@ -27,6 +27,7 @@ import type { ReviewStatusSnapshotRequest } from '../../shared/github/review-sta
 import type { SyncReviewHeadRequest } from '../../shared/github/review-head-sync'
 import { syncReviewHead } from '../github/review-head-sync'
 import { resolveGitHubAttachmentUrl, uploadReviewAsset } from '../github/review-asset-upload'
+import { registerSettingsTransferHandlers } from '../settings-transfer/settings-transfer'
 import type { UploadReviewAssetRequest } from '../../shared/github/review-asset'
 
 export function registerMainProcessIpcHandlers(): void {
@@ -37,6 +38,8 @@ export function registerMainProcessIpcHandlers(): void {
   ipcMain.handle('review-status-rules:snapshot', (_event, request: ReviewStatusSnapshotRequest) =>
     getReviewStatusSnapshot(request)
   )
+
+  registerSettingsTransferHandlers()
 
   ipcMain.handle('pending-review:submit', (_event, request: SubmitReviewVerdictRequest) =>
     submitReviewVerdict(request)

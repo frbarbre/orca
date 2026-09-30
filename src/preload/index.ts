@@ -7,6 +7,7 @@ import {
 import { appApi } from './api/app-bridge'
 import { reviewStatusRulesApi } from './api/review-status-rules-bridge'
 import { pendingReviewApi } from './api/pending-review-bridge'
+import { settingsTransferApi } from './api/settings-transfer-bridge'
 import { orcaProfilesApi } from './api/orca-profiles-bridge'
 import { platformApi } from './api/platform-bridge'
 import { wslApi } from './api/wsl-bridge'
@@ -105,6 +106,7 @@ const api = {
   app: appApi,
   reviewStatusRules: reviewStatusRulesApi,
   pendingReview: pendingReviewApi,
+  settingsTransfer: settingsTransferApi,
   orcaProfiles: orcaProfilesApi,
   platform: platformApi,
   wsl: wslApi,

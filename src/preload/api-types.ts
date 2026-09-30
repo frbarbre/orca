@@ -1,3 +1,4 @@
+import type { SettingsTransferApi } from './api/settings-transfer-bridge'
 import type {
   ClaudeAccountsApi,
   CodexAccountsApi,
@@ -92,6 +93,7 @@ export type PreloadApi = {
   hostedReview: HostedReviewApi
   reviewStatusRules: ReviewStatusRulesApi
   pendingReview: PendingReviewApi
+  settingsTransfer: SettingsTransferApi
   gl: GitLabApi
   bitbucket: BitbucketApi
   linear: LinearApi

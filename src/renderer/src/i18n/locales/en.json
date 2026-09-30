@@ -401,6 +401,9 @@
         "submitDesktopOnly": "Reviews are submitted from the desktop app.",
         "editDesktopOnly": "Comments are edited from the desktop app.",
         "attachDesktopOnly": "Attachments are uploaded from the desktop app."
+      },
+      "settingsTransfer": {
+        "desktopOnly": "Settings are exported and imported from the desktop app."
       }
     },
     "store": {
@@ -12278,6 +12281,31 @@
           "review": "Review",
           "title": "Top bar actions",
           "description": "Prompts for the buttons beside the right sidebar toggle. Supports {{branch}}, {{baseRef}}, {{worktreePath}}, {{prNumber}}, {{prUrl}}, {{prTitle}}, {{draftMode}}, {{templateRule}} and {{prInstructions}}. Resolve conflicts uses the Source Control conflict template. Clear a box to go back to the built-in prompt."
+        },
+        "transfer": {
+          "summarySettings": "{{count}} settings",
+          "summaryUi": "{{count}} layout preferences",
+          "summaryRules": "automations",
+          "summaryKeybindings": "keybindings",
+          "summaryThemes": "{{count}} editor themes",
+          "exported": "Settings exported to {{path}}",
+          "importFailed": "Import failed: {{reason}}",
+          "title": "Share settings",
+          "description": "Export your preferences, board columns, automations, keybindings and editor themes to a file a colleague can import. Accounts, tokens, API keys, local paths and your projects are left out.",
+          "export": "Export settings…",
+          "import": "Import settings…",
+          "confirm": "This replaces your {{summary}}. Your accounts, projects and workspaces stay as they are. Orca reloads afterwards.",
+          "cancel": "Cancel",
+          "apply": "Import and reload",
+          "search": {
+            "title": "Share settings",
+            "description": "Export settings to a file, or import a colleague’s.",
+            "export": "export",
+            "import": "import",
+            "share": "share",
+            "backup": "backup",
+            "config": "config"
+          }
         }
       },
       "right": {

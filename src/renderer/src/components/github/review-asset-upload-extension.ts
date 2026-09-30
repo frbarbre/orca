@@ -5,18 +5,12 @@ import { toast } from 'sonner'
 import { translate } from '@/i18n/i18n'
 import { createBrowserUuid } from '@/lib/browser-uuid'
 import { reviewAssetKind } from '../../../../shared/github/review-asset'
+import type { GitHubRepositoryIdentity } from '../../../../shared/github/pull-request-types'
 
 export type ReviewAssetUploadOptions = {
   isEnabled: () => boolean
   onUploadingChange: (uploading: boolean) => void
-}
-
-let configured: Promise<boolean> | null = null
-function isUploadConfigured(): Promise<boolean> {
-  configured ??=
-    window.api?.pendingReview?.assetUploadConfigured?.().catch(() => false) ??
-    Promise.resolve(false)
-  return configured
+  resolveRepo: () => Promise<GitHubRepositoryIdentity | null>
 }
 
 function mediaFiles(list: FileList | null | undefined): File[] {
@@ -65,12 +59,25 @@ function findPendingVideo(state: EditorState, id: string): number | null {
   return found?.[0]?.from ?? null
 }
 
-async function uploadFile(file: File): Promise<{ url: string } | { error: string }> {
+async function uploadFile(
+  file: File,
+  resolveRepo: () => Promise<GitHubRepositoryIdentity | null>
+): Promise<{ url: string } | { error: string }> {
   try {
+    const repo = await resolveRepo()
+    if (!repo) {
+      return {
+        error: translate(
+          'auto.components.github.reviewAssets.noRepository',
+          'This workspace has no GitHub repository to attach the file to.'
+        )
+      }
+    }
     const result = await window.api.pendingReview.uploadAsset({
       name: file.name,
       contentType: file.type,
-      bytes: new Uint8Array(await file.arrayBuffer())
+      bytes: new Uint8Array(await file.arrayBuffer()),
+      repo
     })
     return result.ok ? { url: result.url } : { error: result.error }
   } catch (error) {
@@ -83,7 +90,11 @@ export const ReviewAssetUpload = Extension.create<ReviewAssetUploadOptions>({
   priority: 1000,
 
   addOptions() {
-    return { isEnabled: () => true, onUploadingChange: () => undefined }
+    return {
+      isEnabled: () => true,
+      onUploadingChange: () => undefined,
+      resolveRepo: () => Promise.resolve(null)
+    }
   },
 
   addProseMirrorPlugins() {
@@ -95,16 +106,7 @@ export const ReviewAssetUpload = Extension.create<ReviewAssetUploadOptions>({
       options.onUploadingChange(pending > 0)
     }
 
-    const attach = async (files: File[], at: number | null): Promise<void> => {
-      if (!(await isUploadConfigured())) {
-        toast.error(
-          translate(
-            'auto.components.github.reviewAssets.notConfigured',
-            'Uploads are not set up on this computer.'
-          )
-        )
-        return
-      }
+    const attach = (files: File[], at: number | null): void => {
       for (const file of files) {
         const id = createBrowserUuid()
         const kind = reviewAssetKind(file.type)
@@ -138,7 +140,7 @@ export const ReviewAssetUpload = Extension.create<ReviewAssetUploadOptions>({
           editor.view.dispatch(editor.state.tr.setMeta(pendingVideoKey, meta))
         }
         settle(1)
-        void uploadFile(file).then((result) => {
+        void uploadFile(file, options.resolveRepo).then((result) => {
           if (editor.isDestroyed) {
             settle(-1)
             return
@@ -213,7 +215,7 @@ export const ReviewAssetUpload = Extension.create<ReviewAssetUploadOptions>({
             if (files.length === 0 || !options.isEnabled()) {
               return false
             }
-            void attach(files, null)
+            attach(files, null)
             return true
           },
           handleDrop: (view, event) => {
@@ -222,7 +224,7 @@ export const ReviewAssetUpload = Extension.create<ReviewAssetUploadOptions>({
               return false
             }
             const target = view.posAtCoords({ left: event.clientX, top: event.clientY })
-            void attach(files, target?.pos ?? null)
+            attach(files, target?.pos ?? null)
             return true
           }
         }

@@ -20,6 +20,8 @@ import {
   onImageCacheInvalidated
 } from './useLocalImageSrc'
 import type { RuntimeFileOperationArgs } from '@/runtime/runtime-file-client'
+import { resolveGitHubAttachmentSrc } from '@/lib/github-attachment-src'
+import { isGitHubAttachmentAssetUrl } from '../../../../shared/github/review-asset'
 import {
   createRawMarkdownHtmlBlock,
   createRawMarkdownHtmlInline,
@@ -159,6 +161,14 @@ export function createRichMarkdownExtensions({
                 // authorization; a failed load should render missing, not
                 // hand the raw path back to Chromium.
                 img.removeAttribute('src')
+              })
+            } else if (isGitHubAttachmentAssetUrl(src)) {
+              // Why: a private repository's attachment answers 404 without a github.com session;
+              // the previous src (an upload's local preview) stays up until the signed URL arrives.
+              void resolveGitHubAttachmentSrc(src).then((resolved) => {
+                if (currentSrc === src) {
+                  img.src = resolved ?? src
+                }
               })
             } else if (src) {
               img.src = src

@@ -9,7 +9,6 @@ import {
   isGitHubUserAttachmentVideoLink
 } from './comment-markdown-github-attachment-media'
 import { ExpandableMarkdownImage } from './MarkdownImageLightbox'
-import { isReviewAssetImageUrl } from '../../../../shared/github/review-asset'
 
 export type CommentMarkdownLinkClickHandler = (
   event: React.MouseEvent<HTMLElement>,
@@ -171,8 +170,7 @@ export function createCompactCommentMarkdownComponents(
       if (isGitHubUserAttachmentUrl(src)) {
         return <GitHubUserAttachmentImage src={src} alt={alt} className={COMPACT_MEDIA_CLASS} />
       }
-      // Why trusted: the review-assets bucket only holds what Orca users uploaded for review comments.
-      if (!isTrustedCompactImageSrc(src) && !isReviewAssetImageUrl(src)) {
+      if (!isTrustedCompactImageSrc(src)) {
         if (!src) {
           return alt ? <span>{alt}</span> : null
         }

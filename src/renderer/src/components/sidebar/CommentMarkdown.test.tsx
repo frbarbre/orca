@@ -114,13 +114,11 @@ describe('CommentMarkdown', () => {
     expect(markup).toContain('max-h-32')
   })
 
-  it('renders bare GitHub user attachment links as videos that open full screen', () => {
+  it('holds a bare GitHub attachment link as media while its signed URL resolves', () => {
     const url = 'https://github.com/user-attachments/assets/ce11040a-fb66-4289-927f-547b16dfc488'
     const markup = renderToStaticMarkup(<CommentMarkdown variant="document" content={url} />)
 
-    expect(markup).toContain('<video')
-    expect(markup).toContain(`src="${url}"`)
-    expect(markup).toContain('aria-label="Play video"')
+    expect(markup).toContain('animate-pulse')
     expect(markup).not.toContain(`href="${url}" class="break-all`)
   })
 

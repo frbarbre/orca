@@ -1,5 +1,5 @@
 import React from 'react'
-import { isReviewAssetVideoUrl } from '../../../../shared/github/review-asset'
+import { useGitHubAttachmentSrc } from '@/lib/github-attachment-src'
 import { ExpandableMarkdownImage, ExpandableMarkdownVideo } from './MarkdownImageLightbox'
 
 export function isGitHubUserAttachmentUrl(href: string | undefined): href is string {
@@ -27,10 +27,7 @@ export function isGitHubUserAttachmentVideoLink(
   href: string | undefined,
   children: React.ReactNode
 ): href is string {
-  return (
-    (isGitHubUserAttachmentUrl(href) || isReviewAssetVideoUrl(href)) &&
-    isBareAutolink(children, href)
-  )
+  return isGitHubUserAttachmentUrl(href) && isBareAutolink(children, href)
 }
 
 // Shared fallback link for attachments that can't render inline (see the image
@@ -55,6 +52,10 @@ function AttachmentFallbackLink({
   )
 }
 
+function AttachmentPending({ className }: { className: string }): React.ReactElement {
+  return <span className={`my-3 block h-24 w-40 animate-pulse bg-muted ${className}`} />
+}
+
 export function GitHubUserAttachmentVideo({
   href,
   children,
@@ -65,14 +66,18 @@ export function GitHubUserAttachmentVideo({
   className?: string
 }): React.ReactElement {
   const [failed, setFailed] = React.useState(false)
+  const resolved = useGitHubAttachmentSrc(href)
 
-  if (failed) {
+  if (failed || resolved.status === 'failed') {
     return <AttachmentFallbackLink href={href}>{children}</AttachmentFallbackLink>
+  }
+  if (resolved.status === 'pending') {
+    return <AttachmentPending className="rounded-md" />
   }
 
   return (
     <ExpandableMarkdownVideo
-      src={href}
+      src={resolved.src}
       label={React.Children.toArray(children).join('').trim() || href}
       className={className}
       onError={() => setFailed(true)}
@@ -90,16 +95,20 @@ export function GitHubUserAttachmentImage({
   className?: string
 }): React.ReactElement {
   const [failed, setFailed] = React.useState(false)
+  const resolved = useGitHubAttachmentSrc(src)
 
-  // Why: private-repo attachment images can't load cross-origin without the
-  // user's GitHub session cookies, so drop to a link that opens where that session exists.
-  if (failed) {
+  // Why a link on failure: one that main cannot resolve (no gh login, no access) still opens in a
+  // browser where a github.com session may exist.
+  if (failed || resolved.status === 'failed') {
     return <AttachmentFallbackLink href={src}>{alt?.trim() || src}</AttachmentFallbackLink>
+  }
+  if (resolved.status === 'pending') {
+    return <AttachmentPending className="rounded-md" />
   }
 
   return (
     <ExpandableMarkdownImage
-      src={src}
+      src={resolved.src}
       alt={alt}
       className={className}
       onError={() => setFailed(true)}

@@ -50,7 +50,7 @@ export type PendingReviewApi = {
     commits: PullRequestCommitSummary[]
     viewerReviews: ViewerReviewSummary[]
   }>
-  /** Uploads a pasted or dropped image or video to the public review-assets bucket. */
+  /** Uploads a pasted or dropped image or video as a GitHub attachment on the repository. */
   uploadAsset: (request: UploadReviewAssetRequest) => Promise<UploadReviewAssetResult>
-  assetUploadConfigured: () => Promise<boolean>
+  resolveAssetUrl: (href: string) => Promise<string | null>
 }

@@ -26,7 +26,7 @@ import type {
 import type { ReviewStatusSnapshotRequest } from '../../shared/github/review-status-snapshot-types'
 import type { SyncReviewHeadRequest } from '../../shared/github/review-head-sync'
 import { syncReviewHead } from '../github/review-head-sync'
-import { isReviewAssetUploadConfigured, uploadReviewAsset } from '../github/review-asset-upload'
+import { resolveGitHubAttachmentUrl, uploadReviewAsset } from '../github/review-asset-upload'
 import type { UploadReviewAssetRequest } from '../../shared/github/review-asset'
 
 export function registerMainProcessIpcHandlers(): void {
@@ -101,7 +101,9 @@ export function registerMainProcessIpcHandlers(): void {
   ipcMain.handle('pending-review:asset-upload', (_event, request: UploadReviewAssetRequest) =>
     uploadReviewAsset(request)
   )
-  ipcMain.handle('pending-review:asset-configured', () => isReviewAssetUploadConfigured())
+  ipcMain.handle('pending-review:asset-resolve', (_event, href: string) =>
+    resolveGitHubAttachmentUrl(href)
+  )
 
   ipcMain.handle(
     'pending-review:context',

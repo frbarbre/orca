@@ -2808,9 +2808,9 @@
           "member": "Member"
         },
         "reviewAssets": {
-          "notConfigured": "Uploads are not set up on this computer.",
           "uploadingLine": "Uploading {{name}}…",
-          "uploadFailed": "Could not upload {{name}}. {{reason}}"
+          "uploadFailed": "Could not upload {{name}}. {{reason}}",
+          "noRepository": "This workspace has no GitHub repository to attach the file to."
         }
       },
       "linear": {

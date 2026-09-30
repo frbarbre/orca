@@ -631,9 +631,9 @@ hidden (`showToolbar={false}`), grown to its content instead of scrolling (`grow
 extensions passed through the new `editorExtensions` prop:
 
 - `review-asset-upload-extension.ts` takes pasted or dropped PNG/JPEG/GIF/WebP/MP4/MOV/WebM. An
-  image shows at once from a `blob:` preview and swaps to its public URL when the upload lands. A
+  image shows at once from a `blob:` preview and swaps to its attachment URL when the upload lands. A
   video shows as an "Uploading …" widget decoration after its paragraph, never document text, and
-  becomes its bare link on its own line when the upload lands (GitHub strips `<video>`). A text
+  becomes its bare attachment link on its own line, which GitHub plays as a video. A text
   placeholder once went out in a review: autolink split `clip.mov` (`.mov` is a TLD) so the swap never
   found it. A pending counter drives `onUploadingChange`, and the wrapper also holds submit while the
   markdown still carries a `](blob:` link. It is off for agent notes, which stay local.
@@ -644,19 +644,32 @@ A focused contenteditable is not an owned text control, so the app-menu Cmd+V ro
 (`lib/app-menu-paste.ts`) falls back to native paste, and the paste event carries the clipboard image.
 The old textarea boxes read clipboard text only, which is why screenshots never pasted into them.
 
-Uploads go through `main/github/review-asset-upload.ts`: it reads `review-assets.json` (endpoint +
-token, mode 600) from userData, asks the Helios signer for a presigned PUT, and uploads the bytes. The
-S3 keys never leave the cluster; the signer (helios-k8s `applications/base/review-assets`, tailnet-only)
-only issues 15-minute URLs for one new object in the public `helios-review-assets` bucket (helios-iac
-`storage/review-assets`), with the content type and length signed in and a media-only allow-list.
+Files become **GitHub attachments**, the same kind the web editor and `gh --attach` (gh 2.99)
+make, so GitHub renders them inline and nothing is hosted outside GitHub. `main/github/review-asset-
+upload.ts` takes the ambient gh token (`resolveReleaseApiToken`), looks up the repository's numeric id
+and push permission (`GET /repos/{owner}/{repo}`), and posts the bytes to
+`https://uploads.github.com/user-attachments/assets?name=&content_type=&repository_id=`, which answers
+`{ url: "https://github.com/user-attachments/assets/<uuid>" }`. It needs write access (the endpoint
+answers 404 otherwise) and takes images up to 10 MB and videos up to 100 MB. The repository is the
+pull request's `prRepo`, else the workspace remote's slug, so a fork's attachments belong upstream.
+
+A private repository's attachment answers 404 without a github.com session, so the renderer never
+loads it directly: `resolveGitHubAttachmentUrl` sends the token to exactly
+`https://github.com/user-attachments/assets/<uuid>`, reads the 302 to GitHub's signed file storage
+(`*.amazonaws.com` / `*.githubusercontent.com`, valid 5 minutes, cached 4), and hands that back
+(`pending-review:asset-resolve`). `lib/github-attachment-src.ts` wraps it for the comment media
+components and the editor's image node view (`rich-markdown-extensions.ts`), which keeps an upload's
+local preview up until the signed URL arrives. An attachment it cannot resolve renders as a link.
+
+An earlier version uploaded to a public Hetzner bucket through a Helios signer; that was removed with
+its infrastructure, so the few bucket links posted in that window no longer load.
 
 The preload's document-level file-drop handler skips `[data-review-asset-drop]` elements
 (`preload-runtime-support.ts`) so these boxes receive the File objects.
 
-Rendering: the compact comment markdown (PR panel, inline diff threads) trusts images from the bucket
-host (`isReviewAssetImageUrl`) and GitHub user attachments besides its app-managed `blob:`/`data:`
-images; every other remote image still renders as a link. Bare video links from the bucket or GitHub
-attachments render as videos in both the compact and document renderers. Every image and video opens
+Rendering: the compact comment markdown (PR panel, inline diff threads) shows GitHub attachment
+images besides its app-managed `blob:`/`data:` images; every other remote image still renders as a
+link. Bare GitHub attachment links render as videos in both the compact and document renderers. Every image and video opens
 full screen on click (`MarkdownImageLightbox.tsx`: `ExpandableMarkdownImage`,
 `ExpandableMarkdownVideo`), which replaced the old compact `expandImages` opt-in and the document
 renderer's hand-off of image clicks to `onLinkClick`.

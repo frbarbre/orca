@@ -5,6 +5,8 @@ import { GitHubMarkdownComposer } from './GitHubMarkdownComposer'
 import { filterGitHubMentionOptions } from './github-mention-option-filter'
 import { GitHubMentionList, useActiveRepoMentionOptions } from './github-mention-autocomplete'
 import { ReviewAssetUpload } from './review-asset-upload-extension'
+import { useAppStore } from '@/store'
+import { usePRCommentScope } from '@/components/pr-comments/use-pr-comment-scope'
 import { ReviewMention, type MentionQueryState } from './review-mention-extension'
 
 function sameQuery(a: MentionQueryState | null, b: MentionQueryState | null): boolean {
@@ -40,6 +42,9 @@ export function ReviewMarkdownComposer({
   const [active, setActive] = useState(0)
   const editorRef = useRef<Editor | null>(null)
   const options = useActiveRepoMentionOptions(mentions && query !== null)
+  const activeWorktreeId = useAppStore((state) => state.activeWorktreeId)
+  const scope = usePRCommentScope(activeWorktreeId)
+  const uploadTarget = useRef({ repo: scope.repo, prRepo: scope.pr?.prRepo })
   const suggestions = useMemo(
     () => (mentions && query ? filterGitHubMentionOptions([...options], query.query) : []),
     [mentions, options, query]
@@ -68,6 +73,7 @@ export function ReviewMarkdownComposer({
   useEffect(() => {
     uploadingHandler.current = onUploadingChange
     uploadsEnabled.current = uploads
+    uploadTarget.current = { repo: scope.repo, prRepo: scope.pr?.prRepo }
     keyHandler.current = (event) => {
       if (!open) {
         if (event.key === 'Escape' && onEscape) {
@@ -101,7 +107,20 @@ export function ReviewMarkdownComposer({
     () => [
       ReviewAssetUpload.configure({
         isEnabled: () => uploadsEnabled.current,
-        onUploadingChange: setExtensionUploading
+        onUploadingChange: setExtensionUploading,
+        // Why the pull request's repository first: a fork's pull request lives upstream, and the
+        // attachment has to belong to the repository its comment is posted on.
+        resolveRepo: async () => {
+          const { repo, prRepo } = uploadTarget.current
+          if (prRepo) {
+            return prRepo
+          }
+          return repo
+            ? await window.api.gh
+                .repoSlug({ repoPath: repo.path, repoId: repo.id })
+                .catch(() => null)
+            : null
+        }
       }),
       ReviewMention.configure({
         onQueryChange: (next) => {

@@ -11,7 +11,7 @@ vi.mock('sonner', () => ({
   toast: { error: vi.fn() }
 }))
 
-const VIDEO_URL = 'https://helios-review-assets.fsn1.your-objectstorage.com/assets/2026/09/a.mov'
+const VIDEO_URL = 'https://github.com/user-attachments/assets/4d400186-c984-470b-b03f-2a44d5d034c5'
 
 let editor: Editor | null = null
 let finishUpload: (result: { ok: true; url: string; kind: 'video' }) => void = () => undefined
@@ -23,7 +23,10 @@ function mountEditor(onUploadingChange: (uploading: boolean) => void): Editor {
     element: host,
     extensions: [
       ...createRichMarkdownExtensions({ codec: createRichMarkdownEditorCodec() }),
-      ReviewAssetUpload.configure({ onUploadingChange })
+      ReviewAssetUpload.configure({
+        onUploadingChange,
+        resolveRepo: () => Promise.resolve({ owner: 'acme', repo: 'widgets' })
+      })
     ],
     content: 'Please test this.',
     contentType: 'markdown'
@@ -47,7 +50,6 @@ describe('ReviewAssetUpload', () => {
   beforeEach(() => {
     vi.stubGlobal('api', {
       pendingReview: {
-        assetUploadConfigured: () => Promise.resolve(true),
         uploadAsset: () =>
           new Promise((resolve) => {
             finishUpload = resolve

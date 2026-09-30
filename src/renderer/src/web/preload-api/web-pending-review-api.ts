@@ -47,7 +47,7 @@ export function createWebPendingReviewApi(): Pick<PreloadApi, 'pendingReview'> {
             'Attachments are uploaded from the desktop app.'
           )
         }),
-      assetUploadConfigured: () => Promise.resolve(false)
+      resolveAssetUrl: () => Promise.resolve(null)
     }
   }
 }

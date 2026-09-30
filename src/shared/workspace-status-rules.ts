@@ -47,6 +47,26 @@ function awaitsPmApproval(
   return pending.length > 0 && pending.every((login) => pmTeamLogins.has(login))
 }
 
+// Why: the approval gate is a CI check that runs a while after the last approval; until it does, a
+// pull request a PM and every other reviewer approved is ready, not back in review.
+function isApprovedByPmAndEveryone(
+  pr: ReviewSnapshotPullRequest,
+  pmTeamLogins: ReadonlySet<string>
+): boolean {
+  if (pmTeamLogins.size === 0 || pendingUserReviewerLogins(pr).length > 0) {
+    return false
+  }
+  const author = pr.author?.toLowerCase()
+  const verdicts = (pr.latestOpinionatedReviews ?? pr.latestReviews).filter(
+    (review) => review.login.toLowerCase() !== author
+  )
+  return (
+    verdicts.length > 0 &&
+    verdicts.every((review) => review.state === 'APPROVED') &&
+    verdicts.some((review) => pmTeamLogins.has(review.login.toLowerCase()))
+  )
+}
+
 export function resolveWorkspaceStatusRuleCondition(
   pr: ReviewSnapshotPullRequest,
   config: Pick<WorkspaceStatusRuleConfig, 'mergingCheckName'> &
@@ -81,7 +101,10 @@ export function resolveWorkspaceStatusRuleCondition(
   if (hasUnansweredChangeRequest(pr)) {
     return 'changes-requested'
   }
-  if (hasPassingNamedCheck(pr, config.mergingCheckName)) {
+  if (
+    hasPassingNamedCheck(pr, config.mergingCheckName) ||
+    isApprovedByPmAndEveryone(pr, pmTeamLogins)
+  ) {
     return 'merging'
   }
   if (awaitsPmApproval(pr, pmTeamLogins)) {

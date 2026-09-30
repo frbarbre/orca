@@ -136,6 +136,44 @@ describe('resolveWorkspaceStatusRuleCondition', () => {
     expect(resolveWorkspaceStatusRuleCondition(pr, config, pmTeam, viewer)).toBe('merging')
   })
 
+  it('reports merging once a PM and every other reviewer approved, before the gate runs', () => {
+    const pr = makePR({
+      latestReviews: [
+        { login: 'linear-code', state: 'COMMENTED', commitOid: null },
+        { login: 'PmPerson', state: 'APPROVED', commitOid: null },
+        { login: 'reviewer', state: 'APPROVED', commitOid: null }
+      ],
+      latestOpinionatedReviews: [
+        { login: 'PmPerson', state: 'APPROVED', commitOid: null },
+        { login: 'reviewer', state: 'APPROVED', commitOid: null }
+      ],
+      checks: [{ name: 'Reviews satisfied', state: 'pending' }]
+    })
+
+    expect(resolveWorkspaceStatusRuleCondition(pr, config, pmTeam, viewer)).toBe('merging')
+  })
+
+  it('stays in review when everyone approved but no PM did, or someone is still pending', () => {
+    const withoutPm = makePR({
+      latestReviews: [{ login: 'reviewer', state: 'APPROVED', commitOid: null }]
+    })
+    const stillPending = makePR({
+      latestReviews: [{ login: 'PmPerson', state: 'APPROVED', commitOid: null }],
+      requestedReviewers: [{ kind: 'user', login: 'other' }]
+    })
+
+    expect(resolveWorkspaceStatusRuleCondition(withoutPm, config, pmTeam, viewer)).toBe('review')
+    expect(resolveWorkspaceStatusRuleCondition(stillPending, config, pmTeam, viewer)).toBe('review')
+    expect(
+      resolveWorkspaceStatusRuleCondition(
+        makePR({ latestReviews: [{ login: 'PmPerson', state: 'APPROVED', commitOid: null }] }),
+        config,
+        noPmTeam,
+        viewer
+      )
+    ).toBe('review')
+  })
+
   it('reports PM approval when a PM is the only reviewer left', () => {
     const pr = makePR({
       requestedReviewers: [{ kind: 'user', login: 'pmperson' }],

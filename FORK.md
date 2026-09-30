@@ -216,6 +216,11 @@ Dev builds (`pnpm dev`) do not run the poller unless `localStorage['orca.devStat
 share the workspace folder and GitHub account with the installed app, and a dev build that ticked
 first once created a review workspace and ran its agent where nobody could see it.
 
+**Merging** is the named approval-gate check passing, or — since that check runs a while after the
+last approval — a PM team member and every other reviewer having approved with nobody still pending
+(plain comments do not count). Without the second half, a pull request the PM just approved fell back
+to Review until the gate ran.
+
 **Conflicts** comes right after "You are the reviewer", so your own pull request with merge conflicts
 lands there even as a draft. It reads GitHub's `mergeable`; while that is `UNKNOWN` (recomputing
 after a push) the card holds still for a poll instead of bouncing out and back. Left unmapped, the

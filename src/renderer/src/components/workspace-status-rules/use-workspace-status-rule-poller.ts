@@ -129,8 +129,25 @@ async function syncReviewWorkspaceHeads(
   }
 }
 
+const DEV_OPT_IN_STORAGE_KEY = 'orca.devStatusRules'
+
+// Why off in dev builds: they share the workspace folder and GitHub account with the installed app, so
+// both would act on the same review request and whichever ticks first runs the agent where you can't see it.
+function isDevBuildWithoutOptIn(): boolean {
+  if (!import.meta.env.DEV) {
+    return false
+  }
+  try {
+    return window.localStorage.getItem(DEV_OPT_IN_STORAGE_KEY) !== '1'
+  } catch {
+    return true
+  }
+}
+
 export function useWorkspaceStatusRulePoller(): void {
-  const enabled = useAppStore((state) => state.workspaceStatusRules.enabled)
+  const enabled = useAppStore(
+    (state) => state.workspaceStatusRules.enabled && !isDevBuildWithoutOptIn()
+  )
 
   useEffect(() => {
     if (!enabled) {

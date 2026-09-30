@@ -212,6 +212,10 @@ Watches each workspace's linked pull request and sets its board column, deletes 
 its pull request is merged or closed, and opens a review workspace when someone asks you to review.
 Configured per project under Settings → Automations.
 
+Dev builds (`pnpm dev`) do not run the poller unless `localStorage['orca.devStatusRules'] = '1'`: they
+share the workspace folder and GitHub account with the installed app, and a dev build that ticked
+first once created a review workspace and ran its agent where nobody could see it.
+
 **Conflicts** comes right after "You are the reviewer", so your own pull request with merge conflicts
 lands there even as a draft. It reads GitHub's `mergeable`; while that is `UNKNOWN` (recomputing
 after a push) the card holds still for a poll instead of bouncing out and back. Left unmapped, the
@@ -596,6 +600,10 @@ agent in a new tab with a prompt:
   PR instructions and PR creation defaults (draft, template). Resolve conflicts uses upstream's
   conflict prompts and the Source Control `resolveConflicts` template instead.
 - GitHub pull requests only (read from `prCache`).
+- The unpushed count is `remoteStatusesByWorktree`. For a worktree with a push target, upstream's
+  automatic poll caches that comparison for 60s; the cache key also carries the porcelain tracking
+  counts (`push-target-upstream-refresh-cache.ts`), so a push from a terminal clears Commit & push on
+  the next poll instead of after the TTL.
 
 ### 14. Pick where the review diff starts
 

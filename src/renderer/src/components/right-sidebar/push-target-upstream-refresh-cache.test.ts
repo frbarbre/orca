@@ -109,6 +109,20 @@ describe('push-target upstream refresh cache', () => {
     })
   })
 
+  it('re-checks the publish target once a push outside Orca moves the tracking counts', async () => {
+    const tracking = { hasUpstream: true, upstreamName: 'fork/feature/pr-head', behind: 0 }
+    stubGitStatus([
+      { ...unchangedStatus, upstreamStatus: { ...tracking, ahead: 1 } },
+      { ...unchangedStatus, upstreamStatus: { ...tracking, ahead: 0 } }
+    ])
+    const deps = makeDeps()
+
+    await refreshAutomatically({ deps })
+    await refreshAutomatically({ deps })
+
+    expect(deps.fetchUpstreamStatus).toHaveBeenCalledTimes(2)
+  })
+
   it('retries after a failed push-target refresh invalidates an unchanged automatic poll cache hit', async () => {
     stubGitStatus([unchangedStatus])
     const deps = makeDeps()

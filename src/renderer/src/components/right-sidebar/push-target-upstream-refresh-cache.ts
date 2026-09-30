@@ -31,8 +31,16 @@ function getPushTargetKey(pushTarget: GitPushTarget): readonly unknown[] {
   ]
 }
 
+// Why the tracking counts: a push from a terminal moves no HEAD, only the remote-tracking ref,
+// and without them the cached "ahead" outlives the push until the TTL runs out.
 function getStatusIdentityKey(status: GitStatusResult): readonly unknown[] {
-  return [status.head ?? null, status.branch ?? null]
+  return [
+    status.head ?? null,
+    status.branch ?? null,
+    status.upstreamStatus?.upstreamName ?? null,
+    status.upstreamStatus?.ahead ?? null,
+    status.upstreamStatus?.behind ?? null
+  ]
 }
 
 function getCacheScopeKey({

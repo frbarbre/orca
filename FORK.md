@@ -629,9 +629,12 @@ hidden (`showToolbar={false}`), grown to its content instead of scrolling (`grow
 extensions passed through the new `editorExtensions` prop:
 
 - `review-asset-upload-extension.ts` takes pasted or dropped PNG/JPEG/GIF/WebP/MP4/MOV/WebM. An
-  image shows at once from a `blob:` preview and swaps to its public URL when the upload lands; a
-  video shows as a line that becomes its bare link (GitHub strips `<video>`). A pending counter drives
-  `onUploadingChange`, which holds every submit. It is off for agent notes, which stay local.
+  image shows at once from a `blob:` preview and swaps to its public URL when the upload lands. A
+  video shows as an "Uploading …" widget decoration after its paragraph, never document text, and
+  becomes its bare link on its own line when the upload lands (GitHub strips `<video>`). A text
+  placeholder once went out in a review: autolink split `clip.mov` (`.mov` is a TLD) so the swap never
+  found it. A pending counter drives `onUploadingChange`, and the wrapper also holds submit while the
+  markdown still carries a `](blob:` link. It is off for agent notes, which stay local.
 - `review-mention-extension.ts` reports an `@query` before the caret; the wrapper shows the shared
   `GitHubMentionList` of the active repository's members.
 

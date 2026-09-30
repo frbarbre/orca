@@ -103,6 +103,12 @@
   min-height: 3rem;
 }
 
+.review-asset-pending-video {
+  display: block;
+  color: var(--muted-foreground);
+  font-style: italic;
+}
+
 .github-markdown-composer-image-row {
   display: flex;
   align-items: center;

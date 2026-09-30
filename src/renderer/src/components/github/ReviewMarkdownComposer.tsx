@@ -57,6 +57,13 @@ export function ReviewMarkdownComposer({
   // Why refs: the extensions are built once so the editor is never recreated.
   const keyHandler = useRef<(event: KeyboardEvent) => boolean>(() => false)
   const uploadingHandler = useRef(onUploadingChange)
+  const [extensionUploading, setExtensionUploading] = useState(false)
+  // Why the body check too: a local preview link in the markdown means an upload has not landed,
+  // whatever the counter says, and sending it would post a link nobody else can open.
+  const blocked = extensionUploading || value.includes('](blob:')
+  useEffect(() => {
+    uploadingHandler.current?.(blocked)
+  }, [blocked])
   const uploadsEnabled = useRef(uploads)
   useEffect(() => {
     uploadingHandler.current = onUploadingChange
@@ -94,7 +101,7 @@ export function ReviewMarkdownComposer({
     () => [
       ReviewAssetUpload.configure({
         isEnabled: () => uploadsEnabled.current,
-        onUploadingChange: (uploading) => uploadingHandler.current?.(uploading)
+        onUploadingChange: setExtensionUploading
       }),
       ReviewMention.configure({
         onQueryChange: (next) => {

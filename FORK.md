@@ -592,9 +592,11 @@ Beside the right sidebar toggle (`right-sidebar/index.tsx` composes them into `c
 when the branch has an open or draft pull request, a Review button. Each launches the review-inbox
 agent in a new tab with a prompt:
 
-- Priority (`src/shared/workspace-action.ts`, + test): a merge stopped on conflicts, then uncommitted
-  or unpushed work (Commit & push), then pull request conflicts, then a draft (Ready for review),
-  then no pull request (Create PR). Nothing on the default branch or an open, clean pull request.
+- Priority (`src/shared/workspace-action.ts`, + test): a merge stopped on conflicts, then no pull
+  request (Create PR, whose prompt commits and pushes the work first), then uncommitted or unpushed
+  work (Commit & push), then pull request conflicts, then a draft (Ready for review). Nothing on the
+  default branch or an open, clean pull request. Create PR waits for the `prCache` lookup to answer
+  (an entry without an error), so a branch whose pull request has not loaded yet shows Commit & push.
 - Prompts (`src/shared/workspace-action-prompts.ts`, + test) are editable under Automations → Top bar
   actions and stored in `workspaceStatusRules.actionPrompts`; Create PR fills in the Source Control
   PR instructions and PR creation defaults (draft, template). Resolve conflicts uses upstream's

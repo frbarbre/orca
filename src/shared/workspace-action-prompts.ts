@@ -32,7 +32,7 @@ export const DEFAULT_WORKSPACE_ACTION_PROMPTS: Record<WorkspaceActionPromptId, s
 Reply with the commits you made and the result of the push.`,
   createPullRequest: `Open a pull request for branch {{branch}} in {{worktreePath}}, targeting {{baseRef}}.
 
-- Make sure everything is committed and the branch is pushed; push it (never force) if it is not.
+- First commit and push all the work: start with git status and git diff, group the changes into focused commits with clear messages that follow the repository's conventions, and push the branch (never force), setting its upstream if it has none.
 - Write the title and description from the commits and the diff against {{baseRef}}.
 - {{templateRule}}
 - Create it {{draftMode}} with gh pr create.

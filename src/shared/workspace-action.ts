@@ -13,26 +13,30 @@ export type WorkspaceActionInput = {
   hasLocalConflicts: boolean
   isDefaultBranch: boolean
   pullRequest: { state: PRState; conflicting: boolean } | null
+  // Why: an unanswered lookup is not "no pull request", and must not offer Create PR.
+  pullRequestKnown: boolean
 }
 
-// Why this order: unfinished local work comes first, then what blocks the pull request, then the
-// next step in its life. A merge stopped on conflicts cannot be committed, so it outranks everything.
+// Why this order: a merge stopped on conflicts cannot be committed, so it outranks everything. A
+// branch with no pull request goes straight to Create PR, whose prompt commits and pushes the work
+// too. Otherwise unfinished local work comes first, then what blocks the pull request, then its
+// next step.
 export function resolveWorkspaceAction(input: WorkspaceActionInput): WorkspaceActionKind | null {
   if (input.hasLocalConflicts) {
     return 'resolve-conflicts'
   }
+  const pr = input.pullRequest
+  if (!pr && input.pullRequestKnown && !input.isDefaultBranch) {
+    return 'create-pull-request'
+  }
   if (input.hasUncommittedChanges || (input.hasUpstream && input.unpushedCommits > 0)) {
     return 'commit-and-push'
   }
-  const pr = input.pullRequest
   if (pr && (pr.state === 'open' || pr.state === 'draft')) {
     if (pr.conflicting) {
       return 'resolve-conflicts'
     }
     return pr.state === 'draft' ? 'ready-for-review' : null
   }
-  if (pr || input.isDefaultBranch) {
-    return null
-  }
-  return 'create-pull-request'
+  return null
 }

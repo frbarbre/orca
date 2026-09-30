@@ -31,7 +31,7 @@ export function selectWorkspaceActionContext(state: AppState): WorkspaceActionCo
   if (!worktree || !repo || !branch) {
     return null
   }
-  const cached =
+  const entry =
     state.prCache[
       getGitHubPRCacheKey(
         repo.path,
@@ -42,7 +42,8 @@ export function selectWorkspaceActionContext(state: AppState): WorkspaceActionCo
         repo.executionHostId,
         true
       )
-    ]?.data ?? null
+    ]
+  const cached = entry?.data ?? null
   const pr = cached && !isGitHubPRSuppressed(worktree, cached.number) ? cached : null
   const entries = state.gitStatusByWorktree[worktree.id] ?? EMPTY_ENTRIES
   const unresolvedConflicts = entries.filter(
@@ -55,7 +56,8 @@ export function selectWorkspaceActionContext(state: AppState): WorkspaceActionCo
     unpushedCommits: upstream?.hasUpstream ? upstream.ahead : 0,
     hasLocalConflicts: unresolvedConflicts.length > 0,
     isDefaultBranch: worktree.isMainWorktree || branch === 'main' || branch === 'master',
-    pullRequest: pr ? { state: pr.state, conflicting: pr.mergeable === 'CONFLICTING' } : null
+    pullRequest: pr ? { state: pr.state, conflicting: pr.mergeable === 'CONFLICTING' } : null,
+    pullRequestKnown: entry !== undefined && !entry.error
   })
   return { worktree, repo, branch, pr, unresolvedConflicts, action }
 }

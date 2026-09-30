@@ -620,7 +620,10 @@ The PR context query also fetches `commits(last: 100)`, `reviews(last: 100)` and
 viewer's reviews and builds the options. `use-review-diff-base.ts` routes every choice but the target
 branch through `resolveReviewBase`, so a commit picked after a rebase or a merge of the target still
 gets an interdiff, and marks the commit as a reviewed base so upstream's pinned-sha repair leaves it.
-The pick is kept per workspace for the session.
+A picked commit is inclusive: it goes to `resolveReviewBase` as `<oid>^`, which rev-parses it to the
+parent, so that commit's own changes are in the diff (and the resolved parent is the sha marked). A
+review stays exclusive — it is the point you already read up to. The list opens below the select
+(`position="popper"`). The pick is kept per workspace for the session.
 
 ### 15. Paste and drop images and videos into review comments
 

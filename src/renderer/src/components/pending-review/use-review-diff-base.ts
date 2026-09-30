@@ -27,7 +27,10 @@ function selectedCommit(value: ReviewDiffBase, lastReviewedCommit: string | null
   if (value === 'since-review') {
     return lastReviewedCommit
   }
-  return value.slice(value.indexOf(':') + 1)
+  const oid = value.slice(value.indexOf(':') + 1)
+  // Why the parent for a picked commit: choosing a commit means reading from it, so its own
+  // changes belong in the diff; a review is the point you already read up to.
+  return value.startsWith('commit:') ? `${oid}^` : oid
 }
 
 /**
@@ -95,6 +98,9 @@ export function useReviewDiffBase(
       return
     }
     if (reviewBase) {
+      if (reviewBase.kind === 'reviewed') {
+        markReviewedCommit(reviewBase.baseRef)
+      }
       writeBaseRef(reviewBase.baseRef)
     } else if (!canResolve) {
       writeBaseRef(commit)

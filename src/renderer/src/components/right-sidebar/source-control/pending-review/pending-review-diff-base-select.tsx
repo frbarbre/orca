@@ -77,7 +77,7 @@ export function PendingReviewDiffBaseSelect({
       >
         <SelectValue />
       </SelectTrigger>
-      <SelectContent className="max-h-80">
+      <SelectContent position="popper" side="bottom" align="start" className="max-h-80">
         <SelectItem value="since-review" disabled={sinceReviewDisabled || !latestReview}>
           <span className="truncate">
             {latestReview

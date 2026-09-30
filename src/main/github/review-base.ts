@@ -25,9 +25,10 @@ export async function resolveReviewBase(
       await gitExecFileAsync(args, gitOptionsForWorktree(request.worktreePath, options))
     ).stdout.trim()
 
-  const reviewed = request.reviewedCommit.trim()
+  let reviewed: string
   try {
-    await git(['cat-file', '-e', `${reviewed}^{commit}`])
+    // Why rev-parse: a picked commit arrives as `<oid>^` so the diff includes that commit itself.
+    reviewed = await git(['rev-parse', '--verify', `${request.reviewedCommit.trim()}^{commit}`])
   } catch {
     return { kind: 'missing' }
   }

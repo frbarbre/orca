@@ -72,6 +72,21 @@ describe('resolveReviewBase', () => {
     ).toEqual({ kind: 'reviewed', baseRef: reviewed })
   })
 
+  it('resolves a picked commit to its parent, so the commit itself is in the diff', async () => {
+    git('switch', '-q', '-c', 'feature')
+    const before = commitFile('feature.ts', 'export const f = 1\n', 'feature')
+    const picked = commitFile('feature.ts', 'export const f = 2\n', 'freddy test')
+    commitFile('feature.ts', 'export const f = 1\n', 'remove test')
+
+    expect(
+      await resolveReviewBase({
+        worktreePath: repo,
+        reviewedCommit: `${picked}^`,
+        targetRef: 'main'
+      })
+    ).toEqual({ kind: 'reviewed', baseRef: before })
+  })
+
   it('compares a rebased branch against the reviewed version replayed onto its new base', async () => {
     git('switch', '-q', '-c', 'feature')
     const reviewed = commitFile('feature.ts', 'export const f = 1\n', 'feature')

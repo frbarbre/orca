@@ -6323,7 +6323,9 @@
           "image": "Image",
           "expand": "Expand image",
           "close": "Close",
-          "expandVideo": "Play video"
+          "expandVideo": "Play video",
+          "previous": "Previous",
+          "next": "Next"
         },
         "WorktreeDeveloperMenu": {
           "developer": "Developer",

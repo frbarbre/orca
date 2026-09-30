@@ -682,7 +682,9 @@ remote image still renders as a link. Comments written in Linear sync to GitHub 
 Bare GitHub attachment links, and Linear upload links whose text is a video file name
 (`isHostedVideoLink`), render as videos in both the compact and document renderers. Every image and video opens
 full screen on click (`MarkdownImageLightbox.tsx`: `ExpandableMarkdownImage`,
-`ExpandableMarkdownVideo`), which replaced the old compact `expandImages` opt-in and the document
+`ExpandableMarkdownVideo`), and ← / → (or the side arrows) step through every image and video of the
+same comment in document order, with a counter — `CommentMarkdown` wraps each comment in a
+`MediaGalleryProvider` (`media-lightbox-gallery.tsx`, + test) the triggers register with, which replaced the old compact `expandImages` opt-in and the document
 renderer's hand-off of image clicks to `onLinkClick`.
 
 ### 16. Share settings: export and import

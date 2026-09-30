@@ -1,74 +1,64 @@
-import React from 'react'
-import { Play, X } from 'lucide-react'
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogTitle,
-  DialogTrigger
-} from '@/components/ui/dialog'
-import { Button } from '@/components/ui/button'
+import React, { useEffect, useId, useRef, useState } from 'react'
+import { Play } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { translate } from '@/i18n/i18n'
+import { LightboxDialog, useMediaGallery, type LightboxItem } from './media-lightbox-gallery'
 
 function MediaLightbox({
-  label,
+  item,
   expandLabel,
   trigger,
-  triggerClassName,
-  children
+  triggerClassName
 }: {
-  label: string
+  item: LightboxItem
   expandLabel: string
   trigger: React.ReactNode
   triggerClassName?: string
-  children: React.ReactNode
 }): React.JSX.Element {
-  const [open, setOpen] = React.useState(false)
+  const id = useId()
+  const gallery = useMediaGallery()
+  const buttonRef = useRef<HTMLButtonElement | null>(null)
+  const [open, setOpen] = useState(false)
+  const { kind, src, label } = item
+
+  useEffect(
+    () => gallery?.register(id, { kind, src, label, element: buttonRef.current }),
+    [gallery, id, kind, src, label]
+  )
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <button
-          type="button"
-          className={cn(
-            'relative my-3 block max-w-full cursor-zoom-in border-0 bg-transparent p-0 text-left',
-            triggerClassName
-          )}
-          onClick={(event) => {
-            // Why: prevent parent row/card handlers from treating the zoom click
-            // as selection/navigation.
-            event.stopPropagation()
-          }}
-          aria-label={expandLabel}
-        >
-          {trigger}
-        </button>
-      </DialogTrigger>
-      <DialogContent
-        aria-describedby={undefined}
-        showCloseButton={false}
-        className="flex h-[90dvh] w-[90vw] max-w-[90vw] flex-col gap-0 overflow-hidden p-0 sm:max-w-[90vw]"
-        onClick={(event) => event.stopPropagation()}
+    <>
+      <button
+        ref={buttonRef}
+        type="button"
+        className={cn(
+          'relative my-3 block max-w-full cursor-zoom-in border-0 bg-transparent p-0 text-left',
+          triggerClassName
+        )}
+        onClick={(event) => {
+          // Why: prevent parent row/card handlers from treating the zoom click
+          // as selection/navigation.
+          event.stopPropagation()
+          if (gallery) {
+            gallery.open(id)
+          } else {
+            setOpen(true)
+          }
+        }}
+        aria-label={expandLabel}
       >
-        <DialogTitle className="sr-only">{label}</DialogTitle>
-        <div className="flex shrink-0 items-center justify-between border-b border-border px-3 py-2">
-          <span className="min-w-0 truncate text-sm font-medium text-foreground">{label}</span>
-          <DialogClose asChild>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon-sm"
-              aria-label={translate('auto.components.sidebar.MarkdownImageLightbox.close', 'Close')}
-            >
-              <X className="size-4" />
-            </Button>
-          </DialogClose>
-        </div>
-        <div className="flex min-h-0 flex-1 items-center justify-center overflow-auto bg-muted/20 p-4 scrollbar-editor">
-          {children}
-        </div>
-      </DialogContent>
-    </Dialog>
+        {trigger}
+      </button>
+      {open ? (
+        <LightboxDialog
+          items={[item]}
+          index={0}
+          onIndexChange={() => undefined}
+          onClose={() => setOpen(false)}
+          returnFocusTo={buttonRef.current}
+        />
+      ) : null}
+    </>
   )
 }
 
@@ -91,7 +81,7 @@ export function ExpandableMarkdownImage({
     alt?.trim() || translate('auto.components.sidebar.MarkdownImageLightbox.image', 'Image')
   return (
     <MediaLightbox
-      label={label}
+      item={{ kind: 'image', src, label }}
       expandLabel={translate(
         'auto.components.sidebar.MarkdownImageLightbox.expand',
         'Expand image'
@@ -105,9 +95,7 @@ export function ExpandableMarkdownImage({
           onError={onError}
         />
       }
-    >
-      <img src={src} alt={label} className="size-full rounded-md object-contain" />
-    </MediaLightbox>
+    />
   )
 }
 
@@ -126,7 +114,7 @@ export function ExpandableMarkdownVideo({
 }): React.JSX.Element {
   return (
     <MediaLightbox
-      label={label}
+      item={{ kind: 'video', src, label }}
       expandLabel={translate(
         'auto.components.sidebar.MarkdownImageLightbox.expandVideo',
         'Play video'
@@ -149,14 +137,6 @@ export function ExpandableMarkdownVideo({
           </span>
         </>
       }
-    >
-      <video
-        src={src}
-        controls
-        autoPlay
-        playsInline
-        className="size-full rounded-md bg-black object-contain"
-      />
-    </MediaLightbox>
+    />
   )
 }

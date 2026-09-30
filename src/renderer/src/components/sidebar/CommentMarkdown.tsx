@@ -1,3 +1,4 @@
+import { MediaGalleryProvider } from './media-lightbox-gallery'
 import React from 'react'
 import Markdown, { defaultUrlTransform } from 'react-markdown'
 import remarkGfm from 'remark-gfm'
@@ -241,16 +242,18 @@ const CommentMarkdown = React.memo(
         )}
         {...rest}
       >
-        <Markdown
-          remarkPlugins={activeRemarkPlugins}
-          rehypePlugins={rehypePlugins}
-          components={components}
-          urlTransform={
-            allowFileUriLinks ? commentMarkdownFileUriUrlTransform : commentMarkdownUrlTransform
-          }
-        >
-          {content}
-        </Markdown>
+        <MediaGalleryProvider>
+          <Markdown
+            remarkPlugins={activeRemarkPlugins}
+            rehypePlugins={rehypePlugins}
+            components={components}
+            urlTransform={
+              allowFileUriLinks ? commentMarkdownFileUriUrlTransform : commentMarkdownUrlTransform
+            }
+          >
+            {content}
+          </Markdown>
+        </MediaGalleryProvider>
       </div>
     )
   })

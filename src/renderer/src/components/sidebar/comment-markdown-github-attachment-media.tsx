@@ -30,6 +30,34 @@ export function isGitHubUserAttachmentVideoLink(
   return isGitHubUserAttachmentUrl(href) && isBareAutolink(children, href)
 }
 
+// Why Linear's uploads too: comments written in Linear sync to GitHub as <img> and links on
+// uploads.linear.app, signed for a year and readable without a Linear session.
+export function isLinearUploadUrl(href: string | undefined): href is string {
+  if (!href) {
+    return false
+  }
+  try {
+    const url = new URL(href.trim())
+    return url.protocol === 'https:' && url.hostname === 'uploads.linear.app'
+  } catch {
+    return false
+  }
+}
+
+const VIDEO_FILE_NAME = /\.(mp4|mov|webm|m4v)$/i
+
+// Why the link text: Linear's upload URLs carry no extension, only the file name they link from.
+export function isHostedVideoLink(
+  href: string | undefined,
+  children: React.ReactNode
+): href is string {
+  if (isGitHubUserAttachmentVideoLink(href, children)) {
+    return true
+  }
+  const text = React.Children.toArray(children).join('').trim()
+  return isLinearUploadUrl(href) && VIDEO_FILE_NAME.test(text)
+}
+
 // Shared fallback link for attachments that can't render inline (see the image
 // note below on why load failures drop to a session-scoped link).
 function AttachmentFallbackLink({

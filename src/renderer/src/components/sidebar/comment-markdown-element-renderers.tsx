@@ -6,7 +6,8 @@ import {
   GitHubUserAttachmentImage,
   GitHubUserAttachmentVideo,
   isGitHubUserAttachmentUrl,
-  isGitHubUserAttachmentVideoLink
+  isHostedVideoLink,
+  isLinearUploadUrl
 } from './comment-markdown-github-attachment-media'
 import { ExpandableMarkdownImage } from './MarkdownImageLightbox'
 
@@ -77,7 +78,7 @@ export function createCompactCommentMarkdownComponents(
     p: ({ children }) => <span className="comment-md-p">{children}</span>,
     // Open links externally — sidebar is not a navigation context.
     a: ({ href, children }) =>
-      isGitHubUserAttachmentVideoLink(href, children) ? (
+      isHostedVideoLink(href, children) ? (
         <GitHubUserAttachmentVideo href={href} className={COMPACT_MEDIA_CLASS}>
           {children}
         </GitHubUserAttachmentVideo>
@@ -170,7 +171,7 @@ export function createCompactCommentMarkdownComponents(
       if (isGitHubUserAttachmentUrl(src)) {
         return <GitHubUserAttachmentImage src={src} alt={alt} className={COMPACT_MEDIA_CLASS} />
       }
-      if (!isTrustedCompactImageSrc(src)) {
+      if (!isTrustedCompactImageSrc(src) && !isLinearUploadUrl(src)) {
         if (!src) {
           return alt ? <span>{alt}</span> : null
         }
@@ -217,7 +218,7 @@ export function createDocumentCommentMarkdownComponents(
   return {
     p: ({ children }) => <p className="my-2 first:mt-0 last:mb-0">{children}</p>,
     a: ({ href, children }) =>
-      isGitHubUserAttachmentVideoLink(href, children) ? (
+      isHostedVideoLink(href, children) ? (
         // Why: GitHub's API returns uploaded videos as bare attachment links;
         // GitHub.com upgrades them to media embeds in its own renderer.
         <GitHubUserAttachmentVideo href={href}>{children}</GitHubUserAttachmentVideo>

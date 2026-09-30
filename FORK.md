@@ -676,8 +676,11 @@ The preload's document-level file-drop handler skips `[data-review-asset-drop]` 
 (`preload-runtime-support.ts`) so these boxes receive the File objects.
 
 Rendering: the compact comment markdown (PR panel, inline diff threads) shows GitHub attachment
-images besides its app-managed `blob:`/`data:` images; every other remote image still renders as a
-link. Bare GitHub attachment links render as videos in both the compact and document renderers. Every image and video opens
+images and `uploads.linear.app` images besides its app-managed `blob:`/`data:` images; every other
+remote image still renders as a link. Comments written in Linear sync to GitHub as `<img>` tags and
+`[clip.mov](…)` links on `uploads.linear.app`, signed for a year and readable without a session.
+Bare GitHub attachment links, and Linear upload links whose text is a video file name
+(`isHostedVideoLink`), render as videos in both the compact and document renderers. Every image and video opens
 full screen on click (`MarkdownImageLightbox.tsx`: `ExpandableMarkdownImage`,
 `ExpandableMarkdownVideo`), which replaced the old compact `expandImages` opt-in and the document
 renderer's hand-off of image clicks to `onLinkClick`.

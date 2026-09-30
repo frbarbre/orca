@@ -43,7 +43,6 @@ export function CommentEditor({
               onSubmit()
             }
           }}
-          minHeightClassName="min-h-28"
           className={cn('text-foreground', presentation.commentEditorText)}
         />
       </div>

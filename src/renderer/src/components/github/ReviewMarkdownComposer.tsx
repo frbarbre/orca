@@ -22,8 +22,7 @@ export function ReviewMarkdownComposer({
   disabled,
   mentions = true,
   uploads = true,
-  className,
-  minHeightClassName = 'min-h-20'
+  className
 }: {
   value: string
   onChange: (value: string) => void
@@ -36,7 +35,6 @@ export function ReviewMarkdownComposer({
   mentions?: boolean
   uploads?: boolean
   className?: string
-  minHeightClassName?: string
 }): React.JSX.Element {
   const [query, setQuery] = useState<MentionQueryState | null>(null)
   const [active, setActive] = useState(0)
@@ -124,7 +122,7 @@ export function ReviewMarkdownComposer({
 
   return (
     <div
-      className={cn('min-w-0', className)}
+      className={cn('review-markdown-composer min-w-0', className)}
       {...(uploads ? { 'data-review-asset-drop': '' } : {})}
     >
       <GitHubMarkdownComposer
@@ -134,7 +132,7 @@ export function ReviewMarkdownComposer({
         autoFocus={autoFocus}
         disabled={disabled}
         onSubmitShortcut={onSubmitShortcut}
-        minHeightClassName={minHeightClassName}
+        minHeightClassName=""
         editorExtensions={extensions}
         growWithContent
         showToolbar={false}

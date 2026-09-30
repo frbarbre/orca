@@ -87,6 +87,22 @@
   margin: 0.55em 0;
 }
 
+.github-markdown-composer .github-markdown-composer-editor {
+  padding: 6px 10px;
+}
+
+.github-markdown-composer .github-markdown-composer-editor > :first-child {
+  margin-top: 0;
+}
+
+.github-markdown-composer .github-markdown-composer-editor > :last-child {
+  margin-bottom: 0;
+}
+
+.review-markdown-composer .github-markdown-composer-editor {
+  min-height: 3rem;
+}
+
 .github-markdown-composer-image-row {
   display: flex;
   align-items: center;

@@ -250,7 +250,6 @@ export function DiffCommentPopover({
           onUploadingChange={setUploading}
           onSubmitShortcut={() => void handleSubmit()}
           onEscape={onCancel}
-          minHeightClassName="min-h-16"
           className="orca-diff-comment-popover-composer"
         />
         <div className="orca-diff-comment-popover-footer">

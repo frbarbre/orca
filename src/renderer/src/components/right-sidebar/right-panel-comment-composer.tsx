@@ -96,7 +96,6 @@ export function RightPanelCommentComposer({
           disabled={disabled || submitting}
           onUploadingChange={setUploading}
           onSubmitShortcut={() => void submit()}
-          minHeightClassName="min-h-20"
           className="[&_.github-markdown-composer]:rounded-none [&_.github-markdown-composer]:border-0 [&_.github-markdown-composer]:bg-transparent [&_.github-markdown-composer]:shadow-none"
         />
       </div>

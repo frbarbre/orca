@@ -207,7 +207,6 @@ export function SourceControlPendingReviewShelf({
               'Add review summary…'
             )}
             onUploadingChange={setUploading}
-            minHeightClassName="min-h-16"
             className="[&_.github-markdown-composer]:border-0 [&_.github-markdown-composer]:bg-transparent [&_.github-markdown-composer]:shadow-none"
           />
           <div className="flex flex-wrap items-center justify-end gap-0.5 px-1.5 pb-1.5">

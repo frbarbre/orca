@@ -165,7 +165,11 @@ export function CommentRow({
   // and two times side by side read as two comments.
   const editedMarker = comment.lastEditedAt ? (
     <span
-      className="text-muted-foreground"
+      // Why sized here: it sits beside the 11px timestamp but inherits the card's larger text.
+      className={cn(
+        'shrink-0 text-[11px] text-muted-foreground',
+        presentation.useCardLayout && 'leading-5'
+      )}
       title={translate(
         'auto.components.right.sidebar.checks.panel.content.editedTitle',
         'Edited {{value0}}',

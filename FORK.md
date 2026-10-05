@@ -769,6 +769,35 @@ sync hit exactly that (#23062 landed two commits later) and was fixed by merging
 
 ### Sync log
 
+**1.4.214 → 1.4.214** (`433986fa3b..2b0ce17514`, 780 upstream commits, ten conflicts)
+
+- `package.json` still says 1.4.214 after 780 commits, so the branch name repeats a third time.
+- `src/main/index.ts`, `main-process-ipc-bootstrap.ts` — upstream renamed `os-opened-markdown-files`
+  to `os-opened-documents` (`resolveOsOpenedDocuments`, `state.osOpenedDocuments`). Took the rename,
+  kept `armForkUpdateChannel` after the capture and every fork import in the bootstrap.
+- `updater/updater-download-install.ts` — upstream added `isMacInstallRequested` /
+  `setMacInstallPreflightInProgress` to the import. Took it and kept the fork's `app` import; the
+  fork's self-install and manual-install early returns auto-merged above upstream's new guards.
+- `app-shell/use-app-shell-services.ts` — both sides added a hook import. Kept both.
+- `editor/DiffViewer.tsx` — upstream replaced `resolveDocumentTheme(...)` with the
+  `useDocumentDarkTheme()` hook (`isDark`), so the theme line is now `editorThemeName(isDark)`
+  (`MonacoEditor.tsx` already merged to the same). Upstream also moved the diff editor's dispose
+  cleanup into the guarded `modifiedEditor.onDidDispose`; took that and added the fork's
+  `setPopover(null)` to it, dropping the fork's old `diffEditor.onDidDispose` copy.
+- `editor/rich-markdown-extensions.ts` — upstream reshaped the local-image load into a guarded
+  callback. Took it and re-attached the fork's `isGitHubAttachmentAssetUrl` branch after it.
+- `right-sidebar/FileExplorerFilesTreePane.tsx` — upstream added imports and went to
+  `import type React`. Kept the fork's `React, { useEffect }` (the open-in selection effect) plus
+  upstream's new imports.
+- `ui/textarea.tsx` — upstream moved variants onto `cva` (`default`, `code`). The fork's `seamless`
+  is now a third `cva` variant. Nothing in the renderer passes `seamless` any more (the composers
+  became TipTap), so a later sync may drop it.
+- `ui-slice-hydration-sanitizers.ts` — both sides appended a function. Kept both.
+- `en.json` — took upstream's, then `sync:localization-catalog` re-added the fork's 160 keys,
+  identical to main's.
+- The Mod+O "open in configured editor" work (`lib/open-in-selection.ts` and its explorer effect) is
+  fork work not yet listed in [What this fork owns](#what-this-fork-owns).
+
 **1.4.214 → 1.4.214** (`1554f15b6c..433986fa3b`, 92 upstream commits, no conflicts)
 
 - Upstream's `package.json` did not move: all 92 commits landed under the same 1.4.214, so the

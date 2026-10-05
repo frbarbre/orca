@@ -995,6 +995,19 @@
               }
             }
           },
+          "right": {
+            "panel": {
+              "comment": {
+                "composer": {
+                  "256300f8ea": "Bold",
+                  "542bf6a7e2": "Italic",
+                  "cf5a7aba6f": "List",
+                  "d6d9c3c947": "Quote",
+                  "f49e0a21e0": "Code"
+                }
+              }
+            }
+          },
           "source": {
             "control": {
               "ai": {

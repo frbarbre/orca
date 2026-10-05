@@ -3,7 +3,7 @@ import { useSortable } from '@dnd-kit/sortable'
 import { GitCompareArrows, Eye, ShieldAlert, Pin, ListChecks } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-import { basename, normalizeRelativePath } from '@/lib/path'
+import { basename } from '@/lib/path'
 import { getEditorDisplayLabel } from '@/components/editor/editor-labels'
 import { renameFileOnDisk } from '@/lib/rename-file'
 import { isImeCompositionKeyDown } from '@/lib/ime-composition-keyboard-event'
@@ -29,9 +29,11 @@ import {
 import { canOpenMarkdownPreview } from '@/components/editor/markdown-preview-controls'
 import { EditorFileTabContextMenu } from './EditorFileTabContextMenu'
 import { translate } from '@/i18n/i18n'
-import { TAB_CONTAINER_WIDTH_CLASSES, TAB_LABEL_WIDTH_CLASSES } from './tab-width-rules'
+import { TAB_LABEL_WIDTH_CLASSES } from './tab-width-rules'
+import { useTabStripSlotProps } from './use-tab-strip-slot-props'
 import { EditorFileTabCloseButton } from './EditorFileTabCloseButton'
 import { useTabStripPointerActivation } from './tab-strip-pointer-activation'
+import { editorTabDocumentFolderAccess } from '@/lib/local-file-access'
 
 export default function EditorFileTab({
   file,
@@ -40,7 +42,7 @@ export default function EditorFileTab({
   hasTabsToRight,
   hasTabsToLeft,
   tabCount,
-  statusByRelativePath,
+  gitStatus: tabStatus,
   onActivate,
   onClose,
   onCloseOthers,
@@ -59,7 +61,7 @@ export default function EditorFileTab({
   hasTabsToRight: boolean
   hasTabsToLeft: boolean
   tabCount: number
-  statusByRelativePath: Map<string, GitFileStatus>
+  gitStatus: GitFileStatus | null
   onActivate: () => void
   onClose: () => void
   onCloseOthers: () => void
@@ -162,7 +164,9 @@ export default function EditorFileTab({
       oldPath: file.filePath,
       newName,
       worktreeId: file.worktreeId,
-      worktreePath
+      worktreePath,
+      // Why: a file opened outside every project may be renamed to any path, wherever it lives.
+      documentScoped: editorTabDocumentFolderAccess(useAppStore.getState(), file) !== undefined
     })
   }
 
@@ -196,10 +200,6 @@ export default function EditorFileTab({
     [file.filePath]
   )
 
-  const tabStatus =
-    file.relativePath === 'All Changes'
-      ? null
-      : (statusByRelativePath.get(normalizeRelativePath(file.relativePath)) ?? null)
   const tabStatusColor = tabStatus ? STATUS_COLORS[tabStatus] : undefined
   const tabLabel = getEditorDisplayLabel(file)
 
@@ -230,6 +230,7 @@ export default function EditorFileTab({
     onActivate,
     disabled: isRenaming
   })
+  const slotProps = useTabStripSlotProps(file.tabId ?? file.id, isActive)
 
   const tabRoot = (
     <div
@@ -390,7 +391,7 @@ export default function EditorFileTab({
   return (
     <>
       <div
-        className={TAB_CONTAINER_WIDTH_CLASSES}
+        {...slotProps}
         onContextMenuCapture={(event) => {
           event.preventDefault()
           window.dispatchEvent(new Event(CLOSE_ALL_CONTEXT_MENUS_EVENT))

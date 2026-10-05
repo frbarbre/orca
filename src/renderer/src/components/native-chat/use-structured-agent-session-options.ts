@@ -1,3 +1,4 @@
+import { toast } from 'sonner'
 import { useCallback, useMemo } from 'react'
 import type {
   AgentSessionOptionResult,
@@ -11,6 +12,7 @@ import {
   canSetStructuredAgentSessionOption,
   commitStructuredAgentSessionOptionValues,
   lockedStructuredAgentSessionOptionSnapshot,
+  pendingModelListStructuredAgentSessionOptionSnapshot,
   structuredAgentSessionOptionPicks,
   structuredAgentSessionOptionSnapshot,
   structuredAgentSessionOptionView,
@@ -23,6 +25,7 @@ import { encodeStructuredAgentSessionOptionValue } from '../../../../shared/stru
 import type { StructuredAgentSessionMutate } from './use-structured-agent-session-mutate'
 import { useHostModelCatalogUpgrade } from './use-host-model-catalog-upgrade'
 import { useStructuredAgentSessionOptionState } from './use-structured-agent-session-option-state'
+import { agentSessionWriteFailureText } from './agent-session-write-notice-text'
 import type { StructuredAgentSessionLaunchView } from './use-native-chat-provisional-launch'
 import {
   getStructuredAgentSessionLaunchSelection,
@@ -44,7 +47,6 @@ export function useStructuredAgentSessionOptions(args: {
   turnId: string | null
   unloadedTurnRevisions: number | undefined
   mutate: StructuredAgentSessionMutate
-  reportWriteError: (message: string) => void
   launch?: StructuredAgentSessionLaunchView
 }) {
   const {
@@ -53,7 +55,6 @@ export function useStructuredAgentSessionOptions(args: {
     launch,
     mutate,
     providerVisible,
-    reportWriteError,
     sessionId,
     target,
     transportEnabled,
@@ -89,7 +90,7 @@ export function useStructuredAgentSessionOptions(args: {
     unloadedTurnRevisions: args.unloadedTurnRevisions
   })
 
-  useHostModelCatalogUpgrade({
+  const awaitingHostModelList = useHostModelCatalogUpgrade({
     agent,
     sessionId,
     target,
@@ -103,6 +104,8 @@ export function useStructuredAgentSessionOptions(args: {
     activeOptionRecordRef,
     updateOptionState
   })
+  // The running provider's own list ends the wait for the host's.
+  const modelListPending = awaitingHostModelList && optionState.catalogSource !== 'live'
 
   // What a settled pick must remember so the next launch starts where the user left off.
   const rememberOptionPicks = useCallback(
@@ -187,7 +190,7 @@ export function useStructuredAgentSessionOptions(args: {
   const settleLaunchOptionPick = useCallback(
     (outcome: StructuredLaunchOptionOutcome) => {
       if (outcome.kind === 'refused') {
-        reportWriteError(outcome.message)
+        toast.error(agentSessionWriteFailureText(outcome.failure, 'option'))
       } else if (outcome.kind === 'accepted') {
         rememberOptionPicks(
           structuredAgentSessionOptionView(
@@ -199,14 +202,15 @@ export function useStructuredAgentSessionOptions(args: {
         )
       }
     },
-    [launchSeedOptions, optionStateRef, rememberOptionPicks, reportWriteError]
+    [launchSeedOptions, optionStateRef, rememberOptionPicks]
   )
   const optionSnapshot = useMemo(() => {
     const snapshot = structuredAgentSessionOptionSnapshot(
       structuredAgentSessionOptionView(optionState, launchSeedOptions, held)
     )
-    return acceptsPicks ? snapshot : lockedStructuredAgentSessionOptionSnapshot(snapshot)
-  }, [acceptsPicks, held, launchSeedOptions, optionState])
+    const shown = acceptsPicks ? snapshot : lockedStructuredAgentSessionOptionSnapshot(snapshot)
+    return modelListPending ? pendingModelListStructuredAgentSessionOptionSnapshot(shown) : shown
+  }, [acceptsPicks, held, launchSeedOptions, modelListPending, optionState])
   const setStructuredOption = useCallback(
     async (id: string, value: string | boolean): Promise<boolean> => {
       const view = structuredAgentSessionOptionView(optionStateRef.current, launchSeedOptions, held)
@@ -214,6 +218,8 @@ export function useStructuredAgentSessionOptions(args: {
       if (
         !optionCatalog ||
         encoded === null ||
+        // A typed `/model` reaches here without the picker.
+        optionSnapshot.some((descriptor) => descriptor.id === id && descriptor.choicesPending) ||
         !canSetStructuredAgentSessionOption(view, id, value)
       ) {
         return false
@@ -234,6 +240,7 @@ export function useStructuredAgentSessionOptions(args: {
       held,
       launchSeedOptions,
       optionCatalog,
+      optionSnapshot,
       optionStateRef,
       pendingOptionRef,
       sendStructuredOption,

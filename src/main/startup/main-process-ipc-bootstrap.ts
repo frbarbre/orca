@@ -3,7 +3,6 @@ import { app, ipcMain } from 'electron'
 import { recoverLegacyWorkerTerminalsForRendererStartup } from './legacy-worker-renderer-recovery'
 import { logStartupMilestone } from './startup-diagnostics'
 import { mainProcessState as state } from './main-process-state'
-import { resolveOpenedMarkdownDocuments } from './os-opened-markdown-files'
 import { loadCustomEditorThemes } from '../editor-theme/custom-editor-theme'
 import { getReviewStatusSnapshot } from '../github/review-status-snapshot'
 import { resolveReviewBase } from '../github/review-base'
@@ -29,6 +28,11 @@ import { syncReviewHead } from '../github/review-head-sync'
 import { resolveGitHubAttachmentUrl, uploadReviewAsset } from '../github/review-asset-upload'
 import { registerSettingsTransferHandlers } from '../settings-transfer/settings-transfer'
 import type { UploadReviewAssetRequest } from '../../shared/github/review-asset'
+import { resolveOsOpenedDocuments } from './os-opened-documents'
+import {
+  onStructuredAgentSessionsHeldChanged,
+  structuredAgentSessionsHeld
+} from '../native-chat/agent-session-wire/structured-agent-session-registry'
 
 export function registerMainProcessIpcHandlers(): void {
   // Why read per call rather than caching: dropping a theme file in and reloading the window is the
@@ -134,6 +138,15 @@ export function registerMainProcessIpcHandlers(): void {
     ])
     await state.runtime?.prepareStructuredAgentSessionStartupRestoration()
   })
+  // Whether this runtime holds a structured chat (a saved record or one a client created here), which
+  // is when the renderer has chats of this machine's to mirror. Many non-chat paths build the host.
+  ipcMain.handle('app:holdsStructuredAgentSessions', () => structuredAgentSessionsHeld())
+  onStructuredAgentSessionsHeldChanged((held) => {
+    const window = state.mainWindow
+    if (window && !window.isDestroyed() && !window.webContents.isDestroyed()) {
+      window.webContents.send('app:structuredAgentSessionsHeldChanged', held)
+    }
+  })
   ipcMain.handle('app:recoverLegacyWorkerTerminalsForRendererStartup', () =>
     recoverLegacyWorkerTerminalsForRendererStartup({
       firstWindowStartupServicesReady: state.firstWindowStartupServicesReady,
@@ -157,13 +170,13 @@ export function registerMainProcessIpcHandlers(): void {
   // cold-start "Open With" queued before mount still opens. The pull doubles as the proof
   // that the listener is live, which is what lets main start pushing.
   ipcMain.handle('ui:consumePendingMarkdownFileOpens', async () => {
-    state.markdownFileOpenListenerReady = true
-    const filePaths = state.osOpenedMarkdownFiles.consume()
+    state.osDocumentOpenListenerReady = true
+    const filePaths = state.osOpenedDocuments.consume()
     try {
-      return await resolveOpenedMarkdownDocuments(filePaths)
+      return await resolveOsOpenedDocuments(filePaths)
     } catch (error) {
       // Why restored: the renderer never received these, so a later mount must still get them.
-      state.osOpenedMarkdownFiles.restore(filePaths)
+      state.osOpenedDocuments.restore(filePaths)
       throw error
     }
   })

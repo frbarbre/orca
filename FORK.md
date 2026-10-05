@@ -795,6 +795,17 @@ sync hit exactly that (#23062 landed two commits later) and was fixed by merging
 - `ui-slice-hydration-sanitizers.ts` — both sides appended a function. Kept both.
 - `en.json` — took upstream's, then `sync:localization-catalog` re-added the fork's 160 keys,
   identical to main's.
+- Verify round 1 found four files over the line cap (`DiffViewer.tsx`, `use-global-keybindings.ts`,
+  `worktree-activation.ts`, `sidebar-workspace-option-items.ts`): upstream grew each to within a few
+  lines of it. The fork's code there now lives in `useDiffViewerCommentPopover.ts`,
+  `tab-group-focus/directional-group-focus-chord.ts`, `sidebar/temporary-checkout-reveal.ts` and
+  `sidebar/fork-card-property-options.ts`, leaving one-line calls in upstream's files. Upstream's
+  `NotesSendMenu` now takes `formatPrompt` and notes shaped like `DiffCommentDeliverySnapshot`, so
+  `InlinePRCommentCard` passes a snapshot of the thread's root comment. And
+  `web-preload-api-composition.test.ts` had never listed the fork's `settingsTransfer` namespace.
+- Upstream's new `DiffViewer.word-wrap-lifecycle.test.tsx` fails on the fork: the fork's
+  `useInlinePRCommentActions` needs a `ConfirmationDialogProvider` the test does not mount. Verify
+  does not run upstream tests, so it is left as upstream wrote it.
 - The Mod+O "open in configured editor" work (`lib/open-in-selection.ts` and its explorer effect) is
   fork work not yet listed in [What this fork owns](#what-this-fork-owns).
 

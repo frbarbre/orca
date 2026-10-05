@@ -4,6 +4,10 @@ import type {
 } from '../../../../shared/ui-chrome-types'
 import { TASK_WORKTREE_CARD_PROPERTIES } from '../../../../shared/constants'
 import { translate } from '@/i18n/i18n'
+import {
+  LINEAR_TITLE_CARD_PROPERTY_OPTION,
+  PR_AUTHOR_CARD_PROPERTY_OPTION
+} from './fork-card-property-options'
 
 export const GROUP_BY_OPTIONS = [
   {
@@ -171,16 +175,7 @@ const ISSUE_WORKTREE_CARD_PROPERTY_OPTIONS: WorktreeCardPropertyOption[] = [
       )
     }
   },
-  {
-    id: 'linear-title',
-    properties: ['linear-title'],
-    get label() {
-      return translate(
-        'auto.components.sidebar.SidebarWorkspaceOptionsMenu.linearTitle',
-        'Linear title'
-      )
-    }
-  },
+  LINEAR_TITLE_CARD_PROPERTY_OPTION,
   {
     id: 'jira-issue',
     properties: ['jira-issue'],
@@ -191,13 +186,7 @@ const ISSUE_WORKTREE_CARD_PROPERTY_OPTIONS: WorktreeCardPropertyOption[] = [
       )
     }
   },
-  {
-    id: 'pr-author',
-    properties: ['pr-author'],
-    get label() {
-      return translate('auto.components.sidebar.SidebarWorkspaceOptionsMenu.prAuthor', 'PR author')
-    }
-  }
+  PR_AUTHOR_CARD_PROPERTY_OPTION
 ]
 
 type WorktreeCardPropertyOptionsInput = {

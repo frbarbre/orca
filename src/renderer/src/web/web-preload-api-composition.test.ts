@@ -21,6 +21,7 @@ describe('web preload API composition', () => {
       'app',
       'reviewStatusRules',
       'pendingReview',
+      'settingsTransfer',
       'starNag',
       'platform',
       'workspacePorts',

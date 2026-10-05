@@ -16,6 +16,7 @@ import {
 } from '../../../../shared/pr-comment-groups'
 import type { GitHubReactionContent, PRComment } from '../../../../shared/github/comment-types'
 import type { RightPanelCommentSubmitResult } from '@/components/right-sidebar/right-panel-comment-composer'
+import type { DiffCommentDeliverySnapshot } from '@/store/slices/diffComments'
 
 const NO_BOT_OVERRIDES: ReadonlySet<string> = new Set()
 
@@ -126,6 +127,13 @@ export function InlinePRCommentCard({
     }
   }, [])
   const count = getPRCommentGroupCount(group)
+  // Why a snapshot: the send menu keys in-flight sends by note fields, and a thread is not a note.
+  const threadNote: DiffCommentDeliverySnapshot = {
+    id: `pr-review-comment:${root.id}`,
+    body: root.body,
+    filePath: relativePath,
+    lineNumber: root.line ?? 0
+  }
 
   if (resolved && !expanded) {
     return (
@@ -183,7 +191,7 @@ export function InlinePRCommentCard({
             onSetReaction={onSetReaction}
           />
           <div className="flex items-center border-t border-border/70 bg-muted/20">
-            <NotesSendMenu<PRComment>
+            <NotesSendMenu<DiffCommentDeliverySnapshot>
               worktreeId={worktreeId}
               groupId={getPRCommentGroupId(group)}
               modeIdParts={['pr-review-comment', worktreeId, relativePath, String(root.id)]}
@@ -194,8 +202,8 @@ export function InlinePRCommentCard({
                     'auto.components.diff.comments.InlinePRCommentCard.thisThread',
                     'This comment'
                   ),
-                  notes: [root],
-                  prompt: formatThreadPrompt(group, relativePath)
+                  notes: [threadNote],
+                  formatPrompt: () => formatThreadPrompt(group, relativePath)
                 }
               ]}
               targetModeLabel={translate(

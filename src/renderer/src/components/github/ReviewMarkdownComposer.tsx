@@ -40,6 +40,7 @@ export function ReviewMarkdownComposer({
 }): React.JSX.Element {
   const [query, setQuery] = useState<MentionQueryState | null>(null)
   const [active, setActive] = useState(0)
+  const queryRef = useRef<MentionQueryState | null>(null)
   const editorRef = useRef<Editor | null>(null)
   const options = useActiveRepoMentionOptions(mentions && query !== null)
   const activeWorktreeId = useAppStore((state) => state.activeWorktreeId)
@@ -124,7 +125,11 @@ export function ReviewMarkdownComposer({
       }),
       ReviewMention.configure({
         onQueryChange: (next) => {
-          setQuery((current) => (sameQuery(current, next) ? current : next))
+          if (sameQuery(queryRef.current, next)) {
+            return
+          }
+          queryRef.current = next
+          setQuery(next)
           setActive(0)
         },
         onKeyDown: (event) => keyHandler.current(event),

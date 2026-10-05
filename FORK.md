@@ -794,7 +794,8 @@ sync hit exactly that (#23062 landed two commits later) and was fixed by merging
   became TipTap), so a later sync may drop it.
 - `ui-slice-hydration-sanitizers.ts` — both sides appended a function. Kept both.
 - `en.json` — took upstream's, then `sync:localization-catalog` re-added the fork's 160 keys,
-  identical to main's.
+  identical to main's. That also needs `pnpm run sync:localization-runtime-catalog`: upstream's
+  `en-runtime-required.json` did not cover five fork composer keys, and `pnpm lint` stops on it.
 - Verify round 1 found four files over the line cap (`DiffViewer.tsx`, `use-global-keybindings.ts`,
   `worktree-activation.ts`, `sidebar-workspace-option-items.ts`): upstream grew each to within a few
   lines of it. The fork's code there now lives in `useDiffViewerCommentPopover.ts`,

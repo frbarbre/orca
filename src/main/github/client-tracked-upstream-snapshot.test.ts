@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type * as GithubApiRepositoryModule from './github-api-repository'
 import type * as GitHubEnterpriseRepositoryModule from './github-enterprise-repository'
+import type * as RepoDefaultBranchModule from '../source-control/repo-default-branch'
 
 const { clientMocks, moduleMocks } = await vi.hoisted(async () => {
   const moduleMocks = await import('./client-test-mocks')
@@ -19,6 +20,10 @@ vi.mock('./github-enterprise-repository', async (importOriginal) =>
   )
 )
 vi.mock('./rate-limit', () => moduleMocks.rateLimitModuleMock(clientMocks))
+vi.mock('../source-control/repo-default-branch', async (importOriginal) => ({
+  ...(await importOriginal<typeof RepoDefaultBranchModule>()),
+  getRepoDefaultBranchName: vi.fn(async () => 'main')
+}))
 vi.mock('./github-api-repository', async (importOriginal) =>
   moduleMocks.githubApiRepositoryModuleMock(
     clientMocks,
@@ -122,6 +127,20 @@ describe('getPRForBranch', () => {
       title: 'Hydrated upstream branch PR',
       headSha: 'upstream-head-oid'
     })
+  })
+
+  it('does not take the default branch PR for a branch that tracks the default branch', async () => {
+    getOwnerRepoMock.mockResolvedValueOnce({ owner: 'acme', repo: 'widgets' })
+    ghExecFileAsyncMock.mockResolvedValueOnce({ stdout: JSON.stringify([]) })
+    gitExecFileAsyncMock.mockResolvedValueOnce({
+      stdout: 'feature/new-work\0origin/main\n',
+      stderr: ''
+    })
+
+    const pr = await getPRForBranch('/repo-root', 'feature/new-work')
+
+    expect(ghExecFileAsyncMock).toHaveBeenCalledTimes(1)
+    expect(pr).toBeNull()
   })
 
   it('does not repeat missing tracked-upstream probes during PR refresh polling', async () => {

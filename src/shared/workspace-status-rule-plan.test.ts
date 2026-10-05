@@ -53,6 +53,7 @@ function makeTarget(overrides: Partial<WorkspaceStatusRuleTarget> = {}): Workspa
     prNumber: 1,
     hasPendingReviewComments: false,
     currentStatus: 'todo',
+    headOid: 'abc',
     ...overrides
   }
 }
@@ -190,6 +191,17 @@ describe('buildWorkspaceStatusRulePlan — closed without merging', () => {
     expect(plan.removals).toEqual([
       { worktreeId: 'repo::/w/one', executionHostId: 'local', displayName: 'one' }
     ])
+  })
+
+  it('keeps a workspace that is not at the pull request head', () => {
+    const plan = buildWorkspaceStatusRulePlan({
+      targets: [makeTarget({ headOid: 'local-work' })],
+      snapshot: closed,
+      config: { ...enabled, onResolved: 'delete' },
+      existingBranches: noBranches
+    })
+
+    expect(plan.removals).toEqual([])
   })
 
   it('keeps the workspace when the switch is off', () => {

@@ -93,6 +93,7 @@ export function collectWorkspaceStatusRuleScope(
       repo: pr.prRepo,
       prNumber: pr.number,
       currentStatus: worktree.workspaceStatus ?? null,
+      headOid: worktree.head,
       // Why both: a queue not yet moved onto this device still sits on the workspace metadata.
       hasPendingReviewComments:
         (getPendingReviewDrafts(worktree.id)?.length ?? 0) > 0 ||

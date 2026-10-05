@@ -28,6 +28,7 @@ const target = {
   repo,
   prNumber: 3166,
   currentStatus: 'review',
+  headOid: 'abc',
   hasPendingReviewComments: false
 }
 const snapshot = {

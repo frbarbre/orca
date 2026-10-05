@@ -4,7 +4,10 @@ import {
   isCommitPartOfMergedPR,
   type MergedPRCommitMembership
 } from '../../merged-pr-commit-membership'
-import { shouldHideNonOpenReviewOnDefaultBranch } from '../../../source-control/repo-default-branch'
+import {
+  getRepoDefaultBranchName,
+  shouldHideNonOpenReviewOnDefaultBranch
+} from '../../../source-control/repo-default-branch'
 import {
   getGitHubApiRepositoryForRemote,
   resolveGitHubApiRepositoryCandidates
@@ -178,7 +181,13 @@ export async function resolvePRForBranchOutcome(input: {
         connectionId,
         localGitOptions
       )
-      if (upstreamBranch) {
+      // Why: a branch created from origin/main tracks the trunk, and the trunk's PR is never this branch's.
+      const tracksDefaultBranch =
+        upstreamBranch !== null &&
+        upstreamBranch.branchName !== branchName &&
+        upstreamBranch.branchName ===
+          (await getRepoDefaultBranchName(repoPath, connectionId, localGitOptions))
+      if (upstreamBranch && !tracksDefaultBranch) {
         const upstreamHeadRepo =
           (await getGitHubApiRepositoryForRemote(
             repoPath,

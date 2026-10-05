@@ -28,6 +28,7 @@ export type WorkspaceStatusRuleTarget = {
   repo: GitHubRepositoryIdentity
   prNumber: number
   currentStatus: WorkspaceStatus | null
+  headOid: string
   /** Unsent review comments live in metadata, not the tree, so git would not refuse the delete. */
   hasPendingReviewComments: boolean
 }
@@ -104,7 +105,9 @@ export function buildWorkspaceStatusRulePlan(args: {
       snapshot.viewerLogin
     )
     const isResolved = condition === 'merged' || condition === 'closed'
-    if (isResolved && config.onResolved === 'delete') {
+    // Why the head check: a branch can resolve to a pull request it never was (an upstream tracking the
+    // trunk finds an old PR whose head is the trunk), and deleting would discard the workspace's own work.
+    if (isResolved && config.onResolved === 'delete' && target.headOid === pr.headRefOid) {
       plan.removals.push({
         worktreeId: target.worktreeId,
         executionHostId: target.executionHostId,

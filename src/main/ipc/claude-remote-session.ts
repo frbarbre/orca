@@ -27,7 +27,12 @@ export function registerClaudeRemoteSessionHandlers(
       if (!guest || guest.getType() !== 'webview' || guest.hostWebContents !== event.sender) {
         return
       }
-      installClaudeWebGuestShortcuts(guest, getKeybindings)
+      const host = event.sender
+      installClaudeWebGuestShortcuts(guest, getKeybindings, (key) => {
+        if (!host.isDestroyed()) {
+          host.send('claudeRemoteSession:replayKey', key)
+        }
+      })
     }
   )
 }

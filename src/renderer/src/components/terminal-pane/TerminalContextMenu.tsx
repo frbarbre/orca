@@ -35,7 +35,7 @@ import { isMacPlatform, nativeChatToggleShortcutLabel } from '../native-chat/nat
 import { AgentSessionContinuationMenuItem } from './AgentSessionContinuationMenuItem'
 import type { TerminalQuickCommandMenuHost } from '@/hooks/use-terminal-quick-command-hosts'
 import { TerminalQuickCommandsSubmenu } from './TerminalQuickCommandsSubmenu'
-import { ClaudeWebViewMenuItem } from './ClaudeWebViewMenuItem'
+import { AgentViewSubmenu } from './AgentViewSubmenu'
 
 type TerminalContextMenuProps = {
   open: boolean
@@ -234,7 +234,15 @@ function TerminalContextMenuItems({
         <ClipboardCopy />
         {translate('auto.components.terminal.pane.TerminalContextMenu.cff67afad1', 'Copy Context')}
       </DropdownMenuItem>
-      {canToggleNativeChat ? (
+      {claudeWebTabId ? (
+        <AgentViewSubmenu
+          tabId={claudeWebTabId}
+          leafId={claudeWebLeafId}
+          canChat={canToggleNativeChat}
+          isChat={isNativeChatView}
+          onToggleChat={onToggleNativeChat}
+        />
+      ) : canToggleNativeChat ? (
         <DropdownMenuItem onSelect={onToggleNativeChat}>
           {isNativeChatView ? <SquareTerminal /> : <MessageSquare />}
           {isNativeChatView
@@ -248,9 +256,6 @@ function TerminalContextMenuItems({
               )}
           <DropdownMenuShortcut>{shortcuts.nativeChat}</DropdownMenuShortcut>
         </DropdownMenuItem>
-      ) : null}
-      {claudeWebTabId && claudeWebLeafId ? (
-        <ClaudeWebViewMenuItem tabId={claudeWebTabId} leafId={claudeWebLeafId} />
       ) : null}
       <DropdownMenuSeparator />
       <DropdownMenuItem className="whitespace-nowrap" onSelect={onSplitRight}>

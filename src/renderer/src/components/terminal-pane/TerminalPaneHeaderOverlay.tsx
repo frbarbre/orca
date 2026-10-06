@@ -30,6 +30,8 @@ type TerminalPaneHeaderOverlayProps = {
   showSplitButton?: boolean
   isTabPinned: boolean
   paneCount: number
+  /** Fork: a single pane under the Claude web view shows no header; its buttons sit over the page. */
+  webViewLeafId?: string | null
   activePaneId: number | null | undefined
   panes: readonly ManagedPane[]
   paneTitles: Readonly<Record<number, string>>
@@ -76,6 +78,7 @@ export default function TerminalPaneHeaderOverlay({
   showSplitButton = true,
   isTabPinned,
   paneCount,
+  webViewLeafId,
   activePaneId,
   panes,
   paneTitles,
@@ -139,7 +142,7 @@ export default function TerminalPaneHeaderOverlay({
         // pane (agent terminals get runtime titles) still needs a close control.
         const showCloseButton =
           showAlwaysOnHeaders && (paneCount > 1 ? !title : showSplitButton && !isTabPinned)
-        if (!showHeader || !overlayRect) {
+        if (!showHeader || !overlayRect || (paneCount === 1 && pane.leafId === webViewLeafId)) {
           return null
         }
 

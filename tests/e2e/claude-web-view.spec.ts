@@ -1,6 +1,6 @@
 import { mkdirSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
-import type { ElectronApplication, Page } from '@stablyai/playwright-test'
+import type { ElectronApplication, Locator, Page } from '@stablyai/playwright-test'
 import { test, expect } from './helpers/orca-app'
 import { waitForActiveWorktree, waitForSessionReady } from './helpers/store'
 import { readTerminalPaneDomLeafOrder, waitForActiveTerminalManager } from './helpers/terminal'
@@ -10,25 +10,33 @@ const SESSION_ID = 'e2e-claude-web-session'
 const BRIDGE_SESSION_ID = 'session_01E2eClaudeWebView'
 const PAGE_URL = `https://claude.ai/code/${BRIDGE_SESSION_ID}`
 
-async function seedClaudePane(electronApp: ElectronApplication, orcaPage: Page) {
-  await waitForSessionReady(orcaPage)
-  const worktreeId = await waitForActiveWorktree(orcaPage)
+async function writeSessionFile(
+  electronApp: ElectronApplication,
+  bridgeSessionId?: string
+): Promise<void> {
+  const home = await electronApp.evaluate(({ app }) => app.getPath('home'))
+  const sessionFile = path.join(home, '.claude', 'sessions', '424242.json')
+  mkdirSync(path.dirname(sessionFile), { recursive: true })
+  writeFileSync(
+    sessionFile,
+    JSON.stringify({ sessionId: SESSION_ID, updatedAt: Date.now(), bridgeSessionId })
+  )
+}
+
+async function readActivePane(orcaPage: Page): Promise<{ tabId: string; leafId: string }> {
   await waitForActiveTerminalManager(orcaPage)
   const tabId = (await readPaneIdentitySnapshot(orcaPage))?.tabId
   const [leafId] = await readTerminalPaneDomLeafOrder(orcaPage)
   expect(tabId).toBeTruthy()
   expect(leafId).toBeTruthy()
+  return { tabId: tabId!, leafId: leafId! }
+}
 
-  const home = await electronApp.evaluate(({ app }) => app.getPath('home'))
-  const sessionFile = path.join(home, '.claude', 'sessions', '424242.json')
-  mkdirSync(path.dirname(sessionFile), { recursive: true })
-  const writeSessionFile = (bridgeSessionId?: string): void =>
-    writeFileSync(
-      sessionFile,
-      JSON.stringify({ sessionId: SESSION_ID, updatedAt: Date.now(), bridgeSessionId })
-    )
-  writeSessionFile(BRIDGE_SESSION_ID)
-
+async function markPaneRunningClaude(
+  orcaPage: Page,
+  { tabId, leafId }: { tabId: string; leafId: string }
+): Promise<void> {
+  const worktreeId = await waitForActiveWorktree(orcaPage)
   await orcaPage.evaluate(
     ({ tabId, leafId, worktreeId, sessionId }) => {
       window.__store
@@ -42,47 +50,37 @@ async function seedClaudePane(electronApp: ElectronApplication, orcaPage: Page) 
           { providerSession: { key: 'session_id', id: sessionId } }
         )
     },
-    { tabId: tabId!, leafId: leafId!, worktreeId, sessionId: SESSION_ID }
+    { tabId, leafId, worktreeId, sessionId: SESSION_ID }
   )
-
-  const pane = orcaPage.locator(`.pane[data-leaf-id="${leafId}"]`)
-  const tab = orcaPage.locator(`[data-testid="sortable-tab"][data-tab-id="${tabId}"]`)
-  const webview = pane.locator('webview[aria-label="Claude Code on the web"]')
-  return { pane, tab, webview, writeSessionFile }
 }
 
-test('switches a Claude Code pane to its claude.ai Remote Control page and back', async ({
-  electronApp,
-  orcaPage
-}) => {
-  const { pane, tab, webview, writeSessionFile } = await seedClaudePane(electronApp, orcaPage)
+async function seedClaudePane(electronApp: ElectronApplication, orcaPage: Page) {
+  await waitForSessionReady(orcaPage)
+  const ids = await readActivePane(orcaPage)
+  await writeSessionFile(electronApp, BRIDGE_SESSION_ID)
+  await markPaneRunningClaude(orcaPage, ids)
+  const pane = orcaPage.locator(`.pane[data-leaf-id="${ids.leafId}"]`)
+  return {
+    ...ids,
+    pane,
+    tab: orcaPage.locator(`[data-testid="sortable-tab"][data-tab-id="${ids.tabId}"]`),
+    webview: pane.locator('webview[aria-label="Claude Code on the web"]')
+  }
+}
 
-  await pane.click({ button: 'right' })
-  await orcaPage.getByRole('menuitem', { name: 'Switch to Claude web view' }).click()
-  await expect(webview).toHaveAttribute('src', PAGE_URL)
+async function chooseView(orcaPage: Page, menuTarget: Locator, view: string): Promise<void> {
+  await menuTarget.click({ button: 'right' })
+  await orcaPage.getByRole('menuitem', { name: 'View', exact: true }).click()
+  await orcaPage.getByRole('menuitemradio', { name: view }).click()
+  // Why: a closing menu animates out; opening the next one meanwhile shows two View triggers.
+  await expect(orcaPage.getByRole('menuitem', { name: 'View', exact: true })).toHaveCount(0)
+}
 
-  await tab.click({ button: 'right' })
-  await orcaPage.getByRole('menuitem', { name: 'Switch to terminal view' }).click()
-  await expect(webview).toHaveCount(0)
-
-  writeSessionFile(undefined)
-  await tab.click({ button: 'right' })
-  await orcaPage.getByRole('menuitem', { name: 'Switch to Claude web view' }).click()
-  await expect(pane.getByText(/Remote Control is not on for this session/)).toBeVisible()
-  await expect(webview).toHaveCount(0)
-  await pane.getByRole('button', { name: 'Switch to terminal view' }).click()
-  await expect(pane.getByText(/Remote Control is not on/)).toHaveCount(0)
-})
-
-test('the reload shortcut reloads the claude.ai page, with no toolbar over it', async ({
-  electronApp,
-  orcaPage
-}) => {
-  const { pane, webview } = await seedClaudePane(electronApp, orcaPage)
+// Why: serve a local stand-in for claude.ai on the page's own session, so these need no network.
+async function serveClaudeStandIn(electronApp: ElectronApplication, orcaPage: Page) {
   const partition = await orcaPage.evaluate(() =>
     window.api.browser.sessionResolvePartition({ profileId: null })
   )
-  // Why: serve a local stand-in for claude.ai on the page's own session, so the test needs no network.
   await electronApp.evaluate(
     ({ session, net }, { partition }) => {
       session.fromPartition(partition).protocol.handle('https', (request) => {
@@ -96,10 +94,6 @@ test('the reload shortcut reloads the claude.ai page, with no toolbar over it', 
     },
     { partition: partition! }
   )
-  await pane.click({ button: 'right' })
-  await orcaPage.getByRole('menuitem', { name: 'Switch to Claude web view' }).click()
-  await expect(webview).toHaveAttribute('src', PAGE_URL)
-
   const inGuest = <T>(script: string): Promise<T> =>
     electronApp.evaluate(
       ({ webContents }, { script, url }) =>
@@ -109,23 +103,105 @@ test('the reload shortcut reloads the claude.ai page, with no toolbar over it', 
           ?.executeJavaScript(script),
       { script, url: PAGE_URL }
     )
+  const pressInGuest = (keyCode: string, modifiers: ('shift' | 'alt')[] = []): Promise<void> =>
+    electronApp.evaluate(
+      ({ webContents }, { url, keyCode, modifiers }) => {
+        const guest = webContents
+          .getAllWebContents()
+          .find((contents) => contents.getType() === 'webview' && contents.getURL() === url)
+        guest?.focus()
+        guest?.sendInputEvent({
+          type: 'keyDown',
+          keyCode,
+          modifiers: [process.platform === 'darwin' ? 'meta' : 'control', ...modifiers]
+        })
+      },
+      { url: PAGE_URL, keyCode, modifiers }
+    )
+  return { inGuest, pressInGuest }
+}
+
+test('the View submenu switches a Claude Code pane between terminal and Claude web', async ({
+  electronApp,
+  orcaPage
+}) => {
+  const { pane, tab, webview } = await seedClaudePane(electronApp, orcaPage)
+
+  await chooseView(orcaPage, pane, 'Claude web')
+  await expect(webview).toHaveAttribute('src', PAGE_URL)
+  await expect(orcaPage.getByText('Switch to Claude web view')).toHaveCount(0)
+
+  await chooseView(orcaPage, tab, 'Terminal')
+  await expect(webview).toHaveCount(0)
+
+  await writeSessionFile(electronApp, undefined)
+  await chooseView(orcaPage, tab, 'Claude web')
+  await expect(pane.getByText(/Remote Control is not on for this session/)).toBeVisible()
+  await expect(webview).toHaveCount(0)
+  await pane.getByRole('button', { name: 'Switch to terminal view' }).click()
+  await expect(pane.getByText(/Remote Control is not on/)).toHaveCount(0)
+})
+
+test('Orca shortcuts reach Orca from inside the page, and Cmd+R reloads the page', async ({
+  electronApp,
+  orcaPage
+}) => {
+  const { pane, webview } = await seedClaudePane(electronApp, orcaPage)
+  const { inGuest, pressInGuest } = await serveClaudeStandIn(electronApp, orcaPage)
+  await chooseView(orcaPage, pane, 'Claude web')
+  await expect(webview).toHaveAttribute('src', PAGE_URL)
   await expect.poll(() => inGuest<boolean>("Boolean(document.getElementById('input'))")).toBe(true)
-  // Why typed text: a reload clears it, so its absence proves the page itself reloaded.
-  await inGuest("document.getElementById('input').value = 'before reload'")
+
+  // Why: a single pane under the web view draws no header buttons over the page.
+  await expect(orcaPage.locator('.pane-title-bar')).toHaveCount(0)
+
+  const rightSidebarTab = (): Promise<string | undefined> =>
+    orcaPage.evaluate(() => window.__store?.getState().rightSidebarTab)
+  await pressInGuest('G', ['shift'])
+  await expect.poll(rightSidebarTab).toBe('source-control')
+  await pressInGuest('E', ['shift'])
+  await expect.poll(rightSidebarTab).toBe('explorer')
+
   const loadToken = (): Promise<string> => inGuest<string>('document.body.dataset.load')
   const tokenBeforeReload = await loadToken()
-  await electronApp.evaluate(({ webContents }, url) => {
-    const guest = webContents
-      .getAllWebContents()
-      .find((contents) => contents.getType() === 'webview' && contents.getURL() === url)
-    guest?.focus()
-    guest?.sendInputEvent({
-      type: 'keyDown',
-      keyCode: 'R',
-      modifiers: [process.platform === 'darwin' ? 'meta' : 'control']
-    })
-  }, PAGE_URL)
+  await pressInGuest('R')
   await expect.poll(loadToken).not.toBe(tokenBeforeReload)
-  await expect.poll(() => inGuest<string>("document.getElementById('input')?.value")).toBe('')
-  await expect(pane.getByText('Claude web view')).toHaveCount(0)
+})
+
+test('remembers the Claude web view across a reload', async ({ electronApp, orcaPage }) => {
+  const { tabId, leafId, pane, webview } = await seedClaudePane(electronApp, orcaPage)
+  await chooseView(orcaPage, pane, 'Claude web')
+  await expect(webview).toHaveAttribute('src', PAGE_URL)
+
+  await orcaPage.reload({ waitUntil: 'domcontentloaded' })
+  await waitForSessionReady(orcaPage)
+  await waitForActiveTerminalManager(orcaPage)
+  // Why: the injected session lives in renderer state; a real one is re-reported by its hooks.
+  await markPaneRunningClaude(orcaPage, { tabId, leafId })
+  await expect(webview).toHaveAttribute('src', PAGE_URL)
+})
+
+test('opens a new Claude Code tab in the web view when that is the default view', async ({
+  electronApp,
+  orcaPage
+}) => {
+  await waitForSessionReady(orcaPage)
+  const worktreeId = await waitForActiveWorktree(orcaPage)
+  await writeSessionFile(electronApp, BRIDGE_SESSION_ID)
+  await orcaPage.evaluate(async (worktreeId) => {
+    const store = window.__store
+    if (!store) {
+      throw new Error('window.__store is unavailable')
+    }
+    await store.getState().updateSettings({ openClaudeTabsInWebView: true })
+    store.getState().createTab(worktreeId)
+  }, worktreeId)
+  const ids = await readActivePane(orcaPage)
+  await markPaneRunningClaude(orcaPage, ids)
+
+  const pane = orcaPage.locator(`.pane[data-leaf-id="${ids.leafId}"]`)
+  await expect(pane.locator('webview[aria-label="Claude Code on the web"]')).toHaveAttribute(
+    'src',
+    PAGE_URL
+  )
 })

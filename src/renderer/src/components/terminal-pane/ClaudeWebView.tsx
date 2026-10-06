@@ -5,6 +5,8 @@ import type { ClaudeRemoteSessionUrlResult } from '../../../../shared/claude-rem
 import { moveFocusToRendererBeforeWebviewDetach } from '@/components/browser-pane/host-guest/webview-registry'
 import { Button } from '@/components/ui/button'
 import { translate } from '@/i18n/i18n'
+import { pollClaudeRemoteSessionUrl } from './claude-remote-session-poll'
+import { ensureClaudeWebKeyReplay } from './claude-web-key-replay'
 
 type PageState = 'loading' | 'ready' | 'failed'
 
@@ -47,6 +49,7 @@ function attachClaudeWebview(
       return
     }
     attachedGuest = true
+    ensureClaudeWebKeyReplay()
     void window.api.claudeRemoteSession.attachGuest({ webContentsId: webview.getWebContentsId() })
     // Why: the cover took focus from the terminal before the page existed; hand it to the page.
     if (container.parentElement?.contains(document.activeElement)) {
@@ -101,16 +104,19 @@ export function ClaudeWebView({
   const [attempt, setAttempt] = useState(0)
 
   useEffect(() => {
-    let disposed = false
+    const controller = new AbortController()
     let detach: (() => void) | undefined
     setResolved(null)
     setPageState('loading')
     void Promise.all([
-      window.api.claudeRemoteSession.resolveUrl({ sessionId }),
+      pollClaudeRemoteSessionUrl(
+        () => window.api.claudeRemoteSession.resolveUrl({ sessionId }),
+        controller.signal
+      ),
       window.api.browser.sessionResolvePartition({ profileId: null })
     ])
       .then(([result, partition]) => {
-        if (disposed) {
+        if (controller.signal.aborted) {
           return
         }
         if (result.status !== 'ready' || !partition || !containerRef.current) {
@@ -119,18 +125,18 @@ export function ClaudeWebView({
         }
         setResolved(result)
         detach = attachClaudeWebview(containerRef.current, partition, result.url, (next) => {
-          if (!disposed) {
+          if (!controller.signal.aborted) {
             setPageState(next)
           }
         })
       })
       .catch(() => {
-        if (!disposed) {
+        if (!controller.signal.aborted) {
           setResolved('failed')
         }
       })
     return () => {
-      disposed = true
+      controller.abort()
       detach?.()
     }
   }, [sessionId, attempt])

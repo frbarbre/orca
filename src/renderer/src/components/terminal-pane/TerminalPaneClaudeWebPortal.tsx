@@ -10,6 +10,7 @@ import {
   useClaudeWebViewLeafId
 } from './claude-web-view-state'
 import { useCoveredTerminalFocusHandoff } from './use-covered-terminal-focus-handoff'
+import { useClaudeWebAutoOpen } from './use-claude-web-auto-open'
 import type { TerminalPaneController } from './use-terminal-pane-controller'
 
 function ClaudeWebPaneCover({
@@ -52,10 +53,18 @@ export function TerminalPaneClaudeWebPortal({
   const sessionId = useAppStore((state) =>
     leafId ? resolvePaneClaudeSessionId(state, makePaneKey(tabId, leafId)) : null
   )
+  const exitedToShell = useAppStore((state) =>
+    leafId
+      ? state.paneForegroundAgentByPaneKey[makePaneKey(tabId, leafId)]?.shellForeground === true
+      : false
+  )
   const pane = leafId ? managedPanes.find((candidate) => candidate.leafId === leafId) : undefined
+  useClaudeWebAutoOpen(tabId, leafId)
 
-  // Why: once Claude exits or its pane closes there is no session left to show.
-  const orphaned = leafId !== null && (!sessionId || !pane)
+  // Why only on proof: after a reload the session and panes arrive late, and a missing one then
+  // must not forget the remembered view. Claude exiting, or its pane closing, is proof.
+  const orphaned =
+    leafId !== null && (exitedToShell || (managedPanes.length > 0 && pane === undefined))
   useEffect(() => {
     if (orphaned) {
       hide(tabId)

@@ -197,8 +197,8 @@ vi.mock('../sidebar/WorktreeCardHelpers', () => ({
   }
 }))
 
-vi.mock('../terminal-pane/ClaudeWebViewMenuItem', () => ({
-  ClaudeWebViewMenuItem: () => null
+vi.mock('../terminal-pane/AgentViewSubmenu', () => ({
+  AgentViewSubmenu: () => null
 }))
 
 vi.mock('./drop-indicator', () => ({

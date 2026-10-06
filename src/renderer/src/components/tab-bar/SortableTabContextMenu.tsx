@@ -1,14 +1,4 @@
-import {
-  MessageSquare,
-  PanelLeftClose,
-  PanelRightClose,
-  Pin,
-  PinOff,
-  Pencil,
-  SquareTerminal,
-  X,
-  ListX
-} from 'lucide-react'
+import { PanelLeftClose, PanelRightClose, Pin, PinOff, Pencil, X, ListX } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,7 +13,7 @@ import { formatShortcutLabel, useOptionalShortcutLabel } from '@/hooks/useShortc
 import { translate } from '@/i18n/i18n'
 import { TerminalTabSplitMenuSection } from './TerminalTabSplitMenuSection'
 import { TAB_CONTEXT_MENU_CONTENT_CLASS } from './tab-context-menu-sizing'
-import { ClaudeWebViewMenuItem } from '../terminal-pane/ClaudeWebViewMenuItem'
+import { AgentViewSubmenu } from '../terminal-pane/AgentViewSubmenu'
 
 const TAB_COLORS = [
   {
@@ -173,28 +163,12 @@ export function SortableTabContextMenu({
           splitDownShortcut={splitDownShortcut}
           showTerminalSplit={canSplitTerminal}
         />
-        {canToggleViewMode && onToggleViewMode ? (
-          <>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onSelect={onToggleViewMode}>
-              {isChatView ? (
-                <SquareTerminal className="size-3.5 shrink-0" />
-              ) : (
-                <MessageSquare className="size-3.5 shrink-0" />
-              )}
-              {isChatView
-                ? translate(
-                    'components.tab.bar.SortableTabContextMenu.switchToTerminalView',
-                    'Switch to terminal view'
-                  )
-                : translate(
-                    'components.tab.bar.SortableTabContextMenu.switchToChatView',
-                    'Switch to chat view'
-                  )}
-            </DropdownMenuItem>
-          </>
-        ) : null}
-        <ClaudeWebViewMenuItem tabId={tab.id} />
+        <AgentViewSubmenu
+          tabId={tab.id}
+          canChat={canToggleViewMode}
+          isChat={isChatView}
+          onToggleChat={onToggleViewMode}
+        />
         <DropdownMenuSeparator />
         <DropdownMenuItem onSelect={onTogglePin}>
           {isPinned ? (

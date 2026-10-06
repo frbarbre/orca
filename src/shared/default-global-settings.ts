@@ -133,6 +133,7 @@ export function buildDefaultSettings(args: {
     terminalLinkClickBehavior: 'actions',
     terminalUrlMiddleClickBehavior: 'open',
     openAgentTabsInChatByDefault: false,
+    openClaudeTabsInWebView: false,
     experimentalNativeChat: false,
     experimentalStructuredNativeChat: false,
     nativeChatResumeWorkOnRestart: false,

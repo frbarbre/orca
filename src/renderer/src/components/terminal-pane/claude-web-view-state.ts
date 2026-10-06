@@ -2,11 +2,38 @@ import { useSyncExternalStore } from 'react'
 import { makePaneKey, parsePaneKey } from '../../../../shared/stable-pane-id'
 import { resolvePaneAgentSessionId, type PaneAgentSessionIdState } from './pane-agent-session-id'
 
-let leafIdByTabId: Readonly<Record<string, string>> = {}
+const STORAGE_KEY = 'orca.claudeWebView.leafIdByTabId'
+
+function readPersisted(): Readonly<Record<string, string>> {
+  try {
+    const parsed: unknown = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}')
+    if (typeof parsed !== 'object' || parsed === null) {
+      return {}
+    }
+    return Object.fromEntries(
+      Object.entries(parsed).filter(
+        (entry): entry is [string, string] => typeof entry[1] === 'string'
+      )
+    )
+  } catch {
+    return {}
+  }
+}
+
+function writePersisted(value: Readonly<Record<string, string>>): void {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(value))
+  } catch {
+    // Why: storage can be unavailable; the view then just isn't remembered across reloads.
+  }
+}
+
+let leafIdByTabId: Readonly<Record<string, string>> = readPersisted()
 const listeners = new Set<() => void>()
 
 function publish(next: Readonly<Record<string, string>>): void {
   leafIdByTabId = next
+  writePersisted(next)
   for (const listener of listeners) {
     listener()
   }
@@ -37,7 +64,11 @@ export function resolvePaneClaudeSessionId(
   state: PaneAgentSessionIdState,
   paneKey: string
 ): string | null {
-  if (state.agentStatusByPaneKey[paneKey]?.agentType !== 'claude') {
+  // Why the sleeping record too: after a reload the live row can lag behind the restored session.
+  const agent =
+    state.agentStatusByPaneKey[paneKey]?.agentType ??
+    state.sleepingAgentSessionsByPaneKey[paneKey]?.agent
+  if (agent !== 'claude') {
     return null
   }
   return resolvePaneAgentSessionId(state, paneKey)

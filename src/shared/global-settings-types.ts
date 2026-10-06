@@ -228,6 +228,8 @@ export type GlobalSettings = {
   terminalUrlMiddleClickBehavior?: 'open' | 'actions' | 'none'
   /** Opt-in: open new coding-agent tabs in native chat instead of the raw terminal; optional for legacy settings. */
   openAgentTabsInChatByDefault?: boolean
+  /** Fork: open new Claude Code tabs in the claude.ai Remote Control web view. */
+  openClaudeTabsInWebView?: boolean
   /** Experimental native chat surface for Claude/Codex sessions; off by default. */
   experimentalNativeChat?: boolean
   /** Opt-in updated structured runtime; off keeps the existing PTY-backed native chat path. */

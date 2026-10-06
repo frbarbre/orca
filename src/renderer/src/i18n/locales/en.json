@@ -3490,6 +3490,12 @@
             "reload": "Reload",
             "retry": "Try again",
             "switchToWebView": "Switch to Claude web view"
+          },
+          "AgentViewSubmenu": {
+            "view": "View",
+            "terminal": "Terminal",
+            "chat": "Chat UI",
+            "claudeWeb": "Claude web"
           }
         }
       },
@@ -7377,7 +7383,8 @@
             "shellEnvNamesAlwaysPassed": "PATH, locale, and SSH_AUTH_SOCK are always passed. Applies the next time a chat starts or resumes.",
             "shellEnvTitle": "Use your shell environment",
             "shellEnvCopy": "Codex and Claude chats start with every variable your login shell exports, the same as a terminal. Turn off to choose which ones they get.",
-            "shellEnvToggleLabel": "Toggle using your shell environment"
+            "shellEnvToggleLabel": "Toggle using your shell environment",
+            "defaultViewClaudeWeb": "Claude web"
           },
           "agentDashboard": {
             "title": "Agent Dashboard",

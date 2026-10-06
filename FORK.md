@@ -746,9 +746,19 @@ New files: `src/shared/git-review-attributes.ts` (+ test), `src/main/git/check-r
 
 ### 18. Claude web view
 
-"Switch to Claude web view" (tab and pane right-click menus) covers a Claude Code pane with its
-claude.ai Remote Control page, `https://claude.ai/code/<bridgeSessionId>`, and "Switch to terminal
-view" removes it. The terminal and its process stay alive underneath, the same way chat view does.
+A **View** submenu (tab and pane right-click menus) picks one of Terminal, Chat UI and Claude web.
+Claude web covers a Claude Code pane with its claude.ai Remote Control page,
+`https://claude.ai/code/<bridgeSessionId>`; the terminal and its process stay alive underneath, the
+same way chat view does. Because the web view covers both other views, every choice clears it first
+(`agent-view-choice.ts`) — two separate toggle items used to switch chat on underneath it.
+
+Settings → Experimental → Chat UI → Default view has a third option, Claude web
+(`openClaudeTabsInWebView`, fork-only; the select writes it only when Claude web is involved, so
+upstream's `openAgentTabsInChatByDefault` writes are unchanged). With it on,
+`use-claude-web-auto-open.ts` opens the web view once for a Claude session in a tab created during
+this run — one observer instead of a hook in each launch path. The page waits up to 30 s for a young
+session's Remote Control to connect (`claude-remote-session-poll.ts`, keyed off the session file's
+`startedAt`); an older session without it reports Remote Control off at once.
 
 Claude Code writes `sessions/<pid>.json` in its config dir (`CLAUDE_CONFIG_DIR` or `~/.claude`) for
 each live process, with the hook `sessionId` and, while Remote Control is connected,
@@ -757,33 +767,43 @@ Local sessions only: an SSH workspace's file lives on the remote host and is not
 
 It deliberately does not add a `viewMode` value: `viewMode` is persisted, sanitized to
 `'terminal' | 'chat'` and mirrored to mobile and runtime hosts. The web view is renderer state
-(`claude-web-view-state.ts`) and is not restored on restart. The `<webview>` uses the default
+(`claude-web-view-state.ts`), remembered per tab in `localStorage` across reloads and restarts; it
+is dropped only on proof (Claude exited to the shell, or the pane is gone), never because the session
+has not been reported yet after a reload. With the web view over a tab's only pane, the pane header
+(its corner buttons) is not drawn. The `<webview>` uses the default
 browser profile's partition, so a claude.ai login in Orca's browser carries over. A split or pane
 move reparents the pane container and reloads the page.
 
-There is no toolbar; switching back is the right-click item, or the button on the error card.
+There is no toolbar; switching back is the View submenu, or the button on the error card.
 Keyboard: the cover carries `native-chat-pane-shell`, the "terminal is covered" marker, so the
 hidden terminal's paste/copy/focus handlers stand aside. Edit ▸ Paste pastes straight into a focused
 `<webview>` the focused window hosts (`app-menu-paste-item.ts`) — before, it went to the renderer,
 whose fallback pasted into Orca's own window. The page is not a registered browser tab, so the
-browser's guest shortcut forwarding never sees it; `claude-web-guest-shortcuts.ts` gives it
-`browser.reload` / `browser.hardReload` (⌘R / ⇧⌘R by default) through the
-`claudeRemoteSession:attachGuest` IPC.
+browser's allowlisted guest forwarding never sees it (and that allowlist lacks ⌘⇧G/⌘⇧E anyway).
+`claude-web-guest-shortcuts.ts`, armed through the `claudeRemoteSession:attachGuest` IPC, reloads
+the page on `browser.reload` / `browser.hardReload`, and sends any key matching a `global` or `tabs`
+keybinding to the renderer, which replays it on `document.body` (`claude-web-key-replay.ts`) so
+Orca's window keydown handlers run it with the user's rebinds. Modifier releases follow a forwarded
+chord, for hold-to-switch. Page editing keys (copy, paste, undo) are in neither scope and stay put.
 
 New files: `src/shared/claude-remote-session.ts`, `src/main/claude/claude-remote-session-url.ts`
 (+ test), `src/main/claude/claude-web-guest-shortcuts.ts` (+ test), `src/main/menu/app-menu-paste-item.ts`, `src/main/ipc/claude-remote-session.ts`, `src/preload/api/claude-remote-session-bridge.ts`,
 and in `src/renderer/src/components/terminal-pane/`: `claude-web-view-state.ts` (+ test),
-`ClaudeWebView.tsx`, `ClaudeWebViewMenuItem.tsx`, `TerminalPaneClaudeWebPortal.tsx`; plus
-`tests/e2e/claude-web-view.spec.ts`.
+`ClaudeWebView.tsx`, `AgentViewSubmenu.tsx`, `agent-view-choice.ts` (+ test),
+`claude-remote-session-poll.ts` (+ test), `claude-web-key-replay.ts`, `use-claude-web-auto-open.ts`,
+`TerminalPaneClaudeWebPortal.tsx`; plus `tests/e2e/claude-web-view.spec.ts`.
 
 | File | What is ours |
 | --- | --- |
 | `src/main/ipc/register-core-handlers/register-core-handlers.ts` | `registerClaudeRemoteSessionHandlers(() => store.getSettings().keybindings)`. |
 | `src/main/menu/register-app-menu.ts` (+ test) | The Paste item comes from `createAppMenuPasteItem` (new `app-menu-paste-item.ts`, which also holds upstream's paste routing); the test's "pastes natively into a focused guest webview" case. |
 | `src/preload/api-types.ts`, `src/preload/index.ts` | `claudeRemoteSession`. |
-| `src/renderer/src/components/terminal-pane/TerminalPaneSurface.tsx` | `<TerminalPaneClaudeWebPortal>` and the `claudeWebTabId` / `claudeWebLeafId` props. |
-| `src/renderer/src/components/terminal-pane/TerminalContextMenu.tsx` | The optional `claudeWeb*` props and `<ClaudeWebViewMenuItem>`. |
-| `src/renderer/src/components/tab-bar/SortableTabContextMenu.tsx` | `<ClaudeWebViewMenuItem tabId={tab.id} />`. |
+| `src/shared/global-settings-types.ts`, `default-global-settings.ts` | `openClaudeTabsInWebView`. |
+| `src/renderer/src/components/settings/NativeChatExperimentalSetting.tsx` | The Claude web option of Default view. |
+| `src/renderer/src/components/terminal-pane/TerminalPaneSurface.tsx` | `<TerminalPaneClaudeWebPortal>`, the `claudeWebTabId` / `claudeWebLeafId` props and `webViewLeafId`. |
+| `src/renderer/src/components/terminal-pane/TerminalPaneHeaderOverlay.tsx` | The optional `webViewLeafId` prop and its single-pane early return. |
+| `src/renderer/src/components/terminal-pane/TerminalContextMenu.tsx` | The optional `claudeWeb*` props; `<AgentViewSubmenu>` replaces upstream's chat toggle when the tab is known. |
+| `src/renderer/src/components/tab-bar/SortableTabContextMenu.tsx` | `<AgentViewSubmenu>` replaces upstream's "Switch to chat/terminal view" item. |
 | `SortableTabContextMenu.test.tsx`, `SortableTab.rename-shortcut.test.tsx`, `register-core-handlers.test.ts` | Store fields / module mocks for the above; re-apply after taking upstream's test. |
 
 ## Verify

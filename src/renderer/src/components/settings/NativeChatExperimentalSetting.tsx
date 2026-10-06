@@ -10,7 +10,7 @@ import { SearchableSetting } from './SearchableSetting'
 import { SettingsSwitch } from './SettingsFormControls'
 import { getExperimentalSearchEntry } from './experimental-search'
 
-type NativeChatDefaultView = 'terminal-chat' | 'native-chat'
+type NativeChatDefaultView = 'terminal-chat' | 'native-chat' | 'claude-web'
 
 type NativeChatExperimentalSettingProps = {
   settings: GlobalSettings
@@ -25,7 +25,11 @@ export function NativeChatExperimentalSetting({
   const structuredNativeChatEnabled = settings.experimentalStructuredNativeChat === true
   const resumeOnRestartEnabled = settings.nativeChatResumeWorkOnRestart === true
   const defaultView: NativeChatDefaultView =
-    settings.openAgentTabsInChatByDefault === true ? 'native-chat' : 'terminal-chat'
+    settings.openClaudeTabsInWebView === true
+      ? 'claude-web'
+      : settings.openAgentTabsInChatByDefault === true
+        ? 'native-chat'
+        : 'terminal-chat'
   // Structured-only settings; terminal-backed chat never reads them. They govern the chats this
   // machine holds too, which keep running whatever the setting says.
   const holdsStructuredChats = useLocalStructuredAgentSessionsHeld()
@@ -90,7 +94,10 @@ export function NativeChatExperimentalSetting({
               value={defaultView}
               onValueChange={(value: NativeChatDefaultView) => {
                 updateSettings({
-                  openAgentTabsInChatByDefault: value === 'native-chat'
+                  openAgentTabsInChatByDefault: value === 'native-chat',
+                  ...(value === 'claude-web' || defaultView === 'claude-web'
+                    ? { openClaudeTabsInWebView: value === 'claude-web' }
+                    : {})
                 })
               }}
             >
@@ -115,6 +122,12 @@ export function NativeChatExperimentalSetting({
                   {translate(
                     'auto.components.settings.ExperimentalPane.nativeChat.defaultViewNative',
                     'Chat UI'
+                  )}
+                </SelectItem>
+                <SelectItem value="claude-web">
+                  {translate(
+                    'auto.components.settings.ExperimentalPane.nativeChat.defaultViewClaudeWeb',
+                    'Claude web'
                   )}
                 </SelectItem>
               </SelectContent>

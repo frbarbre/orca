@@ -16,6 +16,7 @@ import { handleInternalTerminalFileDrop } from './terminal-drop-handler'
 import { TerminalQuickCommandEditorDialog } from './TerminalQuickCommandEditorDialog'
 import { TerminalPaneNativeChatPortal } from './TerminalPaneNativeChatPortal'
 import { TerminalPaneClaudeWebPortal } from './TerminalPaneClaudeWebPortal'
+import { useClaudeWebViewLeafId } from './claude-web-view-state'
 import {
   TerminalPaneCodexRestartPortals,
   TerminalPaneMobileDriverPortals,
@@ -113,6 +114,7 @@ export function TerminalPaneSurface({
     visibleTerminalError,
     worktreeId
   } = controller
+  const claudeWebViewLeafId = useClaudeWebViewLeafId(tabId)
 
   return (
     <>
@@ -313,6 +315,7 @@ export function TerminalPaneSurface({
         showSplitButton={showSplitButton}
         isTabPinned={isTabPinned}
         paneCount={paneCount}
+        webViewLeafId={claudeWebViewLeafId}
         activePaneId={activePane?.id}
         panes={managedPanes}
         paneTitles={paneTitles}

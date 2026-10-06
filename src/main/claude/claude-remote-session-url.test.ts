@@ -43,17 +43,19 @@ describe('resolveClaudeRemoteSessionUrl', () => {
     })
   })
 
-  it('reports Remote Control off when the process has no bridge session', async () => {
-    await writeSession(1, { sessionId: 'abc' })
+  it('reports Remote Control off, with when the session started, when there is no bridge', async () => {
+    await writeSession(1, { sessionId: 'abc', startedAt: 1234 })
     await expect(resolveClaudeRemoteSessionUrl('abc', configDir)).resolves.toEqual({
-      status: 'remote-control-off'
+      status: 'remote-control-off',
+      startedAt: 1234
     })
   })
 
   it('rejects a bridge id that is not a plain session id', async () => {
     await writeSession(1, { sessionId: 'abc', bridgeSessionId: '../../evil?x=1' })
     await expect(resolveClaudeRemoteSessionUrl('abc', configDir)).resolves.toEqual({
-      status: 'remote-control-off'
+      status: 'remote-control-off',
+      startedAt: 0
     })
   })
 

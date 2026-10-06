@@ -9,6 +9,7 @@ type ClaudeProcessSessionRecord = {
   sessionId: string
   bridgeSessionId: string | null
   updatedAt: number
+  startedAt: number
 }
 
 function parseProcessSessionRecord(raw: string): ClaudeProcessSessionRecord | null {
@@ -27,11 +28,13 @@ function parseProcessSessionRecord(raw: string): ClaudeProcessSessionRecord | nu
   }
   const bridge = 'bridgeSessionId' in parsed ? parsed.bridgeSessionId : undefined
   const updatedAt = 'updatedAt' in parsed ? parsed.updatedAt : undefined
+  const startedAt = 'startedAt' in parsed ? parsed.startedAt : undefined
   return {
     sessionId,
     bridgeSessionId:
       typeof bridge === 'string' && BRIDGE_SESSION_ID_PATTERN.test(bridge) ? bridge : null,
-    updatedAt: typeof updatedAt === 'number' ? updatedAt : 0
+    updatedAt: typeof updatedAt === 'number' ? updatedAt : 0,
+    startedAt: typeof startedAt === 'number' ? startedAt : 0
   }
 }
 
@@ -65,7 +68,7 @@ export async function resolveClaudeRemoteSessionUrl(
     return { status: 'session-not-found' }
   }
   if (!match.bridgeSessionId) {
-    return { status: 'remote-control-off' }
+    return { status: 'remote-control-off', startedAt: match.startedAt }
   }
   return { status: 'ready', url: `https://claude.ai/code/${match.bridgeSessionId}` }
 }

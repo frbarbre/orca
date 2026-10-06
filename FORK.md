@@ -868,6 +868,28 @@ sync hit exactly that (#23062 landed two commits later) and was fixed by merging
 
 ### Sync log
 
+**1.4.214 → 1.4.214** (`2b0ce17514..51062e653e`, 163 upstream commits, eight conflicts)
+
+- `package.json` still says 1.4.214, so the branch name repeats a fourth time.
+- `config/scripts/mobile-web-bundle-packaging-workflow-contract.test.mjs` — upstream deleted it
+  (#25791, "Remove low-value test inventories"). Took the deletion, so the fork's two workflow
+  entries in it are gone with it; the earlier note about re-adding them no longer applies.
+- `DiffCommentPopover.tsx`, `right-panel-comment-composer.tsx` — upstream #25480 swapped their
+  `<textarea>` for `ImeTextarea` (IME Enter no longer submits). Both boxes are the fork's
+  `ReviewMarkdownComposer` (TipTap), which has no textarea, so kept the fork's files whole.
+- `checks-panel/active-content.tsx` — the same #25480 import beside the fork's `useEffect`. Kept both.
+- `use-checks-panel-controller-state.tsx` — upstream dropped `panelVisibleSinceRef` /
+  `foregroundedUnrenderedReviewKeyRef`; the fork had dropped `commentsRef.current = comments` (the
+  comment list comes from `usePRCommentsState`). Dropped both.
+- `ui/textarea.tsx` — upstream added a `cell` variant beside the fork's `seamless`. Kept both.
+- `lib/worktree-activation.ts` — upstream moved the sidebar-filter lifting into
+  `worktree-activation-sidebar-filters.ts` (`liftSidebarFiltersHidingWorktree`). Took the move; the
+  fork's `revealTemporaryCheckout(state, wt)` now sits at the end of that function.
+- `ui-slice-preference-actions.ts` — upstream moved the agents-view defaults into
+  `createAgentsViewPreferenceActions`. Took it and kept the fork's
+  `createUiWorkspaceStatusRuleActions` import and spread.
+- Localization and RPC catalogs verified clean after the merge; no regeneration was needed.
+
 **1.4.214 → 1.4.214** (`433986fa3b..2b0ce17514`, 780 upstream commits, ten conflicts)
 
 - `package.json` still says 1.4.214 after 780 commits, so the branch name repeats a third time.

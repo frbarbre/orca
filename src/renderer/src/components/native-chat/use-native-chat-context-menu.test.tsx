@@ -73,6 +73,26 @@ vi.mock('@/components/tab-bar/TabWorkspaceLayoutMenuSection', () => ({
   TabWorkspaceLayoutMenuSection: () => 'Move Tab to Split'
 }))
 
+type CapturedAgentViewSubmenu = {
+  tabId: string
+  leafId?: string | null
+  canChat: boolean
+  isChat: boolean
+  onToggleChat?: () => void
+}
+
+const agentViewSubmenus = vi.hoisted(() => {
+  const list: CapturedAgentViewSubmenu[] = []
+  return { list }
+})
+
+vi.mock('@/components/terminal-pane/AgentViewSubmenu', () => ({
+  AgentViewSubmenu: (props: CapturedAgentViewSubmenu) => {
+    agentViewSubmenus.list.push(props)
+    return 'View'
+  }
+}))
+
 function childrenText(children: ReactNode): string {
   return React.Children.toArray(children)
     .map((child) => {
@@ -88,11 +108,13 @@ function childrenText(children: ReactNode): string {
 
 function Harness({
   onSwitchToTerminal,
+  agentView,
   structured = false,
   enabled = true,
   orcaSessionId
 }: {
   onSwitchToTerminal?: () => void
+  agentView?: { tabId: string; leafId: string | null }
   structured?: boolean
   enabled?: boolean
   orcaSessionId?: string
@@ -102,6 +124,7 @@ function Harness({
     rootRef,
     enabled,
     onSwitchToTerminal,
+    agentView,
     showTerminalPaneActions: !structured,
     workspaceLayout: structured ? { unifiedTabId: 'chat-tab', groupId: 'group-1' } : undefined,
     resolveOrcaSessionId: orcaSessionId === undefined ? undefined : async () => orcaSessionId,
@@ -138,6 +161,29 @@ describe('useNativeChatContextMenu', () => {
     expect(item).toBeDefined()
     item?.onSelect?.()
     expect(onSwitchToTerminal).toHaveBeenCalledTimes(1)
+  })
+
+  it('offers the View submenu instead of the single switch when the pane is known', () => {
+    agentViewSubmenus.list = []
+    const onSwitchToTerminal = vi.fn()
+
+    renderToStaticMarkup(
+      <Harness
+        onSwitchToTerminal={onSwitchToTerminal}
+        agentView={{ tabId: 'tab-1', leafId: 'leaf-1' }}
+      />
+    )
+
+    expect(
+      items.list.some((candidate) =>
+        childrenText(candidate.children).startsWith('Switch to terminal view')
+      )
+    ).toBe(false)
+    expect(agentViewSubmenus.list).toHaveLength(1)
+    const submenu = agentViewSubmenus.list[0]
+    expect(submenu).toMatchObject({ tabId: 'tab-1', leafId: 'leaf-1', canChat: true, isChat: true })
+    submenu.onToggleChat?.()
+    expect(onSwitchToTerminal).toHaveBeenCalledOnce()
   })
 
   it('does not render a terminal switch action without a bridge callback', () => {

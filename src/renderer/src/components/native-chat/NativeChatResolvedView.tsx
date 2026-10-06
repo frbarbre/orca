@@ -49,6 +49,7 @@ import { useNativeChatFileLinkContext } from './use-native-chat-file-link-contex
 import { matchNativeChatSplitShortcut } from './native-chat-split-shortcut'
 import { getShortcutPlatform } from '@/lib/shortcut-platform'
 import { formatShortcutLabel } from '@/hooks/useShortcutLabel'
+import { parsePaneKey } from '../../../../shared/stable-pane-id'
 
 /** Renders the bridge UI after NativeChatSessionGate resolves its agent session. */
 export function NativeChatResolvedView({
@@ -136,6 +137,7 @@ export function NativeChatResolvedView({
   const contextMenu = useNativeChatContextMenu({
     rootRef,
     onSwitchToTerminal,
+    agentView: { tabId: terminalTabId, leafId: parsePaneKey(paneKey)?.leafId ?? null },
     splitShortcutLabels: {
       right: formatShortcutLabel('terminal.splitRight', keybindings),
       down: formatShortcutLabel('terminal.splitDown', keybindings)

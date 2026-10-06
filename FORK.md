@@ -804,6 +804,7 @@ and in `src/renderer/src/components/terminal-pane/`: `claude-web-view-state.ts` 
 | `src/renderer/src/components/terminal-pane/TerminalPaneHeaderOverlay.tsx` | The optional `webViewLeafId` prop and its single-pane early return. |
 | `src/renderer/src/components/terminal-pane/TerminalContextMenu.tsx` | The optional `claudeWeb*` props; `<AgentViewSubmenu>` replaces upstream's chat toggle when the tab is known. |
 | `src/renderer/src/components/tab-bar/SortableTabContextMenu.tsx` | `<AgentViewSubmenu>` replaces upstream's "Switch to chat/terminal view" item. |
+| `src/renderer/src/components/native-chat/use-native-chat-context-menu.tsx` (+ test), `NativeChatResolvedView.tsx` | The optional `agentView` argument: a terminal-backed chat's right-click menu shows `<AgentViewSubmenu>` instead of "Switch to terminal view". Structured chats keep their menu. |
 | `SortableTabContextMenu.test.tsx`, `SortableTab.rename-shortcut.test.tsx`, `register-core-handlers.test.ts` | Store fields / module mocks for the above; re-apply after taking upstream's test. |
 
 ## Verify

@@ -32,6 +32,7 @@ import { translate } from '@/i18n/i18n'
 import { isMacPlatform, nativeChatToggleShortcutLabel } from './native-chat-shortcut'
 import { TabWorkspaceLayoutMenuSection } from '@/components/tab-bar/TabWorkspaceLayoutMenuSection'
 import { NativeChatCopyOrcaSessionIdMenuItem } from './NativeChatCopyOrcaSessionIdMenuItem'
+import { AgentViewSubmenu } from '@/components/terminal-pane/AgentViewSubmenu'
 import type { TabSplitDirection } from '@/store/slices/tabs'
 
 type NativeChatContextMenuState = {
@@ -45,6 +46,8 @@ type UseNativeChatContextMenuArgs = {
   enabled?: boolean
   /** Bridge-only escape hatch; structured sessions have no terminal view. */
   onSwitchToTerminal?: () => void
+  /** Fork: the terminal pane under this chat, so the View submenu can offer Claude web too. */
+  agentView?: { tabId: string; leafId: string | null }
   actions: NativeChatContextMenuActions
   showTerminalPaneActions?: boolean
   splitShortcutLabels?: { right: string; down: string }
@@ -103,6 +106,7 @@ export function useNativeChatContextMenu({
   rootRef,
   enabled = true,
   onSwitchToTerminal,
+  agentView,
   actions,
   showTerminalPaneActions = true,
   splitShortcutLabels,
@@ -198,7 +202,15 @@ export function useNativeChatContextMenu({
           </DropdownMenuItem>
           {showTerminalPaneActions ? (
             <>
-              {onSwitchToTerminal ? (
+              {onSwitchToTerminal && agentView ? (
+                <AgentViewSubmenu
+                  tabId={agentView.tabId}
+                  leafId={agentView.leafId}
+                  canChat
+                  isChat
+                  onToggleChat={onSwitchToTerminal}
+                />
+              ) : onSwitchToTerminal ? (
                 <DropdownMenuItem onSelect={onSwitchToTerminal}>
                   <SquareTerminal />
                   {translate(

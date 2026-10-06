@@ -19,7 +19,7 @@ export function applyAgentViewChoice({
 }): void {
   if (next === 'claude-web') {
     if (claudeLeafId) {
-      claudeWebView.show(tabId, claudeLeafId)
+      claudeWebView.show(tabId, claudeLeafId, { focusPrompt: true })
     }
     return
   }

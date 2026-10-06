@@ -27,6 +27,7 @@ vi.mock('@/lib/pane-manager/pane-webgl-renderer', () => ({
 }))
 
 import { useTerminalWindowWakeRecovery } from './use-terminal-window-wake-recovery'
+import { claudeWebView } from './claude-web-view-state'
 import {
   getTerminalFreezeBreadcrumbs,
   resetTerminalFreezeBreadcrumbsForTesting
@@ -139,6 +140,40 @@ describe('useTerminalWindowWakeRecovery', () => {
       isChatViewMode: covered,
       clearGlyphAtlases: false
     })
+  })
+
+  it('treats a Claude web view cover as covered, so window focus never hands it the keyboard', () => {
+    const fakeManager = {
+      getActivePane: () => ({
+        container: {
+          querySelector: (selector: string) => (selector === '[data-claude-web-cover]' ? {} : null)
+        }
+      }),
+      getPanes: () => []
+    }
+    // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: wake recovery reads only getActivePane/getPanes, which the fake implements.
+    const webManager = fakeManager as unknown as PaneManager
+    claudeWebView.show('web-tab', '11111111-1111-4111-8111-111111111111')
+    renderHook(() =>
+      useTerminalWindowWakeRecovery({
+        isVisible: true,
+        isChatViewMode: false,
+        tabId: 'web-tab',
+        managerRef: { current: webManager },
+        isActiveRef: { current: true },
+        isVisibleRef: { current: true }
+      })
+    )
+
+    window.dispatchEvent(new Event('focus'))
+
+    expect(recoverVisibleTerminalWindowWakeMock).toHaveBeenLastCalledWith({
+      manager: webManager,
+      isActive: true,
+      isChatViewMode: true,
+      clearGlyphAtlases: false
+    })
+    claudeWebView.hide('web-tab')
   })
 
   it('records a wake-recovery breadcrumb with the trigger source and atlas decision', () => {

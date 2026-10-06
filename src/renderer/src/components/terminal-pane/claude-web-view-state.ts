@@ -44,16 +44,27 @@ function subscribe(listener: () => void): () => void {
   return () => listeners.delete(listener)
 }
 
+// Why not persisted: a web view restored after a reload must never take focus on its own.
+const promptFocusRequests = new Set<string>()
+
 /** Which pane of a terminal tab is showing the claude.ai page instead of the terminal. */
 export const claudeWebView = {
   leafIdFor: (tabId: string): string | null => leafIdByTabId[tabId] ?? null,
-  show: (tabId: string, leafId: string): void => publish({ ...leafIdByTabId, [tabId]: leafId }),
+  show: (tabId: string, leafId: string, options?: { focusPrompt?: boolean }): void => {
+    if (options?.focusPrompt) {
+      promptFocusRequests.add(tabId)
+    }
+    publish({ ...leafIdByTabId, [tabId]: leafId })
+  },
   hide: (tabId: string): void => {
+    promptFocusRequests.delete(tabId)
     if (tabId in leafIdByTabId) {
       const { [tabId]: _removed, ...rest } = leafIdByTabId
       publish(rest)
     }
-  }
+  },
+  /** True once per request: the opener asked for the prompt to take focus. */
+  takePromptFocusRequest: (tabId: string): boolean => promptFocusRequests.delete(tabId)
 }
 
 export function useClaudeWebViewLeafId(tabId: string): string | null {

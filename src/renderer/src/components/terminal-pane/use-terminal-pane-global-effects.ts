@@ -125,6 +125,7 @@ export function useTerminalPaneGlobalEffects({
   useTerminalWindowWakeRecovery({
     isVisible: rendererVisible,
     isChatViewMode,
+    tabId,
     managerRef,
     isActiveRef,
     isVisibleRef,

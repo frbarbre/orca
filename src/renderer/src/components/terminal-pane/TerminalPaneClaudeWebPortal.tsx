@@ -11,14 +11,17 @@ import {
 } from './claude-web-view-state'
 import { useCoveredTerminalFocusHandoff } from './use-covered-terminal-focus-handoff'
 import { useClaudeWebAutoOpen } from './use-claude-web-auto-open'
+import { CLAUDE_WEB_COVER_ATTRIBUTE } from './claude-web-covered-pane'
 import type { TerminalPaneController } from './use-terminal-pane-controller'
 
 function ClaudeWebPaneCover({
   pane,
+  tabId,
   sessionId,
   onSwitchToTerminal
 }: {
   pane: Pick<ManagedPane, 'terminal'>
+  tabId: string
   sessionId: string
   onSwitchToTerminal: () => void
 }): React.JSX.Element {
@@ -28,6 +31,7 @@ function ClaudeWebPaneCover({
     <div
       ref={coverRef}
       tabIndex={-1}
+      {...{ [CLAUDE_WEB_COVER_ATTRIBUTE]: '' }}
       // Why native-chat-pane-shell: it is the "terminal is covered" marker, so the hidden terminal's
       // paste/copy/focus handling stands aside and these chords reach the page. z-20 sits above chat.
       className="native-chat-pane-shell absolute inset-0 z-20 flex min-h-0 min-w-0 bg-background focus:outline-none"
@@ -37,7 +41,7 @@ function ClaudeWebPaneCover({
         }
       }}
     >
-      <ClaudeWebView sessionId={sessionId} onSwitchToTerminal={onSwitchToTerminal} />
+      <ClaudeWebView tabId={tabId} sessionId={sessionId} onSwitchToTerminal={onSwitchToTerminal} />
     </div>
   )
 }
@@ -75,7 +79,12 @@ export function TerminalPaneClaudeWebPortal({
     return null
   }
   return createPortal(
-    <ClaudeWebPaneCover pane={pane} sessionId={sessionId} onSwitchToTerminal={() => hide(tabId)} />,
+    <ClaudeWebPaneCover
+      pane={pane}
+      tabId={tabId}
+      sessionId={sessionId}
+      onSwitchToTerminal={() => hide(tabId)}
+    />,
     pane.container,
     `claude-web-${tabId}-${pane.leafId}`
   )

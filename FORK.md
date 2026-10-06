@@ -786,11 +786,24 @@ keybinding to the renderer, which replays it on `document.body` (`claude-web-key
 Orca's window keydown handlers run it with the user's rebinds. Modifier releases follow a forwarded
 chord, for hold-to-switch. Page editing keys (copy, paste, undo) are in neither scope and stay put.
 
+Opening the web view (View submenu, or auto-open) asks for the claude.ai prompt to take focus:
+`claudeWebView.show(…, { focusPrompt: true })` queues a one-shot request, and on `dom-ready` a
+visible (not `inert`) pane focuses the page and runs `claude-web-prompt-focus.ts` in it, which
+polls up to 10 s for `[data-testid="code-prompt-input"]` (fallback `[role="textbox"][aria-label="Prompt"]`)
+and puts the caret at the end. A view restored after a reload has no request and never takes focus.
+
+Window focus: terminal wake recovery refocuses the active pane on every window `focus`; for a pane
+under the web view that meant the cover, which forwards to the page, which blurs Orca's window
+mid-press and cancels a tab-strip click (the tab strip cancels a press on window blur). So clicks on
+other tabs were randomly swallowed. `use-terminal-window-wake-recovery.ts` takes the tab's id and
+treats a pane under `[data-claude-web-cover]` (`claude-web-covered-pane.ts`) as covered, like chat.
+
 New files: `src/shared/claude-remote-session.ts`, `src/main/claude/claude-remote-session-url.ts`
 (+ test), `src/main/claude/claude-web-guest-shortcuts.ts` (+ test), `src/main/menu/app-menu-paste-item.ts`, `src/main/ipc/claude-remote-session.ts`, `src/preload/api/claude-remote-session-bridge.ts`,
 and in `src/renderer/src/components/terminal-pane/`: `claude-web-view-state.ts` (+ test),
 `ClaudeWebView.tsx`, `AgentViewSubmenu.tsx`, `agent-view-choice.ts` (+ test),
 `claude-remote-session-poll.ts` (+ test), `claude-web-key-replay.ts`, `use-claude-web-auto-open.ts`,
+`claude-web-prompt-focus.ts`, `claude-web-covered-pane.ts`,
 `TerminalPaneClaudeWebPortal.tsx`; plus `tests/e2e/claude-web-view.spec.ts`.
 
 | File | What is ours |
@@ -802,6 +815,7 @@ and in `src/renderer/src/components/terminal-pane/`: `claude-web-view-state.ts` 
 | `src/renderer/src/components/settings/NativeChatExperimentalSetting.tsx` | The Claude web option of Default view. |
 | `src/renderer/src/components/terminal-pane/TerminalPaneSurface.tsx` | `<TerminalPaneClaudeWebPortal>`, the `claudeWebTabId` / `claudeWebLeafId` props and `webViewLeafId`. |
 | `src/renderer/src/components/terminal-pane/TerminalPaneHeaderOverlay.tsx` | The optional `webViewLeafId` prop and its single-pane early return. |
+| `src/renderer/src/components/terminal-pane/use-terminal-window-wake-recovery.ts` (+ test), `use-terminal-pane-global-effects.ts` | The optional `tabId` and the web-view clause beside the chat-cover check; the caller passes `tabId`. |
 | `src/renderer/src/components/terminal-pane/TerminalContextMenu.tsx` | The optional `claudeWeb*` props; `<AgentViewSubmenu>` replaces upstream's chat toggle when the tab is known. |
 | `src/renderer/src/components/tab-bar/SortableTabContextMenu.tsx` | `<AgentViewSubmenu>` replaces upstream's "Switch to chat/terminal view" item. |
 | `src/renderer/src/components/native-chat/use-native-chat-context-menu.tsx` (+ test), `NativeChatResolvedView.tsx` | The optional `agentView` argument: a terminal-backed chat's right-click menu shows `<AgentViewSubmenu>` instead of "Switch to terminal view". Structured chats keep their menu. |

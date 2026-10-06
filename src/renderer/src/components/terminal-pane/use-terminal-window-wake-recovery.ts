@@ -6,10 +6,14 @@ import { presentPaneViewport } from '@/lib/pane-manager/pane-webgl-renderer'
 import { recordTerminalFreezeBreadcrumb } from './terminal-freeze-breadcrumbs'
 import type { IDisposable } from '@xterm/xterm'
 import { activePaneIsCoveredByNativeChat } from './native-chat-covered-pane'
+import { activePaneIsCoveredByClaudeWeb } from './claude-web-covered-pane'
+import { claudeWebView } from './claude-web-view-state'
 
 type UseTerminalWindowWakeRecoveryArgs = {
   isVisible: boolean
   isChatViewMode: boolean
+  /** Fork: the tab, to tell whether a Claude web view covers one of its panes. */
+  tabId?: string
   managerRef: React.RefObject<PaneManager | null>
   isActiveRef: React.RefObject<boolean>
   isVisibleRef: React.RefObject<boolean>
@@ -25,6 +29,7 @@ const DPR_RECOVERY_RETRY_FRAMES = 16
 export function useTerminalWindowWakeRecovery({
   isVisible,
   isChatViewMode,
+  tabId,
   managerRef,
   isActiveRef,
   isVisibleRef,
@@ -88,7 +93,12 @@ export function useTerminalWindowWakeRecovery({
       recoverVisibleTerminalWindowWake({
         manager,
         isActive: isActiveRef.current,
-        isChatViewMode: isChatViewMode && activePaneIsCoveredByNativeChat(manager),
+        isChatViewMode:
+          (isChatViewMode && activePaneIsCoveredByNativeChat(manager)) ||
+          // Why read at event time: the check runs on each window focus, so nothing subscribes.
+          (tabId !== undefined &&
+            claudeWebView.leafIdFor(tabId) !== null &&
+            activePaneIsCoveredByClaudeWeb(manager)),
         clearGlyphAtlases
       })
       if (typeof requestAnimationFrame !== 'function') {
@@ -107,7 +117,11 @@ export function useTerminalWindowWakeRecovery({
         recoverVisibleTerminalWindowWake({
           manager: settledManager,
           isActive: isActiveRef.current,
-          isChatViewMode: isChatViewMode && activePaneIsCoveredByNativeChat(settledManager),
+          isChatViewMode:
+            (isChatViewMode && activePaneIsCoveredByNativeChat(settledManager)) ||
+            (tabId !== undefined &&
+              claudeWebView.leafIdFor(tabId) !== null &&
+              activePaneIsCoveredByClaudeWeb(settledManager)),
           clearGlyphAtlases: clearGlyphAtlasesOnSettle
         })
         reassertPanePtySizes()
@@ -204,5 +218,5 @@ export function useTerminalWindowWakeRecovery({
       }
       unsubscribeSystemResumed?.()
     }
-  }, [isActiveRef, isChatViewMode, isVisible, isVisibleRef, managerRef, panePtyBindingsRef])
+  }, [isActiveRef, isChatViewMode, tabId, isVisible, isVisibleRef, managerRef, panePtyBindingsRef])
 }

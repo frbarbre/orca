@@ -74,4 +74,20 @@ describe('claudeWebView', () => {
     expect(claudeWebView.leafIdFor('tab-1')).toBeNull()
     expect(claudeWebView.leafIdFor('tab-2')).toBe(CODEX_LEAF)
   })
+
+  it('hands out a prompt focus request once, and only when the opener asked', () => {
+    claudeWebView.show('tab-1', CLAUDE_LEAF)
+    expect(claudeWebView.takePromptFocusRequest('tab-1')).toBe(false)
+
+    claudeWebView.show('tab-1', CLAUDE_LEAF, { focusPrompt: true })
+    expect(claudeWebView.takePromptFocusRequest('tab-1')).toBe(true)
+    expect(claudeWebView.takePromptFocusRequest('tab-1')).toBe(false)
+  })
+
+  it('drops an unused prompt focus request when the web view closes', () => {
+    claudeWebView.show('tab-1', CLAUDE_LEAF, { focusPrompt: true })
+    claudeWebView.hide('tab-1')
+    claudeWebView.show('tab-1', CLAUDE_LEAF)
+    expect(claudeWebView.takePromptFocusRequest('tab-1')).toBe(false)
+  })
 })

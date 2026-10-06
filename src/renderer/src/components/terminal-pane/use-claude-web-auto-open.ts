@@ -30,6 +30,6 @@ export function useClaudeWebAutoOpen(tabId: string, shownLeafId: string | null):
       return
     }
     autoOpenedPaneKeys.add(paneKey)
-    claudeWebView.show(tabId, claudeLeafId)
+    claudeWebView.show(tabId, claudeLeafId, { focusPrompt: true })
   }, [claudeLeafId, shownLeafId, tabId])
 }

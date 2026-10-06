@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button'
 import { translate } from '@/i18n/i18n'
 import { pollClaudeRemoteSessionUrl } from './claude-remote-session-poll'
 import { ensureClaudeWebKeyReplay } from './claude-web-key-replay'
+import { FOCUS_CLAUDE_PROMPT_SCRIPT } from './claude-web-prompt-focus'
+import { claudeWebView } from './claude-web-view-state'
 
 type PageState = 'loading' | 'ready' | 'failed'
 
@@ -14,7 +16,8 @@ function attachClaudeWebview(
   container: HTMLDivElement,
   partition: string,
   url: string,
-  onState: (state: PageState) => void
+  onState: (state: PageState) => void,
+  takePromptFocusRequest: () => boolean
 ): () => void {
   // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: Electron's renderer creates a WebviewTag for the 'webview' tag, which DOM typings do not know.
   const webview = document.createElement('webview') as Electron.WebviewTag
@@ -51,6 +54,14 @@ function attachClaudeWebview(
     attachedGuest = true
     ensureClaudeWebKeyReplay()
     void window.api.claudeRemoteSession.attachGuest({ webContentsId: webview.getWebContentsId() })
+    // Why visible only: a request for a pane on a background tab must not pull focus there; a
+    // retained hidden tab keeps its layout, so `inert` is what marks it.
+    const isVisible = container.getClientRects().length > 0 && !container.closest('[inert]')
+    if (takePromptFocusRequest() && isVisible) {
+      webview.focus()
+      void webview.executeJavaScript(FOCUS_CLAUDE_PROMPT_SCRIPT).catch(() => undefined)
+      return
+    }
     // Why: the cover took focus from the terminal before the page existed; hand it to the page.
     if (container.parentElement?.contains(document.activeElement)) {
       webview.focus()
@@ -92,9 +103,11 @@ function unavailableMessage(result: ClaudeRemoteSessionUrlResult | 'failed'): st
 }
 
 export function ClaudeWebView({
+  tabId,
   sessionId,
   onSwitchToTerminal
 }: {
+  tabId: string
   sessionId: string
   onSwitchToTerminal: () => void
 }): React.JSX.Element {
@@ -124,11 +137,17 @@ export function ClaudeWebView({
           return
         }
         setResolved(result)
-        detach = attachClaudeWebview(containerRef.current, partition, result.url, (next) => {
-          if (!controller.signal.aborted) {
-            setPageState(next)
-          }
-        })
+        detach = attachClaudeWebview(
+          containerRef.current,
+          partition,
+          result.url,
+          (next) => {
+            if (!controller.signal.aborted) {
+              setPageState(next)
+            }
+          },
+          () => claudeWebView.takePromptFocusRequest(tabId)
+        )
       })
       .catch(() => {
         if (!controller.signal.aborted) {
@@ -139,7 +158,7 @@ export function ClaudeWebView({
       controller.abort()
       detach?.()
     }
-  }, [sessionId, attempt])
+  }, [sessionId, tabId, attempt])
 
   const unavailable =
     resolved === 'failed' || (resolved !== null && resolved.status !== 'ready')

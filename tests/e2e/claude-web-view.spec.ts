@@ -88,7 +88,8 @@ async function serveClaudeStandIn(electronApp: ElectronApplication, orcaPage: Pa
           return net.fetch(request, { bypassCustomProtocolHandlers: true })
         }
         // Why a fresh token per response: a changed token proves the page was fetched again.
-        const html = `<!doctype html><body data-load="${crypto.randomUUID()}"><textarea id="input"></textarea></body>`
+        // Why the prompt arrives late: claude.ai is a SPA that draws its prompt after load.
+        const html = `<!doctype html><body data-load="${crypto.randomUUID()}"><textarea id="input"></textarea><script>setTimeout(() => { const prompt = document.createElement('div'); prompt.setAttribute('data-testid', 'code-prompt-input'); prompt.setAttribute('role', 'textbox'); prompt.setAttribute('aria-label', 'Prompt'); prompt.contentEditable = 'true'; document.body.append(prompt) }, 300)</script></body>`
         return new Response(html, { headers: { 'content-type': 'text/html' } })
       })
     },
@@ -126,6 +127,7 @@ test('the View submenu switches a Claude Code pane between terminal and Claude w
   orcaPage
 }) => {
   const { pane, tab, webview } = await seedClaudePane(electronApp, orcaPage)
+  await serveClaudeStandIn(electronApp, orcaPage)
 
   await chooseView(orcaPage, pane, 'Claude web')
   await expect(webview).toHaveAttribute('src', PAGE_URL)
@@ -168,10 +170,19 @@ test('Orca shortcuts reach Orca from inside the page, and Cmd+R reloads the page
   await expect.poll(loadToken).not.toBe(tokenBeforeReload)
 })
 
-test('remembers the Claude web view across a reload', async ({ electronApp, orcaPage }) => {
+const PROMPT_IS_FOCUSED =
+  "document.activeElement?.getAttribute('data-testid') === 'code-prompt-input'"
+const PROMPT_IS_DRAWN = 'Boolean(document.querySelector(\'[data-testid="code-prompt-input"]\'))'
+
+test('focuses the prompt when the web view is opened, and restores it after a reload without stealing focus', async ({
+  electronApp,
+  orcaPage
+}) => {
   const { tabId, leafId, pane, webview } = await seedClaudePane(electronApp, orcaPage)
+  const { inGuest } = await serveClaudeStandIn(electronApp, orcaPage)
   await chooseView(orcaPage, pane, 'Claude web')
   await expect(webview).toHaveAttribute('src', PAGE_URL)
+  await expect.poll(() => inGuest<boolean>(PROMPT_IS_FOCUSED)).toBe(true)
 
   await orcaPage.reload({ waitUntil: 'domcontentloaded' })
   await waitForSessionReady(orcaPage)
@@ -179,6 +190,10 @@ test('remembers the Claude web view across a reload', async ({ electronApp, orca
   // Why: the injected session lives in renderer state; a real one is re-reported by its hooks.
   await markPaneRunningClaude(orcaPage, { tabId, leafId })
   await expect(webview).toHaveAttribute('src', PAGE_URL)
+  await expect.poll(() => inGuest<boolean>(PROMPT_IS_DRAWN)).toBe(true)
+  // Why a pause: proving focus never arrives needs time for a wrong focus to have happened.
+  await orcaPage.waitForTimeout(1_500)
+  expect(await inGuest<boolean>(PROMPT_IS_FOCUSED)).toBe(false)
 })
 
 test('opens a new Claude Code tab in the web view when that is the default view', async ({
@@ -188,6 +203,10 @@ test('opens a new Claude Code tab in the web view when that is the default view'
   await waitForSessionReady(orcaPage)
   const worktreeId = await waitForActiveWorktree(orcaPage)
   await writeSessionFile(electronApp, BRIDGE_SESSION_ID)
+  const { inGuest } = await serveClaudeStandIn(electronApp, orcaPage)
+  const activeTabId = (): Promise<string | null> =>
+    orcaPage.evaluate(() => window.__store?.getState().activeTabId ?? null)
+  const firstTabId = (await readActivePane(orcaPage)).tabId
   await orcaPage.evaluate(async (worktreeId) => {
     const store = window.__store
     if (!store) {
@@ -196,6 +215,7 @@ test('opens a new Claude Code tab in the web view when that is the default view'
     await store.getState().updateSettings({ openClaudeTabsInWebView: true })
     store.getState().createTab(worktreeId)
   }, worktreeId)
+  await expect.poll(activeTabId).not.toBe(firstTabId)
   const ids = await readActivePane(orcaPage)
   await markPaneRunningClaude(orcaPage, ids)
 
@@ -204,4 +224,11 @@ test('opens a new Claude Code tab in the web view when that is the default view'
     'src',
     PAGE_URL
   )
+  await expect.poll(() => inGuest<boolean>(PROMPT_IS_FOCUSED)).toBe(true)
+
+  // Why: an auto-opened web view once pulled its tab back, so one click on another tab didn't stick.
+  await orcaPage.locator(`[data-testid="sortable-tab"][data-tab-id="${firstTabId}"]`).click()
+  await expect.poll(activeTabId).toBe(firstTabId)
+  await orcaPage.waitForTimeout(1_500)
+  expect(await activeTabId()).toBe(firstTabId)
 })

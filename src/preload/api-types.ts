@@ -67,6 +67,7 @@ import type { UpdaterApi } from './api/updater-api'
 import type { WorkspaceCleanupApi, WorkspaceSpaceApi } from './api/workspace-cleanup-api'
 import type { LocalhostWorktreeLabelsApi, WorkspacePortsApi } from './api/workspace-port-api'
 import type { WorkspaceSessionApi } from './api/workspace-session-api'
+import type { ClaudeRemoteSessionUrlResult } from '../shared/claude-remote-session'
 import type { FolderWorkspacesApi, SparsePresetsApi, WorktreeApi } from './api/worktree-api'
 
 // Flattens contracts that share one PreloadApi key: an intersection is not type-identical to the flat shape.
@@ -137,6 +138,9 @@ export type PreloadApi = {
   stats: StatsApi
   memory: MemoryApi
   claudeUsage: ClaudeUsageApi
+  claudeRemoteSession: {
+    resolveUrl: (args: { sessionId: string }) => Promise<ClaudeRemoteSessionUrlResult>
+  }
   codexUsage: CodexUsageApi
   openCodeUsage: OpenCodeUsageApi
   museUsage: MuseUsageApi

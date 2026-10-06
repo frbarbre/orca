@@ -15,6 +15,7 @@ import { SessionRestoredBannerPortals } from './SessionRestoredBannerPortals'
 import { handleInternalTerminalFileDrop } from './terminal-drop-handler'
 import { TerminalQuickCommandEditorDialog } from './TerminalQuickCommandEditorDialog'
 import { TerminalPaneNativeChatPortal } from './TerminalPaneNativeChatPortal'
+import { TerminalPaneClaudeWebPortal } from './TerminalPaneClaudeWebPortal'
 import {
   TerminalPaneCodexRestartPortals,
   TerminalPaneMobileDriverPortals,
@@ -223,6 +224,7 @@ export function TerminalPaneSurface({
         paneIds={sessionRestoredBannerPaneIds}
       />
       <TerminalPaneNativeChatPortal controller={controller} />
+      <TerminalPaneClaudeWebPortal controller={controller} />
       <TerminalContextMenu
         open={contextMenu.open}
         onOpenChange={contextMenu.setOpen}
@@ -248,6 +250,10 @@ export function TerminalPaneSurface({
         onContinueAgentSessionInNewSession={contextMenu.onContinueAgentSessionInNewSession}
         onForkAgentSession={() => void contextMenu.onForkAgentSession()}
         canToggleNativeChat={contextMenuCanToggleChat}
+        claudeWebTabId={tabId}
+        claudeWebLeafId={
+          managedPanes.find((pane) => pane.id === contextMenu.menuPaneId)?.leafId ?? null
+        }
         isNativeChatView={contextMenuIsChatView}
         onToggleNativeChat={handleContextMenuToggleNativeChat}
         onCopyAgentSessionContext={() => void contextMenu.onCopyAgentSessionContext()}

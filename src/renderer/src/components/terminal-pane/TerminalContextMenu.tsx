@@ -35,6 +35,7 @@ import { isMacPlatform, nativeChatToggleShortcutLabel } from '../native-chat/nat
 import { AgentSessionContinuationMenuItem } from './AgentSessionContinuationMenuItem'
 import type { TerminalQuickCommandMenuHost } from '@/hooks/use-terminal-quick-command-hosts'
 import { TerminalQuickCommandsSubmenu } from './TerminalQuickCommandsSubmenu'
+import { ClaudeWebViewMenuItem } from './ClaudeWebViewMenuItem'
 
 type TerminalContextMenuProps = {
   open: boolean
@@ -61,6 +62,8 @@ type TerminalContextMenuProps = {
   /** True when this pane may switch between the terminal and native chat views.
    *  Structured sessions are excluded — they have no terminal underneath. */
   canToggleNativeChat: boolean
+  claudeWebTabId?: string
+  claudeWebLeafId?: string | null
   isNativeChatView: boolean
   onToggleNativeChat: () => void
   onCopyAgentSessionContext: () => void
@@ -151,6 +154,8 @@ function TerminalContextMenuItems({
   onContinueAgentSessionInNewSession,
   onForkAgentSession,
   canToggleNativeChat,
+  claudeWebTabId,
+  claudeWebLeafId,
   isNativeChatView,
   onToggleNativeChat,
   onCopyAgentSessionContext,
@@ -243,6 +248,9 @@ function TerminalContextMenuItems({
               )}
           <DropdownMenuShortcut>{shortcuts.nativeChat}</DropdownMenuShortcut>
         </DropdownMenuItem>
+      ) : null}
+      {claudeWebTabId && claudeWebLeafId ? (
+        <ClaudeWebViewMenuItem tabId={claudeWebTabId} leafId={claudeWebLeafId} />
       ) : null}
       <DropdownMenuSeparator />
       <DropdownMenuItem className="whitespace-nowrap" onSelect={onSplitRight}>

@@ -3480,6 +3480,16 @@
           },
           "TerminalRestoringPlaceholder": {
             "restoring": "Restoring terminal…"
+          },
+          "ClaudeWebView": {
+            "pageLabel": "Claude Code on the web",
+            "loadFailed": "claude.ai could not be loaded.",
+            "remoteControlOff": "Remote Control is not on for this session. Run /remote-control in Claude Code, then try again.",
+            "sessionNotFound": "This Claude Code session could not be found on this machine.",
+            "title": "Claude web view",
+            "reload": "Reload",
+            "retry": "Try again",
+            "switchToWebView": "Switch to Claude web view"
           }
         }
       },

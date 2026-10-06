@@ -96,6 +96,7 @@ import {
 import { callRuntimeSessionSearch } from '../../ai-vault/runtime-session-search-call'
 import { ensureStructuredAgentSessionHostUnlessRefused } from '../../runtime/structured-agent-session-host-refusal'
 import type { PluginService } from '../../plugins/plugin-service'
+import { registerClaudeRemoteSessionHandlers } from '../claude-remote-session'
 import type { PluginMarketplaceHandlerServices } from '../plugin-marketplaces'
 
 let registered = false
@@ -152,6 +153,7 @@ export function registerCoreHandlers(
   registerAgentHookHandlers(runtime, { getPtyIdForPaneKey })
   registerCodexConfigSyncHandlers(codexAccounts.runtimeHomeService)
   registerClaudeAccountHandlers(claudeAccounts)
+  registerClaudeRemoteSessionHandlers()
   registerOpenCodeGoCredentialsHandlers(rateLimits)
   registerMiniMaxCredentialsHandlers(rateLimits)
   registerZcodePlanCredentialsHandlers(rateLimits)

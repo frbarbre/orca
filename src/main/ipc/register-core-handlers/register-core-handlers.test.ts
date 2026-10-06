@@ -332,6 +332,10 @@ vi.mock('../agent-hooks', () => ({
   registerAgentHookHandlers: registerAgentHookHandlersMock
 }))
 
+vi.mock('../claude-remote-session', () => ({
+  registerClaudeRemoteSessionHandlers: vi.fn()
+}))
+
 vi.mock('../claude-accounts', () => ({
   registerClaudeAccountHandlers: registerClaudeAccountHandlersMock
 }))

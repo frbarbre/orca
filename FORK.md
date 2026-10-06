@@ -744,6 +744,38 @@ New files: `src/shared/git-review-attributes.ts` (+ test), `src/main/git/check-r
 | `source-control/listing/use-file-projection.ts` | `categoryGrouped` feeds both the text filter and `unfilteredDisplaySectionsById`, so section Stage all / Discard all / View all never act on hidden files. Branch entries are category-filtered before the text filter. |
 | `source-control/panel/panel-content.tsx`, `listing/content-status.tsx` | The filter under the commit surface and the "All changed files are hidden" empty state. |
 
+### 18. Claude web view
+
+"Switch to Claude web view" (tab and pane right-click menus) covers a Claude Code pane with its
+claude.ai Remote Control page, `https://claude.ai/code/<bridgeSessionId>`, and "Switch to terminal
+view" removes it. The terminal and its process stay alive underneath, the same way chat view does.
+
+Claude Code writes `sessions/<pid>.json` in its config dir (`CLAUDE_CONFIG_DIR` or `~/.claude`) for
+each live process, with the hook `sessionId` and, while Remote Control is connected,
+`bridgeSessionId`. That file is undocumented; if it moves, the cover says the session was not found.
+Local sessions only: an SSH workspace's file lives on the remote host and is not read.
+
+It deliberately does not add a `viewMode` value: `viewMode` is persisted, sanitized to
+`'terminal' | 'chat'` and mirrored to mobile and runtime hosts. The web view is renderer state
+(`claude-web-view-state.ts`) and is not restored on restart. The `<webview>` uses the default
+browser profile's partition, so a claude.ai login in Orca's browser carries over. A split or pane
+move reparents the pane container and reloads the page.
+
+New files: `src/shared/claude-remote-session.ts`, `src/main/claude/claude-remote-session-url.ts`
+(+ test), `src/main/ipc/claude-remote-session.ts`, `src/preload/api/claude-remote-session-bridge.ts`,
+and in `src/renderer/src/components/terminal-pane/`: `claude-web-view-state.ts` (+ test),
+`ClaudeWebView.tsx`, `ClaudeWebViewMenuItem.tsx`, `TerminalPaneClaudeWebPortal.tsx`; plus
+`tests/e2e/claude-web-view.spec.ts`.
+
+| File | What is ours |
+| --- | --- |
+| `src/main/ipc/register-core-handlers/register-core-handlers.ts` | `registerClaudeRemoteSessionHandlers()`. |
+| `src/preload/api-types.ts`, `src/preload/index.ts` | `claudeRemoteSession`. |
+| `src/renderer/src/components/terminal-pane/TerminalPaneSurface.tsx` | `<TerminalPaneClaudeWebPortal>` and the `claudeWebTabId` / `claudeWebLeafId` props. |
+| `src/renderer/src/components/terminal-pane/TerminalContextMenu.tsx` | The optional `claudeWeb*` props and `<ClaudeWebViewMenuItem>`. |
+| `src/renderer/src/components/tab-bar/SortableTabContextMenu.tsx` | `<ClaudeWebViewMenuItem tabId={tab.id} />`. |
+| `SortableTabContextMenu.test.tsx`, `SortableTab.rename-shortcut.test.tsx`, `register-core-handlers.test.ts` | Store fields / module mocks for the above; re-apply after taking upstream's test. |
+
 ## Verify
 
 Verify runs on GitHub, not locally: `fork-verify.yml` runs it on every pull request against `main`,

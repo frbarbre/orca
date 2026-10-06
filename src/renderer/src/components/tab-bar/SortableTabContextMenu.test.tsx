@@ -155,6 +155,9 @@ beforeEach(() => {
   storeMock.dropUnifiedTab.mockReset()
   storeMock.state = {
     keybindings: {},
+    agentStatusByPaneKey: {},
+    sleepingAgentSessionsByPaneKey: {},
+    paneForegroundAgentByPaneKey: {},
     dropUnifiedTab: storeMock.dropUnifiedTab,
     groupsByWorktree: {
       'wt-1': [

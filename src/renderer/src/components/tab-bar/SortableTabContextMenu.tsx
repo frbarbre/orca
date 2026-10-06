@@ -23,6 +23,7 @@ import { formatShortcutLabel, useOptionalShortcutLabel } from '@/hooks/useShortc
 import { translate } from '@/i18n/i18n'
 import { TerminalTabSplitMenuSection } from './TerminalTabSplitMenuSection'
 import { TAB_CONTEXT_MENU_CONTENT_CLASS } from './tab-context-menu-sizing'
+import { ClaudeWebViewMenuItem } from '../terminal-pane/ClaudeWebViewMenuItem'
 
 const TAB_COLORS = [
   {
@@ -193,6 +194,7 @@ export function SortableTabContextMenu({
             </DropdownMenuItem>
           </>
         ) : null}
+        <ClaudeWebViewMenuItem tabId={tab.id} />
         <DropdownMenuSeparator />
         <DropdownMenuItem onSelect={onTogglePin}>
           {isPinned ? (

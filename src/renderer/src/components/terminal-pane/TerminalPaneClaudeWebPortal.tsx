@@ -27,8 +27,14 @@ function ClaudeWebPaneCover({
     <div
       ref={coverRef}
       tabIndex={-1}
-      // Why z-20: sits above the native chat cover (z-10) if both were ever requested at once.
-      className="absolute inset-0 z-20 flex min-h-0 min-w-0 bg-background focus:outline-none"
+      // Why native-chat-pane-shell: it is the "terminal is covered" marker, so the hidden terminal's
+      // paste/copy/focus handling stands aside and these chords reach the page. z-20 sits above chat.
+      className="native-chat-pane-shell absolute inset-0 z-20 flex min-h-0 min-w-0 bg-background focus:outline-none"
+      onFocus={(event) => {
+        if (event.target === event.currentTarget) {
+          event.currentTarget.querySelector<HTMLElement>('webview')?.focus()
+        }
+      }}
     >
       <ClaudeWebView sessionId={sessionId} onSwitchToTerminal={onSwitchToTerminal} />
     </div>

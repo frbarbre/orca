@@ -2521,6 +2521,10 @@
       },
       "terminal": {
         "pane": {
+          "ClaudeWebView": {
+            "reload": "Reload",
+            "title": "Claude web view"
+          },
           "CloseTerminalDialog": {
             "6b9a6975f8": "The terminal still has a running process. If you close the terminal, the process will be killed.",
             "78b79d854d": "Close Terminal?",

@@ -761,15 +761,25 @@ It deliberately does not add a `viewMode` value: `viewMode` is persisted, saniti
 browser profile's partition, so a claude.ai login in Orca's browser carries over. A split or pane
 move reparents the pane container and reloads the page.
 
+There is no toolbar; switching back is the right-click item, or the button on the error card.
+Keyboard: the cover carries `native-chat-pane-shell`, the "terminal is covered" marker, so the
+hidden terminal's paste/copy/focus handlers stand aside. Edit ▸ Paste pastes straight into a focused
+`<webview>` the focused window hosts (`app-menu-paste-item.ts`) — before, it went to the renderer,
+whose fallback pasted into Orca's own window. The page is not a registered browser tab, so the
+browser's guest shortcut forwarding never sees it; `claude-web-guest-shortcuts.ts` gives it
+`browser.reload` / `browser.hardReload` (⌘R / ⇧⌘R by default) through the
+`claudeRemoteSession:attachGuest` IPC.
+
 New files: `src/shared/claude-remote-session.ts`, `src/main/claude/claude-remote-session-url.ts`
-(+ test), `src/main/ipc/claude-remote-session.ts`, `src/preload/api/claude-remote-session-bridge.ts`,
+(+ test), `src/main/claude/claude-web-guest-shortcuts.ts` (+ test), `src/main/menu/app-menu-paste-item.ts`, `src/main/ipc/claude-remote-session.ts`, `src/preload/api/claude-remote-session-bridge.ts`,
 and in `src/renderer/src/components/terminal-pane/`: `claude-web-view-state.ts` (+ test),
 `ClaudeWebView.tsx`, `ClaudeWebViewMenuItem.tsx`, `TerminalPaneClaudeWebPortal.tsx`; plus
 `tests/e2e/claude-web-view.spec.ts`.
 
 | File | What is ours |
 | --- | --- |
-| `src/main/ipc/register-core-handlers/register-core-handlers.ts` | `registerClaudeRemoteSessionHandlers()`. |
+| `src/main/ipc/register-core-handlers/register-core-handlers.ts` | `registerClaudeRemoteSessionHandlers(() => store.getSettings().keybindings)`. |
+| `src/main/menu/register-app-menu.ts` (+ test) | The Paste item comes from `createAppMenuPasteItem` (new `app-menu-paste-item.ts`, which also holds upstream's paste routing); the test's "pastes natively into a focused guest webview" case. |
 | `src/preload/api-types.ts`, `src/preload/index.ts` | `claudeRemoteSession`. |
 | `src/renderer/src/components/terminal-pane/TerminalPaneSurface.tsx` | `<TerminalPaneClaudeWebPortal>` and the `claudeWebTabId` / `claudeWebLeafId` props. |
 | `src/renderer/src/components/terminal-pane/TerminalContextMenu.tsx` | The optional `claudeWeb*` props and `<ClaudeWebViewMenuItem>`. |

@@ -140,6 +140,7 @@ export type PreloadApi = {
   claudeUsage: ClaudeUsageApi
   claudeRemoteSession: {
     resolveUrl: (args: { sessionId: string }) => Promise<ClaudeRemoteSessionUrlResult>
+    attachGuest: (args: { webContentsId: number }) => Promise<void>
   }
   codexUsage: CodexUsageApi
   openCodeUsage: OpenCodeUsageApi

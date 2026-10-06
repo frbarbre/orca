@@ -310,6 +310,25 @@ describe('registerAppMenu', () => {
     }
   )
 
+  it('pastes natively into a focused guest webview the focused window hosts', () => {
+    const hostContents = { send: vi.fn() }
+    const guestContents = {
+      getType: () => 'webview',
+      hostWebContents: hostContents,
+      paste: vi.fn()
+    }
+    getFocusedWindowMock.mockReturnValue({ webContents: hostContents })
+    getFocusedWebContentsMock.mockReturnValue(guestContents)
+    registerAppMenu(buildMenuOptions())
+
+    getSubmenu(getTemplate(), 'Edit')
+      .find((item) => item.label === 'Paste')
+      ?.click?.({} as never, {} as never, {} as never)
+
+    expect(guestContents.paste).toHaveBeenCalledOnce()
+    expect(hostContents.send).not.toHaveBeenCalled()
+  })
+
   it('keeps selection actions native in a focused guest webview', () => {
     const send = vi.fn()
     const guestContents = { copy: vi.fn(), selectAll: vi.fn() }

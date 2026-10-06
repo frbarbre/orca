@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { AlertCircle, Loader2, RotateCw, SquareTerminal } from 'lucide-react'
+import { AlertCircle, Loader2, SquareTerminal } from 'lucide-react'
 import { ORCA_BROWSER_GUEST_WEB_PREFERENCES_ATTRIBUTE } from '../../../../shared/browser-guest-web-preferences'
 import type { ClaudeRemoteSessionUrlResult } from '../../../../shared/claude-remote-session'
 import { moveFocusToRendererBeforeWebviewDetach } from '@/components/browser-pane/host-guest/webview-registry'
@@ -13,7 +13,7 @@ function attachClaudeWebview(
   partition: string,
   url: string,
   onState: (state: PageState) => void
-): { reload: () => void; detach: () => void } {
+): () => void {
   // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: Electron's renderer creates a WebviewTag for the 'webview' tag, which DOM typings do not know.
   const webview = document.createElement('webview') as Electron.WebviewTag
   webview.setAttribute('partition', partition)
@@ -41,20 +41,31 @@ function attachClaudeWebview(
       onState('failed')
     }
   }
+  let attachedGuest = false
+  const onDomReady = (): void => {
+    if (attachedGuest) {
+      return
+    }
+    attachedGuest = true
+    void window.api.claudeRemoteSession.attachGuest({ webContentsId: webview.getWebContentsId() })
+    // Why: the cover took focus from the terminal before the page existed; hand it to the page.
+    if (container.parentElement?.contains(document.activeElement)) {
+      webview.focus()
+    }
+  }
   webview.addEventListener('did-start-loading', onStart)
   webview.addEventListener('did-stop-loading', onStop)
   webview.addEventListener('did-fail-load', onFail)
+  webview.addEventListener('dom-ready', onDomReady)
   container.appendChild(webview)
   webview.setAttribute('src', url)
-  return {
-    reload: () => webview.reload(),
-    detach: () => {
-      webview.removeEventListener('did-start-loading', onStart)
-      webview.removeEventListener('did-stop-loading', onStop)
-      webview.removeEventListener('did-fail-load', onFail)
-      moveFocusToRendererBeforeWebviewDetach(webview)
-      webview.remove()
-    }
+  return () => {
+    webview.removeEventListener('did-start-loading', onStart)
+    webview.removeEventListener('did-stop-loading', onStop)
+    webview.removeEventListener('did-fail-load', onFail)
+    webview.removeEventListener('dom-ready', onDomReady)
+    moveFocusToRendererBeforeWebviewDetach(webview)
+    webview.remove()
   }
 }
 
@@ -85,7 +96,6 @@ export function ClaudeWebView({
   onSwitchToTerminal: () => void
 }): React.JSX.Element {
   const containerRef = useRef<HTMLDivElement>(null)
-  const reloadRef = useRef<(() => void) | null>(null)
   const [resolved, setResolved] = useState<ClaudeRemoteSessionUrlResult | 'failed' | null>(null)
   const [pageState, setPageState] = useState<PageState>('loading')
   const [attempt, setAttempt] = useState(0)
@@ -108,18 +118,11 @@ export function ClaudeWebView({
           return
         }
         setResolved(result)
-        const attached = attachClaudeWebview(
-          containerRef.current,
-          partition,
-          result.url,
-          (next) => {
-            if (!disposed) {
-              setPageState(next)
-            }
+        detach = attachClaudeWebview(containerRef.current, partition, result.url, (next) => {
+          if (!disposed) {
+            setPageState(next)
           }
-        )
-        detach = attached.detach
-        reloadRef.current = attached.reload
+        })
       })
       .catch(() => {
         if (!disposed) {
@@ -128,7 +131,6 @@ export function ClaudeWebView({
       })
     return () => {
       disposed = true
-      reloadRef.current = null
       detach?.()
     }
   }, [sessionId, attempt])
@@ -142,39 +144,17 @@ export function ClaudeWebView({
   const loading = !unavailable && (resolved === null || pageState === 'loading')
 
   return (
-    <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-      {/* Why pr-12: the pane's chromeless split/close controls float over this corner. */}
-      <div className="flex shrink-0 items-center gap-1 border-b border-border py-1 pr-12 pl-2">
-        <span className="min-w-0 flex-1 truncate text-xs text-muted-foreground">
-          {translate('auto.components.terminal.pane.ClaudeWebView.title', 'Claude web view')}
-        </span>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-xs"
-          aria-label={translate('auto.components.terminal.pane.ClaudeWebView.reload', 'Reload')}
-          onClick={() => (reloadRef.current ? reloadRef.current() : setAttempt((n) => n + 1))}
-        >
-          <RotateCw />
-        </Button>
-        <Button type="button" variant="ghost" size="xs" onClick={onSwitchToTerminal}>
-          <SquareTerminal />
-          {translate(
-            'components.tab.bar.SortableTabContextMenu.switchToTerminalView',
-            'Switch to terminal view'
-          )}
-        </Button>
-      </div>
-      <div ref={containerRef} className="relative flex min-h-0 min-w-0 flex-1 bg-background">
-        {loading ? (
-          <div className="absolute inset-0 z-10 flex items-center justify-center bg-background">
-            <Loader2 className="size-5 animate-spin text-muted-foreground" />
-          </div>
-        ) : null}
-        {unavailable ? (
-          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-background px-6 text-center">
-            <AlertCircle className="size-6 text-muted-foreground" />
-            <p className="max-w-sm text-sm text-muted-foreground">{unavailable}</p>
+    <div ref={containerRef} className="relative flex min-h-0 min-w-0 flex-1 bg-background">
+      {loading ? (
+        <div className="absolute inset-0 z-10 flex items-center justify-center bg-background">
+          <Loader2 className="size-5 animate-spin text-muted-foreground" />
+        </div>
+      ) : null}
+      {unavailable ? (
+        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-background px-6 text-center">
+          <AlertCircle className="size-6 text-muted-foreground" />
+          <p className="max-w-sm text-sm text-muted-foreground">{unavailable}</p>
+          <div className="flex items-center gap-2">
             <Button
               type="button"
               variant="outline"
@@ -183,9 +163,16 @@ export function ClaudeWebView({
             >
               {translate('auto.components.terminal.pane.ClaudeWebView.retry', 'Try again')}
             </Button>
+            <Button type="button" variant="ghost" size="sm" onClick={onSwitchToTerminal}>
+              <SquareTerminal />
+              {translate(
+                'components.tab.bar.SortableTabContextMenu.switchToTerminalView',
+                'Switch to terminal view'
+              )}
+            </Button>
           </div>
-        ) : null}
-      </div>
+        </div>
+      ) : null}
     </div>
   )
 }

@@ -3,6 +3,7 @@ import type { GitForkSyncExpectedUpstream, GitForkSyncResult } from '../../share
 import type { GitStagingArea, GitUpstreamStatus } from '../../shared/git-status-types'
 import type { GitPushTarget } from '../../shared/worktree/types'
 import type { GitHistoryOptions, GitHistoryResult } from '../../shared/git-history'
+import type { GitPathReviewAttributes } from '../../shared/git-review-attributes'
 import type { PreloadApi } from '../api-types'
 
 export const gitApi = {
@@ -36,6 +37,11 @@ export const gitApi = {
     paths: string[]
     connectionId?: string
   }): Promise<string[]> => ipcRenderer.invoke('git:checkIgnored', args),
+  checkReviewAttributes: (args: {
+    worktreePath: string
+    paths: string[]
+    connectionId?: string
+  }): Promise<GitPathReviewAttributes> => ipcRenderer.invoke('git:checkReviewAttributes', args),
   findHugeFoldersToIgnore: (args: { worktreePath: string }): Promise<string[]> =>
     ipcRenderer.invoke('git:findHugeFoldersToIgnore', args),
   appendGitignore: (args: { worktreePath: string; folderName: string }): Promise<boolean> =>

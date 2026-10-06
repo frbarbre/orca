@@ -6,6 +6,8 @@ import type {
 } from '../../shared/git-status-types'
 import type { RuntimeGitCheckoutResult, RuntimeGitLocalBranches } from '../../shared/runtime-types'
 import { checkIgnoredPaths } from '../git/check-ignored-paths'
+import { checkReviewAttributes } from '../git/check-review-attributes'
+import type { GitPathReviewAttributes } from '../../shared/git-review-attributes'
 import { checkoutBranch, listLocalBranches } from '../git/checkout'
 import { getHistory as getGitHistory } from '../git/history'
 import {
@@ -74,6 +76,21 @@ export class RuntimeGitStatusCommands {
       return provider.checkIgnoredPaths(target.worktree.path, relativePaths)
     }
     return checkIgnoredPaths(target.worktree.path, relativePaths, {
+      ...localGitOptionsForTarget(target),
+      admissionTier: 'interactive'
+    })
+  }
+
+  async checkRuntimeGitReviewAttributes(
+    worktreeSelector: string,
+    relativePaths: string[]
+  ): Promise<GitPathReviewAttributes> {
+    const target = await this.host.resolveRuntimeGitTarget(worktreeSelector)
+    const provider = requireRuntimeGitProvider(target)
+    if (provider) {
+      return provider.checkReviewAttributes(target.worktree.path, relativePaths)
+    }
+    return checkReviewAttributes(target.worktree.path, relativePaths, {
       ...localGitOptionsForTarget(target),
       admissionTier: 'interactive'
     })

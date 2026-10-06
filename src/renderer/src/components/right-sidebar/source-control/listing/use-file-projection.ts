@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import type { GitBranchChangeEntry } from '../../../../../../shared/git-diff-compare-types'
 import type { GitStatusEntry } from '../../../../../../shared/git-status-types'
+import type { GitPathReviewAttributes } from '../../../../../../shared/git-review-attributes'
 import type { SourceControlViewMode } from '../../../../../../shared/ui-chrome-types'
 import { compareFileNames } from '../../../../../../shared/file-name-sort'
 import { compareGitStatusEntries } from '../../source-control-status-sort'
@@ -10,6 +11,11 @@ import {
   getSourceControlFileFilterState,
   type SourceControlFileFilterState
 } from './file-filter'
+import {
+  collectSourceControlFileCategories,
+  filterSourceControlPathEntriesByCategory,
+  type SourceControlFileCategory
+} from './file-category'
 import {
   applyGitStatusEntryAreasToSourceControlTree,
   buildGitStatusSourceControlTree,
@@ -43,6 +49,8 @@ export type SourceControlFileProjection = {
   grouped: SourceControlEntryGroups
   fileFilterState: SourceControlFileFilterState
   normalizedFilter: string
+  presentFileCategories: SourceControlFileCategory[]
+  isCategoryFilterActive: boolean
   isGitHistoryVisible: boolean
   filteredGrouped: SourceControlEntryGroups
   displaySections: SourceControlDisplaySection[]
@@ -83,6 +91,8 @@ export function useSourceControlFileProjection({
   entries,
   branchEntries,
   filterQuery,
+  hiddenFileCategories,
+  reviewAttributes,
   sourceControlGroupOrder,
   activeWorktreeId,
   worktreePath,
@@ -96,6 +106,8 @@ export function useSourceControlFileProjection({
   entries: GitStatusEntry[]
   branchEntries: GitBranchChangeEntry[]
   filterQuery: string
+  hiddenFileCategories: ReadonlySet<SourceControlFileCategory>
+  reviewAttributes: GitPathReviewAttributes
   sourceControlGroupOrder: readonly SourceControlSectionArea[]
   activeWorktreeId: string | null
   worktreePath: string | null
@@ -121,6 +133,27 @@ export function useSourceControlFileProjection({
     return groups
   }, [entries])
 
+  const presentFileCategories = useMemo(
+    () => collectSourceControlFileCategories([entries, branchEntries], reviewAttributes),
+    [branchEntries, entries, reviewAttributes]
+  )
+  // Why: a hidden category that is absent from this diff narrows nothing, so it must not read as an active filter.
+  const isCategoryFilterActive = presentFileCategories.some((category) =>
+    hiddenFileCategories.has(category)
+  )
+  const categoryGrouped = useMemo((): SourceControlEntryGroups => {
+    if (!isCategoryFilterActive) {
+      return grouped
+    }
+    const narrow = (items: GitStatusEntry[]): GitStatusEntry[] =>
+      filterSourceControlPathEntriesByCategory(items, hiddenFileCategories, reviewAttributes)
+    return {
+      staged: narrow(grouped.staged),
+      unstaged: narrow(grouped.unstaged),
+      untracked: narrow(grouped.untracked)
+    }
+  }, [grouped, hiddenFileCategories, isCategoryFilterActive, reviewAttributes])
+
   const fileFilterState = useMemo(() => getSourceControlFileFilterState(filterQuery), [filterQuery])
   const normalizedFilter = fileFilterState.normalizedFilter
   const isGitHistoryVisible =
@@ -129,17 +162,18 @@ export function useSourceControlFileProjection({
     Boolean(activeWorktreeId && worktreePath && !isFolder)
 
   const filteredGrouped = useMemo(
-    () => filterSourceControlGroupedPathEntries(grouped, fileFilterState),
-    [fileFilterState, grouped]
+    () => filterSourceControlGroupedPathEntries(categoryGrouped, fileFilterState),
+    [categoryGrouped, fileFilterState]
   )
 
   const displaySections = useMemo(
     () => buildSourceControlDisplaySections(filteredGrouped, sourceControlGroupOrder),
     [filteredGrouped, sourceControlGroupOrder]
   )
+  // Why category-narrowed: section bulk actions and View all act on these, and hidden file types must stay out of them.
   const unfilteredDisplaySections = useMemo(
-    () => buildSourceControlDisplaySections(grouped, sourceControlGroupOrder),
-    [grouped, sourceControlGroupOrder]
+    () => buildSourceControlDisplaySections(categoryGrouped, sourceControlGroupOrder),
+    [categoryGrouped, sourceControlGroupOrder]
   )
   const unfilteredDisplaySectionsById = useMemo(
     () => new Map(unfilteredDisplaySections.map((section) => [section.id, section])),
@@ -156,8 +190,16 @@ export function useSourceControlFileProjection({
     [branchEntries]
   )
   const filteredBranchEntries = useMemo(
-    () => filterSourceControlPathEntries(sortedBranchEntries, fileFilterState),
-    [fileFilterState, sortedBranchEntries]
+    () =>
+      filterSourceControlPathEntries(
+        filterSourceControlPathEntriesByCategory(
+          sortedBranchEntries,
+          hiddenFileCategories,
+          reviewAttributes
+        ),
+        fileFilterState
+      ),
+    [fileFilterState, hiddenFileCategories, reviewAttributes, sortedBranchEntries]
   )
 
   const treeRootsBySection = useMemo(() => {
@@ -273,6 +315,8 @@ export function useSourceControlFileProjection({
     grouped,
     fileFilterState,
     normalizedFilter,
+    presentFileCategories,
+    isCategoryFilterActive,
     isGitHistoryVisible,
     filteredGrouped,
     displaySections,

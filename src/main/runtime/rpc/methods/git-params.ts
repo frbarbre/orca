@@ -3,6 +3,7 @@ export {
   GitBranchDiff,
   GitBulkPaths,
   GitCheckIgnored,
+  GitCheckReviewAttributes,
   GitCheckout,
   GitCommit,
   GitCommitCompare,

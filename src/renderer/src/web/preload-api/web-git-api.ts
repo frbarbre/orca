@@ -84,6 +84,13 @@ export function createGitApi(): NonNullable<Partial<PreloadApi>['git']> {
         paths
       })
     },
+    checkReviewAttributes: async ({ worktreePath, paths }) => {
+      const worktree = await resolveRuntimeWorktreeByPath(worktreePath)
+      return callRuntimeResult('git.checkReviewAttributes', {
+        worktree: toRuntimeWorktreeSelector(worktree.id),
+        paths
+      })
+    },
     // Why: the "add huge folder to .gitignore" flow is desktop-only; the web runtime makes no offer, so return no candidates.
     findHugeFoldersToIgnore: async () => [],
     appendGitignore: async () => false,

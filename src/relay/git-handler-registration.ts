@@ -12,6 +12,9 @@ export function registerGitHandlers(
     handlers.read.getSubmoduleStatus(p, context)
   )
   dispatcher.onRequest('git.checkIgnored', (p, context) => handlers.read.checkIgnored(p, context))
+  dispatcher.onRequest('git.checkReviewAttributes', (p, context) =>
+    handlers.read.checkReviewAttributes(p, context)
+  )
   dispatcher.onRequest('git.history', (p, context) => handlers.read.history(p, context))
   dispatcher.onRequest('git.commit', (p) => handlers.changes.commit(p))
   dispatcher.onRequest('git.diff', (p, context) => handlers.read.getDiff(p, context))

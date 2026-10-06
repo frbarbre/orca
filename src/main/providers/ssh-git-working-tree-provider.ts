@@ -4,6 +4,10 @@ import type {
 } from '../../shared/git-diff-compare-types'
 import type { GitHistoryOptions, GitHistoryResult } from '../../shared/git-history'
 import type { GitConflictOperation } from '../../shared/git-status-types'
+import {
+  normalizeGitPathReviewAttributes,
+  type GitPathReviewAttributes
+} from '../../shared/git-review-attributes'
 import type { GitAdmissionTier } from '../git/command-runner/git-exec-options'
 import { SshGitNoninteractiveProvider } from './ssh-git-noninteractive-provider'
 
@@ -13,6 +17,18 @@ export class SshGitWorkingTreeProvider extends SshGitNoninteractiveProvider {
       worktreePath,
       paths: relativePaths
     })) as string[]
+  }
+
+  async checkReviewAttributes(
+    worktreePath: string,
+    relativePaths: string[]
+  ): Promise<GitPathReviewAttributes> {
+    return normalizeGitPathReviewAttributes(
+      await this.mux.request('git.checkReviewAttributes', {
+        worktreePath,
+        paths: relativePaths
+      })
+    )
   }
 
   async getHistory(

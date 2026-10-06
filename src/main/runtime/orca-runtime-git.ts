@@ -14,6 +14,7 @@ export class RuntimeGitCommands {
   readonly getRuntimeGitStatus: RuntimeGitStatusCommands['getRuntimeGitStatus']
   readonly getRuntimeGitSubmoduleStatus: RuntimeGitStatusCommands['getRuntimeGitSubmoduleStatus']
   readonly checkRuntimeGitIgnoredPaths: RuntimeGitStatusCommands['checkRuntimeGitIgnoredPaths']
+  readonly checkRuntimeGitReviewAttributes: RuntimeGitStatusCommands['checkRuntimeGitReviewAttributes']
   readonly getRuntimeGitHistory: RuntimeGitStatusCommands['getRuntimeGitHistory']
   readonly getRuntimeGitConflictOperation: RuntimeGitStatusCommands['getRuntimeGitConflictOperation']
   readonly checkoutRuntimeGitBranch: RuntimeGitStatusCommands['checkoutRuntimeGitBranch']
@@ -57,6 +58,7 @@ export class RuntimeGitCommands {
     this.getRuntimeGitStatus = status.getRuntimeGitStatus.bind(status)
     this.getRuntimeGitSubmoduleStatus = status.getRuntimeGitSubmoduleStatus.bind(status)
     this.checkRuntimeGitIgnoredPaths = status.checkRuntimeGitIgnoredPaths.bind(status)
+    this.checkRuntimeGitReviewAttributes = status.checkRuntimeGitReviewAttributes.bind(status)
     this.getRuntimeGitHistory = status.getRuntimeGitHistory.bind(status)
     this.getRuntimeGitConflictOperation = status.getRuntimeGitConflictOperation.bind(status)
     this.checkoutRuntimeGitBranch = status.checkoutRuntimeGitBranch.bind(status)

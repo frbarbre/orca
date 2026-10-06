@@ -27,7 +27,8 @@ export function SourceControlContentStatus({
   filterTooLarge,
   hasFilteredUncommittedEntries,
   hasFilteredBranchEntries,
-  filterQuery
+  filterQuery,
+  isCategoryFilterActive
 }: {
   unresolvedConflictCount: number
   conflictOperation: GitConflictOperation
@@ -46,6 +47,7 @@ export function SourceControlContentStatus({
   hasFilteredUncommittedEntries: boolean
   hasFilteredBranchEntries: boolean
   filterQuery: string
+  isCategoryFilterActive: boolean
 }): React.JSX.Element {
   return (
     <>
@@ -115,6 +117,21 @@ export function SourceControlContentStatus({
           )}
         />
       )}
+      {!normalizedFilter &&
+        isCategoryFilterActive &&
+        !hasFilteredUncommittedEntries &&
+        !hasFilteredBranchEntries && (
+          <EmptyState
+            heading={translate(
+              'auto.components.right.sidebar.SourceControl.fileCategory.allHiddenHeading',
+              'All changed files are hidden'
+            )}
+            supportingText={translate(
+              'auto.components.right.sidebar.SourceControl.fileCategory.allHiddenSupporting',
+              'Show more file types from the file type filter.'
+            )}
+          />
+        )}
       {normalizedFilter && !hasFilteredUncommittedEntries && !hasFilteredBranchEntries && (
         <EmptyState
           heading={translate(

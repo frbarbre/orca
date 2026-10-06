@@ -17,6 +17,7 @@ import {
   getRuntimeGitConflictOperation as getRuntimeGitConflictOperationImplementation,
   getRuntimeGitHistory as getRuntimeGitHistoryImplementation,
   getRuntimeGitIgnoredPaths as getRuntimeGitIgnoredPathsImplementation,
+  getRuntimeGitReviewAttributes as getRuntimeGitReviewAttributesImplementation,
   getRuntimeGitStatus as getRuntimeGitStatusImplementation,
   getRuntimeGitSubmoduleStatus as getRuntimeGitSubmoduleStatusImplementation,
   setRuntimeGitStatusUpstreamRefWatch as setRuntimeGitStatusUpstreamRefWatchImplementation
@@ -58,6 +59,7 @@ export const getRuntimeGitStatus = getRuntimeGitStatusImplementation
 export const setRuntimeGitStatusUpstreamRefWatch = setRuntimeGitStatusUpstreamRefWatchImplementation
 export const getRuntimeGitSubmoduleStatus = getRuntimeGitSubmoduleStatusImplementation
 export const getRuntimeGitIgnoredPaths = getRuntimeGitIgnoredPathsImplementation
+export const getRuntimeGitReviewAttributes = getRuntimeGitReviewAttributesImplementation
 export const getRuntimeGitHistory = getRuntimeGitHistoryImplementation
 export const getRuntimeGitConflictOperation = getRuntimeGitConflictOperationImplementation
 export const abortRuntimeGitMerge = abortRuntimeGitMergeImplementation

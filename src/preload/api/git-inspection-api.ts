@@ -11,6 +11,7 @@ import type {
 } from '../../shared/git-status-types'
 import type { GitPushTarget } from '../../shared/worktree/types'
 import type { GitHistoryOptions, GitHistoryResult } from '../../shared/git-history'
+import type { GitPathReviewAttributes } from '../../shared/git-review-attributes'
 import type {
   CommitMessageAgentCapability,
   CommitMessageModelCapability
@@ -49,6 +50,11 @@ export type GitInspectionApi = {
     paths: string[]
     connectionId?: string
   }) => Promise<string[]>
+  checkReviewAttributes: (args: {
+    worktreePath: string
+    paths: string[]
+    connectionId?: string
+  }) => Promise<GitPathReviewAttributes>
   findHugeFoldersToIgnore: (args: { worktreePath: string }) => Promise<string[]>
   history: (
     args: { worktreePath: string; connectionId?: string } & GitHistoryOptions

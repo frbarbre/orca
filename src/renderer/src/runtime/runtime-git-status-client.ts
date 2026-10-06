@@ -1,4 +1,5 @@
 import type { GitHistoryOptions, GitHistoryResult } from '../../../shared/git-history'
+import type { GitPathReviewAttributes } from '../../../shared/git-review-attributes'
 import type {
   GitConflictOperation,
   GitStagingArea,
@@ -160,6 +161,29 @@ export async function getRuntimeGitIgnoredPaths(
   return callRuntimeRpc<string[]>(
     target,
     'git.checkIgnored',
+    { worktree: toRuntimeWorktreeSelector(context.worktreeId), paths },
+    { timeoutMs: 15_000 }
+  )
+}
+
+export async function getRuntimeGitReviewAttributes(
+  context: RuntimeGitContext,
+  paths: string[]
+): Promise<GitPathReviewAttributes> {
+  const target = getActiveRuntimeTarget(context.settings)
+  if (paths.length === 0) {
+    return {}
+  }
+  if (target.kind === 'local' || !context.worktreeId) {
+    return window.api.git.checkReviewAttributes({
+      worktreePath: resolveLocalWorktreePath(context),
+      connectionId: context.connectionId,
+      paths
+    })
+  }
+  return callRuntimeRpc<GitPathReviewAttributes>(
+    target,
+    'git.checkReviewAttributes',
     { worktree: toRuntimeWorktreeSelector(context.worktreeId), paths },
     { timeoutMs: 15_000 }
   )

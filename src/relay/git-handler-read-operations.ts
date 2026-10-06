@@ -15,6 +15,7 @@ import {
 } from './git-handler-submodule-ops'
 import { computeDiff, type GitExec } from './git-handler-ops'
 import { checkIgnoredPathsOp } from './git-handler-check-ignore'
+import { checkReviewAttributesOp } from './git-handler-check-attr'
 import { loadGitHistoryFromExecutor } from '../shared/git-history'
 import { stableInFlightKey } from '../shared/in-flight-promise-dedupe'
 
@@ -88,6 +89,12 @@ export class GitHandlerReadOperations extends GitHandlerOperationContext {
 
   async checkIgnored(params: Record<string, unknown>, context?: RequestContext) {
     const result = await checkIgnoredPathsOp(this.gitForSignal(context?.signal), params)
+    context?.signal?.throwIfAborted()
+    return result
+  }
+
+  async checkReviewAttributes(params: Record<string, unknown>, context?: RequestContext) {
+    const result = await checkReviewAttributesOp(this.gitForSignal(context?.signal), params)
     context?.signal?.throwIfAborted()
     return result
   }

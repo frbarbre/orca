@@ -194,7 +194,7 @@ Modified files, and what to re-apply:
 | `src/renderer/src/components/editor/monaco-reveal.ts`, `use-monaco-reveal-scheduler.ts`             | Type widened from `IStandaloneCodeEditor` to `ICodeEditor` so the diff editor can reuse the scheduler.                                                                                                                                                                                                       |
 | `src/renderer/src/components/virtualized-list.tsx`                                                  | `scrollToRowKey`, `alignRowWithinScrollPadding`, and the flow-path wrapper — rendered **only when a caller passes `scrollToRowKey`**, so every other list keeps upstream's bare fragment. Heavily edited — merge with care.                                                                                                                                                                                                    |
 | `src/renderer/.../checks-panel/comment-row.tsx`, `comment-group.tsx`, `use-comments-list-state.tsx` | The `onOpenLocation` prop and the clickable path badge.                                                                                                                                                                                                                                                      |
-| `src/renderer/.../source-control/listing/*`                                                         | `activeOpenRowKey`, the branch-row `isOpenFile` highlight, the published review order in `use-file-listing.ts`.                                                                                                                                                                                              |
+| `src/renderer/.../source-control/listing/*`                                                         | `activeOpenRowKey`, the branch-row `isOpenFile` highlight, the published review order in `use-published-review-order.ts`.                                                                                                                                                                                              |
 | `src/renderer/.../source-control/panel/panel-ready.tsx`                                             | `scroll-pb-9` on the file-list scroller — reserves the sticky Commits header.                                                                                                                                                                                                                                |
 | `src/renderer/.../listing/active-open-file-keys.ts`                                                 | The `branch::<path>` key. Branch keys **must bypass** the availability filter.                                                                                                                                                                                                                               |
 
@@ -707,6 +707,42 @@ Import re-filters the parsed file, so an edited export cannot plant a token or a
 deep-merged onto the importer's own (their private nested fields survive), status rules keep their
 projects and ledger (a new-workspace column only moves workspaces created after the import), and the
 window reloads so every stored value goes through the normal hydration sanitizers.
+
+### 17. Filter changed files by type
+
+A dropdown under the commit button hides changed files by type — implementation, tests,
+documentation, generated, agent guidance, localization, assets — across staged, unstaged,
+untracked and committed-on-branch rows. It lists only the types present in the diff. Categories
+follow [Linear's `.gitattributes` rules](https://linear.app/enablement/guide/diffs#organize-files-with-.gitattributes):
+`review-<category>` and GitHub's `linguist-generated` / `linguist-documentation` add a category,
+`-attr` / `attr=false` removes one (the file falls back to implementation). Without an attribute,
+the branch line-total chip's `isGeneratedCodePath` / `isTestCodePath` heuristics decide.
+
+Git answers the attributes (`git check-attr --stdin -z`), so nested `.gitattributes` files and
+uncommitted edits to them count. It is a new read-only call on every route: IPC
+`git:checkReviewAttributes`, runtime RPC and relay `git.checkReviewAttributes`. An older relay or
+runtime without it errors, and the panel falls back to the path heuristics.
+
+New files: `src/shared/git-review-attributes.ts` (+ test), `src/main/git/check-review-attributes.ts`
+(+ real-git test), `src/main/ipc/filesystem/filesystem-git-review-attributes-handlers.ts`,
+`src/relay/git-handler-check-attr.ts`, and in `source-control/listing/`: `file-category.ts` (+ test),
+`file-category-filter.tsx`, `use-review-attributes.ts`, `use-file-projection-categories.test.tsx`,
+`use-published-review-order.ts` (the review order, moved out of `use-file-listing.ts`), and
+`tests/e2e/source-control-file-type-filter.spec.ts`.
+
+| File | What is ours |
+| --- | --- |
+| `src/main/ipc/filesystem.ts` | The `registerFilesystemGitReviewAttributesHandlers` call. |
+| `src/main/providers/git-provider-contract.ts`, `ssh-git-working-tree-provider.ts` | `checkReviewAttributes`. |
+| `src/main/runtime/runtime-git-status-commands.ts`, `orca-runtime-git.ts`, `runtime-git-command-surface.ts`, `rpc/methods/git.ts`, `rpc/methods/git-params.ts`, `runtime-git-api-contract.test.ts` | `checkRuntimeGitReviewAttributes` and the `git.checkReviewAttributes` method. |
+| `src/shared/rpc-contract/git-params.ts` | `GitCheckReviewAttributes`; regenerate the catalog with `pnpm run generate:rpc-params-catalog`. |
+| `src/relay/git-handler-read-operations.ts`, `git-handler-registration.ts` | `checkReviewAttributes` and its registration. |
+| `src/preload/api/git-bridge.ts`, `git-inspection-api.ts`, `src/renderer/src/web/preload-api/web-git-api.ts` | `checkReviewAttributes`. |
+| `src/renderer/src/runtime/runtime-git-status-client.ts`, `runtime-git-client.ts` | `getRuntimeGitReviewAttributes`. |
+| `source-control/panel/use-panel-view-state.ts` | `hiddenFileCategories` / `toggleFileCategory`, deliberately not reset on worktree switch. |
+| `source-control/panel/use-panel-foundation.ts`, `listing/use-file-listing.ts` | Passing `hiddenFileCategories` and `reviewAttributes` into the projection. |
+| `source-control/listing/use-file-projection.ts` | `categoryGrouped` feeds both the text filter and `unfilteredDisplaySectionsById`, so section Stage all / Discard all / View all never act on hidden files. Branch entries are category-filtered before the text filter. |
+| `source-control/panel/panel-content.tsx`, `listing/content-status.tsx` | The filter under the commit surface and the "All changed files are hidden" empty state. |
 
 ## Verify
 

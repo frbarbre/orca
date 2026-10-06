@@ -8,6 +8,7 @@ import type { SourceControlViewMode } from '../../../../../../shared/ui-chrome-t
 import type * as FileNameSortModule from '../../../../../../shared/file-name-sort'
 import type * as SourceControlTreeModule from '../../source-control-tree'
 import type * as SubmoduleExpansionModule from './submodule-expansion'
+import type { SourceControlFileCategory } from './file-category'
 
 const counters = vi.hoisted(() => ({
   compareFileNames: 0,
@@ -83,6 +84,8 @@ const NO_EXPANDED_SUBMODULES = new Set<string>()
 const NO_COLLAPSED_SECTIONS = new Set<string>()
 const NO_SUBMODULE_STATUS = {}
 const GROUP_ORDER = ['unstaged', 'staged', 'untracked'] as const
+const NO_HIDDEN_CATEGORIES = new Set<SourceControlFileCategory>()
+const NO_REVIEW_ATTRIBUTES = {}
 
 type ProjectionProps = {
   entries: GitStatusEntry[]
@@ -98,6 +101,8 @@ function renderProjection(initialProps: ProjectionProps) {
         entries: props.entries,
         branchEntries: props.branchEntries,
         filterQuery: props.filterQuery,
+        hiddenFileCategories: NO_HIDDEN_CATEGORIES,
+        reviewAttributes: NO_REVIEW_ATTRIBUTES,
         sourceControlGroupOrder: GROUP_ORDER,
         activeWorktreeId: 'wt-1',
         worktreePath: '/repo',

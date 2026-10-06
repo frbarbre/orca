@@ -3,6 +3,10 @@ import { shouldShowSourceControlCompareUnavailableCard } from './header-toolbar'
 import { shouldRenderCommitArea } from '../commit/component-gates'
 import { SourceControlBranchSection } from '../listing/branch-section'
 import { SourceControlContentStatus } from '../listing/content-status'
+import {
+  SourceControlFileCategoryFilter,
+  shouldShowSourceControlFileCategoryFilter
+} from '../listing/file-category-filter'
 import { SourceControlUncommittedSections } from '../listing/uncommitted-sections'
 import { CompareUnavailable } from '../sync/compare-summary'
 import { SourceControlCommitSurface } from './commit-surface'
@@ -43,7 +47,9 @@ export function SourceControlPanelContent(props: SourceControlPanelReadyProps) {
     handleUnstage,
     handleUnstagePaths,
     hasUncommittedEntries,
+    hiddenFileCategories,
     isAbortingOperation,
+    isCategoryFilterActive,
     isExecutingBulk,
     isGitHistoryVisible,
     loadCommitFiles,
@@ -54,6 +60,7 @@ export function SourceControlPanelContent(props: SourceControlPanelReadyProps) {
     openCommittedDiff,
     openConflictReview,
     openHistoryCommitDiff,
+    presentFileCategories,
     refreshActiveGitStatus,
     refreshBranchCompare,
     refreshGitHistory,
@@ -66,6 +73,7 @@ export function SourceControlPanelContent(props: SourceControlPanelReadyProps) {
     setBaseRefDialogOpen,
     sourceControlAiActionsVisible,
     sourceControlViewMode,
+    toggleFileCategory,
     toggleSection,
     toggleSubmodule,
     toggleTreeDir,
@@ -112,6 +120,7 @@ export function SourceControlPanelContent(props: SourceControlPanelReadyProps) {
         hasFilteredUncommittedEntries={hasFilteredUncommittedEntries}
         hasFilteredBranchEntries={hasFilteredBranchEntries}
         filterQuery={filterQuery}
+        isCategoryFilterActive={isCategoryFilterActive}
       />
 
       {/* Why: keep CommitArea mounted across normal states — gating on hasUncommittedEntries (#1448) would unmount the action surface on clean worktrees and mid-commit as the staged list clears. Active merge/rebase/cherry-pick is the exception. */}
@@ -119,6 +128,15 @@ export function SourceControlPanelContent(props: SourceControlPanelReadyProps) {
 
       {shouldRenderCommitArea(unresolvedConflicts.length, conflictOperation) && (
         <SourceControlCommitSurface {...props} showGenericEmptyState={showGenericEmptyState} />
+      )}
+
+      {shouldShowSourceControlFileCategoryFilter(presentFileCategories, isCategoryFilterActive) && (
+        <SourceControlFileCategoryFilter
+          presentFileCategories={presentFileCategories}
+          hiddenFileCategories={hiddenFileCategories}
+          isCategoryFilterActive={isCategoryFilterActive}
+          onToggleFileCategory={toggleFileCategory}
+        />
       )}
 
       {hasFilteredUncommittedEntries && (

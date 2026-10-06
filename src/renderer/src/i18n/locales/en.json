@@ -13061,7 +13061,22 @@
             "entryDeleteFailed": "Failed to delete “{{value0}}”",
             "entryFailedInWorkspace": "{{value0}} in {{value1}}",
             "diffCommentNotesCopyFailed": "Failed to copy notes",
-            "unresolvedThreads": "{{value0}} unresolved review thread{{value1}}"
+            "unresolvedThreads": "{{value0}} unresolved review thread{{value1}}",
+            "fileCategory": {
+              "allHiddenHeading": "All changed files are hidden",
+              "allHiddenSupporting": "Show more file types from the file type filter.",
+              "implementation": "Implementation",
+              "test": "Tests",
+              "documentation": "Documentation",
+              "generated": "Generated",
+              "agentGuidance": "Agent guidance",
+              "localization": "Localization",
+              "assets": "Assets",
+              "allTypes": "All file types",
+              "noTypes": "No file types",
+              "triggerLabel": "Filter changed files by type",
+              "menuLabel": "Show file types"
+            }
           },
           "SourceControlAgentActionDialog": {
             "8e856842d1": "Could not start the selected agent.",

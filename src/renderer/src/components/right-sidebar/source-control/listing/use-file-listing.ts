@@ -9,10 +9,9 @@ import type { SourceControlPanelViewState } from '../panel/use-panel-view-state'
 import { useSourceControlGitHistory } from '../sync/use-git-history'
 import type { SourceControlStatusRefresh } from '../sync/use-status-refresh'
 import { useSourceControlFileProjection } from './use-file-projection'
-import {
-  clearSourceControlReviewOrder,
-  setSourceControlReviewOrder
-} from '@/lib/source-control-review-order'
+import type { SourceControlFileCategory } from './file-category'
+import { useSourceControlReviewAttributes } from './use-review-attributes'
+import { usePublishedSourceControlReviewOrder } from './use-published-review-order'
 import { clearOpenInSelection, setOpenInSelection } from '@/lib/open-in-selection'
 import { usePRCommentScope } from '@/components/pr-comments/use-pr-comment-scope'
 import { buildUnresolvedThreadCountByPath } from '@/components/pr-comments/unresolved-thread-count'
@@ -39,6 +38,7 @@ export function useSourceControlFileListing({
   compareBaseRef,
   entries,
   filterQuery,
+  hiddenFileCategories,
   isBranchVisible,
   isFolder,
   isGitHistoryExpanded,
@@ -63,6 +63,7 @@ export function useSourceControlFileListing({
   compareBaseRef: string | null
   entries: SourceControlWorktreeContext['entries']
   filterQuery: string
+  hiddenFileCategories: ReadonlySet<SourceControlFileCategory>
   isBranchVisible: boolean
   isFolder: boolean
   isGitHistoryExpanded: boolean
@@ -83,10 +84,20 @@ export function useSourceControlFileListing({
       activeRepoSettings,
       entries
     })
+  const reviewAttributes = useSourceControlReviewAttributes({
+    activeWorktreeId,
+    worktreePath,
+    activeRepoSettings,
+    isFolder,
+    entries,
+    branchEntries
+  })
   const {
     grouped,
     fileFilterState,
     normalizedFilter,
+    presentFileCategories,
+    isCategoryFilterActive,
     isGitHistoryVisible,
     filteredGrouped,
     displaySections,
@@ -100,6 +111,8 @@ export function useSourceControlFileListing({
     entries,
     branchEntries,
     filterQuery,
+    hiddenFileCategories,
+    reviewAttributes,
     sourceControlGroupOrder,
     activeWorktreeId,
     worktreePath,
@@ -137,46 +150,12 @@ export function useSourceControlFileListing({
     branchSummary
   })
 
-  // Why: keyboard file-stepping must follow what the panel is showing — filtered, collapsed
-  // directories honoured, tree or list — so publish that order rather than let the step action
-  // re-derive it from the raw git arrays and land on a file the user cannot see next to the current one.
-  const reviewOrder = useMemo(() => {
-    const keys: string[] = []
-    const seen = new Set<string>()
-    // Why row keys (`<area>::<path>`) rather than paths: a file changed in the working tree AND on
-    // the branch has a row in both sections, and deduping by path dropped the branch row from the
-    // order entirely — stepping silently skipped it. The keys differ by area, so both survive.
-    const push = (key: string): void => {
-      if (seen.has(key)) {
-        return
-      }
-      seen.add(key)
-      keys.push(key)
-    }
-    for (const entry of visibleSelectionEntries) {
-      push(entry.key)
-    }
-    for (const node of visibleBranchTreeRows) {
-      if (node.type === 'file') {
-        push(node.key)
-      }
-    }
-    // Why: list mode renders branch entries flat instead of as tree rows.
-    if (visibleBranchTreeRows.length === 0) {
-      for (const entry of filteredBranchEntries) {
-        push(`branch::${entry.path}`)
-      }
-    }
-    return keys
-  }, [filteredBranchEntries, visibleBranchTreeRows, visibleSelectionEntries])
-
-  useEffect(() => {
-    if (!activeWorktreeId) {
-      return
-    }
-    setSourceControlReviewOrder(activeWorktreeId, reviewOrder)
-    return () => clearSourceControlReviewOrder(activeWorktreeId)
-  }, [activeWorktreeId, reviewOrder])
+  usePublishedSourceControlReviewOrder({
+    activeWorktreeId,
+    visibleSelectionEntries,
+    visibleBranchTreeRows,
+    filteredBranchEntries
+  })
 
   const shouldOpenAsSplit = useCallback(
     (event: SourceControlRowOpenEvent) => isSourceControlSplitOpenModifier(event, isMac),
@@ -310,9 +289,11 @@ export function useSourceControlFileListing({
     handleStageAllPrimary,
     handleUnstagePaths,
     isExecutingBulk,
+    isCategoryFilterActive,
     isGitHistoryVisible,
     normalizedFilter,
     openCommittedDiff,
+    presentFileCategories,
     pushRecovery,
     refreshGitHistory,
     refreshGitHistoryRef,

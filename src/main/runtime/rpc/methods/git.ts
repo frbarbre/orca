@@ -5,6 +5,7 @@ import {
   GitBranchCompare,
   GitBulkPaths,
   GitCheckIgnored,
+  GitCheckReviewAttributes,
   GitCheckout,
   GitCommit,
   GitCommitCompare,
@@ -62,6 +63,12 @@ export const GIT_METHODS = [
     params: GitCheckIgnored,
     handler: async (params, { runtime }) =>
       runtime.checkRuntimeGitIgnoredPaths(params.worktree, params.paths)
+  }),
+  defineMethod({
+    name: 'git.checkReviewAttributes',
+    params: GitCheckReviewAttributes,
+    handler: async (params, { runtime }) =>
+      runtime.checkRuntimeGitReviewAttributes(params.worktree, params.paths)
   }),
   defineMethod({
     name: 'git.submoduleStatus',

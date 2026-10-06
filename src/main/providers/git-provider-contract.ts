@@ -13,6 +13,7 @@ import type {
 import type { RemoveWorktreeResult } from '../../shared/worktree/create-types'
 import type { GitPushTarget, GitWorktreeInfo } from '../../shared/worktree/types'
 import type { GitHistoryOptions, GitHistoryResult } from '../../shared/git-history'
+import type { GitPathReviewAttributes } from '../../shared/git-review-attributes'
 import type { CommitMessageDraftContext } from '../../shared/commit-message-generation'
 import type { GitProviderStatusOptions } from './git-provider-status-options'
 import type { GitAdmissionTier } from '../git/command-runner/git-exec-options'
@@ -27,6 +28,10 @@ export type IGitProvider = {
     area?: GitStagingArea
   ): Promise<GitStatusResult>
   checkIgnoredPaths(worktreePath: string, relativePaths: string[]): Promise<string[]>
+  checkReviewAttributes(
+    worktreePath: string,
+    relativePaths: string[]
+  ): Promise<GitPathReviewAttributes>
   getHistory(worktreePath: string, options?: GitHistoryOptions): Promise<GitHistoryResult>
   commit(worktreePath: string, message: string): Promise<{ success: boolean; error?: string }>
   getStagedCommitContext(worktreePath: string): Promise<CommitMessageDraftContext | null>

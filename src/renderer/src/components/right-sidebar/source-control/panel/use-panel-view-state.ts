@@ -4,6 +4,7 @@ import { getNextSourceControlViewMode } from './header-toolbar'
 import { normalizeSourceControlViewMode } from '../commit/commit-drafts'
 import type { SourceControlStoreActions } from '../listing/use-store-actions'
 import type { SourceControlWorktreeContext } from '../listing/use-worktree-context'
+import type { SourceControlFileCategory } from '../listing/file-category'
 
 const DEFAULT_COLLAPSED_SECTIONS = ['history'] as const
 
@@ -41,6 +42,10 @@ export function useSourceControlPanelViewState({
   const [collapsedTreeDirs, setCollapsedTreeDirs] = useState<Set<string>>(new Set())
   const [baseRefDialogOpen, setBaseRefDialogOpen] = useState(false)
   const [filterQuery, setFilterQuery] = useState('')
+  // Why not reset per worktree: hiding a file type is a reviewing preference, not something tied to one diff.
+  const [hiddenFileCategories, setHiddenFileCategories] = useState<
+    ReadonlySet<SourceControlFileCategory>
+  >(() => new Set())
   const isGitHistoryExpanded = !collapsedSections.has('history')
 
   const handleToggleSourceControlViewMode = useCallback(() => {
@@ -77,6 +82,18 @@ export function useSourceControlPanelViewState({
     })
   }, [])
 
+  const toggleFileCategory = useCallback((category: SourceControlFileCategory) => {
+    setHiddenFileCategories((prev) => {
+      const next = new Set(prev)
+      if (next.has(category)) {
+        next.delete(category)
+      } else {
+        next.add(category)
+      }
+      return next
+    })
+  }, [])
+
   const toggleTreeDir = useCallback((key: string) => {
     setCollapsedTreeDirs((prev) => {
       const next = new Set(prev)
@@ -97,6 +114,7 @@ export function useSourceControlPanelViewState({
     filterExpanded,
     filterQuery,
     handleToggleSourceControlViewMode,
+    hiddenFileCategories,
     isGitHistoryExpanded,
     isMac,
     setBaseRefDialogOpen,
@@ -106,6 +124,7 @@ export function useSourceControlPanelViewState({
     sourceControlGroupOrder,
     sourceControlRef,
     sourceControlViewMode,
+    toggleFileCategory,
     toggleSection,
     toggleTreeDir
   }

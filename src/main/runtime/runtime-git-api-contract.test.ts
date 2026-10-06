@@ -6,6 +6,7 @@ import { RuntimeGitCommands } from './orca-runtime-git'
 const RPC_TO_RUNTIME_COMMAND = {
   'git.status': 'getRuntimeGitStatus',
   'git.checkIgnored': 'checkRuntimeGitIgnoredPaths',
+  'git.checkReviewAttributes': 'checkRuntimeGitReviewAttributes',
   'git.submoduleStatus': 'getRuntimeGitSubmoduleStatus',
   'git.history': 'getRuntimeGitHistory',
   'git.conflictOperation': 'getRuntimeGitConflictOperation',

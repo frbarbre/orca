@@ -868,7 +868,7 @@ sync hit exactly that (#23062 landed two commits later) and was fixed by merging
 
 ### Sync log
 
-**1.4.214 → 1.4.214** (`2b0ce17514..51062e653e`, 163 upstream commits, eight conflicts)
+**1.4.214 → 1.4.214** (`2b0ce17514..cc6006779f`, 164 upstream commits, eight conflicts)
 
 - `package.json` still says 1.4.214, so the branch name repeats a fourth time.
 - `config/scripts/mobile-web-bundle-packaging-workflow-contract.test.mjs` — upstream deleted it
@@ -889,6 +889,13 @@ sync hit exactly that (#23062 landed two commits later) and was fixed by merging
   `createAgentsViewPreferenceActions`. Took it and kept the fork's
   `createUiWorkspaceStatusRuleActions` import and spread.
 - Localization and RPC catalogs verified clean after the merge; no regeneration was needed.
+- Verify round 1: typecheck failed in upstream's own `structured-agent-session-codex-stopped-send-order.test.ts`
+  (missing `resolveLaunchArgs`); upstream fixed it one commit later (#25977), so merged again.
+- Upstream's Vitest launcher now runs under Bun (`config/bun-version`) and refuses to start without
+  it, so `fork-verify.yml` installs it with `oven-sh/setup-bun` before the fork's tests, as
+  upstream's `unit-tests.yml` does. Running fork tests locally needs Bun on `PATH` too.
+- Upstream added `release-javascript-benchmark.yml`, a pull-request workflow; the disable script
+  can only turn it off once it is on GitHub, so it ran once on the sync PR and was cancelled.
 
 **1.4.214 → 1.4.214** (`433986fa3b..2b0ce17514`, 780 upstream commits, ten conflicts)
 

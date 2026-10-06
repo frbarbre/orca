@@ -159,8 +159,6 @@ export function useChecksPanelControllerState() {
   // fetched against the MR's own project rather than this repo's default remote.
   const gitLabProjectRefRef = useRef<GitLabProjectRef | null>(null)
   const conflictSummaryRefreshKeyRef = useRef<string | null>(null)
-  const panelVisibleSinceRef = useRef<number | null>(null)
-  const foregroundedUnrenderedReviewKeyRef = useRef<string | null>(null)
   const prGenerationRecords = useAppStore((s) => s.pullRequestGenerationRecords)
   const allocatePullRequestGenerationRequestId = useAppStore(
     (s) => s.allocatePullRequestGenerationRequestId
@@ -376,8 +374,6 @@ export function useChecksPanelControllerState() {
     prevChecksRef,
     gitLabProjectRefRef,
     conflictSummaryRefreshKeyRef,
-    panelVisibleSinceRef,
-    foregroundedUnrenderedReviewKeyRef,
     prGenerationRecords,
     allocatePullRequestGenerationRequestId,
     setPullRequestGenerationRecord,

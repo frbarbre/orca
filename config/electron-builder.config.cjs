@@ -217,6 +217,8 @@ module.exports = {
     '!out/runtimes{,/**/*}',
     '!out/node-runtime-cache{,/**/*}',
     '!config{,/**/*}',
+    // Release archives and other build staging are not runtime resources.
+    '!.build{,/**/*}',
     '!docs{,/**/*}',
     '!mobile{,/**/*}',
     '!native{,/**/*}',

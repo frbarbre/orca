@@ -2,6 +2,7 @@ import * as React from 'react'
 import { cva, type VariantProps } from 'class-variance-authority'
 
 import { cn } from '@/lib/utils'
+import { ImeTextarea } from '@/lib/ime-text-field'
 
 // `seamless` drops the field's own chrome so a composer can own the border and put its actions inside the same box.
 const textareaVariants = cva('', {
@@ -10,7 +11,8 @@ const textareaVariants = cva('', {
       default: '',
       code: 'font-mono',
       seamless:
-        'border-0 bg-transparent text-xs shadow-none focus-visible:ring-0 md:text-xs dark:bg-transparent'
+        'border-0 bg-transparent text-xs shadow-none focus-visible:ring-0 md:text-xs dark:bg-transparent',
+      cell: 'h-full min-h-0 resize-none rounded-none border-0 px-2 py-0 font-mono text-xs shadow-none md:text-xs focus-visible:ring-1 focus-visible:ring-inset'
     }
   },
   defaultVariants: { variant: 'default' }
@@ -21,7 +23,7 @@ const Textarea = React.forwardRef<
   React.ComponentProps<'textarea'> & VariantProps<typeof textareaVariants>
 >(({ className, variant, ...props }, ref) => {
   return (
-    <textarea
+    <ImeTextarea
       ref={ref}
       data-slot="textarea"
       // Why scrollbar-sleek here: a textarea scrolls without an overflow class,

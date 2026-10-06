@@ -23,13 +23,15 @@ import { useBrowserIdentityMigrationNotice } from '../components/browser-pane/br
 import { useWorkspaceStatusRulePoller } from '@/components/workspace-status-rules/use-workspace-status-rule-poller'
 import { useCodexTerminalServerIsolationNotice } from '../components/terminal-pane/codex-terminal-server-isolation-notice'
 import { useCodexSharedSettingsNotice } from '../components/terminal-pane/codex-shared-settings-notice'
+import { useVisibleReviewRefreshReporting } from './use-visible-review-refresh-reporting'
+import { useVisibleHostedReviewRefresh } from './use-visible-hosted-review-refresh'
 
 /**
  * App-level subscriptions that must outlive any individual surface. Each one is here because
  * the component that consumes its result unmounts (right sidebar, explorer, terminal) or is
  * absent entirely on the landing path.
  */
-export function useAppShellServices(options: { floatingPanelVisible: boolean }): void {
+export function useAppShellServices(): void {
   const workspaceSessionReady = useAppStore((s) => s.workspaceSessionReady)
   const persistedUIReady = useAppStore((s) => s.persistedUIReady)
   const primarySelectionMiddleClickPaste = useAppStore((s) =>
@@ -43,6 +45,8 @@ export function useAppShellServices(options: { floatingPanelVisible: boolean }):
   // Subscribe to IPC push events
   useIpcEvents()
   useRemoteRuntimeRecoveryTriggers()
+  useVisibleReviewRefreshReporting()
+  useVisibleHostedReviewRefresh({ enabled: workspaceSessionReady })
   useTerminalViewerColorPublication()
   useAutomationDispatchEvents()
   useWorkspaceStatusRulePoller()
@@ -51,7 +55,7 @@ export function useAppShellServices(options: { floatingPanelVisible: boolean }):
   // Why: wire file-change watching at App level so the editor keeps hearing FS changes when Explorer unmounts (right-sidebar switches to Source Control/Checks).
   useEditorExternalWatch()
   useGlobalFileDrop()
-  useAutoAckViewedAgent(options.floatingPanelVisible)
+  useAutoAckViewedAgent()
   useAppMenuPaste()
   useAppMenuSelectionActions()
   useLargeTextControlPaste()

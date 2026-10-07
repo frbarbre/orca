@@ -1,8 +1,9 @@
-import { ipcMain, webContents } from 'electron'
+import { BrowserWindow, ipcMain, webContents } from 'electron'
 import type { KeybindingOverrides } from '../../shared/keybindings'
 import type { ClaudeRemoteSessionUrlResult } from '../../shared/claude-remote-session'
 import { resolveClaudeRemoteSessionUrl } from '../claude/claude-remote-session-url'
 import { installClaudeWebGuestShortcuts } from '../claude/claude-web-guest-shortcuts'
+import { sendResolvedWindowShortcutAction } from '../window/main-window-shortcut-actions'
 
 export function registerClaudeRemoteSessionHandlers(
   getKeybindings: () => KeybindingOverrides | undefined
@@ -28,11 +29,21 @@ export function registerClaudeRemoteSessionHandlers(
         return
       }
       const host = event.sender
-      installClaudeWebGuestShortcuts(guest, getKeybindings, (key) => {
-        if (!host.isDestroyed()) {
-          host.send('claudeRemoteSession:replayKey', key)
+      installClaudeWebGuestShortcuts(
+        guest,
+        getKeybindings,
+        (key) => {
+          if (!host.isDestroyed()) {
+            host.send('claudeRemoteSession:replayKey', key)
+          }
+        },
+        (action) => {
+          const window = host.isDestroyed() ? null : BrowserWindow.fromWebContents(host)
+          if (window) {
+            sendResolvedWindowShortcutAction(window, action)
+          }
         }
-      })
+      )
     }
   )
 }

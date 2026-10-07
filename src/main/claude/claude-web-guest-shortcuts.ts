@@ -5,6 +5,10 @@ import {
   type KeybindingScope
 } from '../../shared/keybindings'
 import type { ClaudeWebReplayedKey } from '../../shared/claude-remote-session'
+import {
+  resolveWindowShortcutAction,
+  type WindowShortcutAction
+} from '../../shared/window-shortcut-policy'
 
 type ClaudeWebGuest = {
   on(
@@ -47,6 +51,7 @@ export function installClaudeWebGuestShortcuts(
   guest: ClaudeWebGuest,
   getKeybindings: () => KeybindingOverrides | undefined,
   replayInRenderer: (key: ClaudeWebReplayedKey) => void,
+  runWindowAction: (action: WindowShortcutAction) => void,
   platform: NodeJS.Platform = process.platform
 ): void {
   if (installedGuests.has(guest)) {
@@ -79,6 +84,15 @@ export function installClaudeWebGuestShortcuts(
     if (keybindingMatchesAction('browser.reload', input, platform, keybindings)) {
       event.preventDefault()
       guest.reload()
+      return
+    }
+    // Why: the main window runs these in main (number jumps never reach the renderer's DOM), so a replayed key would do nothing.
+    const windowAction = resolveWindowShortcutAction(input, platform, keybindings)
+    if (windowAction && windowAction.type !== 'dictationKeyDown') {
+      event.preventDefault()
+      if (!input.isAutoRepeat) {
+        runWindowAction(windowAction)
+      }
       return
     }
     if (APP_ACTION_IDS.some((id) => keybindingMatchesAction(id, input, platform, keybindings))) {

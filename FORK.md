@@ -785,6 +785,9 @@ the page on `browser.reload` / `browser.hardReload`, and sends any key matching 
 keybinding to the renderer, which replays it on `document.body` (`claude-web-key-replay.ts`) so
 Orca's window keydown handlers run it with the user's rebinds. Modifier releases follow a forwarded
 chord, for hold-to-switch. Page editing keys (copy, paste, undo) are in neither scope and stay put.
+Window-level chords that the main window runs in main (`resolveWindowShortcutAction`: tab and
+workspace number jumps, sidebars, palettes) go through `sendResolvedWindowShortcutAction` instead,
+since a replayed key never reaches those handlers.
 
 Opening the web view (View submenu, or auto-open) asks for the claude.ai prompt to take focus:
 `claudeWebView.show(…, { focusPrompt: true })` queues a one-shot request, and on `dom-ready` a

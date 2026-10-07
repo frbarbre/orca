@@ -1,6 +1,7 @@
 import { EventEmitter } from 'node:events'
 import { describe, expect, it, vi } from 'vitest'
 import type { ClaudeWebReplayedKey } from '../../shared/claude-remote-session'
+import type { WindowShortcutAction } from '../../shared/window-shortcut-policy'
 import { installClaudeWebGuestShortcuts } from './claude-web-guest-shortcuts'
 
 function install() {
@@ -17,10 +18,12 @@ function install() {
     isDestroyed: () => false
   }
   const replayed: ClaudeWebReplayedKey[] = []
+  const windowActions: WindowShortcutAction[] = []
   installClaudeWebGuestShortcuts(
     guest,
     () => undefined,
     (key) => replayed.push(key),
+    (action) => windowActions.push(action),
     'darwin'
   )
   const send = (input: Partial<Electron.Input>): boolean => {
@@ -37,7 +40,13 @@ function install() {
     })
     return event.preventDefault.mock.calls.length > 0
   }
-  return { guest, send, replayed, listenerCount: () => emitter.listenerCount('before-input-event') }
+  return {
+    guest,
+    send,
+    replayed,
+    windowActions,
+    listenerCount: () => emitter.listenerCount('before-input-event')
+  }
 }
 
 describe('installClaudeWebGuestShortcuts', () => {
@@ -62,6 +71,21 @@ describe('installClaudeWebGuestShortcuts', () => {
       ['keydown', 'KeyE', true, true],
       ['keydown', 'KeyT', true, false]
     ])
+  })
+
+  it('runs window-level shortcuts like tab and workspace number jumps the way the main window does', () => {
+    const { send, replayed, windowActions } = install()
+
+    expect(send({ key: '1', code: 'Digit1', control: true })).toBe(true)
+    expect(send({ key: '3', code: 'Digit3', control: true })).toBe(true)
+    expect(send({ key: '2', code: 'Digit2', meta: true })).toBe(true)
+    expect(send({ key: '3', code: 'Digit3', control: true, isAutoRepeat: true })).toBe(true)
+    expect(windowActions).toEqual([
+      { type: 'jumpToTabIndex', index: 0 },
+      { type: 'jumpToTabIndex', index: 2 },
+      { type: 'jumpToWorktreeIndex', index: 1 }
+    ])
+    expect(replayed).toEqual([])
   })
 
   it('leaves copy, paste, undo and plain typing to the page', () => {
@@ -96,6 +120,7 @@ describe('installClaudeWebGuestShortcuts', () => {
     installClaudeWebGuestShortcuts(
       guest,
       () => undefined,
+      () => {},
       () => {},
       'darwin'
     )

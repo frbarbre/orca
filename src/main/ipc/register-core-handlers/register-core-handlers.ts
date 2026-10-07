@@ -153,7 +153,7 @@ export function registerCoreHandlers(
   registerAgentHookHandlers(runtime, { getPtyIdForPaneKey })
   registerCodexConfigSyncHandlers(codexAccounts.runtimeHomeService)
   registerClaudeAccountHandlers(claudeAccounts)
-  registerClaudeRemoteSessionHandlers(() => store.getSettings().keybindings)
+  registerClaudeRemoteSessionHandlers(() => keybindings?.getOverrides())
   registerOpenCodeGoCredentialsHandlers(rateLimits)
   registerMiniMaxCredentialsHandlers(rateLimits)
   registerZcodePlanCredentialsHandlers(rateLimits)

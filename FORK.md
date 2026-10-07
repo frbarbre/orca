@@ -811,7 +811,7 @@ and in `src/renderer/src/components/terminal-pane/`: `claude-web-view-state.ts` 
 
 | File | What is ours |
 | --- | --- |
-| `src/main/ipc/register-core-handlers/register-core-handlers.ts` | `registerClaudeRemoteSessionHandlers(() => store.getSettings().keybindings)`. |
+| `src/main/ipc/register-core-handlers/register-core-handlers.ts` (+ test) | `registerClaudeRemoteSessionHandlers(() => keybindings?.getOverrides())`: the keybinding service, as the main window reads, so rebinds reach the web view; the test passes a stand-in service and expects it in the dashboard popout call too. |
 | `src/main/menu/register-app-menu.ts` (+ test) | The Paste item comes from `createAppMenuPasteItem` (new `app-menu-paste-item.ts`, which also holds upstream's paste routing); the test's "pastes natively into a focused guest webview" case. |
 | `src/preload/api-types.ts`, `src/preload/index.ts` | `claudeRemoteSession`. |
 | `src/shared/global-settings-types.ts`, `default-global-settings.ts` | `openClaudeTabsInWebView`. |

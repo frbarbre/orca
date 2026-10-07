@@ -413,6 +413,7 @@ vi.mock('../native-chat', () => ({
 import { agentSessionRefusalError } from '../../../shared/agent-session-wire-refusals'
 import { recordStructuredAgentSessionHostInstallRefusal } from '../../runtime/structured-agent-session-host-refusal'
 import { registerCoreHandlers } from './register-core-handlers'
+import { registerClaudeRemoteSessionHandlers } from '../claude-remote-session'
 
 let registeredAiVaultOptions: {
   ensureStructuredSessionOwnership: () => Promise<void>
@@ -505,6 +506,8 @@ describe('registerCoreHandlers', () => {
     const agentAwakeService = { marker: 'agentAwakeService' }
     const onBeforeRelaunch = vi.fn()
     const getAdditionalAiVaultCodexHomePaths = vi.fn(() => ['/runtime/codex/home'])
+    const keybindingOverrides = { 'tab.selectByIndex': ['Alt+1'] }
+    const keybindings = { getOverrides: () => keybindingOverrides }
 
     registerCoreHandlers(
       store as never,
@@ -523,9 +526,14 @@ describe('registerCoreHandlers', () => {
       undefined,
       agentAwakeService as never,
       undefined,
-      undefined,
+      // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: registration only reads getOverrides from this stand-in service.
+      keybindings as never,
       { getAdditionalAiVaultCodexHomePaths, onBeforeRelaunch }
     )
+
+    // Fork: the Claude web view must see rebinds from the keybinding service, as the main window does.
+    const getWebViewKeybindings = vi.mocked(registerClaudeRemoteSessionHandlers).mock.calls[0]?.[0]
+    expect(getWebViewKeybindings?.()).toBe(keybindingOverrides)
 
     const aiVaultOptions = registerAiVaultHandlersMock.mock.calls[0]?.[0]
     expect(aiVaultOptions).toBeDefined()
@@ -576,7 +584,7 @@ describe('registerCoreHandlers', () => {
     expect(registerNotificationHandlersMock).toHaveBeenCalledWith(store, runtime)
     expect(registerDeveloperPermissionHandlersMock).toHaveBeenCalled()
     expect(registerComputerUsePermissionHandlersMock).toHaveBeenCalled()
-    expect(registerDashboardPopoutHandlersMock).toHaveBeenCalledWith(store, undefined)
+    expect(registerDashboardPopoutHandlersMock).toHaveBeenCalledWith(store, keybindings)
     expect(registerTerminalPreviewHandlersMock).toHaveBeenCalledWith(runtime)
     expect(registerSettingsHandlersMock).toHaveBeenCalledWith(store, agentAwakeService)
     expect(registerSkillsHandlersMock).toHaveBeenCalledWith(store, runtime)

@@ -3,6 +3,8 @@ import type { RefObject } from 'react'
 import type { editor } from 'monaco-editor'
 import { diffViewStateCache } from '@/lib/scroll-cache'
 
+const MIN_LAID_OUT_HEIGHT_PX = 50
+
 type DiffViewerFirstChangeAutoScrollInput = {
   diffEditorRef: RefObject<editor.IStandaloneDiffEditor | null>
   modifiedEditor: editor.ICodeEditor | null
@@ -49,6 +51,14 @@ export function useDiffViewerFirstChangeAutoScroll({
       return
     }
     let rafId: number | null = null
+    let layoutSub: { dispose: () => void } | null = null
+    const centerOn = (line: number): void => {
+      const top = modifiedEditor.getTopForLineNumber(line, true)
+      const editorHeight = modifiedEditor.getLayoutInfo().height
+      modifiedEditor.setPosition({ lineNumber: line, column: 1 })
+      modifiedEditor.setScrollTop(Math.max(0, top - editorHeight / 2))
+      didAutoScrollFirstDiffRef.current = true
+    }
     const run = (): void => {
       if (didAutoScrollFirstDiffRef.current) {
         return
@@ -67,11 +77,20 @@ export function useDiffViewerFirstChangeAutoScroll({
         if (didAutoScrollFirstDiffRef.current || !modifiedEditor.getModel()) {
           return
         }
-        const top = modifiedEditor.getTopForLineNumber(line, true)
-        const editorHeight = modifiedEditor.getLayoutInfo().height
-        modifiedEditor.setPosition({ lineNumber: line, column: 1 })
-        modifiedEditor.setScrollTop(Math.max(0, top - editorHeight / 2))
-        didAutoScrollFirstDiffRef.current = true
+        // Fork. Why: a freshly swapped-in diff can still be a few px tall here; centring on that pins the change to the top.
+        if (modifiedEditor.getLayoutInfo().height < MIN_LAID_OUT_HEIGHT_PX) {
+          layoutSub?.dispose()
+          layoutSub = modifiedEditor.onDidLayoutChange((layout) => {
+            if (layout.height < MIN_LAID_OUT_HEIGHT_PX || didAutoScrollFirstDiffRef.current) {
+              return
+            }
+            layoutSub?.dispose()
+            layoutSub = null
+            centerOn(line)
+          })
+          return
+        }
+        centerOn(line)
       })
     }
     // Run now if the diff is ready; otherwise onDidUpdateDiff fires once the computation lands.
@@ -81,6 +100,7 @@ export function useDiffViewerFirstChangeAutoScroll({
     const sub = diffEditor.onDidUpdateDiff(() => run())
     return () => {
       sub.dispose()
+      layoutSub?.dispose()
       if (rafId !== null) {
         cancelAnimationFrame(rafId)
       }

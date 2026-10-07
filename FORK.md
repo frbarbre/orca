@@ -861,6 +861,14 @@ New files: `src/renderer/src/lib/auto-send-target.ts` (+ test),
 | `src/renderer/src/lib/active-agent-note-send.ts`, `active-agent-note-send-delivery.ts`, `active-agent-terminal-send-readiness.ts` | `sendNowWhenWorking` for a Claude pane, `agentWorking` on readiness, and `sendQueuedPromptNow`; new test `active-agent-note-send-send-now.test.ts`. |
 | `src/renderer/src/i18n/locales/en.json`, `en-runtime-required.json` | The `autoPicked` key. |
 
+### 20. Centre a diff's first change after layout
+
+Upstream centres a newly opened diff on its first change one frame after the diff computes. A diff
+swapped in from the file list can still be a few px tall then, so `top - height / 2` pinned the change
+to the top. `useDiffViewerFirstChangeAutoScroll.ts` now waits for `onDidLayoutChange` when the
+height is under 50 px and centres then. `tests/e2e/diff-first-change-centered.spec.ts` opens four
+changed files in turn and checks each change sits mid-editor.
+
 ## Verify
 
 Verify runs on GitHub, not locally: `fork-verify.yml` runs it on every pull request against `main`,

@@ -10,6 +10,7 @@ import {
 } from '@/lib/comment-body-submit-state'
 import { toast } from 'sonner'
 import { installOpenDraftAddReviewNoteGuard } from '../editor/editor-shortcuts'
+import { armNoteSendFocus } from './note-send-focus'
 
 export type DiffCommentDraftCardProps = {
   lineNumber: number
@@ -190,6 +191,9 @@ export function DiffCommentDraftCard({
       e.preventDefault()
       if (submitting) {
         return
+      }
+      if (isCmdOrCtrl) {
+        armNoteSendFocus()
       }
       void handleSubmit()
     }

@@ -6,6 +6,7 @@ import { createBrowserUuid } from '@/lib/browser-uuid'
 import { findFolderWorkspaceOwner } from '@/lib/folder-workspace-runtime-owner'
 import { parseWorkspaceKey } from '../../../../shared/workspace-scope'
 import { isMarkdownComment } from '@/lib/diff-comment-compat'
+import { noteCreatedForSendFocus } from '@/components/diff-comments/note-send-focus'
 import {
   enqueueDiffCommentPersist,
   mutateDiffComments,
@@ -102,6 +103,8 @@ export const createDiffCommentsSlice: StateCreator<AppState, [], [], DiffComment
       id: generateId(),
       createdAt: Date.now()
     })
+    // Why before the store write: the note's card can mount from it before this resolves.
+    noteCreatedForSendFocus(comment.id)
     const result = mutateDiffComments(set, input.worktreeId, (existing) => [...existing, comment])
     if (!result) {
       return null

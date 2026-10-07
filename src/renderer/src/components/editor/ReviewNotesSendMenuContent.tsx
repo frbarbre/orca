@@ -34,6 +34,8 @@ import { useWorktreeAgentRows } from '@/components/sidebar/useWorktreeAgentRows'
 import type { LaunchSource } from '../../../../shared/telemetry-events'
 import { agentRowDisplayDotState } from '@/lib/agent-row-dot-state'
 import { translate } from '@/i18n/i18n'
+import { Sparkles } from 'lucide-react'
+import { pickAutoSendTarget } from '@/lib/auto-send-target'
 
 type OrderedSendTarget = {
   target: NotesSendAgentTarget
@@ -101,6 +103,26 @@ export function ReviewNotesSendMenuContent({
     () => orderSendTargetsByWorktreeAgentRows(sendTargets, agentRows),
     [agentRows, sendTargets]
   )
+  const groupsByWorktree = useAppStore((s) => s.groupsByWorktree)
+  const layoutByWorktree = useAppStore((s) => s.layoutByWorktree)
+  const autoPicked = useMemo(() => {
+    const picked = pickAutoSendTarget(
+      sendTargets,
+      { agentStatusByPaneKey, unifiedTabsByWorktree, groupsByWorktree, layoutByWorktree },
+      worktreeId
+    )
+    return picked
+      ? (orderedSendTargets.find(({ target }) => target.paneKey === picked.paneKey) ?? null)
+      : null
+  }, [
+    agentStatusByPaneKey,
+    groupsByWorktree,
+    layoutByWorktree,
+    orderedSendTargets,
+    sendTargets,
+    unifiedTabsByWorktree,
+    worktreeId
+  ])
 
   const runNotesSend = useCallback(
     (
@@ -190,6 +212,14 @@ export function ReviewNotesSendMenuContent({
       <DropdownMenuLabel>
         {translate('auto.components.editor.ReviewNotesSendMenuContent.03378aea75', 'Send notes to')}
       </DropdownMenuLabel>
+      {/* Why first: a keyboard-opened menu highlights its first item, so Enter sends here. */}
+      {autoPicked ? (
+        <AutoPickedMenuItem
+          target={autoPicked.target}
+          disabled={!hasPrompt}
+          onSend={sendToAgentTarget}
+        />
+      ) : null}
       {orderedSendTargets.map(({ target, agent }) => (
         <AgentTargetMenuItem
           key={target.paneKey}
@@ -241,6 +271,37 @@ function resolveCurrentSendTargetEligibility(
   }
 
   return { status: 'disabled', disabledReason: goneReason }
+}
+
+function AutoPickedMenuItem({
+  target,
+  disabled,
+  onSend
+}: {
+  target: NotesSendAgentTarget
+  disabled: boolean
+  onSend: (target: NotesSendAgentTarget) => void
+}): React.JSX.Element {
+  const tabTitle = target.tabTitle.trim()
+  const detail = [formatAgentTypeLabel(target.agentType), ...(tabTitle ? [tabTitle] : [])]
+  return (
+    <DropdownMenuItem
+      disabled={disabled}
+      onSelect={() => onSend(target)}
+      className="min-w-[240px] gap-2 rounded-[7px] px-2 py-1.5 text-[12px] leading-5 font-medium"
+    >
+      <Sparkles className="size-3.5 shrink-0" />
+      <AgentIcon agent={agentTypeToIconAgent(target.agentType)} size={14} />
+      <span className="grid min-w-0 flex-1 text-left">
+        <span className="truncate">
+          {translate('auto.components.editor.ReviewNotesSendMenuContent.autoPicked', 'Auto-picked')}
+        </span>
+        <span className="truncate text-[11px] font-normal text-muted-foreground">
+          {detail.join(' · ')}
+        </span>
+      </span>
+    </DropdownMenuItem>
+  )
 }
 
 function AgentTargetMenuItem({

@@ -3,6 +3,7 @@ import { act, cleanup, fireEvent, render } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { toast } from 'sonner'
 import { DiffCommentDraftCard } from './DiffCommentDraftCard'
+import { noteCreatedForSendFocus, takeNoteSendFocus } from './note-send-focus'
 
 vi.mock('sonner', () => ({ toast: { error: vi.fn(), success: vi.fn(), info: vi.fn() } }))
 
@@ -267,4 +268,26 @@ describe('DiffCommentDraftCard', () => {
     expect(onContentResize).toHaveBeenCalledTimes(2)
     expect(textarea.style.height).toBe('120px')
   })
+
+  it.each([
+    ['Cmd+Enter', { metaKey: true }, true],
+    ['plain Enter', {}, false]
+  ])(
+    '%s decides whether the saved note hands focus to its send button',
+    (_label, keys, focuses) => {
+      const { container } = render(
+        <DiffCommentDraftCard
+          lineNumber={3}
+          onCancel={vi.fn()}
+          onSubmit={vi.fn().mockResolvedValue(true)}
+        />
+      )
+      const textarea = container.querySelector('textarea')!
+      fireEvent.change(textarea, { target: { value: 'Send me' } })
+      fireEvent.keyDown(textarea, { key: 'Enter', ...keys })
+
+      noteCreatedForSendFocus('draft-note')
+      expect(takeNoteSendFocus('draft-note')).toBe(focuses)
+    }
+  )
 })

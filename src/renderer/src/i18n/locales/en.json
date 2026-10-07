@@ -15661,7 +15661,8 @@
           "03378aea75": "Send notes to",
           "f5096c6e4e": "Could not send notes to the active agent.",
           "bb9c69a0c9": "Notes sent to active agent.",
-          "50f7e753ea": "Sending notes to active agent..."
+          "50f7e753ea": "Sending notes to active agent...",
+          "autoPicked": "Auto-picked"
         },
         "RichMarkdownAnnotationOverlay": {
           "069b5677b8": "Selected text",

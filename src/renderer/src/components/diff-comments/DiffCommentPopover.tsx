@@ -12,6 +12,7 @@ import { translate } from '@/i18n/i18n'
 import { ReviewMarkdownComposer } from '@/components/github/ReviewMarkdownComposer'
 import { installOpenDraftAddReviewNoteGuard } from '../editor/editor-shortcuts'
 import { resolveDiffCommentPopoverTop } from './diff-comment-popover-position'
+import { armNoteSendFocus } from './note-send-focus'
 
 // Why: a DOM sibling overlay rather than a Monaco content widget, so it can own a React rich editor.
 
@@ -248,7 +249,10 @@ export function DiffCommentPopover({
           mentions={Boolean(mode && mode !== 'note')}
           uploads={Boolean(mode && mode !== 'note')}
           onUploadingChange={setUploading}
-          onSubmitShortcut={() => void handleSubmit()}
+          onSubmitShortcut={() => {
+            armNoteSendFocus()
+            void handleSubmit()
+          }}
           onEscape={onCancel}
           className="orca-diff-comment-popover-composer"
         />

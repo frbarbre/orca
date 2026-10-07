@@ -45,6 +45,9 @@ vi.mock('react', async () => {
     useMemo<T>(factory: () => T): T {
       return factory()
     },
+    useRef<T>(initial: T) {
+      return { current: initial }
+    },
     useSyncExternalStore<T>(_subscribe: unknown, getSnapshot: () => T): T {
       return getSnapshot()
     },

@@ -112,6 +112,7 @@ export function renderDiffCommentZoneCard(
               targetModeLabel="This note"
               triggerClassName="orca-diff-comment-edit"
               disabledTooltip="Note already sent"
+              focusRequestKey={comment.id}
               onDelivered={(notes) => void clearDeliveredDiffComments(worktreeId, notes)}
             />
           ) : null

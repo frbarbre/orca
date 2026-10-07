@@ -244,6 +244,9 @@ function setStore(overrides: Record<string, unknown> = {}): void {
     agentStatusByPaneKey: {},
     agentStatusEpoch: 0,
     tabsByWorktree: { 'wt-1': [] },
+    unifiedTabsByWorktree: {},
+    groupsByWorktree: {},
+    layoutByWorktree: {},
     terminalLayoutsByTabId: {},
     ptyIdsByTabId: {},
     runtimePaneTitlesByTabId: {},
@@ -300,6 +303,10 @@ function findAllByType(node: unknown, type: unknown): ReactElementLike[] {
   })
   return found
 }
+
+// The per-session rows, without the Auto-picked row that tops the menu.
+const sessionItems = (tree: unknown): ReactElementLike[] =>
+  findAllByType(tree, 'DropdownMenuItem').filter((i) => !collectText(i).includes('Auto-picked'))
 
 function findByType(node: unknown, type: unknown): ReactElementLike {
   const found = findAllByType(node, type)[0]
@@ -386,7 +393,7 @@ describe('ReviewNotesSendMenuContent', () => {
     ]
 
     const tree = render()
-    const items = findAllByType(tree, 'DropdownMenuItem')
+    const items = sessionItems(tree)
 
     expect(items).toHaveLength(2)
     expect(items.every((item) => item.props.disabled === false)).toBe(true)
@@ -442,7 +449,7 @@ describe('ReviewNotesSendMenuContent', () => {
     ]
 
     const tree = render()
-    const items = findAllByType(tree, 'DropdownMenuItem')
+    const items = sessionItems(tree)
 
     expect(items).toHaveLength(2)
     expect(collectText(items[0])).toContain('Codex')
@@ -473,7 +480,7 @@ describe('ReviewNotesSendMenuContent', () => {
       }
     ]
 
-    const item = findByType(render(), 'DropdownMenuItem')
+    const item = sessionItems(render())[0]
 
     expect(findByType(item, 'AgentStateDot').props.state).toBe('failed')
     expect(collectText(item)).toContain('Failed')
@@ -496,7 +503,7 @@ describe('ReviewNotesSendMenuContent', () => {
       }
     ]
 
-    const item = findByType(render(), 'DropdownMenuItem')
+    const item = sessionItems(render())[0]
 
     expect(findByType(item, 'AgentStateDot').props.state).toBe('interrupted')
     expect(collectText(item)).toContain('Interrupted')
@@ -521,7 +528,7 @@ describe('ReviewNotesSendMenuContent', () => {
     })
 
     const tree = render()
-    const items = findAllByType(tree, 'DropdownMenuItem')
+    const items = sessionItems(tree)
 
     expect(items).toHaveLength(0)
     expect(harness.sendMessageToAgent).not.toHaveBeenCalled()
@@ -557,7 +564,7 @@ describe('ReviewNotesSendMenuContent', () => {
     ]
 
     const tree = render()
-    const item = findByType(tree, 'DropdownMenuItem')
+    const item = sessionItems(tree)[0]
     const stateDot = findByType(item, 'AgentStateDot')
 
     expect(item.props.disabled).toBe(true)
@@ -586,7 +593,7 @@ describe('ReviewNotesSendMenuContent', () => {
     })
 
     const tree = render()
-    const items = findAllByType(tree, 'DropdownMenuItem')
+    const items = sessionItems(tree)
 
     expect(items).toHaveLength(0)
     expect(collectText(tree)).not.toContain('Active agent session')
@@ -613,7 +620,7 @@ describe('ReviewNotesSendMenuContent', () => {
     ]
 
     const tree = render()
-    const items = findAllByType(tree, 'DropdownMenuItem')
+    const items = sessionItems(tree)
 
     expect(items).toHaveLength(1)
     expect(collectText(items[0])).toContain('Claude')
@@ -640,7 +647,7 @@ describe('ReviewNotesSendMenuContent', () => {
     ]
 
     const tree = render()
-    const items = findAllByType(tree, 'DropdownMenuItem')
+    const items = sessionItems(tree)
 
     expect(items).toHaveLength(1)
     expect(items[0].props.disabled).toBe(true)
@@ -836,7 +843,7 @@ describe('ReviewNotesSendMenuContent', () => {
     ]
 
     const tree = render()
-    const item = findByType(tree, 'DropdownMenuItem')
+    const item = sessionItems(tree)[0]
 
     expect(item.props.disabled).toBe(false)
     expect(collectText(item)).toContain('Working')
@@ -851,7 +858,7 @@ describe('ReviewNotesSendMenuContent', () => {
 
   it('does not render an active agent fallback when no agents are derived', () => {
     const tree = render()
-    const items = findAllByType(tree, 'DropdownMenuItem')
+    const items = sessionItems(tree)
 
     expect(items).toHaveLength(0)
     expect(collectText(tree)).not.toContain('Active agent session')

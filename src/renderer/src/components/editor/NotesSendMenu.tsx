@@ -1,4 +1,5 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { takeNoteSendFocus } from '@/components/diff-comments/note-send-focus'
 import { Send, Sparkles } from 'lucide-react'
 import { useAppStore } from '@/store'
 import type { AgentSendPopoverTargetMode } from '@/store/slices/ui'
@@ -63,6 +64,8 @@ export type NotesSendMenuProps<TNote> = {
   // so it reads exact time rather than a render clock that can lag or freeze.
   openRequestExpiresAt?: number | null
   onOpenRequestHandled?: () => void
+  /** Fork: a note id; the trigger takes focus once if Mod+Enter just created that note. */
+  focusRequestKey?: string
   onDelivered: (notes: readonly TNote[]) => void
 }
 
@@ -91,8 +94,18 @@ export function NotesSendMenu<TNote extends DiffCommentDeliverySnapshot>({
   openRequestNonce = null,
   openRequestExpiresAt = null,
   onOpenRequestHandled,
+  focusRequestKey,
   onDelivered
 }: NotesSendMenuProps<TNote>): React.JSX.Element {
+  const triggerRef = useRef<HTMLButtonElement>(null)
+  useEffect(() => {
+    if (!focusRequestKey || !takeNoteSendFocus(focusRequestKey)) {
+      return
+    }
+    // Why next frame: the composer's own focus handoff runs as the note saves, after this mounts.
+    const frame = requestAnimationFrame(() => triggerRef.current?.focus())
+    return () => cancelAnimationFrame(frame)
+  }, [focusRequestKey])
   const openAgentSendPopoverTargetMode = useAppStore((s) => s.openAgentSendPopoverTargetMode)
   const closeAgentSendPopoverTargetMode = useAppStore((s) => s.closeAgentSendPopoverTargetMode)
   const activeTargetModeId = useAppStore((s) => s.agentSendPopoverTargetMode?.id ?? null)
@@ -213,6 +226,7 @@ export function NotesSendMenu<TNote extends DiffCommentDeliverySnapshot>({
         <TooltipTrigger asChild>
           <DropdownMenuTrigger asChild>
             <button
+              ref={triggerRef}
               type="button"
               className={cn(
                 'inline-flex items-center justify-center rounded text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-muted-foreground',

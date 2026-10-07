@@ -821,6 +821,37 @@ and in `src/renderer/src/components/terminal-pane/`: `claude-web-view-state.ts` 
 | `src/renderer/src/components/native-chat/use-native-chat-context-menu.tsx` (+ test), `NativeChatResolvedView.tsx` | The optional `agentView` argument: a terminal-backed chat's right-click menu shows `<AgentViewSubmenu>` instead of "Switch to terminal view". Structured chats keep their menu. |
 | `SortableTabContextMenu.test.tsx`, `SortableTab.rename-shortcut.test.tsx`, `register-core-handlers.test.ts` | Store fields / module mocks for the above; re-apply after taking upstream's test. |
 
+### 19. Send a note in three key presses
+
+Mod+Enter in a diff note composer (draft card or popover) saves the note and puts focus on the
+saved card's "Send notes to an agent" button. Enter then opens the menu, whose first item, "Auto-picked",
+is already highlighted, and a second Enter sends the note.
+
+`note-send-focus.ts` arms for 5 s on Mod+Enter. `addDiffComment` claims the arm for the new note's id
+before the store write. The card's `NotesSendMenu` (`focusRequestKey={comment.id}`) takes that claim
+once and focuses its trigger on the next frame, after the composer's own focus handoff.
+
+`pickAutoSendTarget` (`src/renderer/src/lib/auto-send-target.ts`) ranks the eligible targets of
+any agent type:
+- A session that is the active tab of a group in the worktree's layout beats one that is not.
+- After that, the latest activity wins: the agent status `updatedAt`, falling back to the tab's `lastFocusedAt`.
+
+When no target is eligible, the item does not show.
+
+New files: `src/renderer/src/lib/auto-send-target.ts` (+ test),
+`src/renderer/src/components/diff-comments/note-send-focus.ts` (+ test),
+`src/renderer/src/components/editor/ReviewNotesSendMenuContent.auto-picked.test.tsx`,
+`tests/e2e/note-send-keyboard.spec.ts`.
+
+| File | What is ours |
+| --- | --- |
+| `src/renderer/src/components/editor/ReviewNotesSendMenuContent.tsx` (+ test) | The `groupsByWorktree` / `layoutByWorktree` selectors, the `autoPicked` memo, and `AutoPickedMenuItem` rendered first; the test's store defaults and `sessionItems` helper. |
+| `src/renderer/src/components/editor/NotesSendMenu.tsx` (+ test) | The `focusRequestKey` prop, `triggerRef` and its focus effect; `useRef` in the test's fake React. |
+| `src/renderer/src/components/diff-comments/diff-comment-zone-card.tsx` | `focusRequestKey={comment.id}`. |
+| `src/renderer/src/components/diff-comments/DiffCommentDraftCard.tsx` (+ test), `DiffCommentPopover.tsx` | `armNoteSendFocus()` on the Mod+Enter submit. |
+| `src/renderer/src/store/slices/diffComments.ts` | `noteCreatedForSendFocus(comment.id)` in `addDiffComment`. |
+| `src/renderer/src/i18n/locales/en.json`, `en-runtime-required.json` | The `autoPicked` key. |
+
 ## Verify
 
 Verify runs on GitHub, not locally: `fork-verify.yml` runs it on every pull request against `main`,

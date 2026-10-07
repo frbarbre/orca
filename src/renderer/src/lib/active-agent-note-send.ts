@@ -87,8 +87,15 @@ async function sendNotesToActiveAgentSessionInternal({
     )
   }
   if (explicitNoteTarget) {
+    const paneAgentType =
+      state.agentStatusByPaneKey[`${noteTarget.tabId}:${noteTarget.leafId}`]?.agentType
     return reportNoteSendFailure(
-      await sendPromptToExplicitAgentTarget(runtimeTarget, terminal.handle, trimmedPrompt),
+      await sendPromptToExplicitAgentTarget(
+        runtimeTarget,
+        terminal.handle,
+        trimmedPrompt,
+        paneAgentType === 'claude'
+      ),
       noteTarget
     )
   }
@@ -176,9 +183,11 @@ async function sendNotesToActiveAgentSessionInternal({
 async function sendPromptToExplicitAgentTarget(
   runtimeTarget: ReturnType<typeof getActiveRuntimeTarget>,
   terminalHandle: string,
-  prompt: string
+  prompt: string,
+  sendNowWhenWorking: boolean
 ): Promise<ActiveAgentNotesSendResult> {
   return await sendPromptWithGuardedPasteAndEnter(runtimeTarget, terminalHandle, prompt, {
-    allowLegacyFallback: false
+    allowLegacyFallback: false,
+    sendNowWhenWorking
   })
 }

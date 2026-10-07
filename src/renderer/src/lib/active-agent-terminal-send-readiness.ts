@@ -21,6 +21,7 @@ export type TerminalAgentSendReadinessResult = {
   status: TerminalAgentSendReadiness
   supportsGuardedSend: boolean
   code?: ActiveAgentNotesSendFailureCode
+  agentWorking?: boolean
 }
 
 export async function getTerminalAgentSendReadiness(
@@ -41,7 +42,11 @@ export async function getTerminalAgentSendReadiness(
     if (agentStatus.status === 'permission') {
       return { status: 'permission', supportsGuardedSend: true }
     }
-    return { status: 'sendable', supportsGuardedSend: true }
+    return {
+      status: 'sendable',
+      supportsGuardedSend: true,
+      agentWorking: agentStatus.status === 'working'
+    }
   } catch (error) {
     if (error instanceof RuntimeRpcCallError && error.code === 'method_not_found') {
       if (!options.allowLegacyFallback) {

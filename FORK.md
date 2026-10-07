@@ -841,6 +841,11 @@ any agent type:
 
 When no target is eligible, the item does not show.
 
+A note sent to a Claude Code terminal that is working would queue, and Remote Control never shows
+queued messages. So after the note's Enter, Orca sends Claude Code's "send now" chord (Ctrl+X Ctrl+S,
+the fallback for Ctrl+Enter): Claude reads the note mid-turn, or right after the reply it is writing.
+Other agents keep their own queueing.
+
 New files: `src/renderer/src/lib/auto-send-target.ts` (+ test),
 `src/renderer/src/components/diff-comments/note-send-focus.ts` (+ test),
 `src/renderer/src/components/editor/ReviewNotesSendMenuContent.auto-picked.test.tsx`,
@@ -853,6 +858,7 @@ New files: `src/renderer/src/lib/auto-send-target.ts` (+ test),
 | `src/renderer/src/components/diff-comments/diff-comment-zone-card.tsx` | `focusRequestKey={comment.id}`. |
 | `src/renderer/src/components/diff-comments/DiffCommentDraftCard.tsx` (+ test), `DiffCommentPopover.tsx` | `armNoteSendFocus()` on the Mod+Enter submit. |
 | `src/renderer/src/store/slices/diffComments.ts` | `noteCreatedForSendFocus(comment.id)` in `addDiffComment`. |
+| `src/renderer/src/lib/active-agent-note-send.ts`, `active-agent-note-send-delivery.ts`, `active-agent-terminal-send-readiness.ts` | `sendNowWhenWorking` for a Claude pane, `agentWorking` on readiness, and `sendQueuedPromptNow`; new test `active-agent-note-send-send-now.test.ts`. |
 | `src/renderer/src/i18n/locales/en.json`, `en-runtime-required.json` | The `autoPicked` key. |
 
 ## Verify

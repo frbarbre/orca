@@ -50,7 +50,7 @@ export async function sendPromptWithGuardedPasteAndEnter(
   runtimeTarget: Parameters<typeof callRuntimeRpc>[0],
   terminalHandle: string,
   prompt: string,
-  options: { allowLegacyFallback: boolean }
+  options: { allowLegacyFallback: boolean; sendNowWhenWorking?: boolean }
 ): Promise<ActiveAgentNotesSendResult> {
   const initialAgentStatus = await getTerminalAgentSendReadiness(
     runtimeTarget,
@@ -103,6 +103,7 @@ export async function sendPromptWithGuardedPasteAndEnter(
   }
 
   await new Promise<void>((resolve) => setTimeout(resolve, POST_PASTE_SUBMIT_DELAY_MS))
+  let agentWorkingAtSubmit = false
   try {
     const submitAgentStatus = await getTerminalAgentSendReadiness(
       runtimeTarget,
@@ -118,6 +119,7 @@ export async function sendPromptWithGuardedPasteAndEnter(
         code: submitAgentStatus.code ?? 'submit-readiness-lost'
       }
     }
+    agentWorkingAtSubmit = submitAgentStatus.agentWorking === true
   } catch (error) {
     if (isRuntimeTerminalUnavailable(error)) {
       return {
@@ -140,13 +142,42 @@ export async function sendPromptWithGuardedPasteAndEnter(
       },
       { timeoutMs: ACTIVE_AGENT_SEND_RPC_TIMEOUT_MS }
     )
-    return send.accepted
-      ? { status: 'sent' }
-      : { status: 'partial-submit-failed', code: 'submit-send-refused' }
+    if (!send.accepted) {
+      return { status: 'partial-submit-failed', code: 'submit-send-refused' }
+    }
   } catch (error) {
     if (isRuntimeTerminalUnavailable(error) || isRuntimeTerminalNotWritable(error)) {
       return { status: 'partial-submit-failed', code: 'submit-send-error' }
     }
     throw error
+  }
+  if (options.sendNowWhenWorking && agentWorkingAtSubmit) {
+    await sendQueuedPromptNow(runtimeTarget, terminalHandle)
+  }
+  return { status: 'sent' }
+}
+
+// Fork: Claude Code's "send now" (Ctrl+X Ctrl+S, the Ctrl+Enter fallback); a queued note never shows in Remote Control.
+const CLAUDE_SEND_QUEUED_NOW = '\x18\x13'
+
+async function sendQueuedPromptNow(
+  runtimeTarget: Parameters<typeof callRuntimeRpc>[0],
+  terminalHandle: string
+): Promise<void> {
+  try {
+    await callRuntimeRpc<{ send: RuntimeTerminalSend }>(
+      runtimeTarget,
+      'terminal.send',
+      {
+        terminal: terminalHandle,
+        text: CLAUDE_SEND_QUEUED_NOW,
+        requireAgentStatus: 'sendable',
+        client: ORCA_DESKTOP_TERMINAL_CLIENT
+      },
+      { timeoutMs: ACTIVE_AGENT_SEND_RPC_TIMEOUT_MS }
+    )
+  } catch (error) {
+    // Why: the note is already submitted; failing here only leaves it queued.
+    console.warn('[agent-note-send] send-now failed', error)
   }
 }

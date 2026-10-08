@@ -16125,7 +16125,8 @@
             "reply": "Reply",
             "add": "Add reply",
             "you": "You",
-            "placeholder": "Ask a follow-up…"
+            "placeholder": "Ask a follow-up…",
+            "sent": "sent"
           }
         }
       },

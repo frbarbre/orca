@@ -65,7 +65,9 @@ export function NoteThread({
                 <User className="size-3.5 text-muted-foreground" aria-hidden />
                 <span>{youLabel}</span>
                 {reply.sentAt ? (
-                  <span className="text-[11px] font-normal text-muted-foreground">sent</span>
+                  <span className="text-[11px] font-normal text-muted-foreground">
+                    {translate('auto.components.diff.comments.NoteThread.sent', 'sent')}
+                  </span>
                 ) : null}
               </>
             )}

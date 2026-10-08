@@ -184,8 +184,11 @@ Paths are relative to the selected worktree. `open-changed` reads git status and
 ```bash
 orca notes list --json
 orca notes add --file src/api.ts --line 40 --end-line 58 --agent Codex --body "Fixed the retry backoff." --json
+orca notes reply --id <user-note-id> --body "Renamed it to fetchUser." --json
 orca notes rm --id <note-id> --json
 ```
+
+`notes reply` answers one of the user's notes; the reply shows inside that note.
 
 `notes list` returns the user's notes and the agent notes. `notes add` leaves an agent note on lines of the current file; Orca shows it in the diff as a bot note, apart from the user's notes, and never sends it to an agent. `--file` is relative to cwd or absolute inside the worktree. `--github-comment <url>` links the note to the GitHub review comment it answers.
 

@@ -39,7 +39,7 @@ import {
 } from './accounts-params'
 import { PrepareCodexForWslPaneParams } from './agent-hooks-params'
 import { AgentLaunch, AgentLaunchReplay } from './agent-launch-params'
-import { AgentNoteAdd, AgentNoteList, AgentNoteRemove } from './agent-note-params'
+import { AgentNoteAdd, AgentNoteList, AgentNoteRemove, AgentNoteReply } from './agent-note-params'
 import { CreateAgentSessionParams, EnsureAgentSessionParams } from './agent-session-params'
 import {
   AiVaultListSessionsParams,
@@ -590,6 +590,7 @@ export const RPC_PARAMS_BY_METHOD = {
   'agentNote.add': AgentNoteAdd,
   'agentNote.list': AgentNoteList,
   'agentNote.remove': AgentNoteRemove,
+  'agentNote.reply': AgentNoteReply,
   'agentSession.agents': AgentsParams,
   'agentSession.cancel': CancelParams,
   'agentSession.close': OptionsParams,

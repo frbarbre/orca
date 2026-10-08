@@ -884,6 +884,13 @@ agent name, "Agent note" badge, delete only, no edit and no send menu. The diff 
 notes" shelf (stacked rows) plus a bot count on each changed-file row (`agent-note-file-badge.tsx`).
 They never enter a send-to-agent prompt, since the send menus read `diffComments`.
 
+Sending your notes no longer deletes them: `clearDeliveredDiffComments` (`store/slices/diffComments.ts`)
+marks them `sentAt` instead, and `formatDiffCommentsForAgent` adds a "Note id:" line per note. The agent
+answers with `orca notes reply --id <note id>` (`agentNote.reply`), an agent note with `replyToNoteId`
+that copies the note's file and lines. `withAgentReplies` (`lib/agent-note-replies.ts`) puts each reply
+inside its note's card (`agent-note-replies-list.tsx`, through `DiffCommentCard`'s `footer`); a reply
+whose note is gone shows on its own. The shelf's clear-all also deletes the user notes that were replied to.
+
 `--github-comment <url>` stores `githubCommentUrl`; the card's reply button runs `revealGitHubComment`,
 which opens the Checks tab and asks `pr-comment-reveal.ts` to scroll to and ring the `CommentRow`
 whose `url` matches.

@@ -16117,6 +16117,9 @@
           },
           "AgentNoteGitHubLink": {
             "label": "Show the GitHub comment"
+          },
+          "AgentNoteReplies": {
+            "delete": "Delete reply"
           }
         }
       },

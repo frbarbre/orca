@@ -32,6 +32,8 @@ export type DiffComment = {
   agentAuthor?: DiffCommentAgentAuthor
   /** Fork: the GitHub review comment an agent note answers. */
   githubCommentUrl?: string
+  /** Fork: the user's diff note this agent note replies to. */
+  replyToNoteId?: string
   worktreeId: string
   filePath: string
   /** Undefined means a legacy diff note. */

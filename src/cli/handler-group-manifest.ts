@@ -86,7 +86,7 @@ export const HANDLER_GROUPS: readonly HandlerGroup[] = [
   },
   {
     name: 'notes',
-    keys: ['notes add', 'notes list', 'notes rm'],
+    keys: ['notes add', 'notes reply', 'notes list', 'notes rm'],
     load: async () => (await import('./handlers/notes.js')).NOTES_HANDLERS
   },
   {

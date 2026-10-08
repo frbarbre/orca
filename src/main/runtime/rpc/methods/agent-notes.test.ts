@@ -102,6 +102,39 @@ describe('agent note RPC methods', () => {
     expect(stored().agentNotes).toHaveLength(1)
   })
 
+  it("replies to the user's note on its own lines, and refuses a note that does not exist", async () => {
+    const { call, stored } = createRuntime({
+      id: 'wt-1',
+      diffComments: [{ ...userNote, startLine: 2 }]
+    })
+
+    const replied = await call('agentNote.reply', {
+      worktree: 'id:wt-1',
+      noteId: 'user-1',
+      body: 'Renamed it to fetchUser.',
+      agent: 'Claude Code'
+    })
+    const missing = await call('agentNote.reply', {
+      worktree: 'id:wt-1',
+      noteId: 'nope',
+      body: 'x',
+      agent: 'Claude Code'
+    })
+
+    expect(replied).toMatchObject({ ok: true })
+    expect(stored().agentNotes).toEqual([
+      expect.objectContaining({
+        replyToNoteId: 'user-1',
+        filePath: 'src/a.ts',
+        startLine: 2,
+        lineNumber: 3,
+        body: 'Renamed it to fetchUser.',
+        agentAuthor: { kind: 'agent', name: 'Claude Code' }
+      })
+    ])
+    expect(missing).toMatchObject({ ok: false })
+  })
+
   it('keeps both notes when two agents add at the same time', async () => {
     const { call, stored } = createRuntime({ id: 'wt-1', diffComments: [] })
 

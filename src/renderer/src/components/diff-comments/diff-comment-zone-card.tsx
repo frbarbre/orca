@@ -2,6 +2,7 @@ import type React from 'react'
 import type { RefObject } from 'react'
 import { MessageSquareReply } from 'lucide-react'
 import { revealGitHubComment } from '@/lib/agent-notes'
+import { AgentNoteRepliesList } from './agent-note-replies-list'
 import type { Root } from 'react-dom/client'
 import { getDiffCommentLineLabel } from '@/lib/diff-comment-compat'
 import { formatDiffCommentsForAgent as formatDiffComments } from '../../../../shared/agent-note-prompt'
@@ -23,6 +24,7 @@ export function getRenderSignature(
     author: comment.author ?? null,
     agentName: comment.agentAuthor?.name ?? null,
     githubCommentUrl: comment.githubCommentUrl ?? null,
+    agentReplies: comment.agentReplies?.map((reply) => [reply.id, reply.body]) ?? null,
     authorAvatarUrl: comment.authorAvatarUrl ?? null,
     createdAtLabel: comment.createdAtLabel ?? null,
     url: comment.url ?? null,
@@ -131,6 +133,14 @@ export function renderDiffCommentZoneCard(
         }
         onContentResize={() => resizeZone(comment.id)}
         observeRenderedSize
+        footer={
+          comment.agentReplies?.length ? (
+            <AgentNoteRepliesList
+              replies={comment.agentReplies}
+              onDelete={(replyId) => onDeleteCommentRef.current(replyId)}
+            />
+          ) : undefined
+        }
         headerActions={
           agentName ? (
             comment.githubCommentUrl ? (

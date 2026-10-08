@@ -91,6 +91,25 @@ describe('agent note zone card', () => {
     expect(revealGitHubComment).toHaveBeenCalledWith(url)
   })
 
+  it("shows the agent's reply inside the user's note, deletable on its own", () => {
+    const { agentAuthor: _agent, ...userNote } = agentNote
+    const reply: DiffComment = {
+      ...agentNote,
+      id: 'reply-1',
+      body: 'Done: renamed it.',
+      replyToNoteId: userNote.id
+    }
+    act(() => renderDiffCommentZoneCard(root, { ...userNote, agentReplies: [reply] }, context()))
+
+    const replyRow = container.querySelector('[data-agent-reply="reply-1"]')
+    expect(replyRow?.textContent).toContain('Claude Code')
+    expect(replyRow?.textContent).toContain('Done: renamed it.')
+
+    const remove = replyRow?.querySelector<HTMLButtonElement>('[aria-label="Delete reply"]')
+    act(() => remove?.click())
+    expect(onDelete).toHaveBeenCalledWith('reply-1')
+  })
+
   it('keeps a user note as before', () => {
     const { agentAuthor: _agent, ...userNote } = agentNote
     act(() => renderDiffCommentZoneCard(root, userNote, context()))

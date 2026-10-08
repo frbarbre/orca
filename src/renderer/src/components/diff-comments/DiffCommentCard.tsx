@@ -36,6 +36,7 @@ type Props = {
   observeRenderedSize?: boolean
   onSubmitEdit?: (body: string) => Promise<boolean>
   headerActions?: ReactNode
+  footer?: ReactNode
 }
 
 function resizeDiffCommentTextarea(textarea: HTMLTextAreaElement): boolean {
@@ -60,7 +61,8 @@ export function DiffCommentCard({
   onContentResize,
   observeRenderedSize,
   onSubmitEdit,
-  headerActions
+  headerActions,
+  footer
 }: Props): React.JSX.Element {
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(body)
@@ -361,6 +363,7 @@ export function DiffCommentCard({
         ) : (
           <div className="orca-diff-comment-body">{body}</div>
         )}
+        {footer}
       </div>
     </div>
   )

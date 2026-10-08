@@ -113,6 +113,21 @@ export const NOTES_HANDLERS: Record<string, CommandHandler> = {
       ({ note }) => `Added agent note ${note.id} on ${note.filePath}:${lineLabel(note)}.`
     )
   },
+  'notes reply': async (ctx) => {
+    const worktree = await getNotesWorktreeSelector(ctx)
+    const noteId = getRequiredStringFlag(ctx.flags, 'id')
+    const response = await ctx.client.call<{ note: DiffComment }>('agentNote.reply', {
+      worktree,
+      noteId,
+      body: getRequiredStringFlag(ctx.flags, 'body'),
+      agent: getOptionalStringFlag(ctx.flags, 'agent') ?? defaultAgentName()
+    })
+    printResult(
+      response,
+      ctx.json,
+      ({ note }) => `Replied to note ${noteId} on ${note.filePath}:${lineLabel(note)}.`
+    )
+  },
   'notes list': async (ctx) => {
     const worktree = await getNotesWorktreeSelector(ctx)
     const response = await ctx.client.call<NoteListResult>('agentNote.list', { worktree })

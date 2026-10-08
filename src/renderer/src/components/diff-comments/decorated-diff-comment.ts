@@ -7,4 +7,6 @@ export type DecoratedDiffComment = DiffComment & {
   url?: string
   canDelete?: boolean
   canEdit?: boolean
+  /** Fork: agent notes that reply to this user note (`orca notes reply`). */
+  agentReplies?: DiffComment[]
 }

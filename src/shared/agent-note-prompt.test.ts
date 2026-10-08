@@ -23,7 +23,8 @@ describe('agent note prompt instructions', () => {
     const prompt = formatDiffCommentsForAgent([note])
     expect(prompt).toContain('File: src/a.ts')
     expect(prompt).toContain('User comment: "Rename this"')
-    expect(prompt).toContain('orca notes add --file')
+    expect(prompt).toContain('Note id: n1')
+    expect(prompt).toContain('orca notes reply --id <note id>')
   })
 
   it('hands the agent the GitHub comment link to pass back', () => {

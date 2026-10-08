@@ -23,6 +23,12 @@ export const AgentNoteAdd = WorktreeSelector.extend({
   message: 'startLine must not be after line'
 })
 
+export const AgentNoteReply = WorktreeSelector.extend({
+  noteId: z.string().min(1).max(200),
+  body: z.string().trim().min(1).max(MAX_AGENT_NOTE_BODY_LENGTH),
+  agent: z.string().trim().min(1).max(MAX_AGENT_NAME_LENGTH)
+})
+
 export const AgentNoteList = WorktreeSelector
 
 export const AgentNoteRemove = WorktreeSelector.extend({

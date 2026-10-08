@@ -472,7 +472,8 @@ describe('clearDeliveredDiffComments', () => {
     })
   })
 
-  it('clears delivered notes and persists the remaining pending notes', async () => {
+  // Fork: a delivered note stays, marked sent, so the agent's reply can sit under it.
+  it('marks delivered notes sent and keeps them', async () => {
     const store = createTestStore()
     const delivered = makeComment({ id: 'c1', filePath: 'src/foo.ts' })
     const pending = makeComment({ id: 'c2', filePath: 'src/bar.ts' })
@@ -481,15 +482,13 @@ describe('clearDeliveredDiffComments', () => {
     const ok = await store.getState().clearDeliveredDiffComments(WT, [delivered])
 
     expect(ok).toBe(true)
-    expect(store.getState().getDiffComments(WT)).toEqual([pending])
+    const [sent, untouched] = store.getState().getDiffComments(WT)
+    expect(sent).toEqual({ ...delivered, sentAt: expect.any(Number) })
+    expect(untouched).toEqual(pending)
     expect(updateMeta).toHaveBeenCalledTimes(1)
-    expect(updateMeta).toHaveBeenCalledWith({
-      worktreeId: WT,
-      updates: { diffComments: [pending] }
-    })
   })
 
-  it('keeps a note that changed while delivery was pending', async () => {
+  it('leaves unsent a note that changed while delivery was pending', async () => {
     const store = createTestStore()
     const sentSnapshot = makeComment({ id: 'c1', body: 'old body' })
     const edited = makeComment({ id: 'c1', body: 'new body' })
@@ -499,11 +498,9 @@ describe('clearDeliveredDiffComments', () => {
     const ok = await store.getState().clearDeliveredDiffComments(WT, [sentSnapshot, delivered])
 
     expect(ok).toBe(true)
-    expect(store.getState().getDiffComments(WT)).toEqual([edited])
-    expect(updateMeta).toHaveBeenCalledWith({
-      worktreeId: WT,
-      updates: { diffComments: [edited] }
-    })
+    const [stillEdited, sent] = store.getState().getDiffComments(WT)
+    expect(stillEdited).toEqual(edited)
+    expect(sent?.sentAt).toEqual(expect.any(Number))
   })
 
   it('rolls back delivered-note clearing on persist failure', async () => {

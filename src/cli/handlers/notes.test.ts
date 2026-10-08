@@ -198,6 +198,29 @@ describe('orca notes CLI handlers', () => {
     expect(output).toContain('a1  src/a.ts:3-4  [Codex] Renamed')
   })
 
+  it("replies to one of the user's notes", async () => {
+    queueFixtures(
+      callMock,
+      worktreeListFixture([WORKTREE]),
+      okFixture('req_reply', {
+        note: { id: 'a9', filePath: 'src/a.ts', lineNumber: 3, replyToNoteId: 'u1' }
+      })
+    )
+
+    await main(
+      ['notes', 'reply', '--id', 'u1', '--body', 'Renamed it', '--agent', 'Codex'],
+      '/tmp/repo'
+    )
+
+    expect(callMock).toHaveBeenLastCalledWith('agentNote.reply', {
+      worktree: SELECTOR,
+      noteId: 'u1',
+      body: 'Renamed it',
+      agent: 'Codex'
+    })
+    expect(vi.mocked(console.log).mock.calls[0][0]).toBe('Replied to note u1 on src/a.ts:3.')
+  })
+
   it('removes an agent note by id', async () => {
     queueFixtures(callMock, worktreeListFixture([WORKTREE]), okFixture('req_rm', { removed: true }))
 

@@ -3,7 +3,8 @@ import type { DiffComment } from '../../../../shared/diff-comment-types'
 import {
   AgentNoteAdd,
   AgentNoteList,
-  AgentNoteRemove
+  AgentNoteRemove,
+  AgentNoteReply
 } from '../../../../shared/rpc-contract/agent-note-params'
 import type { OrcaRuntimeService } from '../../orca-runtime'
 import { defineMethod } from '../core'
@@ -63,6 +64,34 @@ export const AGENT_NOTE_METHODS = [
           side: 'modified',
           agentAuthor: { kind: 'agent', name: params.agent },
           ...(params.githubCommentUrl ? { githubCommentUrl: params.githubCommentUrl } : {})
+        }
+        return [...notes, note]
+      })
+      return { note }
+    }
+  }),
+  defineMethod({
+    name: 'agentNote.reply',
+    params: AgentNoteReply,
+    handler: async (params, { runtime }) => {
+      const worktree = await runtime.showManagedWorktree(params.worktree)
+      const parent = (worktree.diffComments ?? []).find((comment) => comment.id === params.noteId)
+      if (!parent) {
+        throw new Error(`No note ${params.noteId} in this worktree; run orca notes list.`)
+      }
+      let note: DiffComment | null = null
+      await updateAgentNotes(runtime, `id:${worktree.id}`, (notes, worktreeId) => {
+        note = {
+          id: randomUUID(),
+          worktreeId,
+          filePath: parent.filePath,
+          ...(parent.startLine !== undefined ? { startLine: parent.startLine } : {}),
+          lineNumber: parent.lineNumber,
+          body: params.body,
+          createdAt: Date.now(),
+          side: 'modified',
+          agentAuthor: { kind: 'agent', name: params.agent },
+          replyToNoteId: parent.id
         }
         return [...notes, note]
       })

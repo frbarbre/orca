@@ -168,13 +168,20 @@ export const createDiffCommentsSlice: StateCreator<AppState, [], [], DiffComment
       return true
     }
     const snapshotsById = new Map(comments.map((comment) => [comment.id, comment]))
+    const sentAt = Date.now()
+    // Fork: a delivered note is kept and marked sent, so the agent's reply (`orca notes reply`) sits under it.
     const result = mutateDiffComments(set, worktreeId, (existing) => {
-      const next = existing.filter((comment) => {
+      let changed = false
+      const next = existing.map((comment) => {
         const snapshot = snapshotsById.get(comment.id)
-        // Why: delivery is async; a note edited after its snapshot was sent is a fresh pending note that must stay visible.
-        return !snapshot || !deliverySnapshotMatches(comment, snapshot)
+        // Why: delivery is async; a note edited after its snapshot was sent is a fresh pending note.
+        if (!snapshot || !deliverySnapshotMatches(comment, snapshot)) {
+          return comment
+        }
+        changed = true
+        return { ...comment, sentAt }
       })
-      return next.length === existing.length ? null : next
+      return changed ? next : null
     })
     if (!result) {
       return true

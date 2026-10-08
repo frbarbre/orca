@@ -3147,6 +3147,24 @@ html.native-shell .app-layout {
   color: var(--orca-agent-note-accent);
 }
 
+.orca-diff-comment-agent-replies {
+  --orca-agent-note-accent: var(--ai-action-accent);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+  padding-top: 8px;
+  border-top: 1px solid color-mix(in srgb, var(--foreground) 8%, var(--border));
+}
+
+.orca-diff-comment-agent-reply-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
 .orca-diff-comment-agent-badge {
   border-radius: 4px;
   padding: 0 5px;

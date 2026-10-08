@@ -12,6 +12,12 @@ const harness = vi.hoisted(() => {
   return state
 })
 
+const deleteDiffComment = vi.hoisted(() => vi.fn())
+vi.mock('@/store', () => ({
+  useAppStore: (selector: (state: { deleteDiffComment: typeof deleteDiffComment }) => unknown) =>
+    selector({ deleteDiffComment })
+}))
+
 vi.mock('@/lib/agent-notes', () => ({
   useWorktreeAgentNotes: () => harness.notes,
   removeAgentNote: harness.removeAgentNote
@@ -40,7 +46,12 @@ describe('AgentNotesShelf', () => {
     cleanup()
   })
 
-  it('clears every agent note from the header without expanding the shelf', () => {
+  it('clears every agent note, and the user notes they replied to, from the header', () => {
+    harness.notes = [
+      agentNote('a1', 'src/a.ts', 3),
+      { ...agentNote('a2', 'src/b.ts', 9), replyToNoteId: 'user-7' }
+    ]
+    deleteDiffComment.mockReset()
     render(<AgentNotesShelf worktreeId="wt-1" onOpenNote={vi.fn()} />)
 
     fireEvent.click(screen.getByRole('button', { name: 'Clear all agent notes' }))
@@ -49,6 +60,7 @@ describe('AgentNotesShelf', () => {
       ['wt-1', 'a1'],
       ['wt-1', 'a2']
     ])
+    expect(deleteDiffComment.mock.calls).toEqual([['wt-1', 'user-7']])
     expect(screen.queryByText('Resolved on 3')).toBeNull()
   })
 

@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { Bot, ChevronDown, Trash2 } from 'lucide-react'
 import { removeAgentNote, useWorktreeAgentNotes } from '@/lib/agent-notes'
+import { useAppStore } from '@/store'
 import { translate } from '@/i18n/i18n'
 import { cn } from '@/lib/utils'
 import type { DiffComment } from '../../../../../../shared/diff-comment-types'
@@ -14,6 +15,7 @@ export function AgentNotesShelf({
   onOpenNote: (note: DiffComment) => void
 }): React.JSX.Element | null {
   const notes = useWorktreeAgentNotes(worktreeId)
+  const deleteDiffComment = useAppStore((s) => s.deleteDiffComment)
   const [expanded, setExpanded] = useState(false)
   if (notes.length === 0) {
     return null
@@ -48,8 +50,16 @@ export function AgentNotesShelf({
           title={clearLabel}
           aria-label={clearLabel}
           onClick={() => {
+            const repliedNoteIds = new Set<string>()
             for (const note of notes) {
               void removeAgentNote(worktreeId, note.id)
+              if (note.replyToNoteId) {
+                repliedNoteIds.add(note.replyToNoteId)
+              }
+            }
+            // Why: a sent note an agent answered has done its job; clearing the answers clears it too.
+            for (const noteId of repliedNoteIds) {
+              void deleteDiffComment(worktreeId, noteId)
             }
           }}
         >

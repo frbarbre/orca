@@ -28,6 +28,19 @@ export const NOTES_COMMAND_SPECS: CommandSpec[] = [
     ]
   },
   {
+    path: ['notes', 'reply'],
+    summary: "Reply to one of the user's diff notes; the reply shows under their note",
+    usage:
+      'orca notes reply --id <note-id> --body <text> [--agent <name>] [--worktree <selector>] [--json]',
+    allowedFlags: [...GLOBAL_FLAGS, 'id', 'body', 'agent', 'worktree'],
+    notes: [
+      'Use it when the user sent you their notes: say on each one what you did. The note id is in the prompt ("Note id: …") and in orca notes list.'
+    ],
+    examples: [
+      'orca notes reply --id 3f2a… --body "Renamed to fetchUser and updated both callers."'
+    ]
+  },
+  {
     path: ['notes', 'list'],
     summary: "List the user's notes and the agent notes in a worktree",
     usage: 'orca notes list [--worktree <selector>] [--json]',

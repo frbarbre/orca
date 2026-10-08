@@ -14,7 +14,7 @@ export function AgentNotesShelf({
   onOpenNote: (note: DiffComment) => void
 }): React.JSX.Element | null {
   const notes = useWorktreeAgentNotes(worktreeId)
-  const [expanded, setExpanded] = useState(true)
+  const [expanded, setExpanded] = useState(false)
   if (notes.length === 0) {
     return null
   }
@@ -38,19 +38,24 @@ export function AgentNotesShelf({
         </span>
       </button>
       {expanded && (
-        <DiffCommentsInlineList
-          comments={[...notes]}
-          stacked
-          onDelete={(id) => void removeAgentNote(worktreeId, id)}
-          onOpen={onOpenNote}
-          onClearFile={(filePath) => {
-            for (const note of notes) {
-              if (note.filePath === filePath) {
-                void removeAgentNote(worktreeId, note.id)
+        <div
+          data-testid="agent-notes-shelf-list"
+          className="max-h-64 overflow-y-auto scrollbar-sleek"
+        >
+          <DiffCommentsInlineList
+            comments={[...notes]}
+            stacked
+            onDelete={(id) => void removeAgentNote(worktreeId, id)}
+            onOpen={onOpenNote}
+            onClearFile={(filePath) => {
+              for (const note of notes) {
+                if (note.filePath === filePath) {
+                  void removeAgentNote(worktreeId, note.id)
+                }
               }
-            }
-          }}
-        />
+            }}
+          />
+        </div>
       )}
     </div>
   )

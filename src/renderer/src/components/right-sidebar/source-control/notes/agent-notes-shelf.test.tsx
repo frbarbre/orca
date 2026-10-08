@@ -52,7 +52,10 @@ describe('AgentNotesShelf', () => {
 
     expect(screen.getByText('Agent notes')).toBeDefined()
     expect(screen.getByText('2')).toBeDefined()
+    expect(screen.queryByText('Resolved on 3')).toBeNull()
 
+    fireEvent.click(screen.getByText('Agent notes'))
+    expect(screen.getByTestId('agent-notes-shelf-list').className).toContain('max-h-')
     fireEvent.click(screen.getByText('Resolved on 3'))
     expect(onOpenNote).toHaveBeenCalledWith(expect.objectContaining({ id: 'a1' }))
 

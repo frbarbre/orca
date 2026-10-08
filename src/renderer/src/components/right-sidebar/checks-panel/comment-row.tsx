@@ -10,6 +10,7 @@ import type { PRCommentGroupActionState } from '@/lib/pr-comment-action-state'
 import type { PRCommentPresentationClasses } from '../pr-comment-presentation'
 import { formatPrCommentRelativeTime } from '../../../../../shared/pr-comment-time'
 import { translate } from '@/i18n/i18n'
+import { usePRCommentReveal } from '@/lib/pr-comment-reveal'
 import {
   buildCopyText,
   CommentMoreMenu,
@@ -71,6 +72,7 @@ export function CommentRow({
    *  has not been sent yet is ours to edit or throw away. */
   forceMutable?: boolean
 }): React.JSX.Element {
+  const reveal = usePRCommentReveal(comment.url)
   const automated = isBotPRComment(comment, botAuthorOverrides)
   const canMutateComment = forceMutable || isMutablePRConversationComment(comment)
   // Why edit is wider than delete: the provider lets the author rewrite an inline review
@@ -345,11 +347,14 @@ export function CommentRow({
 
   return (
     <div
+      ref={reveal.ref}
+      data-pr-comment-revealed={reveal.highlighted ? 'true' : undefined}
       className={cn(
         'group/comment min-w-0',
         presentation.commentRow,
         isReply && presentation.commentRowReply,
-        comment.isResolved && presentation.resolvedContainer
+        comment.isResolved && presentation.resolvedContainer,
+        reveal.highlighted && 'rounded-md ring-2 ring-ai-action-accent/60 transition-shadow'
       )}
     >
       <div className="min-w-0">

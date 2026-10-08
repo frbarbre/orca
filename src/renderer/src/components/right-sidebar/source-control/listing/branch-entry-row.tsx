@@ -6,6 +6,7 @@ import { basename, dirname, joinPath } from '@/lib/path'
 import { WORKSPACE_FILE_PATH_MIME } from '@/lib/workspace-file-drag'
 import { writeWorkspaceFileDragSourceForWorkspace } from '@/lib/workspace-file-drag-source'
 import { translate } from '@/i18n/i18n'
+import { AgentNoteFileBadge } from './agent-note-file-badge'
 import type { GitBranchChangeEntry } from '../../../../../../shared/git-diff-compare-types'
 import { DiffLineCounts } from './diff-line-counts'
 import { SourceControlEntryContextMenu } from './entry-context-menu'
@@ -99,6 +100,7 @@ export function BranchEntryRow({
             <span className="tabular-nums">{commentCount}</span>
           </span>
         )}
+        <AgentNoteFileBadge filePath={entry.path} />
         {reviewThreadCount > 0 && (
           <span
             className="flex shrink-0 items-center gap-0.5 text-[10px] text-status-warning"

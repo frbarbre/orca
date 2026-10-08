@@ -125,6 +125,37 @@ describe('orca notes CLI handlers', () => {
     })
   })
 
+  it('passes the GitHub comment the note answers', async () => {
+    queueFixtures(
+      callMock,
+      worktreeListFixture([WORKTREE]),
+      okFixture('req_show', { worktree: WORKTREE }),
+      okFixture('req_add', { note: { id: 'note-3', filePath: 'README.md', lineNumber: 3 } })
+    )
+    const url = 'https://github.com/acme/app/pull/12#discussion_r1'
+
+    await main(
+      [
+        'notes',
+        'add',
+        '--file',
+        'README.md',
+        '--line',
+        '3',
+        '--body',
+        'Done',
+        '--github-comment',
+        url
+      ],
+      '/tmp/repo'
+    )
+
+    expect(callMock).toHaveBeenLastCalledWith(
+      'agentNote.add',
+      expect.objectContaining({ githubCommentUrl: url })
+    )
+  })
+
   it('refuses a file outside the worktree', async () => {
     queueFixtures(
       callMock,

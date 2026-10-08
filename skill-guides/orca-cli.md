@@ -165,7 +165,7 @@ ORCA notes list --json
 ORCA notes add --file src/api.ts --line 40 --end-line 58 --agent "Claude Code" --body "Renamed fetchUser and updated both callers." --json
 ```
 
-Leave one when you resolve a user note (on the lines you changed: what you did and why) or when a review finds something on specific lines. Line numbers are in the current file. `--file` is relative to cwd or absolute inside the worktree. Name yourself with `--agent`. `orca notes rm --id <id>` removes one of them.
+Leave one when you resolve a user note (on the lines you changed: what you did and why) or when a review finds something on specific lines. Line numbers are in the current file. `--file` is relative to cwd or absolute inside the worktree. Name yourself with `--agent`. When the note answers a GitHub review comment, pass its link with `--github-comment <url>`; the note then links to that comment in Orca. `orca notes rm --id <id>` removes one of them.
 
 ## Terminals
 

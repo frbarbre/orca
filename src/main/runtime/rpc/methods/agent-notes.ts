@@ -61,7 +61,8 @@ export const AGENT_NOTE_METHODS = [
           body: params.body,
           createdAt: Date.now(),
           side: 'modified',
-          agentAuthor: { kind: 'agent', name: params.agent }
+          agentAuthor: { kind: 'agent', name: params.agent },
+          ...(params.githubCommentUrl ? { githubCommentUrl: params.githubCommentUrl } : {})
         }
         return [...notes, note]
       })

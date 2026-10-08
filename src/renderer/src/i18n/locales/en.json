@@ -14156,6 +14156,9 @@
           },
           "AgentNotesShelf": {
             "title": "Agent notes"
+          },
+          "AgentNoteFileBadge": {
+            "title": "{{value0}} agent note{{value1}}"
           }
         }
       },
@@ -16108,6 +16111,9 @@
           "useDiffReviewComment": {
             "noPullRequest": "This diff is not part of a pull request.",
             "lineNotInDiff": "GitHub only accepts review comments on lines the pull request changed."
+          },
+          "AgentNoteGitHubLink": {
+            "label": "Show the GitHub comment"
           }
         }
       },

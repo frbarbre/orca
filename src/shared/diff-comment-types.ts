@@ -30,6 +30,8 @@ export type DiffComment = {
   id: string
   /** Fork: present only on notes an agent left through `orca notes add` (stored in WorktreeMeta.agentNotes). */
   agentAuthor?: DiffCommentAgentAuthor
+  /** Fork: the GitHub review comment an agent note answers. */
+  githubCommentUrl?: string
   worktreeId: string
   filePath: string
   /** Undefined means a legacy diff note. */

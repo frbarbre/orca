@@ -3135,14 +3135,11 @@ html.native-shell .app-layout {
 /* Fork: agent notes left through `orca notes add` read as bot notes, not the user's own. */
 .orca-diff-comment-card-agent {
   --orca-agent-note-accent: var(--ai-action-accent);
-  border-color: color-mix(in srgb, var(--orca-agent-note-accent) 40%, var(--border));
-  border-left: 3px solid var(--orca-agent-note-accent);
-  background: color-mix(in srgb, var(--orca-agent-note-accent) 5%, var(--background));
+  border-color: color-mix(in srgb, var(--orca-agent-note-accent) 22%, var(--border));
 }
 
 .dark .orca-diff-comment-card-agent {
-  border-color: color-mix(in srgb, var(--orca-agent-note-accent) 35%, var(--border));
-  background: color-mix(in srgb, var(--orca-agent-note-accent) 7%, var(--editor-surface));
+  border-color: color-mix(in srgb, var(--orca-agent-note-accent) 20%, var(--border));
 }
 
 .orca-diff-comment-agent-icon,

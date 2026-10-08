@@ -3,6 +3,7 @@ import { Check, Copy, Trash, Trash2 } from 'lucide-react'
 import { getDiffCommentLineLabel, getDiffCommentSource } from '@/lib/diff-comment-compat'
 import { formatDiffComment } from '@/lib/diff-comments-format'
 import { translate } from '@/i18n/i18n'
+import { cn } from '@/lib/utils'
 import type { DiffComment } from '../../../../../../shared/diff-comment-types'
 import { useCopyFeedbackState } from './copy-feedback'
 
@@ -35,9 +36,12 @@ export function DiffCommentsInlineList({
   comments,
   onDelete,
   onClearFile,
-  onOpen
+  onOpen,
+  stacked = false
 }: {
   comments: DiffComment[]
+  /** Fork: puts the line and source badges on their own row above the note text. */
+  stacked?: boolean
   onDelete: (commentId: string) => void
   onClearFile: (filePath: string) => void
   // Why: opens the comment's file diff (or editor fallback), scrolling to the note via scrollToDiffCommentId when an id is given.
@@ -131,7 +135,10 @@ export function DiffCommentsInlineList({
                 <button
                   type="button"
                   // Why: single inner target keeps copy/delete as siblings, not nested interactive elements (violates ARIA no-interactive-descendants).
-                  className="flex min-w-0 flex-1 cursor-pointer items-center gap-1.5 rounded text-left"
+                  className={cn(
+                    'flex min-w-0 flex-1 cursor-pointer gap-1.5 rounded text-left',
+                    stacked ? 'flex-col items-start gap-1' : 'items-center'
+                  )}
                   onClick={() => onOpen(c)}
                   title={translate(
                     'auto.components.right.sidebar.SourceControl.0b5b8c234c',
@@ -144,19 +151,32 @@ export function DiffCommentsInlineList({
                     { value0: getLocalizedDiffCommentLineLabel(c) }
                   )}
                 >
-                  <span className="shrink-0 rounded bg-muted px-1 py-0.5 text-[10px] leading-none tabular-nums text-muted-foreground">
-                    {getDiffCommentLineLabel(c, true)}
-                  </span>
-                  <span className="shrink-0 rounded bg-muted/70 px-1 py-0.5 text-[10px] leading-none text-muted-foreground">
-                    {getDiffCommentSource(c) === 'markdown'
-                      ? translate('auto.components.right.sidebar.SourceControl.94c42b252e', 'MD')
-                      : translate('auto.components.right.sidebar.SourceControl.c56ba7fa06', 'Diff')}
-                  </span>
-                  {c.sentAt ? (
-                    <span className="shrink-0 rounded bg-muted/70 px-1 py-0.5 text-[10px] leading-none text-muted-foreground">
-                      {translate('auto.components.right.sidebar.SourceControl.655633c08a', 'Sent')}
+                  <span className="flex shrink-0 items-center gap-1.5">
+                    <span className="shrink-0 rounded bg-muted px-1 py-0.5 text-[10px] leading-none tabular-nums text-muted-foreground">
+                      {getDiffCommentLineLabel(c, true)}
                     </span>
-                  ) : null}
+                    <span className="shrink-0 rounded bg-muted/70 px-1 py-0.5 text-[10px] leading-none text-muted-foreground">
+                      {c.agentAuthor
+                        ? c.agentAuthor.name
+                        : getDiffCommentSource(c) === 'markdown'
+                          ? translate(
+                              'auto.components.right.sidebar.SourceControl.94c42b252e',
+                              'MD'
+                            )
+                          : translate(
+                              'auto.components.right.sidebar.SourceControl.c56ba7fa06',
+                              'Diff'
+                            )}
+                    </span>
+                    {c.sentAt ? (
+                      <span className="shrink-0 rounded bg-muted/70 px-1 py-0.5 text-[10px] leading-none text-muted-foreground">
+                        {translate(
+                          'auto.components.right.sidebar.SourceControl.655633c08a',
+                          'Sent'
+                        )}
+                      </span>
+                    ) : null}
+                  </span>
                   <span className="block min-w-0 flex-1 whitespace-pre-wrap break-words text-[11px] leading-snug text-foreground">
                     {c.body}
                   </span>

@@ -1,7 +1,7 @@
 import React, { useCallback, useMemo } from 'react'
 import type { DiffComment } from '../../../../shared/diff-comment-types'
 import { useAppStore } from '@/store'
-import { formatDiffComments } from '@/lib/diff-comments-format'
+import { formatDiffCommentsForAgent as formatDiffComments } from '../../../../shared/agent-note-prompt'
 import { NotesSendMenu, type NotesSendMenuScope } from './NotesSendMenu'
 import { translate } from '@/i18n/i18n'
 

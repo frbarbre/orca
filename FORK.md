@@ -881,7 +881,18 @@ The main-side RPC methods `agentNote.add` / `agentNote.list` / `agentNote.remove
 The diff (file and combined) renders them as bot cards: violet `ai-action-accent` tint, bot icon,
 agent name, "Agent note" badge, delete only, no edit and no send menu. The diff header has an
 "Agent notes" pill listing the file's agent notes, and the Source Control sidebar has an "Agent
-notes" shelf. They never enter a send-to-agent prompt, since the send menus read `diffComments`.
+notes" shelf (stacked rows) plus a bot count on each changed-file row (`agent-note-file-badge.tsx`).
+They never enter a send-to-agent prompt, since the send menus read `diffComments`.
+
+`--github-comment <url>` stores `githubCommentUrl`; the card's reply button runs `revealGitHubComment`,
+which opens the Checks tab and asks `pr-comment-reveal.ts` to scroll to and ring the `CommentRow`
+whose `url` matches.
+
+Prompts ask agents to leave these notes (`src/shared/agent-note-prompt.ts`): diff notes go out through
+`formatDiffCommentsForAgent` (DiffNotesSendMenu, the per-note send), and the single PR thread prompt
+(`InlinePRCommentCard`), the queued PR comments prompt (`pr-comments-resolution-prompt.ts`) and the default
+Review templates (`workspace-action-prompts.ts`, `workspace-status-rule-config.ts`) carry the instruction,
+with `--github-comment` for PR comments. A custom Review template in Settings does not get it.
 
 New files: `src/shared/rpc-contract/agent-note-params.ts`, `src/main/runtime/rpc/methods/agent-notes.ts`
 (+ test), `src/cli/specs/notes.ts`, `src/cli/handlers/notes.ts` (+ test), `src/renderer/src/lib/agent-notes.ts`,

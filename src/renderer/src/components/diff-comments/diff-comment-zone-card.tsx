@@ -1,7 +1,10 @@
+import type React from 'react'
 import type { RefObject } from 'react'
+import { MessageSquareReply } from 'lucide-react'
+import { revealGitHubComment } from '@/lib/agent-notes'
 import type { Root } from 'react-dom/client'
 import { getDiffCommentLineLabel } from '@/lib/diff-comment-compat'
-import { formatDiffComments } from '@/lib/diff-comments-format'
+import { formatDiffCommentsForAgent as formatDiffComments } from '../../../../shared/agent-note-prompt'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import type { DiffCommentDeliverySnapshot } from '@/store/slices/diffComments'
 import { DiffCommentCard } from './DiffCommentCard'
@@ -19,6 +22,7 @@ export function getRenderSignature(
     sentAt: comment.sentAt ?? null,
     author: comment.author ?? null,
     agentName: comment.agentAuthor?.name ?? null,
+    githubCommentUrl: comment.githubCommentUrl ?? null,
     authorAvatarUrl: comment.authorAvatarUrl ?? null,
     createdAtLabel: comment.createdAtLabel ?? null,
     url: comment.url ?? null,
@@ -44,6 +48,28 @@ function getSingleCommentSendScopes(
         formatCommentPrompt ? formatCommentPrompt(comment) : formatDiffComments([comment])
     }
   ]
+}
+
+function AgentNoteGitHubLink({ url }: { url: string }): React.JSX.Element {
+  const label = translate(
+    'auto.components.diff.comments.AgentNoteGitHubLink.label',
+    'Show the GitHub comment'
+  )
+  return (
+    <button
+      type="button"
+      className="orca-diff-comment-pill-btn"
+      title={label}
+      aria-label={label}
+      onClick={(event) => {
+        event.preventDefault()
+        event.stopPropagation()
+        revealGitHubComment(url)
+      }}
+    >
+      <MessageSquareReply className="size-3" />
+    </button>
+  )
 }
 
 // Callbacks arrive as refs so the rendered props keep the decorator's identity semantics.
@@ -106,7 +132,11 @@ export function renderDiffCommentZoneCard(
         onContentResize={() => resizeZone(comment.id)}
         observeRenderedSize
         headerActions={
-          worktreeId && comment.author === undefined && !agentName ? (
+          agentName ? (
+            comment.githubCommentUrl ? (
+              <AgentNoteGitHubLink url={comment.githubCommentUrl} />
+            ) : null
+          ) : worktreeId && comment.author === undefined ? (
             <NotesSendMenu
               worktreeId={worktreeId}
               groupId={activeGroupId}

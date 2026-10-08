@@ -53,7 +53,8 @@ test('an agent note added through the runtime shows as a bot note and can be rem
         filePath: 'notes-target.ts',
         line: 6,
         body: 'Changed value5 to a string, as you asked.',
-        agent: 'Claude Code'
+        agent: 'Claude Code',
+        githubCommentUrl: 'https://github.com/acme/app/pull/12#discussion_r1'
       }
     })
   })
@@ -70,6 +71,8 @@ test('an agent note added through the runtime shows as a bot note and can be rem
 
   await expect(orcaPage.getByRole('button', { name: 'Agent notes' }).first()).toBeVisible()
   await expect(orcaPage.getByTestId('agent-notes-shelf')).toContainText('Agent notes')
+  await expect(orcaPage.locator('[title="1 agent note"]').first()).toBeVisible()
+  await expect(card.locator('[aria-label="Show the GitHub comment"]')).toBeVisible()
   await orcaPage.screenshot({ path: testInfo.outputPath('agent-note.png') })
 
   await card.locator('[aria-label="Delete note"]').click()

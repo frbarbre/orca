@@ -15,6 +15,7 @@ import { cn } from '@/lib/utils'
 import { WORKSPACE_FILE_PATH_MIME } from '@/lib/workspace-file-drag'
 import { writeWorkspaceFileDragSourceForWorkspace } from '@/lib/workspace-file-drag-source'
 import { translate } from '@/i18n/i18n'
+import { AgentNoteFileBadge } from './agent-note-file-badge'
 import type { GitStatusEntry } from '../../../../../../shared/git-status-types'
 import { ActionButton } from './action-button'
 import { ConflictBadge } from './conflict-badge'
@@ -208,6 +209,7 @@ export const UncommittedEntryRow = React.memo(function UncommittedEntryRow({
             <span className="tabular-nums">{commentCount}</span>
           </span>
         )}
+        <AgentNoteFileBadge filePath={entry.path} />
         {reviewThreadCount > 0 && (
           <span
             className="flex shrink-0 items-center gap-0.5 text-[10px] text-status-warning"

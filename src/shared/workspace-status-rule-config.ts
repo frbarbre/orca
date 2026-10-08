@@ -1,4 +1,5 @@
 import { isTuiAgent } from './tui-agent-config'
+import { REVIEW_AGENT_NOTE_INSTRUCTION } from './agent-note-prompt'
 import type { TuiAgent } from './tui-agent'
 import type { WorkspaceStatus } from './worktree/types'
 import {
@@ -64,7 +65,9 @@ The branch {{branch}} is checked out and the diff is pointed at {{baseRef}}.
 What UI changes should I check for?
 
 Analyse the changes, and point out the most important bits of the PR and what could be
-potential weak points. Analyse the architecture decisions; are they aligned with the codebase?`
+potential weak points. Analyse the architecture decisions; are they aligned with the codebase?
+
+${REVIEW_AGENT_NOTE_INSTRUCTION}`
 
 export const DEFAULT_REREVIEW_PROMPT_TEMPLATE = `You reviewed pull request #{{prNumber}} — "{{title}}" by {{author}} ({{url}}) before, and {{author}} has asked you to look again.
 The branch {{branch}} is checked out and the diff is pointed at {{sinceCommit}}, the commit you last reviewed, so it shows only what has changed since.

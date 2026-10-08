@@ -91,6 +91,7 @@ export const NOTES_HANDLERS: Record<string, CommandHandler> = {
     }
     const body = getRequiredStringFlag(ctx.flags, 'body')
     const agent = getOptionalStringFlag(ctx.flags, 'agent') ?? defaultAgentName()
+    const githubCommentUrl = getOptionalStringFlag(ctx.flags, 'github-comment')
     const filePath = await resolveNoteFilePath(
       ctx,
       worktree,
@@ -103,7 +104,8 @@ export const NOTES_HANDLERS: Record<string, CommandHandler> = {
         ? { startLine, line: endLine }
         : { line: startLine }),
       body,
-      agent
+      agent,
+      ...(githubCommentUrl ? { githubCommentUrl } : {})
     })
     printResult(
       response,

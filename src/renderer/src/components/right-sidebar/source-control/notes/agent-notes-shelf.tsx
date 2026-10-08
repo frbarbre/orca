@@ -40,6 +40,7 @@ export function AgentNotesShelf({
       {expanded && (
         <DiffCommentsInlineList
           comments={[...notes]}
+          stacked
           onDelete={(id) => void removeAgentNote(worktreeId, id)}
           onOpen={onOpenNote}
           onClearFile={(filePath) => {

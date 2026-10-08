@@ -1,3 +1,5 @@
+import { REVIEW_AGENT_NOTE_INSTRUCTION } from './agent-note-prompt'
+
 export const WORKSPACE_ACTION_PROMPT_IDS = [
   'commitAndPush',
   'createPullRequest',
@@ -52,7 +54,9 @@ The branch {{branch}} is checked out in {{worktreePath}}; compare it against {{b
 - Read the full diff and the surrounding code it touches.
 - Point out bugs, missing edge cases, risky changes and anything that does not fit how the codebase already does things.
 - Order findings by severity, each with the file and line and a concrete suggestion.
-- Do not change any code.`
+- Do not change any code.
+
+${REVIEW_AGENT_NOTE_INSTRUCTION}`
 }
 
 export function resolveWorkspaceActionPromptTemplate(

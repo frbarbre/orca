@@ -1,5 +1,6 @@
 import type { PRComment } from '../../../shared/github/comment-types'
 import type { PRCommentGroup } from '../../../shared/pr-comment-groups'
+import { githubCommentAgentNoteInstruction } from '../../../shared/agent-note-prompt'
 
 export type PRCommentsResolutionReviewKind = 'PR' | 'MR'
 
@@ -153,6 +154,7 @@ export function buildPRCommentsResolutionPrompt({
     '- Orca acknowledges this feedback on the host itself after launch. Do not resolve or unresolve threads on the host, reply on the host, edit host comments, or use provider APIs/CLIs just to change review state.',
     '- Do not push, create commits, or rewrite history.',
     '- Run git diff --check before finishing. Run the most focused relevant tests, typecheck, or lint command you can reasonably identify; if validation is impractical, explain why.',
+    `- ${githubCommentAgentNoteInstruction(undefined)} Each comment's url is in the JSON.`,
     '',
     'Reply with the selected feedback addressed, files changed, validation run, final git status, and anything still left for the user.'
   ].join('\n')

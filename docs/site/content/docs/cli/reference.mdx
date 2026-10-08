@@ -187,7 +187,7 @@ orca notes add --file src/api.ts --line 40 --end-line 58 --agent Codex --body "F
 orca notes rm --id <note-id> --json
 ```
 
-`notes list` returns the user's notes and the agent notes. `notes add` leaves an agent note on lines of the current file; Orca shows it in the diff as a bot note, apart from the user's notes, and never sends it to an agent. `--file` is relative to cwd or absolute inside the worktree.
+`notes list` returns the user's notes and the agent notes. `notes add` leaves an agent note on lines of the current file; Orca shows it in the diff as a bot note, apart from the user's notes, and never sends it to an agent. `--file` is relative to cwd or absolute inside the worktree. `--github-comment <url>` links the note to the GitHub review comment it answers.
 
 ## Built-in browser
 

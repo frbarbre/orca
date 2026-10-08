@@ -18,6 +18,8 @@ import type { GitHubReactionContent, PRComment } from '../../../../shared/github
 import type { RightPanelCommentSubmitResult } from '@/components/right-sidebar/right-panel-comment-composer'
 import type { DiffCommentDeliverySnapshot } from '@/store/slices/diffComments'
 
+import { githubCommentAgentNoteInstruction } from '../../../../shared/agent-note-prompt'
+
 const NO_BOT_OVERRIDES: ReadonlySet<string> = new Set()
 
 function formatThreadPrompt(group: PRCommentGroup, relativePath: string): string {
@@ -27,7 +29,9 @@ function formatThreadPrompt(group: PRCommentGroup, relativePath: string): string
     `Address this pull request review comment on ${relativePath}:${root.line ?? '?'}.`,
     '',
     `@${root.author}: ${root.body}`,
-    ...replies.map((reply) => `@${reply.author}: ${reply.body}`)
+    ...replies.map((reply) => `@${reply.author}: ${reply.body}`),
+    '',
+    githubCommentAgentNoteInstruction(root.url || undefined)
   ]
   return lines.join('\n')
 }

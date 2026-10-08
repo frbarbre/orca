@@ -76,6 +76,32 @@ describe('agent note RPC methods', () => {
     expect(stored().diffComments).toEqual([userNote])
   })
 
+  it('links a note to the GitHub comment it answers, and refuses a non-GitHub link', async () => {
+    const { call, stored } = createRuntime({ id: 'wt-1', diffComments: [] })
+    const url = 'https://github.com/acme/app/pull/12#discussion_r123456'
+
+    await call('agentNote.add', {
+      worktree: 'id:wt-1',
+      filePath: 'a.ts',
+      line: 1,
+      body: 'Done',
+      agent: 'Codex',
+      githubCommentUrl: url
+    })
+    const refused = await call('agentNote.add', {
+      worktree: 'id:wt-1',
+      filePath: 'a.ts',
+      line: 1,
+      body: 'Done',
+      agent: 'Codex',
+      githubCommentUrl: 'javascript:alert(1)'
+    })
+
+    expect(stored().agentNotes?.[0]?.githubCommentUrl).toBe(url)
+    expect(refused).toMatchObject({ ok: false })
+    expect(stored().agentNotes).toHaveLength(1)
+  })
+
   it('keeps both notes when two agents add at the same time', async () => {
     const { call, stored } = createRuntime({ id: 'wt-1', diffComments: [] })
 

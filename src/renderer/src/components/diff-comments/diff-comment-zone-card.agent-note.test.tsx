@@ -12,6 +12,9 @@ vi.mock('../editor/NotesSendMenu', () => ({
   NotesSendMenu: () => <button type="button">Send notes to an agent</button>
 }))
 
+const revealGitHubComment = vi.hoisted(() => vi.fn())
+vi.mock('@/lib/agent-notes', () => ({ revealGitHubComment }))
+
 const agentNote: DiffComment = {
   id: 'agent-1',
   worktreeId: 'wt-1',
@@ -75,6 +78,17 @@ describe('agent note zone card', () => {
     const remove = container.querySelector<HTMLButtonElement>('[aria-label="Delete note"]')
     act(() => remove?.click())
     expect(onDelete).toHaveBeenCalledWith('agent-1')
+  })
+
+  it('links to the GitHub comment it answers, inside Orca', () => {
+    const url = 'https://github.com/acme/app/pull/12#discussion_r1'
+    act(() => renderDiffCommentZoneCard(root, { ...agentNote, githubCommentUrl: url }, context()))
+
+    const link = container.querySelector<HTMLButtonElement>(
+      '[aria-label="Show the GitHub comment"]'
+    )
+    act(() => link?.click())
+    expect(revealGitHubComment).toHaveBeenCalledWith(url)
   })
 
   it('keeps a user note as before', () => {

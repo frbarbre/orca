@@ -10,7 +10,15 @@ export const AgentNoteAdd = WorktreeSelector.extend({
   line: z.number().int().positive(),
   startLine: z.number().int().positive().optional(),
   body: z.string().trim().min(1).max(MAX_AGENT_NOTE_BODY_LENGTH),
-  agent: z.string().trim().min(1).max(MAX_AGENT_NAME_LENGTH)
+  agent: z.string().trim().min(1).max(MAX_AGENT_NAME_LENGTH),
+  githubCommentUrl: z
+    .string()
+    .trim()
+    .max(MAX_FILE_PATH_LENGTH)
+    .refine((value) => /^https:\/\/[^\s/]+\/\S+$/.test(value), {
+      message: 'githubCommentUrl must be an https link'
+    })
+    .optional()
 }).refine((params) => params.startLine === undefined || params.startLine <= params.line, {
   message: 'startLine must not be after line'
 })

@@ -104,6 +104,7 @@ export function useInlinePRCommentZones({
         <InlinePRCommentCard
           group={placement.group}
           resolved={placement.resolved}
+          outdated={placement.outdated}
           relativePath={relativePath}
           worktreeId={worktreeId}
           now={Date.now()}
@@ -135,7 +136,7 @@ export function useInlinePRCommentZones({
         const signature =
           placement.kind === 'pending'
             ? `${placement.lineNumber}:pending:${placement.comment.body}`
-            : `${placement.lineNumber}:${placement.resolved}`
+            : `${placement.lineNumber}:${placement.resolved}:${placement.outdated}`
         if (existing) {
           if (existing.lastRenderSignature !== signature) {
             existing.lastRenderSignature = signature
@@ -176,7 +177,9 @@ export function useInlinePRCommentZones({
                 ? RESOLVED_ZONE_PX
                 : INITIAL_ZONE_PX,
           domNode: dom,
-          suppressMouseDown: false
+          suppressMouseDown: false,
+          // Fork: outdated threads sit after every other zone on the last line.
+          ...(placement.kind === 'thread' && placement.outdated ? { ordinal: 1_000_000 } : {})
         }
         const zoneId = accessor.addZone(delegate)
         zones.set(placement.id, {

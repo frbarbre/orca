@@ -29,18 +29,34 @@ describe('selectInlinePRCommentPlacements', () => {
   it('places a thread on the line it was left on', () => {
     const groups = [thread({ id: 1, path: 'src/a.ts', line: 12 })]
     expect(selectInlinePRCommentPlacements(groups, 'src/a.ts', 100)).toEqual([
-      { kind: 'thread', id: 'thread:1', lineNumber: 12, group: groups[0], resolved: false }
+      {
+        kind: 'thread',
+        id: 'thread:1',
+        lineNumber: 12,
+        group: groups[0],
+        resolved: false,
+        outdated: false
+      }
     ])
   })
 
-  it('drops a thread GitHub marked outdated, which the panel still lists', () => {
-    const groups = [thread({ id: 1, path: 'src/a.ts', line: 12, isOutdated: true })]
-    expect(selectInlinePRCommentPlacements(groups, 'src/a.ts', 100)).toEqual([])
+  it('stacks a thread GitHub marked outdated after the last line, below the anchored ones', () => {
+    const groups = [
+      thread({ id: 1, path: 'src/a.ts', line: 12, isOutdated: true }),
+      thread({ id: 2, path: 'src/a.ts', line: 100 })
+    ]
+    const placements = selectInlinePRCommentPlacements(groups, 'src/a.ts', 100)
+    expect(placements.map((p) => [p.id, p.lineNumber, p.kind === 'thread' && p.outdated])).toEqual([
+      ['thread:2', 100, false],
+      ['thread:1', 100, true]
+    ])
   })
 
-  it('drops a thread whose line is past the end of the file', () => {
+  it('stacks a thread whose line is past the end of the file at the bottom', () => {
     const groups = [thread({ id: 1, path: 'src/a.ts', line: 500 })]
-    expect(selectInlinePRCommentPlacements(groups, 'src/a.ts', 100)).toEqual([])
+    const [placement] = selectInlinePRCommentPlacements(groups, 'src/a.ts', 100)
+    expect(placement?.lineNumber).toBe(100)
+    expect(placement?.kind === 'thread' && placement.outdated).toBe(true)
   })
 
   it('ignores threads on other files and conversation comments with no path', () => {
@@ -54,10 +70,13 @@ describe('selectInlinePRCommentPlacements', () => {
     ])
   })
 
-  it('drops a thread with no line, which cannot be anchored', () => {
-    expect(
-      selectInlinePRCommentPlacements([thread({ id: 1, path: 'src/a.ts' })], 'src/a.ts', 100)
-    ).toEqual([])
+  it('stacks a thread with no line at the bottom too', () => {
+    const [placement] = selectInlinePRCommentPlacements(
+      [thread({ id: 1, path: 'src/a.ts' })],
+      'src/a.ts',
+      100
+    )
+    expect(placement?.lineNumber).toBe(100)
   })
 
   it('reports the resolved state so the zone can render collapsed', () => {

@@ -915,6 +915,14 @@ New files: `src/shared/rpc-contract/agent-note-params.ts`, `src/main/runtime/rpc
 | `src/renderer/src/assets/main.css` | `.orca-diff-comment-card-agent` and the agent badge styles. |
 | `skill-guides/orca-cli.md` (+ generated guides), `docs/site/content/docs/cli/reference.mdx` | The Diff Notes / Diff notes sections. |
 
+### 22. Outdated review threads stay in the diff
+
+Upstream drops a review thread from the diff when GitHub marks it outdated, or its line is gone
+or past the end. `inline-pr-comment-placement.ts` instead places it after the last line, sorted
+below the anchored threads, with `outdated: true`. `useInlinePRCommentZones.tsx` gives it a high
+zone `ordinal` so it sits below every other zone on that line, and `InlinePRCommentCard` shows
+"Outdated · was on line N" above it. The placement test's outdated/past-end/no-line cases changed with it.
+
 ## Verify
 
 Verify runs on GitHub, not locally: `fork-verify.yml` runs it on every pull request against `main`,

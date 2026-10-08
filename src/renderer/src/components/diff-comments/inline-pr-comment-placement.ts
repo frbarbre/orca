@@ -7,19 +7,23 @@ import {
 } from '../../../../shared/pr-comment-groups'
 
 export type InlinePRCommentPlacement =
-  | { kind: 'thread'; id: string; lineNumber: number; group: PRCommentGroup; resolved: boolean }
+  | {
+      kind: 'thread'
+      id: string
+      lineNumber: number
+      group: PRCommentGroup
+      resolved: boolean
+      outdated: boolean
+    }
   | { kind: 'pending'; id: string; lineNumber: number; comment: PendingReviewComment }
 
 /**
  * The review threads that belong on a line of this file's diff.
  *
- * Why outdated threads are dropped rather than pinned somewhere: GitHub sets `isOutdated` when it
- * can no longer map a thread to the current diff, which means the line the reviewer wrote against
- * is gone. Anchoring it to a nearby line would attach the comment to code it was never about. Those
- * threads stay readable in the comments panel, which is a list and needs no anchor.
- *
- * Why the line-count bound on top of that flag: the panel's list can be newer than the diff the
- * viewer is showing, and a zone past the last line is one Monaco silently never lays out.
+ * Fork. Why outdated threads stack after the last line rather than near a line: GitHub sets
+ * `isOutdated` when the line the reviewer wrote against is gone, so anchoring it nearby would
+ * attach it to code it was never about. A line past the end (the panel can be newer than this
+ * diff) or no line at all goes there too, since a zone past the last line never lays out.
  */
 export function selectInlinePRCommentPlacements(
   groups: readonly PRCommentGroup[],
@@ -33,19 +37,19 @@ export function selectInlinePRCommentPlacements(
   const placements: InlinePRCommentPlacement[] = []
   for (const group of groups) {
     const root = getPRCommentGroupRoot(group)
-    if (root.path !== relativePath || root.isOutdated === true) {
+    if (root.path !== relativePath) {
       continue
     }
-    const lineNumber = root.line
-    if (lineNumber === undefined || lineNumber < 1 || lineNumber > modifiedLineCount) {
-      continue
-    }
+    const line = root.line
+    const outdated =
+      root.isOutdated === true || line === undefined || line < 1 || line > modifiedLineCount
     placements.push({
       kind: 'thread',
       id: getPRCommentGroupId(group),
-      lineNumber,
+      lineNumber: outdated ? modifiedLineCount : line,
       group,
-      resolved: isResolvedPRCommentGroup(group)
+      resolved: isResolvedPRCommentGroup(group),
+      outdated
     })
   }
   // Why the same bound as a thread: a queued comment is anchored to a diff line too, and
@@ -66,5 +70,7 @@ export function selectInlinePRCommentPlacements(
   }
   // Why sorted: zones are created in iteration order, and two threads on one line should read in
   // line order rather than in whatever order the fetch returned them.
-  return placements.sort((a, b) => a.lineNumber - b.lineNumber)
+  const isOutdated = (placement: InlinePRCommentPlacement): number =>
+    placement.kind === 'thread' && placement.outdated ? 1 : 0
+  return placements.sort((a, b) => isOutdated(a) - isOutdated(b) || a.lineNumber - b.lineNumber)
 }

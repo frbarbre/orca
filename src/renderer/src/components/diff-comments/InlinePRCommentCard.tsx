@@ -39,6 +39,7 @@ function formatThreadPrompt(group: PRCommentGroup, relativePath: string): string
 export type InlinePRCommentCardProps = {
   group: PRCommentGroup
   resolved: boolean
+  outdated?: boolean
   relativePath: string
   worktreeId: string
   now: number
@@ -64,6 +65,7 @@ export type InlinePRCommentCardProps = {
 export function InlinePRCommentCard({
   group,
   resolved,
+  outdated = false,
   relativePath,
   worktreeId,
   now,
@@ -171,6 +173,17 @@ export function InlinePRCommentCard({
         {/* Why capped: a zone spans the editor, and on a wide pane a two-line comment stretched the
             whole way reads as a banner rather than something someone said about this line. Wider
             than the saved-note card's 420px, since a thread carries replies. */}
+        {outdated ? (
+          <div className="mb-1 text-[11px] text-muted-foreground">
+            {root.line
+              ? translate(
+                  'auto.components.diff.comments.InlinePRCommentCard.outdatedAtLine',
+                  'Outdated · was on line {{line}}',
+                  { line: root.line }
+                )
+              : translate('auto.components.diff.comments.InlinePRCommentCard.outdated', 'Outdated')}
+          </div>
+        ) : null}
         <div className="max-w-3xl rounded-md border border-border/70 bg-card">
           <PRCommentGroupView
             group={group}

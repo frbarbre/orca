@@ -960,6 +960,7 @@ plus `pull-request-page/mentions/textarea.emoji.test.tsx`.
 | --- | --- |
 | `src/renderer/src/components/github/ReviewMarkdownComposer.tsx` | The `ReviewEmojiShortcode` extension, emoji query state, `insertEmoji`, the emoji branch of the key handler, `<EmojiShortcodeList>`. |
 | `src/renderer/src/components/pull-request-page/mentions/textarea.tsx` | Emoji query state, `insertEmoji`, the emoji key handling and `<EmojiShortcodeList>` anchored to the textarea. |
+| `src/renderer/src/components/github/github-mention-autocomplete.tsx` | `clampListLeft` (`autocomplete-list-position.ts`) on the list's `left`, so neither list runs off the right edge; test `emoji-shortcode-list.test.tsx`. |
 
 ## Verify
 

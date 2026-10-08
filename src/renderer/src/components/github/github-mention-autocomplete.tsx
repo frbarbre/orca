@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils'
 import { useAppStore } from '@/store'
 import { useRepoAssignees } from '@/hooks/useIssueMetadata'
 import { GitHubUserAvatar } from './github-user-avatar'
+import { clampListLeft } from './autocomplete-list-position'
 import type { MentionOption } from '@/components/pull-request-page/page-types'
 import { translate } from '@/i18n/i18n'
 
@@ -52,7 +53,7 @@ export function GitHubMentionList({
       role="listbox"
       style={{
         position: 'fixed',
-        left: anchor.left,
+        left: clampListLeft(anchor.left, 260),
         width: 260,
         maxHeight: LIST_MAX_HEIGHT_PX,
         ...(placeAbove

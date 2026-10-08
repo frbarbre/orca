@@ -1,9 +1,11 @@
 import React, { useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { cn } from '@/lib/utils'
+import { clampListLeft } from './autocomplete-list-position'
 import type { WorkspaceEmojiSuggestion } from '@/lib/workspace-emoji-shortcodes'
 
 const LIST_MAX_HEIGHT_PX = 256
+const LIST_WIDTH_PX = 300
 
 function HighlightedShortcode({ shortcode, query }: { shortcode: string; query: string }) {
   const index = shortcode.indexOf(query)
@@ -49,8 +51,8 @@ export function EmojiShortcodeList({
       data-emoji-shortcode-list=""
       style={{
         position: 'fixed',
-        left: anchor.left,
-        width: 300,
+        left: clampListLeft(anchor.left, LIST_WIDTH_PX),
+        width: LIST_WIDTH_PX,
         maxHeight: LIST_MAX_HEIGHT_PX,
         ...(placeAbove
           ? { bottom: window.innerHeight - anchor.top + 4 }

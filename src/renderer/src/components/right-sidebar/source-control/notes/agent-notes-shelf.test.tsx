@@ -40,6 +40,18 @@ describe('AgentNotesShelf', () => {
     cleanup()
   })
 
+  it('clears every agent note from the header without expanding the shelf', () => {
+    render(<AgentNotesShelf worktreeId="wt-1" onOpenNote={vi.fn()} />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Clear all agent notes' }))
+
+    expect(harness.removeAgentNote.mock.calls).toEqual([
+      ['wt-1', 'a1'],
+      ['wt-1', 'a2']
+    ])
+    expect(screen.queryByText('Resolved on 3')).toBeNull()
+  })
+
   it('stays out of the way when no agent left a note', () => {
     harness.notes = []
     const { container } = render(<AgentNotesShelf worktreeId="wt-1" onOpenNote={vi.fn()} />)

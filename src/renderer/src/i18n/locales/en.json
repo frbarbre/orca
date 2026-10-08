@@ -14155,7 +14155,8 @@
             "sourceActionsUnavailable": "The transcript source is unavailable."
           },
           "AgentNotesShelf": {
-            "title": "Agent notes"
+            "title": "Agent notes",
+            "clearAll": "Clear all agent notes"
           },
           "AgentNoteFileBadge": {
             "title": "{{value0}} agent note{{value1}}"
@@ -16106,7 +16107,9 @@
             "queued": "Queued",
             "queue": "Queue",
             "reply": "Reply",
-            "collapse": "Collapse"
+            "collapse": "Collapse",
+            "outdatedAtLine": "Outdated · was on line {{line}}",
+            "outdated": "Outdated"
           },
           "useDiffReviewComment": {
             "noPullRequest": "This diff is not part of a pull request.",

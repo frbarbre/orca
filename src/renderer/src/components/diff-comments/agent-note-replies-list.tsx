@@ -5,6 +5,13 @@ import { ImeTextarea } from '@/lib/ime-text-field'
 import { useAppStore } from '@/store'
 import { translate } from '@/i18n/i18n'
 
+const MAX_REPLY_HEIGHT_PX = 240
+
+function fitToContent(textarea: HTMLTextAreaElement): void {
+  textarea.style.height = 'auto'
+  textarea.style.height = `${Math.min(textarea.scrollHeight, MAX_REPLY_HEIGHT_PX)}px`
+}
+
 // Fork: the replies under a note (the user's and agents'), and a box to add one.
 export function NoteThread({
   root,
@@ -100,7 +107,10 @@ export function NoteThread({
               'Ask a follow-up…'
             )}
             className="orca-diff-comment-popover-textarea"
-            onChange={(event) => setDraft(event.target.value)}
+            onChange={(event) => {
+              setDraft(event.target.value)
+              fitToContent(event.currentTarget)
+            }}
             onKeyDown={(event) => {
               if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) {
                 event.preventDefault()

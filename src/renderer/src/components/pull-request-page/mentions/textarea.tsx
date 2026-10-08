@@ -5,6 +5,11 @@ import { filterGitHubMentionOptions } from '@/components/github/github-mention-o
 import { GitHubUserAvatar } from '@/components/github/github-user-avatar'
 import type { MentionOption, MentionQuery } from '../page-types'
 import { findMentionQuery } from './query'
+import {
+  findEmojiShortcodeQuery,
+  searchCommentEmoji
+} from '@/components/github/emoji-shortcode-query'
+import { EmojiShortcodeList } from '@/components/github/emoji-shortcode-list'
 
 export function MentionTextarea({
   value,
@@ -35,12 +40,40 @@ export function MentionTextarea({
     [mentionOptions, mentionQuery]
   )
   const showSuggestions = mentionQuery !== null && suggestions.length > 0
+  const [emojiQuery, setEmojiQuery] = useState<{ query: string; start: number } | null>(null)
+  const emojiSuggestions = useMemo(
+    () => (emojiQuery ? searchCommentEmoji(emojiQuery.query) : []),
+    [emojiQuery]
+  )
+  const showEmoji = emojiQuery !== null && emojiSuggestions.length > 0
 
   const syncMentionQuery = useCallback((textarea: HTMLTextAreaElement): void => {
     const nextQuery = findMentionQuery(textarea.value, textarea.selectionStart)
     setMentionQuery(nextQuery)
+    setEmojiQuery(findEmojiShortcodeQuery(textarea.value.slice(0, textarea.selectionStart)))
     setActiveIndex(0)
   }, [])
+
+  const insertEmoji = useCallback(
+    (emoji: string): void => {
+      const textarea = textareaRef.current
+      const caret = textarea?.selectionStart ?? value.length
+      const query = findEmojiShortcodeQuery(value.slice(0, caret)) ?? emojiQuery
+      if (!query) {
+        return
+      }
+      const inserted = `${emoji} `
+      const nextValue = `${value.slice(0, query.start)}${inserted}${value.slice(caret)}`
+      const nextCaret = query.start + inserted.length
+      onValueChange(nextValue)
+      setEmojiQuery(null)
+      requestAnimationFrame(() => {
+        textarea?.focus()
+        textarea?.setSelectionRange(nextCaret, nextCaret)
+      })
+    },
+    [emojiQuery, onValueChange, textareaRef, value]
+  )
 
   const insertMention = useCallback(
     (option: MentionOption): void => {
@@ -64,8 +97,19 @@ export function MentionTextarea({
     [mentionQuery, onValueChange, textareaRef, value]
   )
 
+  const emojiAnchor = showEmoji ? textareaRef.current?.getBoundingClientRect() : undefined
+
   return (
     <div className={cn('relative min-w-0 flex-1', wrapperClassName)}>
+      {showEmoji && emojiQuery && emojiAnchor ? (
+        <EmojiShortcodeList
+          suggestions={emojiSuggestions}
+          query={emojiQuery.query}
+          activeIndex={activeIndex}
+          anchor={{ left: emojiAnchor.left, top: emojiAnchor.top, bottom: emojiAnchor.bottom }}
+          onPick={(suggestion) => insertEmoji(suggestion.emoji)}
+        />
+      ) : null}
       {showSuggestions && (
         <div
           id={listboxId}
@@ -126,8 +170,31 @@ export function MentionTextarea({
             syncMentionQuery(event.currentTarget)
           }
         }}
-        onBlur={() => setMentionQuery(null)}
+        onBlur={() => {
+          setMentionQuery(null)
+          setEmojiQuery(null)
+        }}
         onKeyDown={(event) => {
+          if (showEmoji) {
+            if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+              event.preventDefault()
+              const step = event.key === 'ArrowDown' ? 1 : -1
+              setActiveIndex(
+                (current) => (current + step + emojiSuggestions.length) % emojiSuggestions.length
+              )
+              return
+            }
+            if (event.key === 'Enter' || event.key === 'Tab') {
+              event.preventDefault()
+              insertEmoji((emojiSuggestions[activeIndex] ?? emojiSuggestions[0]).emoji)
+              return
+            }
+            if (event.key === 'Escape') {
+              event.preventDefault()
+              setEmojiQuery(null)
+              return
+            }
+          }
           if (showSuggestions) {
             if (event.key === 'ArrowDown') {
               event.preventDefault()

@@ -8,6 +8,9 @@ import { ReviewAssetUpload } from './review-asset-upload-extension'
 import { useAppStore } from '@/store'
 import { usePRCommentScope } from '@/components/pr-comments/use-pr-comment-scope'
 import { ReviewMention, type MentionQueryState } from './review-mention-extension'
+import { ReviewEmojiShortcode } from './review-emoji-shortcode-extension'
+import { searchCommentEmoji } from './emoji-shortcode-query'
+import { EmojiShortcodeList } from './emoji-shortcode-list'
 
 function sameQuery(a: MentionQueryState | null, b: MentionQueryState | null): boolean {
   return a === b || (!!a && !!b && a.query === b.query && a.from === b.from && a.left === b.left)
@@ -51,6 +54,13 @@ export function ReviewMarkdownComposer({
     [mentions, options, query]
   )
   const open = suggestions.length > 0 && query !== null
+  const [emojiQuery, setEmojiQuery] = useState<MentionQueryState | null>(null)
+  const emojiQueryRef = useRef<MentionQueryState | null>(null)
+  const emojiSuggestions = useMemo(
+    () => (mentions && emojiQuery ? searchCommentEmoji(emojiQuery.query) : []),
+    [mentions, emojiQuery]
+  )
+  const emojiOpen = emojiSuggestions.length > 0 && emojiQuery !== null
 
   const insert = (login: string): void => {
     const editor = editorRef.current
@@ -58,6 +68,18 @@ export function ReviewMarkdownComposer({
       editor.chain().focus().insertContentAt({ from: query.from, to: query.to }, `@${login} `).run()
     }
     setQuery(null)
+  }
+
+  const insertEmoji = (emoji: string): void => {
+    const editor = editorRef.current
+    if (editor && emojiQuery) {
+      editor
+        .chain()
+        .focus()
+        .insertContentAt({ from: emojiQuery.from, to: emojiQuery.to }, `${emoji} `)
+        .run()
+    }
+    setEmojiQuery(null)
   }
 
   // Why refs: the extensions are built once so the editor is never recreated.
@@ -76,6 +98,27 @@ export function ReviewMarkdownComposer({
     uploadsEnabled.current = uploads
     uploadTarget.current = { repo: scope.repo, prRepo: scope.pr?.prRepo }
     keyHandler.current = (event) => {
+      if (emojiOpen) {
+        if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+          const step = event.key === 'ArrowDown' ? 1 : -1
+          setActive(
+            (current) => (current + step + emojiSuggestions.length) % emojiSuggestions.length
+          )
+          return true
+        }
+        if (event.key === 'Enter' || event.key === 'Tab') {
+          const choice = emojiSuggestions[active] ?? emojiSuggestions[0]
+          if (choice) {
+            insertEmoji(choice.emoji)
+          }
+          return true
+        }
+        if (event.key === 'Escape') {
+          setEmojiQuery(null)
+          return true
+        }
+        return false
+      }
       if (!open) {
         if (event.key === 'Escape' && onEscape) {
           event.preventDefault()
@@ -136,6 +179,16 @@ export function ReviewMarkdownComposer({
         onEditor: (editor) => {
           editorRef.current = editor
         }
+      }),
+      ReviewEmojiShortcode.configure({
+        onQueryChange: (next) => {
+          if (sameQuery(emojiQueryRef.current, next)) {
+            return
+          }
+          emojiQueryRef.current = next
+          setEmojiQuery(next)
+          setActive(0)
+        }
       })
     ],
     []
@@ -148,6 +201,14 @@ export function ReviewMarkdownComposer({
         activeIndex={active}
         anchor={query}
         onPick={(option) => insert(option.login)}
+      />
+    ) : emojiOpen && emojiQuery ? (
+      <EmojiShortcodeList
+        suggestions={emojiSuggestions}
+        query={emojiQuery.query}
+        activeIndex={active}
+        anchor={emojiQuery}
+        onPick={(suggestion) => insertEmoji(suggestion.emoji)}
       />
     ) : null
 

@@ -940,6 +940,19 @@ keeping their tab id; a single-file diff whose file is not changed against the n
 `openBranchDiff` (`open-history-diff.ts`) reuses such a tab by worktree, path and compare version.
 Tests: `retarget-branch-diff-files.test.ts`, `editor-branch-diff-retarget.test.ts`.
 
+### 24. Emoji shortcodes in comment boxes
+
+Wherever the `@` member picker works, typing `:` and two or more characters opens an emoji list
+(Slack/Linear style); Enter, Tab or a click inserts the emoji. It reuses the workspace-name emoji
+catalog and ranking (`searchWorkspaceEmojiShortcodes`). New files in `src/renderer/src/components/github/`:
+`emoji-shortcode-query.ts` (+ test), `emoji-shortcode-list.tsx`, `review-emoji-shortcode-extension.ts`;
+plus `pull-request-page/mentions/textarea.emoji.test.tsx`.
+
+| File | What is ours |
+| --- | --- |
+| `src/renderer/src/components/github/ReviewMarkdownComposer.tsx` | The `ReviewEmojiShortcode` extension, emoji query state, `insertEmoji`, the emoji branch of the key handler, `<EmojiShortcodeList>`. |
+| `src/renderer/src/components/pull-request-page/mentions/textarea.tsx` | Emoji query state, `insertEmoji`, the emoji key handling and `<EmojiShortcodeList>` anchored to the textarea. |
+
 ## Verify
 
 Verify runs on GitHub, not locally: `fork-verify.yml` runs it on every pull request against `main`,

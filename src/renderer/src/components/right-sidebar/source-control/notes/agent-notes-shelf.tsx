@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { Bot, ChevronDown, Trash2 } from 'lucide-react'
 import { removeAgentNote, useWorktreeAgentNotes } from '@/lib/agent-notes'
 import { useAppStore } from '@/store'
+import { selectWorktreeDiffComments } from '@/store/worktree-diff-comments-selector'
 import { translate } from '@/i18n/i18n'
 import { cn } from '@/lib/utils'
 import type { DiffComment } from '../../../../../../shared/diff-comment-types'
@@ -50,16 +51,21 @@ export function AgentNotesShelf({
           title={clearLabel}
           aria-label={clearLabel}
           onClick={() => {
-            const repliedNoteIds = new Set<string>()
+            // Why whole threads: a note an agent answered, and follow-ups to an agent, have done
+            // their job once the answers go; leaving them would strand one half of a conversation.
+            const threadRootIds = new Set<string>()
             for (const note of notes) {
               void removeAgentNote(worktreeId, note.id)
-              if (note.replyToNoteId) {
-                repliedNoteIds.add(note.replyToNoteId)
-              }
+              threadRootIds.add(note.replyToNoteId ?? note.id)
             }
-            // Why: a sent note an agent answered has done its job; clearing the answers clears it too.
-            for (const noteId of repliedNoteIds) {
-              void deleteDiffComment(worktreeId, noteId)
+            const userNotes = selectWorktreeDiffComments(useAppStore.getState(), worktreeId) ?? []
+            for (const note of userNotes) {
+              if (
+                threadRootIds.has(note.id) ||
+                (note.replyToNoteId !== undefined && threadRootIds.has(note.replyToNoteId))
+              ) {
+                void deleteDiffComment(worktreeId, note.id)
+              }
             }
           }}
         >

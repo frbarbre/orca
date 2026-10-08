@@ -13,7 +13,25 @@ export function githubCommentAgentNoteInstruction(url: string | undefined): stri
   return `When you have addressed a review comment, leave an agent note on the lines you changed saying what you did, linked to that comment: ${ADD_COMMAND} --github-comment ${url ?? '<comment url>'}. Skip this if the orca command is not available.`
 }
 
-export function formatDiffCommentsForAgent(comments: readonly DiffComment[]): string {
-  const notes = comments.map((comment) => `${formatDiffComment(comment)}\nNote id: ${comment.id}`)
+function threadHistory(earlier: readonly DiffComment[]): string {
+  const lines = earlier.map(
+    (message) => `- ${message.agentAuthor?.name ?? 'User'}: ${JSON.stringify(message.body)}`
+  )
+  return ['Earlier in this thread:', ...lines].join('\n')
+}
+
+/** `earlierInThread` returns the thread messages before a follow-up note, oldest first. */
+export function formatDiffCommentsForAgent(
+  comments: readonly DiffComment[],
+  earlierInThread?: (comment: DiffComment) => readonly DiffComment[]
+): string {
+  const notes = comments.map((comment) => {
+    const earlier = comment.replyToNoteId ? (earlierInThread?.(comment) ?? []) : []
+    return [
+      formatDiffComment(comment),
+      ...(earlier.length > 0 ? [threadHistory(earlier)] : []),
+      `Note id: ${comment.id}`
+    ].join('\n')
+  })
   return `${notes.join('\n\n')}\n\n${NOTES_AGENT_NOTE_INSTRUCTION}`
 }

@@ -27,6 +27,23 @@ describe('agent note prompt instructions', () => {
     expect(prompt).toContain('orca notes reply --id <note id>')
   })
 
+  it('gives a follow-up the earlier messages of its thread', () => {
+    const agentRoot: DiffComment = {
+      ...note,
+      id: 'a1',
+      body: 'Loaded layers start closed.',
+      agentAuthor: { kind: 'agent', name: 'Codex' }
+    }
+    const followUp: DiffComment = { ...note, id: 'u2', body: 'Why closed?', replyToNoteId: 'a1' }
+
+    const prompt = formatDiffCommentsForAgent([followUp], () => [agentRoot])
+
+    expect(prompt).toContain('Earlier in this thread:')
+    expect(prompt).toContain('- Codex: "Loaded layers start closed."')
+    expect(prompt).toContain('User comment: "Why closed?"')
+    expect(prompt).toContain('Note id: u2')
+  })
+
   it('hands the agent the GitHub comment link to pass back', () => {
     const url = 'https://github.com/acme/app/pull/12#discussion_r1'
     const instruction = githubCommentAgentNoteInstruction(url)

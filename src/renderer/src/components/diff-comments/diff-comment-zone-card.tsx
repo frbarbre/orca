@@ -1,8 +1,8 @@
 import type React from 'react'
 import type { RefObject } from 'react'
 import { MessageSquareReply } from 'lucide-react'
-import { revealGitHubComment } from '@/lib/agent-notes'
-import { AgentNoteRepliesList } from './agent-note-replies-list'
+import { earlierInThreadFromStore, revealGitHubComment } from '@/lib/agent-notes'
+import { NoteThread } from './agent-note-replies-list'
 import type { Root } from 'react-dom/client'
 import { getDiffCommentLineLabel } from '@/lib/diff-comment-compat'
 import { formatDiffCommentsForAgent as formatDiffComments } from '../../../../shared/agent-note-prompt'
@@ -24,7 +24,8 @@ export function getRenderSignature(
     author: comment.author ?? null,
     agentName: comment.agentAuthor?.name ?? null,
     githubCommentUrl: comment.githubCommentUrl ?? null,
-    agentReplies: comment.agentReplies?.map((reply) => [reply.id, reply.body]) ?? null,
+    threadReplies:
+      comment.threadReplies?.map((reply) => [reply.id, reply.body, reply.sentAt ?? null]) ?? null,
     authorAvatarUrl: comment.authorAvatarUrl ?? null,
     createdAtLabel: comment.createdAtLabel ?? null,
     url: comment.url ?? null,
@@ -34,10 +35,21 @@ export function getRenderSignature(
   })
 }
 
+// Fork: the user's unsent messages in this note's thread — the note itself and any follow-ups.
+function unsentThreadNotes(comment: DecoratedDiffComment): DecoratedDiffComment[] {
+  const own = comment.agentAuthor || comment.sentAt ? [] : [comment]
+  const followUps = (comment.threadReplies ?? []).filter(
+    (reply) => !reply.agentAuthor && !reply.sentAt
+  )
+  return [...own, ...followUps]
+}
+
 function getSingleCommentSendScopes(
   comment: DecoratedDiffComment,
+  worktreeId: string,
   formatCommentPrompt?: (comment: DecoratedDiffComment) => string
 ): NotesSendMenuScope<DecoratedDiffComment>[] {
+  const notes = unsentThreadNotes(comment)
   return [
     {
       id: 'note',
@@ -45,9 +57,11 @@ function getSingleCommentSendScopes(
         'auto.components.diff.comments.useDiffCommentDecorator.995fa28b50',
         'This note'
       ),
-      notes: comment.sentAt ? [] : [comment],
+      notes,
       formatPrompt: () =>
-        formatCommentPrompt ? formatCommentPrompt(comment) : formatDiffComments([comment])
+        formatCommentPrompt
+          ? formatCommentPrompt(comment)
+          : formatDiffComments(notes, earlierInThreadFromStore(worktreeId))
     }
   ]
 }
@@ -134,31 +148,36 @@ export function renderDiffCommentZoneCard(
         onContentResize={() => resizeZone(comment.id)}
         observeRenderedSize
         footer={
-          comment.agentReplies?.length ? (
-            <AgentNoteRepliesList
-              replies={comment.agentReplies}
-              onDelete={(replyId) => onDeleteCommentRef.current(replyId)}
+          worktreeId && comment.author === undefined ? (
+            <NoteThread
+              root={comment}
+              replies={comment.threadReplies ?? []}
+              worktreeId={worktreeId}
+              onDelete={(noteId) => onDeleteCommentRef.current(noteId)}
             />
           ) : undefined
         }
         headerActions={
-          agentName ? (
-            comment.githubCommentUrl ? (
+          <>
+            {agentName && comment.githubCommentUrl ? (
               <AgentNoteGitHubLink url={comment.githubCommentUrl} />
-            ) : null
-          ) : worktreeId && comment.author === undefined ? (
-            <NotesSendMenu
-              worktreeId={worktreeId}
-              groupId={activeGroupId}
-              modeIdParts={['diff-comment-note', worktreeId, filePath, comment.id]}
-              scopes={getSingleCommentSendScopes(comment, formatCommentPrompt)}
-              targetModeLabel="This note"
-              triggerClassName="orca-diff-comment-edit"
-              disabledTooltip="Note already sent"
-              focusRequestKey={comment.id}
-              onDelivered={(notes) => void clearDeliveredDiffComments(worktreeId, notes)}
-            />
-          ) : null
+            ) : null}
+            {worktreeId &&
+            comment.author === undefined &&
+            (!agentName || unsentThreadNotes(comment).length > 0) ? (
+              <NotesSendMenu
+                worktreeId={worktreeId}
+                groupId={activeGroupId}
+                modeIdParts={['diff-comment-note', worktreeId, filePath, comment.id]}
+                scopes={getSingleCommentSendScopes(comment, worktreeId, formatCommentPrompt)}
+                targetModeLabel="This note"
+                triggerClassName="orca-diff-comment-edit"
+                disabledTooltip="Note already sent"
+                focusRequestKey={comment.id}
+                onDelivered={(notes) => void clearDeliveredDiffComments(worktreeId, notes)}
+              />
+            ) : null}
+          </>
         }
       />
     </TooltipProvider>

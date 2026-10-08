@@ -7,7 +7,7 @@ import { computeDiffEditorFontSize, resolveEditorFontFamily } from '@/lib/editor
 import { useContextualCopySetup } from './useContextualCopySetup'
 import { selectWorktreeDiffComments } from '@/store/worktree-diff-comments-selector'
 import { isAgentNoteId, removeAgentNote, useFileAgentNotes } from '@/lib/agent-notes'
-import { withAgentReplies } from '@/lib/agent-note-replies'
+import { buildNoteThreads } from '@/lib/agent-note-replies'
 import { useDiffCommentDecorator } from '../diff-comments/useDiffCommentDecorator'
 import { DiffLineCommentPopoverHost } from '../diff-comments/DiffLineCommentPopoverHost'
 import { applyDiffEditorLineNumberOptions } from './diff-editor-line-number-options'
@@ -73,7 +73,7 @@ export default function DiffViewer({
   const agentNotes = useFileAgentNotes(worktreeId, relativePath)
   const diffComments = useMemo(
     () =>
-      withAgentReplies(
+      buildNoteThreads(
         (allDiffComments ?? []).filter((c) => c.filePath === relativePath && isDiffComment(c)),
         agentNotes
       ),

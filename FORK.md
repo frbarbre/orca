@@ -891,6 +891,14 @@ that copies the note's file and lines. `withAgentReplies` (`lib/agent-note-repli
 inside its note's card (`agent-note-replies-list.tsx`, through `DiffCommentCard`'s `footer`); a reply
 whose note is gone shows on its own. The shelf's clear-all also deletes the user notes that were replied to.
 
+Every note is a thread (`buildNoteThreads` in `lib/agent-note-replies.ts`): its root, the user's or an
+agent's, plus every note whose `replyToNoteId` is that root, oldest first, in `threadReplies`. The card's
+`NoteThread` (`agent-note-replies-list.tsx`) lists them and has a Reply box that adds a user note with
+`replyToNoteId`; the card's send menu sends the thread's unsent user notes, so an agent note gets one once
+you ask a follow-up. A follow-up's prompt carries "Earlier in this thread" (`formatDiffCommentsForAgent`'s
+`earlierInThread`, read from the store by `earlierInThreadFromStore`), and `agentNote.reply` on any note
+in a thread, the agent's included, attaches to the root. Clear-all removes the whole threads.
+
 `--github-comment <url>` stores `githubCommentUrl`; the card's reply button runs `revealGitHubComment`,
 which opens the Checks tab and asks `pr-comment-reveal.ts` to scroll to and ring the `CommentRow`
 whose `url` matches.

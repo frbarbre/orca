@@ -135,6 +135,37 @@ describe('agent note RPC methods', () => {
     expect(missing).toMatchObject({ ok: false })
   })
 
+  it("answers a thread on an agent note, attaching a reply to a reply to the thread's root", async () => {
+    const agentRoot: DiffComment = {
+      ...userNote,
+      id: 'agent-root',
+      agentAuthor: { kind: 'agent', name: 'Codex' }
+    }
+    const userFollowUp: DiffComment = {
+      ...userNote,
+      id: 'user-follow-up',
+      replyToNoteId: 'agent-root'
+    }
+    const { call, stored } = createRuntime({
+      id: 'wt-1',
+      diffComments: [userFollowUp],
+      agentNotes: [agentRoot]
+    })
+
+    await call('agentNote.reply', {
+      worktree: 'id:wt-1',
+      noteId: 'user-follow-up',
+      body: 'Because the cache is per page.',
+      agent: 'Codex'
+    })
+
+    expect(stored().agentNotes?.at(-1)).toMatchObject({
+      replyToNoteId: 'agent-root',
+      filePath: 'src/a.ts',
+      body: 'Because the cache is per page.'
+    })
+  })
+
   it('keeps both notes when two agents add at the same time', async () => {
     const { call, stored } = createRuntime({ id: 'wt-1', diffComments: [] })
 

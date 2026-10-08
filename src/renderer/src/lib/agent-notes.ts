@@ -7,6 +7,7 @@ import { callRuntimeRpc, getActiveRuntimeTarget } from '@/runtime/runtime-rpc-cl
 import { toRuntimeWorktreeSelector } from '@/runtime/runtime-worktree-selector'
 import { getSettingsForWorktreeRuntimeOwner } from '@/lib/worktree-runtime-owner'
 import { requestPRCommentReveal } from '@/lib/pr-comment-reveal'
+import { selectWorktreeDiffComments } from '@/store/worktree-diff-comments-selector'
 
 const NO_AGENT_NOTES: readonly DiffComment[] = Object.freeze([])
 
@@ -36,6 +37,29 @@ export function useFileAgentNotes(
 
 export function isAgentNoteId(notes: readonly DiffComment[], id: string): boolean {
   return notes.some((note) => note.id === id)
+}
+
+/** For a follow-up note: its thread's root and the replies before it, oldest first. */
+export function earlierInThreadFromStore(
+  worktreeId: string
+): (note: DiffComment) => readonly DiffComment[] {
+  const state = useAppStore.getState()
+  const all = [
+    ...(selectWorktreeDiffComments(state, worktreeId) ?? []),
+    ...selectWorktreeAgentNotes(state, worktreeId)
+  ]
+  return (note) => {
+    const root = all.find((candidate) => candidate.id === note.replyToNoteId)
+    if (!root) {
+      return []
+    }
+    const earlier = all
+      .filter(
+        (candidate) => candidate.replyToNoteId === root.id && candidate.createdAt < note.createdAt
+      )
+      .sort((a, b) => a.createdAt - b.createdAt)
+    return [root, ...earlier]
+  }
 }
 
 export function revealGitHubComment(url: string): void {

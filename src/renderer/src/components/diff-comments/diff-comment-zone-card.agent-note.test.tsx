@@ -13,7 +13,15 @@ vi.mock('../editor/NotesSendMenu', () => ({
 }))
 
 const revealGitHubComment = vi.hoisted(() => vi.fn())
-vi.mock('@/lib/agent-notes', () => ({ revealGitHubComment }))
+vi.mock('@/lib/agent-notes', () => ({
+  revealGitHubComment,
+  earlierInThreadFromStore: () => () => []
+}))
+
+const addDiffComment = vi.hoisted(() => vi.fn())
+vi.mock('@/store', () => ({
+  useAppStore: { getState: () => ({ addDiffComment }) }
+}))
 
 const agentNote: DiffComment = {
   id: 'agent-1',
@@ -99,7 +107,7 @@ describe('agent note zone card', () => {
       body: 'Done: renamed it.',
       replyToNoteId: userNote.id
     }
-    act(() => renderDiffCommentZoneCard(root, { ...userNote, agentReplies: [reply] }, context()))
+    act(() => renderDiffCommentZoneCard(root, { ...userNote, threadReplies: [reply] }, context()))
 
     const replyRow = container.querySelector('[data-agent-reply="reply-1"]')
     expect(replyRow?.textContent).toContain('Claude Code')
@@ -108,6 +116,45 @@ describe('agent note zone card', () => {
     const remove = replyRow?.querySelector<HTMLButtonElement>('[aria-label="Delete reply"]')
     act(() => remove?.click())
     expect(onDelete).toHaveBeenCalledWith('reply-1')
+  })
+
+  it('lets the user reply to an agent note, as a note in its thread', async () => {
+    addDiffComment.mockReset()
+    addDiffComment.mockResolvedValue({ id: 'u9' })
+    const question: DiffComment = {
+      ...agentNote,
+      id: 'u1',
+      body: 'Why is it closed?',
+      agentAuthor: undefined,
+      replyToNoteId: 'agent-1',
+      createdAt: 2
+    }
+    act(() =>
+      renderDiffCommentZoneCard(root, { ...agentNote, threadReplies: [question] }, context())
+    )
+    expect(container.querySelector('[data-agent-reply="u1"]')?.textContent).toContain('You')
+
+    act(() => container.querySelector<HTMLButtonElement>('[aria-label="Reply"]')?.click())
+    const input = container.querySelector<HTMLTextAreaElement>('textarea[data-note-thread-reply]')
+    expect(input).not.toBeNull()
+    await act(async () => {
+      const setter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')?.set
+      setter?.call(input, 'And what about drafts?')
+      input?.dispatchEvent(new Event('input', { bubbles: true }))
+    })
+    await act(async () =>
+      container.querySelector<HTMLButtonElement>('[aria-label="Add reply"]')?.click()
+    )
+
+    expect(addDiffComment).toHaveBeenCalledWith({
+      worktreeId: 'wt-1',
+      filePath: 'src/a.ts',
+      startLine: 3,
+      lineNumber: 5,
+      body: 'And what about drafts?',
+      side: 'modified',
+      replyToNoteId: 'agent-1'
+    })
   })
 
   it('keeps a user note as before', () => {

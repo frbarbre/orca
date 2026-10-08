@@ -1,7 +1,8 @@
 import React, { useCallback, useMemo } from 'react'
 import type { DiffComment } from '../../../../shared/diff-comment-types'
 import { useAppStore } from '@/store'
-import { formatDiffCommentsForAgent as formatDiffComments } from '../../../../shared/agent-note-prompt'
+import { formatDiffCommentsForAgent } from '../../../../shared/agent-note-prompt'
+import { earlierInThreadFromStore } from '@/lib/agent-notes'
 import { NotesSendMenu, type NotesSendMenuScope } from './NotesSendMenu'
 import { translate } from '@/i18n/i18n'
 
@@ -61,6 +62,9 @@ export function DiffNotesSendMenu({
   const unsentFileNotes = useMemo(() => fileNotes.filter((comment) => !comment.sentAt), [fileNotes])
   const canSendFileScope = showFileScope && Boolean(filePath)
   const scopes = useMemo<NotesSendMenuScope<DiffComment>[]>(() => {
+    // Why read at send time: a follow-up's prompt carries its thread, which includes agent notes.
+    const formatDiffComments = (notes: readonly DiffComment[]): string =>
+      formatDiffCommentsForAgent(notes, earlierInThreadFromStore(worktreeId))
     const allNotesScope = {
       id: 'all',
       label: translate('auto.components.editor.DiffNotesSendMenu.8b87612461', 'All unsent notes'),
@@ -79,7 +83,7 @@ export function DiffNotesSendMenu({
       },
       allNotesScope
     ]
-  }, [canSendFileScope, unsentFileNotes, unsentNotes])
+  }, [canSendFileScope, unsentFileNotes, unsentNotes, worktreeId])
 
   return (
     <NotesSendMenu

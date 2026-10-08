@@ -14,8 +14,16 @@ const harness = vi.hoisted(() => {
 
 const deleteDiffComment = vi.hoisted(() => vi.fn())
 vi.mock('@/store', () => ({
-  useAppStore: (selector: (state: { deleteDiffComment: typeof deleteDiffComment }) => unknown) =>
-    selector({ deleteDiffComment })
+  useAppStore: Object.assign(
+    (selector: (state: { deleteDiffComment: typeof deleteDiffComment }) => unknown) =>
+      selector({ deleteDiffComment }),
+    { getState: () => ({}) }
+  )
+}))
+
+const userNotes = vi.hoisted(() => ({ list: [] as unknown[] }))
+vi.mock('@/store/worktree-diff-comments-selector', () => ({
+  selectWorktreeDiffComments: () => userNotes.list
 }))
 
 vi.mock('@/lib/agent-notes', () => ({
@@ -46,10 +54,16 @@ describe('AgentNotesShelf', () => {
     cleanup()
   })
 
-  it('clears every agent note, and the user notes they replied to, from the header', () => {
+  it('clears every agent note and the whole threads they are in, from the header', () => {
     harness.notes = [
       agentNote('a1', 'src/a.ts', 3),
       { ...agentNote('a2', 'src/b.ts', 9), replyToNoteId: 'user-7' }
+    ]
+    userNotes.list = [
+      { id: 'user-7' },
+      { id: 'follow-up-on-a1', replyToNoteId: 'a1' },
+      { id: 'follow-up-on-user-7', replyToNoteId: 'user-7' },
+      { id: 'unrelated' }
     ]
     deleteDiffComment.mockReset()
     render(<AgentNotesShelf worktreeId="wt-1" onOpenNote={vi.fn()} />)
@@ -60,7 +74,11 @@ describe('AgentNotesShelf', () => {
       ['wt-1', 'a1'],
       ['wt-1', 'a2']
     ])
-    expect(deleteDiffComment.mock.calls).toEqual([['wt-1', 'user-7']])
+    expect(deleteDiffComment.mock.calls.map(([, id]) => id).sort()).toEqual([
+      'follow-up-on-a1',
+      'follow-up-on-user-7',
+      'user-7'
+    ])
     expect(screen.queryByText('Resolved on 3')).toBeNull()
   })
 

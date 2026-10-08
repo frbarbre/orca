@@ -75,10 +75,15 @@ export const AGENT_NOTE_METHODS = [
     params: AgentNoteReply,
     handler: async (params, { runtime }) => {
       const worktree = await runtime.showManagedWorktree(params.worktree)
-      const parent = (worktree.diffComments ?? []).find((comment) => comment.id === params.noteId)
-      if (!parent) {
+      const allNotes = [...(worktree.diffComments ?? []), ...(worktree.agentNotes ?? [])]
+      const target = allNotes.find((comment) => comment.id === params.noteId)
+      if (!target) {
         throw new Error(`No note ${params.noteId} in this worktree; run orca notes list.`)
       }
+      // Why the root: a thread is its first note plus everything that replies to it, at one level.
+      const parent =
+        (target.replyToNoteId && allNotes.find((comment) => comment.id === target.replyToNoteId)) ||
+        target
       let note: DiffComment | null = null
       await updateAgentNotes(runtime, `id:${worktree.id}`, (notes, worktreeId) => {
         note = {

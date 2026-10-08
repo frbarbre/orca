@@ -3157,6 +3157,30 @@ html.native-shell .app-layout {
   border-top: 1px solid color-mix(in srgb, var(--foreground) 8%, var(--border));
 }
 
+.orca-diff-comment-thread-reply-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  align-self: flex-start;
+  margin-top: 2px;
+  padding: 2px 4px;
+  border-radius: 4px;
+  font-size: 11px;
+  color: var(--muted-foreground);
+}
+
+.orca-diff-comment-thread-reply-btn:hover {
+  background: var(--accent);
+  color: var(--foreground);
+}
+
+.orca-diff-comment-thread-composer {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  margin-top: 6px;
+}
+
 .orca-diff-comment-agent-reply-header {
   display: flex;
   align-items: center;

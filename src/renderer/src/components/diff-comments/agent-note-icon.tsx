@@ -1,4 +1,3 @@
-import React from 'react'
 import { Bot } from 'lucide-react'
 import { AgentIcon } from '@/lib/agent-catalog'
 import { agentFromNoteAuthor } from '@/lib/agent-note-agent'

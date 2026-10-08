@@ -923,6 +923,16 @@ below the anchored threads, with `outdated: true`. `useInlinePRCommentZones.tsx`
 zone `ordinal` so it sits below every other zone on that line, and `InlinePRCommentCard` shows
 "Outdated · was on line N" above it. The placement test's outdated/past-end/no-line cases changed with it.
 
+### 23. Open branch diffs follow a new diff base
+
+A branch diff tab snapshots its compare when opened, so picking another base in the review shelf's
+"What the diff compares against" select left the open file on the old one. `setGitBranchCompareResult`
+(`git-branch-compare-actions.ts`) now runs `retargetBranchDiffFiles` (`git/retarget-branch-diff-files.ts`):
+open branch and combined-branch diffs of that worktree take the new snapshot and a reload request,
+keeping their tab id; a single-file diff whose file is not changed against the new base is left alone.
+`openBranchDiff` (`open-history-diff.ts`) reuses such a tab by worktree, path and compare version.
+Tests: `retarget-branch-diff-files.test.ts`, `editor-branch-diff-retarget.test.ts`.
+
 ## Verify
 
 Verify runs on GitHub, not locally: `fork-verify.yml` runs it on every pull request against `main`,

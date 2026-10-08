@@ -5,6 +5,7 @@ import {
   createLoadingBranchCompareSummary,
   getKnownGitHead
 } from '../git/branch-compare-state'
+import { retargetBranchDiffFiles } from '../git/retarget-branch-diff-files'
 
 export function createGitBranchCompareActions(
   set: EditorSet,
@@ -80,6 +81,12 @@ export function createGitBranchCompareActions(
           return s
         }
         return {
+          openFiles: retargetBranchDiffFiles(
+            s.openFiles,
+            worktreeId,
+            result.summary,
+            result.entries
+          ),
           gitBranchChangesByWorktree: entriesUnchanged
             ? s.gitBranchChangesByWorktree
             : { ...s.gitBranchChangesByWorktree, [worktreeId]: result.entries },

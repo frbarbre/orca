@@ -20,7 +20,17 @@ export function createOpenHistoryDiff(
   return {
     openBranchDiff: (worktreeId, worktreePath, entry, compare, language, options) => {
       const branchCompare = toBranchCompareSnapshot(compare)
-      const id = `${worktreeId}::diff::branch::${compare.baseRef}::${branchCompare.compareVersion}::${entry.path}`
+      // Fork: a tab retargeted to a new diff base keeps its old id, so reuse it by what it shows.
+      const id =
+        get().openFiles.find(
+          (f) =>
+            f.worktreeId === worktreeId &&
+            f.mode === 'diff' &&
+            f.diffSource === 'branch' &&
+            f.relativePath === entry.path &&
+            f.branchCompare?.compareVersion === branchCompare.compareVersion
+        )?.id ??
+        `${worktreeId}::diff::branch::${compare.baseRef}::${branchCompare.compareVersion}::${entry.path}`
       const isPreview = resolveEditorPreviewIntent(get(), options?.preview)
       let editorItemTargetGroupId = options?.targetGroupId
       set((s) => {

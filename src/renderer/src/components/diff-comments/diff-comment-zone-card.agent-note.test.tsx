@@ -80,6 +80,9 @@ describe('agent note zone card', () => {
     expect(card?.getAttribute('data-agent-note')).toBe('true')
     expect(container.textContent).toContain('Claude Code')
     expect(container.textContent).toContain('Agent note')
+    expect(
+      card?.querySelector('[data-agent-note-icon]')?.getAttribute('data-agent-note-icon')
+    ).toBe('claude')
     expect(container.textContent).not.toContain('Send notes to an agent')
     expect(container.querySelector('[aria-label="Edit note"]')).toBeNull()
 

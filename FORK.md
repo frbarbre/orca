@@ -878,8 +878,9 @@ written by another process. A note is a `DiffComment` with `agentAuthor: { kind:
 The main-side RPC methods `agentNote.add` / `agentNote.list` / `agentNote.remove`
 (`src/main/runtime/rpc/methods/agent-notes.ts`) serialize writes per worktree.
 
-The diff (file and combined) renders them as bot cards: violet `ai-action-accent` tint, bot icon,
-agent name, "Agent note" badge, delete only, no edit and no send menu. The diff header has an
+The diff (file and combined) renders them as normal note cards with the agent's own icon
+(`AgentNoteIcon`: `agentFromNoteAuthor` matches the signed name to the agent catalog, else a bot),
+agent name, a neutral "Agent note" badge, delete only, no edit and no send menu. The diff header has an
 "Agent notes" pill listing the file's agent notes, and the Source Control sidebar has an "Agent
 notes" shelf (stacked rows) plus a bot count on each changed-file row (`agent-note-file-badge.tsx`).
 They never enter a send-to-agent prompt, since the send menus read `diffComments`.
@@ -927,7 +928,7 @@ New files: `src/shared/rpc-contract/agent-note-params.ts`, `src/main/runtime/rpc
 | `src/renderer/src/components/editor/DiffViewer.tsx`, `DiffSectionItem.tsx` | `useFileAgentNotes` merged into the decorator's comments; delete routes to `removeAgentNote`. |
 | `src/renderer/src/components/editor/EditorPanelHeader.tsx` | `<AgentNotesPill>`. |
 | `src/renderer/src/components/right-sidebar/source-control/panel/panel-ready.tsx` | `<AgentNotesShelf>`. |
-| `src/renderer/src/assets/main.css` | `.orca-diff-comment-card-agent` and the agent badge styles. |
+| `src/renderer/src/assets/main.css` | The agent badge and note-thread styles. |
 | `skill-guides/orca-cli.md` (+ generated guides), `docs/site/content/docs/cli/reference.mdx` | The Diff Notes / Diff notes sections. |
 
 ### 22. Outdated review threads stay in the diff

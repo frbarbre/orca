@@ -1,5 +1,6 @@
 import { ImeTextarea } from '@/lib/ime-text-field'
-import { Bot, CornerDownLeft, Pencil, Trash } from 'lucide-react'
+import { CornerDownLeft, Pencil, Trash } from 'lucide-react'
+import { AgentNoteIcon } from './agent-note-icon'
 import { useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import { Button } from '@/components/ui/button'
 import { getDiffCommentLineLabel } from '@/lib/diff-comment-compat'
@@ -192,9 +193,7 @@ export function DiffCommentCard({
   return (
     <div
       ref={cardRef}
-      className={
-        agentName ? 'orca-diff-comment-card orca-diff-comment-card-agent' : 'orca-diff-comment-card'
-      }
+      className="orca-diff-comment-card"
       data-agent-note={agentName ? 'true' : undefined}
     >
       <div className="orca-diff-comment-content-col">
@@ -203,7 +202,7 @@ export function DiffCommentCard({
           <div className="orca-diff-comment-meta-group">
             {agentName && (
               <>
-                <Bot className="orca-diff-comment-agent-icon size-3.5" aria-hidden />
+                <AgentNoteIcon name={agentName} />
                 <span className="orca-diff-comment-agent-name">{agentName}</span>
                 <span className="orca-diff-comment-agent-badge">
                   {translate(

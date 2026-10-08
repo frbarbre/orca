@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
-import { Bot, CornerDownLeft, MessageSquareReply, Trash, User } from 'lucide-react'
+import { CornerDownLeft, MessageSquareReply, Trash, User } from 'lucide-react'
+import { AgentNoteIcon } from './agent-note-icon'
 import type { DiffComment } from '../../../../shared/diff-comment-types'
 import { ImeTextarea } from '@/lib/ime-text-field'
 import { useAppStore } from '@/store'
@@ -64,7 +65,7 @@ export function NoteThread({
           <div className="orca-diff-comment-agent-reply-header">
             {reply.agentAuthor ? (
               <>
-                <Bot className="orca-diff-comment-agent-icon size-3.5" aria-hidden />
+                <AgentNoteIcon name={reply.agentAuthor.name} />
                 <span className="orca-diff-comment-agent-name">{reply.agentAuthor.name}</span>
               </>
             ) : (

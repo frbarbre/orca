@@ -3132,23 +3132,8 @@ html.native-shell .app-layout {
     0 4px 16px rgba(0, 0, 0, 0.15);
 }
 
-/* Fork: agent notes left through `orca notes add` read as bot notes, not the user's own. */
-.orca-diff-comment-card-agent {
-  --orca-agent-note-accent: var(--ai-action-accent);
-  border-color: color-mix(in srgb, var(--orca-agent-note-accent) 22%, var(--border));
-}
-
-.dark .orca-diff-comment-card-agent {
-  border-color: color-mix(in srgb, var(--orca-agent-note-accent) 20%, var(--border));
-}
-
-.orca-diff-comment-agent-icon,
-.orca-diff-comment-agent-name {
-  color: var(--orca-agent-note-accent);
-}
-
+/* Fork: agent notes (`orca notes add`) look like any note; the agent's icon and name say who wrote it. */
 .orca-diff-comment-agent-replies {
-  --orca-agent-note-accent: var(--ai-action-accent);
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -3194,8 +3179,8 @@ html.native-shell .app-layout {
   padding: 0 5px;
   font-size: 11px;
   font-weight: 500;
-  color: var(--orca-agent-note-accent);
-  background: color-mix(in srgb, var(--orca-agent-note-accent) 14%, transparent);
+  color: var(--muted-foreground);
+  background: color-mix(in srgb, var(--foreground) 8%, transparent);
 }
 
 /* Content Column */

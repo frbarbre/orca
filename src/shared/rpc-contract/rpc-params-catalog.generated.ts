@@ -39,6 +39,7 @@ import {
 } from './accounts-params'
 import { PrepareCodexForWslPaneParams } from './agent-hooks-params'
 import { AgentLaunch, AgentLaunchReplay } from './agent-launch-params'
+import { AgentNoteAdd, AgentNoteList, AgentNoteRemove } from './agent-note-params'
 import { CreateAgentSessionParams, EnsureAgentSessionParams } from './agent-session-params'
 import {
   AiVaultListSessionsParams,
@@ -543,7 +544,6 @@ import {
   WorktreeRemove,
   WorktreeResolveMrBase,
   WorktreeResolvePrBase,
-  WorktreeSelector as WorktreeSelectorOfWorktreeParams,
   WorktreeSet,
   WorktreeSortOrder,
   WorktreeTeardownMissingTerminalsParams
@@ -587,6 +587,9 @@ export const RPC_PARAMS_BY_METHOD = {
   'agent.launch': AgentLaunch,
   'agent.launchReplay': AgentLaunchReplay,
   'agentHooks.prepareCodexForWslPane': PrepareCodexForWslPaneParams,
+  'agentNote.add': AgentNoteAdd,
+  'agentNote.list': AgentNoteList,
+  'agentNote.remove': AgentNoteRemove,
   'agentSession.agents': AgentsParams,
   'agentSession.cancel': CancelParams,
   'agentSession.close': OptionsParams,
@@ -1208,8 +1211,8 @@ export const RPC_PARAMS_BY_METHOD = {
   'worktree.resolvePrBase': WorktreeResolvePrBase,
   'worktree.rm': WorktreeRemove,
   'worktree.set': WorktreeSet,
-  'worktree.show': WorktreeSelectorOfWorktreeParams,
-  'worktree.sleep': WorktreeSelectorOfWorktreeParams,
+  'worktree.show': AgentNoteList,
+  'worktree.sleep': AgentNoteList,
   'worktree.teardownMissingTerminals': WorktreeTeardownMissingTerminalsParams
 } as const
 

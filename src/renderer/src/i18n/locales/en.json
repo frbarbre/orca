@@ -14153,6 +14153,9 @@
             "sourceMissing": "Transcript is no longer available",
             "metadataMatch": "Match in session metadata",
             "sourceActionsUnavailable": "The transcript source is unavailable."
+          },
+          "AgentNotesShelf": {
+            "title": "Agent notes"
           }
         }
       },
@@ -16060,6 +16063,10 @@
         },
         "useMarkdownDocuments": {
           "listFailed": "Failed to list Markdown documents."
+        },
+        "AgentNotesPill": {
+          "label": "Agent notes",
+          "heading": "Left by agents, not sent to them"
         }
       },
       "diff": {
@@ -16071,7 +16078,8 @@
             "6978871a3d": "Open",
             "cce596969e": "Delete note",
             "cad3384faa": "Edit note",
-            "508ee678a5": "Open in browser"
+            "508ee678a5": "Open in browser",
+            "agentNote": "Agent note"
           },
           "DiffCommentPopover": {
             "2b3ce6d394": "Cancel",

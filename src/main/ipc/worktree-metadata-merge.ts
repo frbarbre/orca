@@ -107,6 +107,7 @@ export function mergeWorktree(
     // forwarded verbatim so the renderer store mirrors on-disk state. A field left out here
     // is written on every change and then silently dropped on the next start.
     diffComments: meta?.diffComments,
+    agentNotes: meta?.agentNotes,
     pendingReviewComments: meta?.pendingReviewComments,
     mobileDiffReview: meta?.mobileDiffReview
   }

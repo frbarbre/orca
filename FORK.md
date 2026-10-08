@@ -869,6 +869,41 @@ to the top. `useDiffViewerFirstChangeAutoScroll.ts` now waits for `onDidLayoutCh
 height is under 50 px and centres then. `tests/e2e/diff-first-change-centered.spec.ts` opens four
 changed files in turn and checks each change sits mid-editor.
 
+### 21. Agent notes
+
+Agents leave notes on diff lines with `orca notes add --file --line [--end-line] --body [--agent]`
+(also `notes list`, `notes rm`). They live in `WorktreeMeta.agentNotes`, apart from the user's
+`diffComments`, because the renderer saves `diffComments` as a whole list and would drop a note
+written by another process. A note is a `DiffComment` with `agentAuthor: { kind: 'agent', name }`.
+The main-side RPC methods `agentNote.add` / `agentNote.list` / `agentNote.remove`
+(`src/main/runtime/rpc/methods/agent-notes.ts`) serialize writes per worktree.
+
+The diff (file and combined) renders them as bot cards: violet `ai-action-accent` tint, bot icon,
+agent name, "Agent note" badge, delete only, no edit and no send menu. The diff header has an
+"Agent notes" pill listing the file's agent notes, and the Source Control sidebar has an "Agent
+notes" shelf. They never enter a send-to-agent prompt, since the send menus read `diffComments`.
+
+New files: `src/shared/rpc-contract/agent-note-params.ts`, `src/main/runtime/rpc/methods/agent-notes.ts`
+(+ test), `src/cli/specs/notes.ts`, `src/cli/handlers/notes.ts` (+ test), `src/renderer/src/lib/agent-notes.ts`,
+`src/renderer/src/components/editor/AgentNotesPill.tsx`,
+`src/renderer/src/components/right-sidebar/source-control/notes/agent-notes-shelf.tsx` (+ test),
+`src/renderer/src/components/diff-comments/diff-comment-zone-card.agent-note.test.tsx`,
+`tests/e2e/agent-notes.spec.ts`.
+
+| File | What is ours |
+| --- | --- |
+| `src/shared/diff-comment-types.ts` | `DiffCommentAgentAuthor` and `agentAuthor`. |
+| `src/shared/worktree/meta-types.ts`, `src/shared/worktree/types.ts` | `agentNotes`. |
+| `src/main/ipc/worktree-metadata-merge.ts` | `agentNotes: meta?.agentNotes`. |
+| `src/main/runtime/rpc/methods/index.ts`, `src/shared/rpc-contract/rpc-params-catalog.generated.ts` | `AGENT_NOTE_METHODS`; regenerate the catalog. |
+| `src/cli/specs/index.ts`, `src/cli/handler-group-manifest.ts` | The `notes` specs and handler group. |
+| `src/renderer/src/components/diff-comments/DiffCommentCard.tsx`, `diff-comment-zone-card.tsx` | The `agentName` prop and its header; no edit/send for agent notes. |
+| `src/renderer/src/components/editor/DiffViewer.tsx`, `DiffSectionItem.tsx` | `useFileAgentNotes` merged into the decorator's comments; delete routes to `removeAgentNote`. |
+| `src/renderer/src/components/editor/EditorPanelHeader.tsx` | `<AgentNotesPill>`. |
+| `src/renderer/src/components/right-sidebar/source-control/panel/panel-ready.tsx` | `<AgentNotesShelf>`. |
+| `src/renderer/src/assets/main.css` | `.orca-diff-comment-card-agent` and the agent badge styles. |
+| `skill-guides/orca-cli.md` (+ generated guides), `docs/site/content/docs/cli/reference.mdx` | The Diff Notes / Diff notes sections. |
+
 ## Verify
 
 Verify runs on GitHub, not locally: `fork-verify.yml` runs it on every pull request against `main`,

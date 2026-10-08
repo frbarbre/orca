@@ -49,6 +49,7 @@ import { STRUCTURED_AGENT_SESSION_METHODS } from './structured-agent-session'
 import { STRUCTURED_AGENT_SESSION_AGENTS_METHODS } from './structured-agent-session-agents'
 import { ARTIFACT_METHODS } from './artifacts'
 import { AGENT_HOOK_METHODS } from './agent-hooks'
+import { AGENT_NOTE_METHODS } from './agent-notes'
 import { AGENT_LAUNCH_METHODS } from './agent-launch'
 
 // Why: a flat manifest keeps registration order explicit and provides one
@@ -57,6 +58,7 @@ import { AGENT_LAUNCH_METHODS } from './agent-launch'
 export const ALL_RPC_METHODS = [
   ...STATUS_METHODS,
   ...AGENT_HOOK_METHODS,
+  ...AGENT_NOTE_METHODS,
   ...AI_VAULT_METHODS,
   ...ARTIFACT_METHODS,
   ...AUTOMATION_METHODS,

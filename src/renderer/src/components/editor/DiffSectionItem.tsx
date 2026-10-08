@@ -5,6 +5,7 @@ import { detectLanguage } from '@/lib/language-detect'
 import { useAppStore } from '@/store'
 import { computeDiffEditorFontSize, resolveEditorFontFamily } from '@/lib/editor-font-zoom'
 import { selectWorktreeDiffComments } from '@/store/worktree-diff-comments-selector'
+import { isAgentNoteId, removeAgentNote, useFileAgentNotes } from '@/lib/agent-notes'
 import { useDiffCommentDecorator } from '../diff-comments/useDiffCommentDecorator'
 import { applyDiffEditorLineNumberOptions } from './diff-editor-line-number-options'
 import { DiffSectionHeader } from './DiffSectionHeader'
@@ -59,9 +60,13 @@ export function DiffSectionItem({
   const allDiffComments = useAppStore((s): DiffComment[] | undefined =>
     selectWorktreeDiffComments(s, worktreeId)
   )
+  const agentNotes = useFileAgentNotes(worktreeId, section.path)
   const diffComments = useMemo(
-    () => (allDiffComments ?? []).filter((c) => c.filePath === section.path && isDiffComment(c)),
-    [allDiffComments, section.path]
+    () => [
+      ...(allDiffComments ?? []).filter((c) => c.filePath === section.path && isDiffComment(c)),
+      ...agentNotes
+    ],
+    [allDiffComments, section.path, agentNotes]
   )
   const language = detectLanguage(section.path)
   const isEditable = section.area === 'unstaged'
@@ -138,7 +143,7 @@ export function DiffSectionItem({
     canOpenDraft: !isLargeDiffLimited,
     onDeleteComment: (id) => {
       if (worktreeId) {
-        void deleteDiffComment(worktreeId, id)
+        void (isAgentNoteId(agentNotes, id) ? removeAgentNote : deleteDiffComment)(worktreeId, id)
       }
     },
     onUpdateComment: worktreeId ? (id, body) => updateDiffComment(worktreeId, id, body) : undefined,

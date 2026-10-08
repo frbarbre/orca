@@ -18,6 +18,7 @@ export function getRenderSignature(
     body: comment.body,
     sentAt: comment.sentAt ?? null,
     author: comment.author ?? null,
+    agentName: comment.agentAuthor?.name ?? null,
     authorAvatarUrl: comment.authorAvatarUrl ?? null,
     createdAtLabel: comment.createdAtLabel ?? null,
     url: comment.url ?? null,
@@ -74,6 +75,7 @@ export function renderDiffCommentZoneCard(
     clearDeliveredDiffComments
   }: DiffCommentZoneCardContext
 ): void {
+  const agentName = comment.agentAuthor?.name
   root.render(
     // View zones are separate React roots outside the app root, so App.tsx context providers don't reach them.
     <TooltipProvider delayDuration={400}>
@@ -84,13 +86,14 @@ export function renderDiffCommentZoneCard(
         body={comment.body}
         sentAt={comment.sentAt}
         author={comment.author}
+        agentName={agentName}
         createdAtLabel={comment.createdAtLabel}
         url={comment.url}
         onDelete={
           comment.canDelete === false ? undefined : () => onDeleteCommentRef.current(comment.id)
         }
         onSubmitEdit={
-          onUpdateCommentRef.current && comment.canEdit !== false
+          onUpdateCommentRef.current && comment.canEdit !== false && !agentName
             ? async (body) => {
                 const fn = onUpdateCommentRef.current
                 if (!fn) {
@@ -103,7 +106,7 @@ export function renderDiffCommentZoneCard(
         onContentResize={() => resizeZone(comment.id)}
         observeRenderedSize
         headerActions={
-          worktreeId && comment.author === undefined ? (
+          worktreeId && comment.author === undefined && !agentName ? (
             <NotesSendMenu
               worktreeId={worktreeId}
               groupId={activeGroupId}

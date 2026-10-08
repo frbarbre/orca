@@ -144,6 +144,7 @@ export type Worktree = {
   priorWorktreeIds?: string[]
   workspaceStatus?: WorkspaceStatus
   diffComments?: DiffComment[]
+  agentNotes?: DiffComment[]
   /** Review comments queued locally, not yet submitted to the provider. */
   pendingReviewComments?: PendingReviewComment[]
   mobileDiffReview?: MobileDiffReviewState

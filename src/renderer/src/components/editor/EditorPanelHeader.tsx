@@ -11,6 +11,7 @@ import EditorViewToggle, {
 import type { EditorToggleValue } from './EditorViewToggle'
 import type { EditorHeaderOpenFileState } from './editor-header'
 import { DiffNotesSendMenu } from './DiffNotesSendMenu'
+import { AgentNotesPill } from './AgentNotesPill'
 import { EditorPanelMarkdownActionsMenu } from './EditorPanelMarkdownActionsMenu'
 import { translate } from '@/i18n/i18n'
 import { EditorPanelHeaderPath } from './EditorPanelHeaderPath'
@@ -185,6 +186,9 @@ export function EditorPanelHeader({
           triggerClassName="h-6 shrink-0 gap-1 rounded-full border border-border/70 bg-muted/40 px-2 text-[11px] font-medium leading-none text-foreground/80 hover:bg-accent hover:text-foreground"
           iconClassName="size-3"
         />
+      )}
+      {isSingleDiff && (
+        <AgentNotesPill worktreeId={activeFile.worktreeId} filePath={activeFile.relativePath} />
       )}
       {isDiffSurface && (
         // Why: the adjacent diff controls use the same tooltip timing, so they

@@ -1,6 +1,7 @@
 import { BulkActionBar } from '../commit/bulk-action-bar'
 import { SourceControlHeaderToolbar } from './header-toolbar'
 import { SourceControlNotesShelf } from '../notes/notes-shelf'
+import { AgentNotesShelf } from '../notes/agent-notes-shelf'
 import { SourceControlPendingReviewShelf } from '../pending-review/pending-review-shelf'
 import { usePendingReviewQueue } from '@/components/pending-review/use-pending-review-queue'
 import { useSubmitReviewVerdict } from '@/components/pending-review/use-submit-review-verdict'
@@ -122,6 +123,9 @@ export function SourceControlPanelReady(props: SourceControlPanelReadyProps) {
             deleteDiffComment={deleteDiffComment}
             handleOpenComment={handleOpenComment}
           />
+        )}
+        {activeWorktreeId && worktreePath && (
+          <AgentNotesShelf worktreeId={activeWorktreeId} onOpenNote={handleOpenComment} />
         )}
 
         <div

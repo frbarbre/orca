@@ -1,0 +1,90 @@
+// @vitest-environment happy-dom
+import { act } from 'react'
+import { createRoot, type Root } from 'react-dom/client'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import type { DiffComment } from '../../../../shared/diff-comment-types'
+import {
+  renderDiffCommentZoneCard,
+  type DiffCommentZoneCardContext
+} from './diff-comment-zone-card'
+
+vi.mock('../editor/NotesSendMenu', () => ({
+  NotesSendMenu: () => <button type="button">Send notes to an agent</button>
+}))
+
+const agentNote: DiffComment = {
+  id: 'agent-1',
+  worktreeId: 'wt-1',
+  filePath: 'src/a.ts',
+  startLine: 3,
+  lineNumber: 5,
+  body: 'Renamed fetchUser and updated both callers.',
+  createdAt: 1,
+  side: 'modified',
+  agentAuthor: { kind: 'agent', name: 'Claude Code' }
+}
+
+describe('agent note zone card', () => {
+  let container: HTMLDivElement
+  let root: Root
+  const onDelete = vi.fn()
+  const onUpdate = vi.fn()
+
+  function context(): DiffCommentZoneCardContext {
+    return {
+      worktreeId: 'wt-1',
+      filePath: 'src/a.ts',
+      activeGroupId: 'g-1',
+      resizeZone: vi.fn(),
+      onDeleteCommentRef: { current: onDelete },
+      onUpdateCommentRef: { current: onUpdate },
+      clearDeliveredDiffComments: vi.fn()
+    }
+  }
+
+  beforeEach(() => {
+    vi.stubGlobal(
+      'ResizeObserver',
+      class {
+        observe() {}
+        unobserve() {}
+        disconnect() {}
+      }
+    )
+    container = document.createElement('div')
+    document.body.append(container)
+    root = createRoot(container)
+  })
+
+  afterEach(() => {
+    act(() => root.unmount())
+    container.remove()
+    vi.unstubAllGlobals()
+  })
+
+  it('reads as a bot note: agent name and badge, no send or edit, still deletable', () => {
+    act(() => renderDiffCommentZoneCard(root, agentNote, context()))
+
+    const card = container.querySelector('.orca-diff-comment-card')
+    expect(card?.getAttribute('data-agent-note')).toBe('true')
+    expect(container.textContent).toContain('Claude Code')
+    expect(container.textContent).toContain('Agent note')
+    expect(container.textContent).not.toContain('Send notes to an agent')
+    expect(container.querySelector('[aria-label="Edit note"]')).toBeNull()
+
+    const remove = container.querySelector<HTMLButtonElement>('[aria-label="Delete note"]')
+    act(() => remove?.click())
+    expect(onDelete).toHaveBeenCalledWith('agent-1')
+  })
+
+  it('keeps a user note as before', () => {
+    const { agentAuthor: _agent, ...userNote } = agentNote
+    act(() => renderDiffCommentZoneCard(root, userNote, context()))
+
+    expect(
+      container.querySelector('.orca-diff-comment-card')?.getAttribute('data-agent-note')
+    ).toBeNull()
+    expect(container.textContent).not.toContain('Agent note')
+    expect(container.textContent).toContain('Send notes to an agent')
+  })
+})

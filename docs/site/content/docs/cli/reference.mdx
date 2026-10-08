@@ -179,6 +179,16 @@ orca file open-changed --mode both --worktree active --json
 
 Paths are relative to the selected worktree. `open-changed` reads git status and opens changed files in edit, diff, or both modes. Tabs open without changing what you are looking at; pass `--focus` to be brought to them.
 
+## Diff notes
+
+```bash
+orca notes list --json
+orca notes add --file src/api.ts --line 40 --end-line 58 --agent Codex --body "Fixed the retry backoff." --json
+orca notes rm --id <note-id> --json
+```
+
+`notes list` returns the user's notes and the agent notes. `notes add` leaves an agent note on lines of the current file; Orca shows it in the diff as a bot note, apart from the user's notes, and never sends it to an agent. `--file` is relative to cwd or absolute inside the worktree.
+
 ## Built-in browser
 
 Browser commands control Orca's embedded browser tab for the selected worktree. They do not control Chrome, Safari, or the Orca desktop UI.

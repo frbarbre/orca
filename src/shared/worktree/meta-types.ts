@@ -83,6 +83,8 @@ export type WorktreeMeta = {
   /** User-assigned workspace board status for manual sidebar organization. */
   workspaceStatus?: WorkspaceStatus
   diffComments?: DiffComment[]
+  /** Fork: kept apart from diffComments so the renderer's whole-list note saves never drop them. */
+  agentNotes?: DiffComment[]
   /** Review comments queued locally, not yet submitted to the provider. */
   pendingReviewComments?: PendingReviewComment[]
   /** Path-derived worktree ids this worktree had before its folder was renamed

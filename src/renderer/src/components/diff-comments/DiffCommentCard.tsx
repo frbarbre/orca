@@ -1,5 +1,5 @@
 import { ImeTextarea } from '@/lib/ime-text-field'
-import { CornerDownLeft, Pencil, Trash } from 'lucide-react'
+import { Bot, CornerDownLeft, Pencil, Trash } from 'lucide-react'
 import { useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import { Button } from '@/components/ui/button'
 import { getDiffCommentLineLabel } from '@/lib/diff-comment-compat'
@@ -24,6 +24,8 @@ type Props = {
   body: string
   sentAt?: number
   author?: string
+  /** Fork: names the agent that left this note; the card then reads as a bot note. */
+  agentName?: string
   createdAtLabel?: string
   url?: string
   onDelete?: () => void
@@ -51,6 +53,7 @@ export function DiffCommentCard({
   body,
   sentAt,
   author,
+  agentName,
   createdAtLabel,
   url,
   onDelete,
@@ -152,7 +155,11 @@ export function DiffCommentCard({
   const canSubmit = !submitting && trimmedDraft.length > 0 && trimmedDraft !== body
   const lineLabel =
     label === undefined ? getDiffCommentLineLabel({ lineNumber, startLine }).toLowerCase() : label
-  const metaText = [author || 'Note', lineLabel, createdAtLabel || (sentAt ? 'sent' : null)]
+  const metaText = [
+    agentName ? null : author || 'Note',
+    lineLabel,
+    createdAtLabel || (sentAt ? 'sent' : null)
+  ]
     .filter(Boolean)
     .join(' ')
 
@@ -181,11 +188,31 @@ export function DiffCommentCard({
   }
 
   return (
-    <div ref={cardRef} className="orca-diff-comment-card">
+    <div
+      ref={cardRef}
+      className={
+        agentName ? 'orca-diff-comment-card orca-diff-comment-card-agent' : 'orca-diff-comment-card'
+      }
+      data-agent-note={agentName ? 'true' : undefined}
+    >
       <div className="orca-diff-comment-content-col">
         {/* Header Row */}
         <div className="orca-diff-comment-header">
-          <div className="orca-diff-comment-meta-group">{metaText}</div>
+          <div className="orca-diff-comment-meta-group">
+            {agentName && (
+              <>
+                <Bot className="orca-diff-comment-agent-icon size-3.5" aria-hidden />
+                <span className="orca-diff-comment-agent-name">{agentName}</span>
+                <span className="orca-diff-comment-agent-badge">
+                  {translate(
+                    'auto.components.diff.comments.DiffCommentCard.agentNote',
+                    'Agent note'
+                  )}
+                </span>{' '}
+              </>
+            )}
+            {metaText}
+          </div>
 
           {/* Action buttons pill (only shown if not editing) */}
           {!editing && (

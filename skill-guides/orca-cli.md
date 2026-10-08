@@ -156,6 +156,17 @@ is refused on `create`. Folder-based repos can store numeric links, but missing
 source/remote identity prevents URL validation and may leave provider links unavailable.
 Old runtimes that predate these existing fields may ignore them; verify with `worktree show --json`.
 
+## Diff Notes
+
+The user leaves notes on diff lines for you; you can leave agent notes back. Agent notes show in the diff as bot notes, apart from the user's, and are never sent back to an agent.
+
+```text
+ORCA notes list --json
+ORCA notes add --file src/api.ts --line 40 --end-line 58 --agent "Claude Code" --body "Renamed fetchUser and updated both callers." --json
+```
+
+Leave one when you resolve a user note (on the lines you changed: what you did and why) or when a review finds something on specific lines. Line numbers are in the current file. `--file` is relative to cwd or absolute inside the worktree. Name yourself with `--agent`. `orca notes rm --id <id>` removes one of them.
+
 ## Terminals
 
 Common commands:

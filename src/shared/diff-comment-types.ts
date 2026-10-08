@@ -24,8 +24,12 @@ export type MobileDiffReviewState = {
   files: Record<string, MobileDiffReviewFileState>
 }
 
+export type DiffCommentAgentAuthor = { kind: 'agent'; name: string }
+
 export type DiffComment = {
   id: string
+  /** Fork: present only on notes an agent left through `orca notes add` (stored in WorktreeMeta.agentNotes). */
+  agentAuthor?: DiffCommentAgentAuthor
   worktreeId: string
   filePath: string
   /** Undefined means a legacy diff note. */

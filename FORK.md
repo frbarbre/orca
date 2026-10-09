@@ -971,6 +971,25 @@ plus `pull-request-page/mentions/textarea.emoji.test.tsx`.
 | `src/renderer/src/components/pull-request-page/mentions/textarea.tsx` | Emoji query state, `insertEmoji`, the emoji key handling and `<EmojiShortcodeList>` anchored to the textarea. |
 | `src/renderer/src/components/github/github-mention-autocomplete.tsx` | `clampListLeft` (`autocomplete-list-position.ts`) on the list's `left`, so neither list runs off the right edge; test `emoji-shortcode-list.test.tsx`. |
 
+### 25. Preview deployment button and a roomier right-panel header
+
+Our PRs get a bot comment per push ("Preview deployment for `sha`: url"). `PreviewDeploymentButton.tsx`
+sits next to the right sidebar toggle and opens the newest one; its tooltip names the commit, its age,
+and whether it is behind the PR head. Parsing is `src/renderer/src/lib/preview-deployment.ts` (+ test).
+It loads the active PR's comments itself (cached), again when the head moves and on hover.
+
+To fit it and the other header buttons, `getTopActivityBarLayout` (`activity-bar-overflow.ts`) first
+narrows the tab buttons (`compact`, 28px) before moving any behind More, and `showsHeaderActionLabels`
+turns Review / Commit & push into icon buttons with tooltips below a 560px panel.
+
+| File | What is ours |
+| --- | --- |
+| `src/renderer/src/components/right-sidebar/activity-bar-overflow.ts` | The `compact` step and `showsHeaderActionLabels`; the overflow tests now use 100px for "too tight". |
+| `src/renderer/src/components/right-sidebar/activity-bar-buttons.tsx` | `compact` prop on `ActivityBarButton`. |
+| `src/renderer/src/components/right-sidebar/right-sidebar-top-activity-bar.tsx` | Passes `compact` through. |
+| `src/renderer/src/components/right-sidebar/workspace-actions/WorkspaceActionButtons.tsx` | `ActionButton` with the `showLabels` prop. |
+| `src/renderer/src/components/right-sidebar/index.tsx` | Renders `PreviewDeploymentButton` and passes `showLabels`. |
+
 ## Verify
 
 Verify runs on GitHub, not locally: `fork-verify.yml` runs it on every pull request against `main`,

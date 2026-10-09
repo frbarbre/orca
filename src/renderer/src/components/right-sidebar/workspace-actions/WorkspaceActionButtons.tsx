@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { CircleCheck, GitMerge, GitPullRequestArrow, ScanEye, Upload } from 'lucide-react'
 import { useAppStore } from '@/store'
 import { cn } from '@/lib/utils'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { translate } from '@/i18n/i18n'
 import type { WorkspaceActionKind } from '../../../../../shared/workspace-action'
 import { selectWorkspaceActionContext } from './workspace-action-context'
@@ -35,7 +36,46 @@ function primaryCopy(action: WorkspaceActionKind): { label: string; icon: React.
 const BUTTON_CLASS =
   'inline-flex h-6 shrink-0 items-center gap-1 rounded-md border border-border/70 px-2 text-[11px] font-medium text-foreground transition-colors hover:bg-accent disabled:opacity-50'
 
-export function WorkspaceActionButtons(): React.JSX.Element | null {
+function ActionButton({
+  label,
+  icon,
+  showLabel,
+  className,
+  ...buttonProps
+}: {
+  label: string
+  icon: React.JSX.Element
+  showLabel: boolean
+} & React.ComponentProps<'button'>): React.JSX.Element {
+  const button = (
+    <button
+      type="button"
+      className={cn(BUTTON_CLASS, !showLabel && 'px-1.5', className)}
+      aria-label={label}
+      {...buttonProps}
+    >
+      {icon}
+      {showLabel ? label : null}
+    </button>
+  )
+  if (showLabel) {
+    return button
+  }
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>{button}</TooltipTrigger>
+      <TooltipContent side="bottom" sideOffset={6}>
+        {label}
+      </TooltipContent>
+    </Tooltip>
+  )
+}
+
+export function WorkspaceActionButtons({
+  showLabels = true
+}: {
+  showLabels?: boolean
+}): React.JSX.Element | null {
   const action = useAppStore((state) => selectWorkspaceActionContext(state)?.action ?? null)
   const canReview = useAppStore((state) => {
     const pr = selectWorkspaceActionContext(state)?.pr
@@ -53,27 +93,24 @@ export function WorkspaceActionButtons(): React.JSX.Element | null {
   return (
     <div className="flex shrink-0 items-center gap-1 pr-1" data-workspace-action-buttons="">
       {canReview ? (
-        <button
-          type="button"
-          className={BUTTON_CLASS}
+        <ActionButton
+          label={translate('auto.components.workspaceActions.review', 'Review')}
+          icon={<ScanEye className="size-3.5" />}
+          showLabel={showLabels}
           disabled={busy !== null}
           onClick={() => run('review')}
-        >
-          <ScanEye className="size-3.5" />
-          {translate('auto.components.workspaceActions.review', 'Review')}
-        </button>
+        />
       ) : null}
       {primary ? (
-        <button
-          type="button"
-          className={cn(BUTTON_CLASS, 'bg-accent/40')}
+        <ActionButton
+          label={primary.label}
+          icon={primary.icon}
+          showLabel={showLabels}
+          className="bg-accent/40"
           disabled={busy !== null}
           onClick={() => run('primary')}
           data-workspace-action={action}
-        >
-          {primary.icon}
-          {primary.label}
-        </button>
+        />
       ) : null}
     </div>
   )

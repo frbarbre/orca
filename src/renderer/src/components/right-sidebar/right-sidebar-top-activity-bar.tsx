@@ -26,7 +26,11 @@ export function RightSidebarTopActivityBar({
 }: {
   hasDesktopWindowChrome: boolean
   topActivityStripRef: (node: HTMLDivElement | null) => void
-  topActivityLayout: { visibleItems: ActivityBarItem[]; overflowItems: ActivityBarItem[] }
+  topActivityLayout: {
+    visibleItems: ActivityBarItem[]
+    overflowItems: ActivityBarItem[]
+    compact: boolean
+  }
   effectiveTab: ActiveRightSidebarTab
   onSelectTab: (tab: ActiveRightSidebarTab) => void
   checksStatus: CheckStatus | null
@@ -59,6 +63,7 @@ export function RightSidebarTopActivityBar({
                         onClick={() => onSelectTab(item.id)}
                         layout="top"
                         statusIndicator={item.id === 'checks' ? checksStatus : null}
+                        compact={topActivityLayout.compact}
                       />
                     ))}
                   </div>
@@ -116,6 +121,7 @@ export function RightSidebarTopActivityBar({
                     onClick={() => onSelectTab(item.id)}
                     layout="top"
                     statusIndicator={item.id === 'checks' ? checksStatus : null}
+                    compact={topActivityLayout.compact}
                   />
                 ))}
               </div>

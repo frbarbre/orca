@@ -126,13 +126,15 @@ export function ActivityBarButton({
   active,
   onClick,
   layout,
-  statusIndicator
+  statusIndicator,
+  compact = false
 }: {
   item: ActivityBarItem
   active: boolean
   onClick: () => void
   layout: 'top' | 'side'
   statusIndicator?: CheckStatus | null
+  compact?: boolean
 }): React.JSX.Element {
   const Icon = item.icon
   const isTop = layout === 'top'
@@ -146,7 +148,7 @@ export function ActivityBarButton({
           className={cn(
             'relative flex shrink-0 items-center justify-center transition-colors',
             RIGHT_SIDEBAR_HEADER_NO_DRAG_CLASS_NAME,
-            isTop ? 'h-[36px] w-9' : 'w-10 h-10',
+            isTop ? cn('h-[36px]', compact ? 'w-7' : 'w-9') : 'w-10 h-10',
             active ? 'text-foreground' : 'text-muted-foreground/60 hover:text-muted-foreground'
           )}
           onClick={onClick}

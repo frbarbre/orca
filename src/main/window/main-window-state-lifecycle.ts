@@ -3,6 +3,7 @@ import type { Store } from '../persistence'
 import { uiZoomFactorFromLevel } from '../../shared/ui-zoom-level'
 import { isWindowlessLaunch, showWindowWithoutStealingFocus } from './foreground-activation-policy'
 import { MIN_HEIGHT, MIN_WIDTH, syncTrafficLightPosition } from './main-window-visual-lifecycle'
+import { installMainWindowNavigationGestures } from './main-window-navigation-gestures'
 
 export type MainWindowStateLifecycle = {
   clearInitialRevealFallbackTimer: () => void
@@ -19,6 +20,7 @@ export function installMainWindowStateLifecycle(args: {
   store: Store | null
 }): MainWindowStateLifecycle {
   const { mainWindow, revealOnDidFinishLoad, savedMaximized, store } = args
+  installMainWindowNavigationGestures(mainWindow)
   mainWindow.webContents.on('dom-ready', () => {
     const level = store?.getUI().uiZoomLevel ?? 0
     mainWindow.webContents.setZoomLevel(level)

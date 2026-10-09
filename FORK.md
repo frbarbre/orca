@@ -1047,7 +1047,10 @@ own tab. Every jump, same-file ones too, is recorded in a back/forward history
 (`lib/code-navigation-history.ts`, 50 places, with the cursor's spot when leaving; opening and the
 store in `lib/code-navigation.ts`). The titlebar's Back/Forward buttons, their shortcuts
 (`worktree.history.back|forward`) and the mouse's back/forward buttons walk this history instead of
-the worktree history. The file editor's `smoothScrolling` is off, so a reveal is instant.
+the worktree history. Mice that don't send buttons 3/4 to the page are caught in main
+(`window/main-window-navigation-gestures.ts`): Logi Options+ on macOS sends a navigation `swipe`
+(left = back), Windows/Linux an `app-command`; both go out as `ui:worktreeHistoryNavigate`.
+The file editor's `smoothScrolling` is off, so a reveal is instant.
 
 | File | What is ours |
 | --- | --- |
@@ -1059,6 +1062,7 @@ the worktree history. The file editor's `smoothScrolling` is off, so a reveal is
 | `src/preload/index.ts`, `src/preload/api-types.ts` | `languageServer` API. |
 | `src/renderer/src/app-shell/TitlebarLeftControls.tsx`, `app-command-handlers.ts`, `hooks/ipc-events/workspace-shortcut-ipc-bridge.ts` | Back/Forward call `goInCodeHistory` instead of `goBackWorktree`/`goForwardWorktree`. |
 | `src/renderer/src/components/editor/MonacoEditor.tsx` | `smoothScrolling: false`. |
+| `src/main/window/main-window-state-lifecycle.ts` | `installMainWindowNavigationGestures(mainWindow)`. |
 
 ## Verify
 

@@ -31,6 +31,7 @@ import { registerNotificationHandlers } from '../notifications'
 import { registerNotebookHandlers } from '../notebook'
 import { registerLanguageServerHandlers } from '../language-server'
 import { registerGitBlameHandlers } from '../git-blame'
+import { registerMaterialIconHandlers } from '../material-icons'
 import { registerOnboardingHandlers } from '../onboarding'
 import { registerDashboardPopoutHandlers } from '../dashboard-popout'
 import { registerTerminalPreviewHandlers } from '../terminal-preview'
@@ -179,6 +180,7 @@ export function registerCoreHandlers(
   registerNotebookHandlers(store)
   registerLanguageServerHandlers()
   registerGitBlameHandlers()
+  registerMaterialIconHandlers()
   registerOnboardingHandlers(store)
   registerDashboardPopoutHandlers(store, keybindings)
   registerTerminalPreviewHandlers(runtime)

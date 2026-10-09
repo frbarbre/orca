@@ -84,6 +84,7 @@ import type {
   GitBlameRequest,
   GitBlameResult
 } from '../shared/git-blame'
+import type { MaterialIconConfigSnapshot } from '../shared/material-icon-config'
 import type { FolderWorkspacesApi, SparsePresetsApi, WorktreeApi } from './api/worktree-api'
 
 // Flattens contracts that share one PreloadApi key: an intersection is not type-identical to the flat shape.
@@ -164,6 +165,11 @@ export type PreloadApi = {
     hover: (args: LanguageServerRequest) => Promise<LanguageServerHoverResult>
     references: (args: LanguageServerRequest) => Promise<LanguageServerReferencesResult>
     stop: (args: { language: LanguageServerLanguage }) => Promise<void>
+  }
+  materialIcons: {
+    read: () => Promise<MaterialIconConfigSnapshot>
+    ensure: () => Promise<MaterialIconConfigSnapshot>
+    onChanged: (callback: (snapshot: MaterialIconConfigSnapshot) => void) => () => void
   }
   gitBlame: {
     line: (args: GitBlameRequest) => Promise<GitBlameResult>

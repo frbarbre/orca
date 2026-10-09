@@ -1,5 +1,6 @@
 import { createElement, memo } from 'react'
-import { ChevronDown, Folder, FolderOpen } from 'lucide-react'
+import { ChevronDown } from 'lucide-react'
+import { MaterialFolderIcon } from '@/lib/material-icons/material-icon'
 import { STATUS_COLORS, STATUS_LABELS } from '@/components/right-sidebar/status-display'
 import type { SourceControlTreeNode } from '@/components/right-sidebar/source-control-tree'
 import { getFileTypeIcon } from '@/lib/file-type-icons'
@@ -80,11 +81,7 @@ export const CombinedDiffFileTreeRow = memo(function CombinedDiffFileTreeRow({
           <ChevronDown
             className={cn('size-3 shrink-0 transition-transform', isCollapsed && '-rotate-90')}
           />
-          {isCollapsed ? (
-            <Folder className="size-3 shrink-0" />
-          ) : (
-            <FolderOpen className="size-3 shrink-0" />
-          )}
+          <MaterialFolderIcon path={node.name} open={!isCollapsed} className="size-4" />
           <span className="min-w-0 flex-1 truncate">{node.name}</span>
         </button>
         <span className="w-4 shrink-0 text-center text-[10px] font-bold tabular-nums text-muted-foreground/80">

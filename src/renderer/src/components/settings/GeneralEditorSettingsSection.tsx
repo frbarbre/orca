@@ -20,6 +20,7 @@ import { translate } from '@/i18n/i18n'
 import { RichMarkdownSpellcheckSetting } from './RichMarkdownSpellcheckSetting'
 import { LanguageServersSetting } from './LanguageServersSetting'
 import { GitBlameSetting } from './GitBlameSetting'
+import { FileIconsSetting } from './FileIconsSetting'
 import { DiffShowWhitespaceSetting } from './DiffShowWhitespaceSetting'
 import { EditorWordWrapSetting } from './EditorWordWrapSetting'
 import { EditorFontFamilySetting } from './EditorFontFamilySetting'
@@ -376,6 +377,8 @@ export function GeneralEditorSettingsSection({
       <LanguageServersSetting settings={settings} updateSettings={updateSettings} />
 
       <GitBlameSetting settings={settings} updateSettings={updateSettings} />
+
+      <FileIconsSetting />
 
       <SearchableSetting
         title={translate(

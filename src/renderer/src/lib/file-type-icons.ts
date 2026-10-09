@@ -1,6 +1,33 @@
+import { createElement, type ComponentType } from 'react'
 import { File, FileCog, FileLock, FileTerminal, Smartphone, type LucideIcon } from 'lucide-react'
 import { COMPOUND_EXTENSIONS, FILE_ICON_BY_EXTENSION } from './file-type-icon-extension-table'
 import { FILE_ICON_BY_NAME } from './file-type-icon-name-table'
+import { MaterialFileIcon, type MaterialIconProps } from './material-icons/material-icon'
+
+export type FileTypeIcon = ComponentType<MaterialIconProps>
+
+const MAX_CACHED_ICONS = 5_000
+const materialIconByPath = new Map<string, FileTypeIcon>()
+
+// Fork: Material Icon Theme icons. Why one component per path: callers render the returned
+// component, so a fresh one each call would remount the icon on every render.
+export function getFileTypeIcon(filePath: string | undefined | null): FileTypeIcon {
+  const path = filePath ?? ''
+  const lowerName = getFilename(path).toLowerCase()
+  if (lowerName === 'mobile emulator' || lowerName === 'simulator') {
+    return Smartphone
+  }
+  let icon = materialIconByPath.get(path)
+  if (!icon) {
+    const PathIcon: FileTypeIcon = (props) => createElement(MaterialFileIcon, { ...props, path })
+    if (materialIconByPath.size >= MAX_CACHED_ICONS) {
+      materialIconByPath.clear()
+    }
+    materialIconByPath.set(path, PathIcon)
+    icon = PathIcon
+  }
+  return icon
+}
 
 function getFilename(filePath: string | undefined | null): string {
   if (!filePath) {
@@ -25,7 +52,7 @@ function getExtension(filename: string): string {
   return filename.slice(lastDot + 1).toLowerCase()
 }
 
-export function getFileTypeIcon(filePath: string | undefined | null): LucideIcon {
+export function getLucideFileTypeIcon(filePath: string | undefined | null): LucideIcon {
   const filename = getFilename(filePath)
   if (!filename) {
     return File

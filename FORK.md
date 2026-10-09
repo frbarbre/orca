@@ -1119,6 +1119,42 @@ A jump that replaces its tab closes it with `closeTabKeepingReveal` (`lib/close-
 `closeFile` clears the pending reveal, which a diff target has not applied yet, so the diff opened
 at its first change (an import) instead of the definition.
 
+### 28. Material Icon Theme file and folder icons
+
+Files and folders use the [Material Icon Theme](https://github.com/material-extensions/vscode-material-icon-theme)
+(`material-icon-theme` on npm, MIT) everywhere `getFileTypeIcon` is used — tabs, explorer, source
+control, the combined diff's file tree, quick open, search — plus each diff section header, and
+named folder icons (open and closed) in the explorer, source control and diff trees
+(`MaterialFolderIcon`). `getFileTypeIcon` now returns one cached component per path that renders the
+Material SVG; upstream's Lucide table is kept as `getLucideFileTypeIcon` (its upstream test points
+there), and the simulator tab keeps its phone icon. The library's `generateManifest(config)` builds
+the name/extension → icon map (`lib/material-icons/material-icon-store.ts`), matched like VS Code:
+whole file name, then the longest extension (`material-icon-resolve.ts`), with light-theme
+variants when the root lacks the `dark` class. The 1,251 SVGs are emitted as separate assets
+(`import.meta.glob(..., { query: '?no-inline' })`), not inlined.
+
+Users configure it like the VS Code extension in `~/.orca/material-icon-theme.json`, either with the
+extension's settings.json keys (`"material-icon-theme.files.associations"`, `folders.associations`,
+`languages.associations`, `folders.theme`, `activeIconPack`) or the same settings nested
+(`shared/material-icon-config.ts`). Main reads and watches the file (`ipc/material-icons.ts`, the
+folder is watched because editors save by replacing the file) and broadcasts
+`materialIcons:changed`; the renderer regenerates the manifest on every save and toasts invalid
+entries once (`material-icon-config-sync.ts`, started in `main.tsx`). Settings → General → Editor →
+**File Icons** → Edit icon settings creates the file and opens it in the floating workspace, like
+`keybindings.json`. The extension's color, opacity and saturation settings aren't supported: the
+extension applies them by rewriting SVG files.
+
+| File | What is ours |
+| --- | --- |
+| `src/renderer/src/lib/file-type-icons.ts` (+ upstream test import) | `getFileTypeIcon` returns Material icons; the Lucide version is `getLucideFileTypeIcon`. |
+| `src/renderer/src/components/right-sidebar/FileExplorerRow.tsx`, `source-control/listing/tree-directory-rows.tsx`, `editor/combined-diff/browse-files/combined-diff-file-tree-row.tsx` | `MaterialFolderIcon` instead of Lucide `Folder`/`FolderOpen`; explorer icons at 16px. |
+| `src/renderer/src/components/editor/DiffSectionHeader.tsx` | The file's icon before its path. |
+| `src/renderer/src/main.tsx` | `startMaterialIconConfigSync()`. |
+| `src/main/ipc/register-core-handlers/register-core-handlers.ts` (+ test mock) | `registerMaterialIconHandlers()`. |
+| `src/preload/index.ts`, `src/preload/api-types.ts` | `materialIcons` API. |
+| `src/renderer/src/components/settings/GeneralEditorSettingsSection.tsx`, `general-editor-search.ts` | `FileIconsSetting` and its search entry. |
+| `package.json`, `pnpm-lock.yaml` | `material-icon-theme` 5.39.0. |
+
 ## Verify
 
 Verify runs on GitHub, not locally: `fork-verify.yml` runs it on every pull request against `main`,

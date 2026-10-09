@@ -1184,6 +1184,9 @@
         "showCommitFailed": "Failed to load the commit",
         "copied": "Commit hash copied"
       },
+      "materialIcons": {
+        "configErrors": "Icon settings problems: {{errors}}"
+      },
       "languageServer": {
         "pythonUnavailable": "Python go-to-definition is unavailable ({{error}}). Set a Python Environment in the project settings.",
         "typescriptUnavailable": "TypeScript go-to-definition is unavailable ({{error}}). Add @typescript/native-preview (tsgo) to the project."
@@ -10239,7 +10242,10 @@
             "blame": "blame",
             "author": "author",
             "commit": "commit",
-            "pullRequest": "pull request"
+            "pullRequest": "pull request",
+            "icons": "icons",
+            "materialIcons": "material",
+            "associations": "associations"
           }
         },
         "git": {
@@ -12766,6 +12772,12 @@
           "enabledDescription": "Faded text after the line; hover it for the commit, the pull request and actions.",
           "youForMyCommits": "Show \"You\" for my commits",
           "youForMyCommitsDescription": "Uses \"You\" instead of your name when the line's author email is your git user.email."
+        },
+        "FileIconsSetting": {
+          "title": "File Icons",
+          "description": "Material Icon Theme icons in the explorer, tabs and diffs. Customize them with the VS Code extension's settings: files.associations, folders.associations, folders.theme and activeIconPack.",
+          "fileHint": "Saved to ~/.orca/material-icon-theme.json and applied on save.",
+          "edit": "Edit icon settings"
         },
         "LanguageServersSetting": {
           "python": "Python (pyrefly)",

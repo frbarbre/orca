@@ -19,7 +19,8 @@ import {
   FileVideo
 } from 'lucide-react'
 import { describe, expect, it } from 'vitest'
-import { getFileTypeIcon } from './file-type-icons'
+// Fork: the Lucide table stays as upstream wrote it; getFileTypeIcon now gives Material icons.
+import { getLucideFileTypeIcon as getFileTypeIcon } from './file-type-icons'
 
 describe('getFileTypeIcon', () => {
   it('prefers known filenames over generic extensions', () => {

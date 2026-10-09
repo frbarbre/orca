@@ -189,6 +189,28 @@ export const getGeneralEditorSearchEntries = createLocalizedCatalog(() => [
     ]
   },
   {
+    title: translate('auto.components.settings.FileIconsSetting.title', 'File Icons'),
+    description: translate(
+      'auto.components.settings.FileIconsSetting.description',
+      "Material Icon Theme icons in the explorer, tabs and diffs. Customize them with the VS Code extension's settings: files.associations, folders.associations, folders.theme and activeIconPack."
+    ),
+    keywords: [
+      ...translateSearchKeyword('auto.components.settings.general.search.icons', 'icons'),
+      ...translateSearchKeyword(
+        'auto.components.settings.general.search.materialIcons',
+        'material',
+        {
+          englishOnly: true,
+          aliases: ['material icon theme']
+        }
+      ),
+      ...translateSearchKeyword(
+        'auto.components.settings.general.search.associations',
+        'associations'
+      )
+    ]
+  },
+  {
     title: translate('auto.components.settings.general.search.128bc09325', 'Markdown Review Notes'),
     description: translate(
       'auto.components.settings.general.search.694613d47f',

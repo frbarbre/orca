@@ -223,6 +223,10 @@ vi.mock('../git-blame', () => ({
   registerGitBlameHandlers: vi.fn()
 }))
 
+vi.mock('../material-icons', () => ({
+  registerMaterialIconHandlers: vi.fn()
+}))
+
 vi.mock('../notifications', () => ({
   registerNotificationHandlers: registerNotificationHandlersMock
 }))

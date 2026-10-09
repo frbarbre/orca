@@ -1,6 +1,7 @@
 import { ChevronDown, ChevronRight, ExternalLink, Eye } from 'lucide-react'
 import type { MouseEvent, ReactElement, ReactNode } from 'react'
 import { translate } from '@/i18n/i18n'
+import { MaterialFileIcon } from '@/lib/material-icons/material-icon'
 import { splitPathForDisplay } from './editor-path-display'
 
 export function DiffSectionHeader({
@@ -33,6 +34,7 @@ export function DiffSectionHeader({
       onClick={onToggle}
     >
       <span className="flex min-w-0 flex-1 items-center text-muted-foreground">
+        <MaterialFileIcon path={path} className="mr-1.5 size-4" />
         <span
           role="button"
           tabIndex={0}

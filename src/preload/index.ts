@@ -70,6 +70,7 @@ import { claudeUsageApi } from './api/claude-usage-bridge'
 import { claudeRemoteSessionApi } from './api/claude-remote-session-bridge'
 import { languageServerApi } from './api/language-server-bridge'
 import { gitBlameApi } from './api/git-blame-bridge'
+import { materialIconsApi } from './api/material-icons-bridge'
 import { codexUsageApi } from './api/codex-usage-bridge'
 import { openCodeUsageApi } from './api/open-code-usage-bridge'
 import { museUsageApi } from './api/muse-usage-bridge'
@@ -176,6 +177,7 @@ const api = {
   claudeRemoteSession: claudeRemoteSessionApi,
   languageServer: languageServerApi,
   gitBlame: gitBlameApi,
+  materialIcons: materialIconsApi,
   codexUsage: codexUsageApi,
   openCodeUsage: openCodeUsageApi,
   museUsage: museUsageApi,

@@ -1,5 +1,3 @@
-import { shell } from 'electron'
-
 // Fork: claude.ai opens links (Linear, GitHub, …) in a new tab, and a <webview> drops new windows
 // unless the host handles them; send http(s) ones to the default browser, nothing else to the OS.
 export function handleClaudeWebWindowOpen(
@@ -12,8 +10,10 @@ export function handleClaudeWebWindowOpen(
   return { action: 'deny' }
 }
 
-export function installClaudeWebExternalLinks(guest: Electron.WebContents): void {
-  guest.setWindowOpenHandler(({ url }) =>
-    handleClaudeWebWindowOpen(url, (target) => void shell.openExternal(target))
-  )
+// Why openExternal is passed in: this module is reachable from the headless runtime, which has no Electron.
+export function installClaudeWebExternalLinks(
+  guest: Electron.WebContents,
+  openExternal: (url: string) => void
+): void {
+  guest.setWindowOpenHandler(({ url }) => handleClaudeWebWindowOpen(url, openExternal))
 }

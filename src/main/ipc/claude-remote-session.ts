@@ -42,7 +42,7 @@ export function registerClaudeRemoteSessionHandlers(
         openExternal: (url) => void shell.openExternal(url),
         writeClipboard: (text) => clipboard.writeText(text)
       })
-      installClaudeWebExternalLinks(guest)
+      installClaudeWebExternalLinks(guest, (url) => void shell.openExternal(url))
       installClaudeWebGuestShortcuts(
         guest,
         getKeybindings,

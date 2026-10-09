@@ -7,6 +7,7 @@ import type { SourceControlWorktreeContext } from '../listing/use-worktree-conte
 import type { SourceControlFileCategory } from '../listing/file-category'
 
 const DEFAULT_COLLAPSED_SECTIONS = ['history'] as const
+const NO_HIDDEN_FILE_CATEGORIES: ReadonlySet<SourceControlFileCategory> = new Set()
 
 function createDefaultCollapsedSections(): Set<string> {
   return new Set(DEFAULT_COLLAPSED_SECTIONS)
@@ -42,10 +43,12 @@ export function useSourceControlPanelViewState({
   const [collapsedTreeDirs, setCollapsedTreeDirs] = useState<Set<string>>(new Set())
   const [baseRefDialogOpen, setBaseRefDialogOpen] = useState(false)
   const [filterQuery, setFilterQuery] = useState('')
-  // Why not reset per worktree: hiding a file type is a reviewing preference, not something tied to one diff.
-  const [hiddenFileCategories, setHiddenFileCategories] = useState<
-    ReadonlySet<SourceControlFileCategory>
-  >(() => new Set())
+  // Why kept per worktree, not reset on switch: each worktree's review keeps its own filter.
+  const [hiddenFileCategoriesByWorktree, setHiddenFileCategoriesByWorktree] = useState<
+    ReadonlyMap<string, ReadonlySet<SourceControlFileCategory>>
+  >(() => new Map())
+  const hiddenFileCategories =
+    hiddenFileCategoriesByWorktree.get(activeWorktreeId ?? '') ?? NO_HIDDEN_FILE_CATEGORIES
   const isGitHistoryExpanded = !collapsedSections.has('history')
 
   const handleToggleSourceControlViewMode = useCallback(() => {
@@ -82,17 +85,21 @@ export function useSourceControlPanelViewState({
     })
   }, [])
 
-  const toggleFileCategory = useCallback((category: SourceControlFileCategory) => {
-    setHiddenFileCategories((prev) => {
-      const next = new Set(prev)
-      if (next.has(category)) {
-        next.delete(category)
-      } else {
-        next.add(category)
-      }
-      return next
-    })
-  }, [])
+  const toggleFileCategory = useCallback(
+    (category: SourceControlFileCategory) => {
+      const key = activeWorktreeId ?? ''
+      setHiddenFileCategoriesByWorktree((prev) => {
+        const next = new Set(prev.get(key) ?? NO_HIDDEN_FILE_CATEGORIES)
+        if (next.has(category)) {
+          next.delete(category)
+        } else {
+          next.add(category)
+        }
+        return new Map(prev).set(key, next)
+      })
+    },
+    [activeWorktreeId]
+  )
 
   const toggleTreeDir = useCallback((key: string) => {
     setCollapsedTreeDirs((prev) => {

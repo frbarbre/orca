@@ -9,19 +9,19 @@ describe('hidden file types per worktree', () => {
       ({ worktreeId }) =>
         useSourceControlPanelViewState({
           activeWorktreeId: worktreeId,
-          settings: undefined,
+          settings: null,
           updateSettings: vi.fn()
         }),
       { initialProps: { worktreeId: 'wt-a' } }
     )
 
-    act(() => result.current.toggleFileCategory('tests'))
-    expect([...result.current.hiddenFileCategories]).toEqual(['tests'])
+    act(() => result.current.toggleFileCategory('test'))
+    expect([...result.current.hiddenFileCategories]).toEqual(['test'])
 
     rerender({ worktreeId: 'wt-b' })
     expect([...result.current.hiddenFileCategories]).toEqual([])
 
     rerender({ worktreeId: 'wt-a' })
-    expect([...result.current.hiddenFileCategories]).toEqual(['tests'])
+    expect([...result.current.hiddenFileCategories]).toEqual(['test'])
   })
 })

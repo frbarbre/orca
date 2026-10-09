@@ -1,4 +1,4 @@
-import { BrowserWindow, ipcMain, webContents } from 'electron'
+import { BrowserWindow, ipcMain, shell, webContents } from 'electron'
 import type { KeybindingOverrides } from '../../shared/keybindings'
 import type { ClaudeRemoteSessionUrlResult } from '../../shared/claude-remote-session'
 import { resolveClaudeRemoteSessionUrl } from '../claude/claude-remote-session-url'
@@ -30,7 +30,7 @@ export function registerClaudeRemoteSessionHandlers(
         return
       }
       const host = event.sender
-      installClaudeWebExternalLinks(guest)
+      installClaudeWebExternalLinks(guest, (url) => void shell.openExternal(url))
       installClaudeWebGuestShortcuts(
         guest,
         getKeybindings,

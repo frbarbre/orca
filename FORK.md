@@ -990,6 +990,30 @@ turns Review / Commit & push into icon buttons with tooltips below a 560px panel
 | `src/renderer/src/components/right-sidebar/workspace-actions/WorkspaceActionButtons.tsx` | `ActionButton` with the `showLabels` prop. |
 | `src/renderer/src/components/right-sidebar/index.tsx` | Renders `PreviewDeploymentButton` and passes `showLabels`. |
 
+### 26. Python go-to-definition (pyrefly)
+
+Cmd+click in a local Python file jumps to the definition, in the same file, another file of the
+worktree, or the venv's packages. Main runs one `pyrefly lsp` per Python project (nearest
+`pyrefly.toml`/`pyproject.toml`) in `src/main/python-lsp/`: framing (`lsp-message-framing.ts`),
+project + venv resolution (`python-project-resolution.ts`), the session (`pyrefly-lsp-session.ts`),
+a pool that stops a server after 15 idle minutes and keeps at most 4 (`pyrefly-lsp-pool.ts`),
+`python-definition-service.ts` and the spawn (`pyrefly-process.ts`, which sets `VIRTUAL_ENV`).
+pyrefly comes from the venv's `bin/`, else `PATH`. The venv is the repo's new `pythonVenvPath`
+setting (Settings → project → Python Environment; relative to the worktree or absolute), else the
+nearest `.venv`/`venv`. Remote (SSH/runtime) worktrees are skipped.
+
+The renderer registers a Monaco definition provider for `python` and an editor opener that opens
+a jump into another file as an Orca tab (`lib/monaco-python-definition.ts`, logic and tests in
+`lib/python-definition.ts`), installed from `monaco-setup.ts`. IPC: `python:definition`
+(`ipc/python-lsp.ts`, `preload/api/python-bridge.ts`, `python` in `api-types.ts`).
+
+| File | What is ours |
+| --- | --- |
+| `src/shared/repo-types.ts`, `ipc/repos/repo-update-handler.ts`, `repo-update-operations.ts`, `repo-lifecycle-operations.ts`, `store/repos/repo-state.ts` | `pythonVenvPath` (trimmed, non-strings dropped). |
+| `src/renderer/src/components/settings/RepositoryPane.tsx`, `repository-git-worktree-search-entries.ts` | The Python Environment section (`PythonEnvironmentSection.tsx`) and its search entry. |
+| `src/main/ipc/register-core-handlers/register-core-handlers.ts` (+ test mock) | `registerPythonLspHandlers()`. |
+| `src/preload/index.ts`, `src/preload/api-types.ts` | `python` API. |
+
 ## Verify
 
 Verify runs on GitHub, not locally: `fork-verify.yml` runs it on every pull request against `main`,

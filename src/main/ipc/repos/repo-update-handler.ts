@@ -37,6 +37,7 @@ export function registerRepoUpdateHandler(mainWindow: BrowserWindow, store: Stor
             | 'worktreeBasePath'
             | 'kind'
             | 'symlinkPaths'
+            | 'pythonVenvPath'
             | 'issueSourcePreference'
             | 'forkSyncMode'
             | 'externalWorktreeVisibilityPromptDismissedAt'
@@ -96,6 +97,14 @@ export function registerRepoUpdateHandler(mainWindow: BrowserWindow, store: Stor
         const v = updates.symlinkPaths as unknown
         if (!Array.isArray(v) || !v.every((e) => typeof e === 'string')) {
           delete updates.symlinkPaths
+        }
+      }
+      if ('pythonVenvPath' in updates && updates.pythonVenvPath !== undefined) {
+        const v = updates.pythonVenvPath as unknown
+        if (typeof v !== 'string') {
+          delete updates.pythonVenvPath
+        } else {
+          updates.pythonVenvPath = v.trim() || undefined
         }
       }
       if ('worktreeBasePath' in updates && updates.worktreeBasePath !== undefined) {

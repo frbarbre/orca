@@ -215,6 +215,10 @@ vi.mock('../notebook', () => ({
   registerNotebookHandlers: registerNotebookHandlersMock
 }))
 
+vi.mock('../python-lsp', () => ({
+  registerPythonLspHandlers: vi.fn()
+}))
+
 vi.mock('../notifications', () => ({
   registerNotificationHandlers: registerNotificationHandlersMock
 }))

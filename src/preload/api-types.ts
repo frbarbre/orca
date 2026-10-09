@@ -71,6 +71,7 @@ import type {
   ClaudeRemoteSessionUrlResult,
   ClaudeWebReplayedKey
 } from '../shared/claude-remote-session'
+import type { PythonDefinitionRequest, PythonDefinitionResult } from '../shared/python-definition'
 import type { FolderWorkspacesApi, SparsePresetsApi, WorktreeApi } from './api/worktree-api'
 
 // Flattens contracts that share one PreloadApi key: an intersection is not type-identical to the flat shape.
@@ -145,6 +146,9 @@ export type PreloadApi = {
     resolveUrl: (args: { sessionId: string }) => Promise<ClaudeRemoteSessionUrlResult>
     attachGuest: (args: { webContentsId: number }) => Promise<void>
     onReplayKey: (callback: (key: ClaudeWebReplayedKey) => void) => () => void
+  }
+  python: {
+    definition: (args: PythonDefinitionRequest) => Promise<PythonDefinitionResult>
   }
   codexUsage: CodexUsageApi
   openCodeUsage: OpenCodeUsageApi

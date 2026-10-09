@@ -4,13 +4,18 @@ import type { OrcaHooks, RepoHookSettings } from '../../../../shared/orca-yaml-h
 import type { Project, ProjectUpdateArgs } from '../../../../shared/project-types'
 import type { Repo } from '../../../../shared/repo-types'
 import { getRepoKindLabel, isFolderRepo } from '../../../../shared/repo-kind'
-import { getRepoExecutionHostId, type ExecutionHostId } from '../../../../shared/execution-host'
+import {
+  getRepoExecutionHostId,
+  LOCAL_EXECUTION_HOST_ID,
+  type ExecutionHostId
+} from '../../../../shared/execution-host'
 import { Label } from '../ui/label'
 import { Separator } from '../ui/separator'
 import { useShallow } from 'zustand/react/shallow'
 import { RepositoryHooksSection } from './RepositoryHooksSection'
 import { McpConfigSection } from './McpConfigSection'
 import { WorktreeSymlinksSection } from './WorktreeSymlinksSection'
+import { PythonEnvironmentSection } from './PythonEnvironmentSection'
 import { SparsePresetSettingsSection } from './SparsePresetSettingsSection'
 import { RepositorySourceControlAiSection } from './RepositorySourceControlAiSection'
 import { SearchableSetting } from './SearchableSetting'
@@ -202,6 +207,9 @@ export function RepositoryPane({
   )
   const mcpEntries = allEntries.filter((entry) => entry.title === 'MCP Configs')
   const symlinkEntries = allEntries.filter((entry) => entry.title === 'Worktree Shared Paths')
+  const pythonEnvironmentEntries = allEntries.filter(
+    (entry) => entry.title === 'Python Environment'
+  )
   const sourceControlAiEntries = allEntries.filter((entry) => entry.title === 'Git AI Author')
   const hostSetupEntries = allEntries.filter((entry) => entry.title === 'Available Hosts')
   const projectRuntimeEntries = allEntries.filter((entry) => entry.title === 'Project Runtime')
@@ -373,6 +381,15 @@ export function RepositoryPane({
     !repo.connectionId &&
     (forceFullPaneForRepoMatch || matchesSettingsSearch(searchQuery, symlinkEntries)) ? (
       <WorktreeSymlinksSection key="symlinks" repo={repo} updateRepo={updateSelectedRepo} />
+    ) : null,
+    getRepoExecutionHostId(repo) === LOCAL_EXECUTION_HOST_ID &&
+    (forceFullPaneForRepoMatch || matchesSettingsSearch(searchQuery, pythonEnvironmentEntries)) ? (
+      <PythonEnvironmentSection
+        key="python-environment"
+        repo={repo}
+        updateRepo={updateSelectedRepo}
+        forceVisible={forceFullPaneForRepoMatch}
+      />
     ) : null,
     !isFolder &&
     (forceFullPaneForRepoMatch || matchesSettingsSearch(searchQuery, sparsePresetEntries)) ? (

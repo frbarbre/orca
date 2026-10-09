@@ -9234,6 +9234,9 @@
           "cd9fe37556": "Microphone permission granted",
           "openAiKeyName": "Your OpenAI transcription key"
         },
+        "PythonEnvironmentSection": {
+          "hint": "Relative to the worktree, or absolute. Empty finds the nearest .venv. Cmd+click in a Python file runs pyrefly from this venv, or from PATH."
+        },
         "WorktreeSymlinksSection": {
           "1c1e35b219": "Remove {{value0}}",
           "b814c618e2": "Linked paths",
@@ -10642,6 +10645,8 @@
             "apfs": "apfs",
             "ed885e589f": "Paths to materialize from the primary checkout into newly created worktrees.",
             "01b3377ebc": "Worktree Shared Paths",
+            "pythonEnvironment": "Python Environment",
+            "pythonEnvironmentDescription": "The venv pyrefly uses for go-to-definition in Python files.",
             "fff8834983": "prompt",
             "fa3131f223": "model",
             "130d76dc16": "rename",

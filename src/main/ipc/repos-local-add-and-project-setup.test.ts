@@ -371,6 +371,31 @@ describe('repos:add + repos:clone', () => {
     expect(invalidateAuthorizedRootsCacheMock).toHaveBeenCalled()
   })
 
+  it('persists a trimmed Python venv path and drops a non-string one', () => {
+    const updated = {
+      id: 'repo-python-venv',
+      path: '/tmp/repo-python-venv',
+      displayName: 'repo-python-venv',
+      kind: 'git',
+      badgeColor: '#22c55e'
+    }
+    mockStore.updateRepo.mockReturnValue(updated)
+
+    handlers.get('repos:update')!(null, {
+      repoId: updated.id,
+      updates: { pythonVenvPath: ' apps/backend/.venv ' }
+    })
+    expect(mockStore.updateRepo).toHaveBeenLastCalledWith(updated.id, {
+      pythonVenvPath: 'apps/backend/.venv'
+    })
+
+    handlers.get('repos:update')!(null, {
+      repoId: updated.id,
+      updates: { pythonVenvPath: 42 }
+    })
+    expect(mockStore.updateRepo).toHaveBeenLastCalledWith(updated.id, {})
+  })
+
   it('persists agent worktree visibility through local repos:update', () => {
     const updated = {
       id: 'repo-agent-visibility',

@@ -156,6 +156,17 @@ export function getRepositoryGitWorktreeSearchEntries(repo: Repo): SettingsSearc
           'node_modules'
         )
       ]
+    },
+    {
+      title: translate(
+        'auto.components.settings.repository.search.pythonEnvironment',
+        'Python Environment'
+      ),
+      description: translate(
+        'auto.components.settings.repository.search.pythonEnvironmentDescription',
+        'The venv pyrefly uses for go-to-definition in Python files.'
+      ),
+      keywords: [repo.displayName, 'python', 'venv', 'virtualenv', 'pyrefly', 'definition']
     }
   ]
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { modelFileFor, trackDiffEditorFile } from './diff-editor-model-files'
+import { isModifiedDiffSide, modelFileFor, trackDiffEditorFile } from './diff-editor-model-files'
 
 function fakeEditor(uri: string) {
   let modelUri = uri
@@ -49,5 +49,20 @@ describe('diff editor model files', () => {
     modified.dispose()
     expect(modelFileFor('diff:modified:a#2')).toBeUndefined()
     expect(modelFileFor('diff:original:a')).toBeUndefined()
+  })
+
+  it('tells the current (modified) side from the old one, for blaming only the current text', () => {
+    const original = fakeEditor('diff:original:b')
+    const modified = fakeEditor('diff:modified:b')
+
+    trackDiffEditorFile(
+      { getOriginalEditor: () => original, getModifiedEditor: () => modified },
+      { worktreeId: 'wt-1', relativePath: 'apps/backend/b.py' }
+    )
+    expect(isModifiedDiffSide('diff:modified:b')).toBe(true)
+    expect(isModifiedDiffSide('diff:original:b')).toBe(false)
+
+    modified.dispose()
+    expect(isModifiedDiffSide('diff:modified:b')).toBe(false)
   })
 })

@@ -9,6 +9,7 @@ import {
   type CodeHistory,
   type CodeLocation
 } from './code-navigation-history'
+import { closeTabKeepingReveal } from './close-tab-keeping-reveal'
 import { replaceableTabId, targetHasDiff } from './language-server-editor'
 
 export const useCodeHistory = create<{ history: CodeHistory }>(() => ({
@@ -73,7 +74,7 @@ function showLocation(location: CodeLocation, leaving: CodeLocation | null): voi
     )
   }
   if (replacedTabId) {
-    useAppStore.getState().closeFile(replacedTabId)
+    closeTabKeepingReveal(useAppStore.getState(), replacedTabId)
   }
 }
 

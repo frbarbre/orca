@@ -409,6 +409,8 @@ export default function DiffViewer({
               readOnly: !editable,
               originalEditable: false,
               renderSideBySide: sideBySide,
+              // Fork. Why: hovers (types, blame) near the right edge were clipped by the editor's bounds.
+              fixedOverflowWidgets: true,
               minimap: { enabled: false },
               scrollBeyondLastLine: false,
               fontSize: diffEditorFontSize,

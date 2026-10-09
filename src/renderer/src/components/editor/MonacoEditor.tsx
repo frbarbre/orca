@@ -290,6 +290,8 @@ export default function MonacoEditor({
               }
             : undefined,
           smoothScrolling: false,
+          // Fork. Why: hovers (types, blame) near the right edge were clipped by the editor's bounds.
+          fixedOverflowWidgets: true,
           cursorSmoothCaretAnimation: 'off',
           padding: { top: 0 },
           find: monacoFindOptions,

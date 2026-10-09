@@ -1084,8 +1084,9 @@ one first). GitHub's `commits/{sha}` gives the author's avatar (shown in the car
 commit also counts as "You" when that login is `gh`'s own (`user`), since squash merges carry your
 GitHub email, not necessarily the checkout's `user.email`. Tailwind's base makes images blocks, so
 `main.css` puts hover images back inline. The renderer (`lib/monaco-git-blame.ts`, text in `lib/git-blame-text.ts`) blames 250ms
-after the cursor changes line or the text changes, only in focused local file editors (not diffs,
-not remote worktrees, not files over 16,384 lines). The gap before the text is non-breaking spaces,
+after the cursor changes line or the text changes, only in focused local editors: file editors and
+the modified side of a diff (`isModifiedDiffSide` in `diff-editor-model-files.ts`), not the
+original side, remote worktrees or files over 16,384 lines. The gap before the text is non-breaking spaces,
 not a CSS margin, because Monaco splits long injected text into several spans. The text never wraps
 or scrolls the line sideways: it is cut with "…" to the room between the line's end and the editor's
 right edge (`fitInlineText`, measured again on layout changes), and hidden when under 12 characters
@@ -1102,6 +1103,11 @@ Editor → **Git Blame** has "Show line blame" and "Show "You" for my commits" (
 | `src/renderer/src/lib/monaco-setup.ts` | The `git blame` setup step. |
 | `src/renderer/src/assets/main.css` | `.orca-git-blame-inline`. |
 | `src/renderer/src/components/editor/useDiffViewerFirstChangeAutoScroll.ts` (+ test) | A pending reveal (a definition jump into a diff) is latched before the editor exists, so a slow diff no longer scrolls the jump back to its first change. |
+| `src/renderer/src/components/editor/MonacoEditor.tsx`, `DiffViewer.tsx`, `DiffSectionBody.tsx` | `fixedOverflowWidgets: true`, so hovers near the right edge aren't clipped by the editor. |
+
+A jump that replaces its tab closes it with `closeTabKeepingReveal` (`lib/close-tab-keeping-reveal.ts`):
+`closeFile` clears the pending reveal, which a diff target has not applied yet, so the diff opened
+at its first change (an import) instead of the definition.
 
 ## Verify
 

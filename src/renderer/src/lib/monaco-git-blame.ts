@@ -3,14 +3,14 @@ import { toast } from 'sonner'
 import type { GitBlameLine, GitBlameLinks } from '../../../shared/git-blame'
 import { translate } from '@/i18n/i18n'
 import { useAppStore } from '@/store'
-import { modelFileFor } from './diff-editor-model-files'
+import { isModifiedDiffSide, modelFileFor } from './diff-editor-model-files'
 import {
   blameHoverMarkdown,
   blameInlineText,
   fitInlineText,
   gitBlameSettings
 } from './git-blame-text'
-import { openFileContext } from './language-server-editor'
+import { openFileContext, trackedFileContext } from './language-server-editor'
 
 const BLAME_DELAY_MS = 250
 const MAX_BLAMED_LINES = 16_384
@@ -69,8 +69,16 @@ function registerCommands(monaco: typeof Monaco): void {
 
 function blameTarget(model: Monaco.editor.ITextModel) {
   const { uri } = model
-  // Why: a diff side or a remote/runtime-owned model has no local file to blame.
-  if (uri.scheme !== 'file' || uri.fragment || modelFileFor(uri.toString())) {
+  const tracked = modelFileFor(uri.toString())
+  if (tracked) {
+    // Why the modified side only: the original side shows an older version, not today's lines.
+    const context = isModifiedDiffSide(uri.toString())
+      ? trackedFileContext(useAppStore.getState(), tracked)
+      : null
+    return context
+  }
+  // Why: a remote/runtime-owned model has no local file to blame.
+  if (uri.scheme !== 'file' || uri.fragment) {
     return null
   }
   const context = openFileContext(useAppStore.getState(), uri.fsPath)

@@ -6,6 +6,7 @@ import { modelFileFor } from './diff-editor-model-files'
 import {
   definitionOpenTarget,
   pythonDefinitionContext,
+  targetHasDiff,
   toEditorPosition,
   trackedFileContext
 } from './python-definition'
@@ -14,23 +15,44 @@ function definitionSource(uri: Monaco.Uri) {
   const state = useAppStore.getState()
   const tracked = modelFileFor(uri.toString())
   if (tracked) {
-    return trackedFileContext(state, tracked)
+    const context = trackedFileContext(state, tracked)
+    return context ? { ...context, fromDiff: true } : null
   }
   // A fragment marks a remote or runtime-owned model; pyrefly only sees local checkouts.
   if (uri.scheme !== 'file' || uri.fragment) {
     return null
   }
   const context = pythonDefinitionContext(state, uri.fsPath)
-  return context ? { filePath: uri.fsPath, ...context } : null
+  return context ? { filePath: uri.fsPath, ...context, fromDiff: false } : null
 }
 
-function openDefinition(worktreeId: string, targetFilePath: string, line: number, column: number) {
+function openDefinition(
+  source: { worktreeId: string; worktreeRoot: string; fromDiff: boolean },
+  targetFilePath: string,
+  line: number,
+  column: number
+) {
   const store = useAppStore.getState()
-  const target = definitionOpenTarget(store, worktreeId, targetFilePath)
+  const target = definitionOpenTarget(store, source.worktreeId, targetFilePath)
   if (!target) {
     return false
   }
   activateAndRevealWorktree(target.worktreeId, { providesInitialSurface: true })
+  // Why: reading a diff, a jump into another changed file should land in that file's diff too.
+  if (
+    source.fromDiff &&
+    target.relativePath !== target.filePath &&
+    targetHasDiff(store, target.worktreeId, target.relativePath)
+  ) {
+    store.openDiffAtLocation({
+      worktreeId: target.worktreeId,
+      worktreePath: source.worktreeRoot,
+      relativePath: target.relativePath,
+      line,
+      preview: false
+    })
+    return true
+  }
   store.openFile(
     {
       filePath: target.filePath,
@@ -101,7 +123,7 @@ export function installMonacoPythonDefinition(monaco: typeof Monaco): void {
         selectionOrPosition && 'startLineNumber' in selectionOrPosition
           ? { line: selectionOrPosition.startLineNumber, column: selectionOrPosition.startColumn }
           : { line: selectionOrPosition?.lineNumber ?? 1, column: selectionOrPosition?.column ?? 1 }
-      return openDefinition(source.worktreeId, resource.fsPath, start.line, start.column)
+      return openDefinition(source, resource.fsPath, start.line, start.column)
     }
   })
 }

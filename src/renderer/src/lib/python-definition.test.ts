@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   definitionOpenTarget,
   pythonDefinitionContext,
+  targetHasDiff,
   toEditorPosition,
   trackedFileContext
 } from './python-definition'
@@ -75,6 +76,28 @@ describe('trackedFileContext', () => {
 
   it('has nothing for a remote worktree', () => {
     expect(trackedFileContext(state, { worktreeId: 'wt-ssh', relativePath: 'a.py' })).toBeNull()
+  })
+})
+
+describe('targetHasDiff', () => {
+  const changes = {
+    gitStatusByWorktree: { 'wt-1': [{ path: 'apps/backend/dirty.py' }] },
+    gitBranchChangesByWorktree: { 'wt-1': [{ path: 'apps/backend/branch.py' }] },
+    gitBranchCompareSummaryByWorktree: { 'wt-1': { status: 'ready' } }
+  }
+
+  it('is true for an uncommitted change or a branch change', () => {
+    expect(targetHasDiff(changes, 'wt-1', 'apps/backend/dirty.py')).toBe(true)
+    expect(targetHasDiff(changes, 'wt-1', 'apps/backend/branch.py')).toBe(true)
+  })
+
+  it('is false for an unchanged file, or a branch change before the compare is ready', () => {
+    expect(targetHasDiff(changes, 'wt-1', 'apps/backend/clean.py')).toBe(false)
+    const loading = {
+      ...changes,
+      gitBranchCompareSummaryByWorktree: { 'wt-1': { status: 'loading' } }
+    }
+    expect(targetHasDiff(loading, 'wt-1', 'apps/backend/branch.py')).toBe(false)
   })
 })
 

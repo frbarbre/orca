@@ -1009,7 +1009,9 @@ a jump into another file as an Orca tab (`lib/monaco-python-definition.ts`, logi
 Diff editors name their models with internal diff paths, so `DiffViewer.tsx` and
 `DiffSectionItem.tsx` record each side's file with `trackDiffEditorFile`
 (`lib/diff-editor-model-files.ts`); Cmd+click in either side of a diff then works too, and a
-same-file hit stays in the diff.
+same-file hit stays in the diff. From a diff, a target file that has its own changes
+(`targetHasDiff`) opens in its diff via `openDiffAtLocation`, which prefers the uncommitted diff
+(the newest version) over the branch diff; an unchanged target opens in a normal tab.
 
 | File | What is ours |
 | --- | --- |

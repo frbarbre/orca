@@ -795,6 +795,10 @@ visible (not `inert`) pane focuses the page and runs `claude-web-prompt-focus.ts
 polls up to 10 s for `[data-testid="code-prompt-input"]` (fallback `[role="textbox"][aria-label="Prompt"]`)
 and puts the caret at the end. A view restored after a reload has no request and never takes focus.
 
+Right-click: a `<webview>` shows no menu of its own, so `claude-web-context-menu.ts` (+ test), installed
+on attach, pops a native menu built from the click: Cut/Copy/Paste in an editable field (enabled by the
+page's edit flags), Copy for a selection, Open/Copy Link for an http(s) link, and Select All.
+
 Window focus: terminal wake recovery refocuses the active pane on every window `focus`; for a pane
 under the web view that meant the cover, which forwards to the page, which blurs Orca's window
 mid-press and cancels a tab-strip click (the tab strip cancels a press on window blur). So clicks on

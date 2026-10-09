@@ -37,7 +37,10 @@ export function PythonEnvironmentSection({
       <RepoSettingsDraftInput
         repoId={repo.id}
         storeValue={repo.pythonVenvPath ?? ''}
-        placeholder=".venv"
+        placeholder={translate(
+          'auto.components.settings.PythonEnvironmentSection.placeholder',
+          '.venv'
+        )}
         onTextChange={() => {}}
         onBlur={(e) => {
           const pythonVenvPath = e.currentTarget.value.trim() || undefined

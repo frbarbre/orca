@@ -166,7 +166,23 @@ export function getRepositoryGitWorktreeSearchEntries(repo: Repo): SettingsSearc
         'auto.components.settings.repository.search.pythonEnvironmentDescription',
         'The venv pyrefly uses for go-to-definition in Python files.'
       ),
-      keywords: [repo.displayName, 'python', 'venv', 'virtualenv', 'pyrefly', 'definition']
+      keywords: [
+        repo.displayName,
+        ...translateSearchKeyword('auto.components.settings.repository.search.python', 'python', {
+          englishOnly: true
+        }),
+        ...translateSearchKeyword('auto.components.settings.repository.search.venv', 'venv', {
+          englishOnly: true,
+          aliases: ['virtualenv']
+        }),
+        ...translateSearchKeyword('auto.components.settings.repository.search.pyrefly', 'pyrefly', {
+          englishOnly: true
+        }),
+        ...translateSearchKeyword(
+          'auto.components.settings.repository.search.definition',
+          'definition'
+        )
+      ]
     }
   ]
 }

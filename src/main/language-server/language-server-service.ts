@@ -1,4 +1,4 @@
-import { isAbsolute } from 'node:path'
+import { isAbsolute, relative } from 'node:path'
 import type {
   LanguageServerDefinitionResult,
   LanguageServerHoverResult,
@@ -27,6 +27,11 @@ export type LanguageServerLaunch = {
 }
 
 type Session = Pick<LspSession, 'closed' | 'definition' | 'hover' | 'dispose'>
+
+function isInside(root: string, path: string): boolean {
+  const rel = relative(root, path)
+  return rel !== '' && !rel.startsWith('..') && !isAbsolute(rel)
+}
 
 function resolveLaunch(
   { language, filePath, worktreeRoot, repoRoot, venvSetting }: LanguageServerRequest,
@@ -73,6 +78,7 @@ export function createLanguageServerService({
   disposeAll: () => void
 } {
   const launches = new Map<string, LanguageServerLaunch>()
+  const lastLaunchByWorktree = new Map<string, LanguageServerLaunch>()
   const pool = createLspSessionPool<Session>({
     start: (key) => {
       const launch = launches.get(key)
@@ -94,7 +100,16 @@ export function createLanguageServerService({
     if (!pattern || !isAbsolute(filePath) || !isAbsolute(worktreeRoot) || !pattern.test(filePath)) {
       return { ok: false, error: `Not a ${language} file in a local worktree.` }
     }
-    const launch = resolveLaunch(request, exists)
+    // Why: a file outside the checkout (a bundled typeshed stub, a global package) has no project
+    // of its own, so it goes to the server that led there, with that project's venv.
+    const outside =
+      !isInside(worktreeRoot, filePath) &&
+      !(request.repoRoot && isInside(request.repoRoot, filePath))
+    const lastKey = `${language}\0${worktreeRoot}`
+    const launch = (outside && lastLaunchByWorktree.get(lastKey)) || resolveLaunch(request, exists)
+    if (!outside) {
+      lastLaunchByWorktree.set(lastKey, launch)
+    }
     const key = sessionKey(launch)
     launches.set(key, launch)
     try {

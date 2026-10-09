@@ -1005,7 +1005,9 @@ sets `VIRTUAL_ENV` for a venv).
   the repo's `pythonVenvPath` setting (Settings → project → Python Environment; relative to the
   worktree or absolute), else the nearest `.venv`/`venv`. A worktree without one borrows the main
   checkout's venv at the same relative path (`repoRoot` in the request); a relative setting falls
-  back there too.
+  back there too. `.pyi` stubs open as `python` (`language-detect.ts`). A file outside the
+  worktree and main checkout (pyrefly's bundled typeshed in a temp dir) goes to the server that
+  worktree last used for that language, which has the right venv.
 - **TypeScript/JavaScript:** `tsgo --lsp --stdio` (`@typescript/native-preview`) for the nearest
   `tsconfig.json`/`jsconfig.json` (`typescript-project-resolution.ts`), from the nearest
   `node_modules/.bin/tsgo`, then the main checkout's, then `PATH`. `bun check` was considered: it

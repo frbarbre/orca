@@ -144,6 +144,19 @@ describe('language server service', () => {
     })
   })
 
+  it("asks the worktree's last server about a file outside it, like a bundled typeshed stub", async () => {
+    const { service, startSession, definition } = setup()
+    await service.definition(request)
+
+    const stub = '/var/folders/x/pyrefly_bundled_typeshed/typing.pyi'
+    await service.hover({ ...request, filePath: stub })
+    expect(startSession).toHaveBeenCalledTimes(1)
+    expect(startSession).toHaveBeenCalledWith(
+      expect.objectContaining({ projectRoot: '/repo/apps/backend' })
+    )
+    expect(definition).toHaveBeenCalledTimes(1)
+  })
+
   it("stops one language's servers and leaves the other running", async () => {
     const { service, sessions } = setup()
     await service.definition(request)

@@ -10,6 +10,10 @@ describe('detectLanguage', () => {
     expect(detectLanguage('src/components/Widget.svelte')).toBe('svelte')
   })
 
+  it('maps Python stub files to python, like their .py sources', () => {
+    expect(detectLanguage('/tmp/pyrefly_bundled_typeshed/typing.pyi')).toBe('python')
+  })
+
   it('maps .astro files to the custom astro language id', () => {
     expect(detectLanguage('src/routes/index.astro')).toBe('astro')
   })

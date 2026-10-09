@@ -19355,6 +19355,11 @@
         "inlineVisualsToggleLabel": "Toggle inline visuals",
         "queueFollowUpsCopy": "Messages you send while the agent is working wait as cards you can steer, edit, or delete. Messages with images send right away.",
         "queueFollowUpsToggleLabel": "Toggle queue follow-ups"
+      },
+      "claudeWeb": {
+        "defaultViewTitle": "Open Claude in Claude web",
+        "defaultViewCopy": "New Claude Code terminal tabs open in their claude.ai Remote Control page. The terminal keeps running underneath.",
+        "defaultViewToggleLabel": "Toggle opening Claude in Claude web"
       }
     },
     "agentChildRow": {

@@ -2,6 +2,7 @@ import type { GlobalSettings } from '../../../../shared/global-settings-types'
 import { useLocalStructuredAgentSessionsHeld } from '@/runtime/local-structured-chats'
 import { translate } from '@/i18n/i18n'
 import { Label } from '../ui/label'
+import { ClaudeWebDefaultViewSetting } from './ClaudeWebDefaultViewSetting'
 import { NativeChatQueueFollowUpsSetting } from './NativeChatQueueFollowUpsSetting'
 import { NativeChatShellEnvironmentSetting } from './NativeChatShellEnvironmentSetting'
 import { NativeChatSupportedAgents } from './NativeChatSupportedAgents'
@@ -60,6 +61,7 @@ export function NativeChatExperimentalSetting({
           }
         />
       </div>
+      <ClaudeWebDefaultViewSetting settings={settings} updateSettings={updateSettings} />
       {structuredChatActive ? (
         <div className="ml-4 space-y-4 border-l border-border pl-4">
           {/* Only structured sessions have a resume cursor to continue from. */}

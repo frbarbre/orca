@@ -4,6 +4,7 @@ import type { ClaudeRemoteSessionUrlResult } from '../../shared/claude-remote-se
 import { resolveClaudeRemoteSessionUrl } from '../claude/claude-remote-session-url'
 import { installClaudeWebGuestShortcuts } from '../claude/claude-web-guest-shortcuts'
 import { installClaudeWebContextMenu } from '../claude/claude-web-context-menu'
+import { installClaudeWebExternalLinks } from '../claude/claude-web-external-links'
 import { sendResolvedWindowShortcutAction } from '../window/main-window-shortcut-actions'
 
 export function registerClaudeRemoteSessionHandlers(
@@ -41,6 +42,7 @@ export function registerClaudeRemoteSessionHandlers(
         openExternal: (url) => void shell.openExternal(url),
         writeClipboard: (text) => clipboard.writeText(text)
       })
+      installClaudeWebExternalLinks(guest)
       installClaudeWebGuestShortcuts(
         guest,
         getKeybindings,

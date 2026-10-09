@@ -799,6 +799,10 @@ Right-click: a `<webview>` shows no menu of its own, so `claude-web-context-menu
 on attach, pops a native menu built from the click: Cut/Copy/Paste in an editable field (enabled by the
 page's edit flags), Copy for a selection, Open/Copy Link for an http(s) link, and Select All.
 
+Links: claude.ai opens links in a new tab, which a `<webview>` drops unless the host handles it.
+`claude-web-external-links.ts` (+ test), installed on attach, opens http(s) ones in the default
+browser and denies every other window.
+
 Window focus: terminal wake recovery refocuses the active pane on every window `focus`; for a pane
 under the web view that meant the cover, which forwards to the page, which blurs Orca's window
 mid-press and cancels a tab-strip click (the tab strip cancels a press on window blur). So clicks on

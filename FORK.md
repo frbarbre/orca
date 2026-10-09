@@ -1203,6 +1203,19 @@ sync hit exactly that (#23062 landed two commits later) and was fixed by merging
   new Linear context), `WorktreeOpenInMenu.tsx` (the Mod+O shortcut label beside upstream's new
   availability arguments).
 - Upstream's Vitest is now 5.x.
+- Verify round 1: upstream's `defineMethod` now requires a `permission` (the fork's `agentNote.*` and
+  `git.checkReviewAttributes` take `'workspace'`); a new `chat-visual` tab kind broke the exhaustive
+  switch in `focus-tab-group-in-direction.ts`; upstream's new `source-control-too-many-changes-banner`
+  test omits the fork's `isCategoryFilterActive`, now optional; `web-git-api.ts` and
+  `NativeChatResolvedView.tsx` sat at their line caps, so the fork's review-attributes call moved to
+  `web-git-review-attributes-api.ts` and the chat View submenu's pane now rides in the portal's
+  `contextMenuActions.agentView`; upstream's new "Switch to terminal view" test in
+  `SortableTabContextMenu.test.tsx` was rewritten for the View submenu.
+- Verify round 2: `pnpm lint` now runs `verify:localization-catalogs` under Bun, so the lint job in
+  `fork-verify.yml` installs it too.
+- Upstream added two pull-request workflows (`preflight-cli-platforms.yml`,
+  `win-orcad-serve-switch-e2e.yml`); they ran once on the sync PR before the disable script could
+  see them.
 
 **1.4.214 → 1.4.214** (`2b0ce17514..cc6006779f`, 164 upstream commits, eight conflicts)
 

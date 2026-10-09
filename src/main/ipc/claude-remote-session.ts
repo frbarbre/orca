@@ -1,4 +1,4 @@
-import { BrowserWindow, ipcMain, webContents } from 'electron'
+import { BrowserWindow, clipboard, ipcMain, Menu, shell, webContents } from 'electron'
 import type { KeybindingOverrides } from '../../shared/keybindings'
 import type { ClaudeRemoteSessionUrlResult } from '../../shared/claude-remote-session'
 import { resolveClaudeRemoteSessionUrl } from '../claude/claude-remote-session-url'
@@ -30,7 +30,17 @@ export function registerClaudeRemoteSessionHandlers(
         return
       }
       const host = event.sender
-      installClaudeWebContextMenu(guest)
+      installClaudeWebContextMenu(guest, {
+        showMenu: (items, separatorBefore) =>
+          Menu.buildFromTemplate(
+            items.flatMap((item, index) => [
+              ...(index === separatorBefore ? [{ type: 'separator' as const }] : []),
+              { label: item.label, enabled: item.enabled, click: item.click }
+            ])
+          ).popup(),
+        openExternal: (url) => void shell.openExternal(url),
+        writeClipboard: (text) => clipboard.writeText(text)
+      })
       installClaudeWebGuestShortcuts(
         guest,
         getKeybindings,

@@ -1,5 +1,3 @@
-import { clipboard, Menu, shell } from 'electron'
-
 export type ClaudeWebMenuActions = {
   cut: () => void
   copy: () => void
@@ -40,8 +38,18 @@ export function buildClaudeWebContextMenu(
 
 const installedGuests = new WeakSet<object>()
 
+export type ClaudeWebMenuHost = {
+  showMenu: (items: readonly ClaudeWebMenuItem[], separatorBefore: number) => void
+  openExternal: (url: string) => void
+  writeClipboard: (text: string) => void
+}
+
 // Fork: a <webview> shows no menu of its own on right-click, so the claude.ai page got none.
-export function installClaudeWebContextMenu(guest: Electron.WebContents): void {
+// Why the host is passed in: this module is reachable from the headless runtime, which has no Electron.
+export function installClaudeWebContextMenu(
+  guest: Electron.WebContents,
+  host: ClaudeWebMenuHost
+): void {
   if (installedGuests.has(guest)) {
     return
   }
@@ -52,15 +60,9 @@ export function installClaudeWebContextMenu(guest: Electron.WebContents): void {
       copy: () => guest.copy(),
       paste: () => guest.paste(),
       selectAll: () => guest.selectAll(),
-      openLink: (url) => void shell.openExternal(url),
-      copyText: (text) => clipboard.writeText(text)
+      openLink: host.openExternal,
+      copyText: host.writeClipboard
     })
-    const separatorAfterLink = items[0]?.label === 'Open Link' ? 2 : -1
-    Menu.buildFromTemplate(
-      items.flatMap((item, index) => [
-        ...(index === separatorAfterLink ? [{ type: 'separator' as const }] : []),
-        { label: item.label, enabled: item.enabled, click: item.click }
-      ])
-    ).popup()
+    host.showMenu(items, items[0]?.label === 'Open Link' ? 2 : -1)
   })
 }

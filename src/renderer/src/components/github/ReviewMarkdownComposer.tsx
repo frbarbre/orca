@@ -11,6 +11,7 @@ import { ReviewMention, type MentionQueryState } from './review-mention-extensio
 import { ReviewEmojiShortcode } from './review-emoji-shortcode-extension'
 import { searchCommentEmoji } from './emoji-shortcode-query'
 import { EmojiShortcodeList } from './emoji-shortcode-list'
+import { useReviewAssetDropClaim } from './review-asset-drop-claim'
 
 function sameQuery(a: MentionQueryState | null, b: MentionQueryState | null): boolean {
   return a === b || (!!a && !!b && a.query === b.query && a.from === b.from && a.left === b.left)
@@ -45,6 +46,8 @@ export function ReviewMarkdownComposer({
   const [active, setActive] = useState(0)
   const queryRef = useRef<MentionQueryState | null>(null)
   const editorRef = useRef<Editor | null>(null)
+  const dropRootRef = useRef<HTMLDivElement | null>(null)
+  useReviewAssetDropClaim(dropRootRef, uploads)
   const options = useActiveRepoMentionOptions(mentions && query !== null)
   const activeWorktreeId = useAppStore((state) => state.activeWorktreeId)
   const scope = usePRCommentScope(activeWorktreeId)
@@ -214,6 +217,7 @@ export function ReviewMarkdownComposer({
 
   return (
     <div
+      ref={dropRootRef}
       className={cn('review-markdown-composer min-w-0', className)}
       {...(uploads ? { 'data-review-asset-drop': '' } : {})}
     >

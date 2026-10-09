@@ -71,7 +71,7 @@ export function definitionOpenTarget(
 type ChangeState = {
   gitStatusByWorktree: Record<string, readonly { path: string }[] | undefined>
   gitBranchChangesByWorktree: Record<string, readonly { path: string }[] | undefined>
-  gitBranchCompareSummaryByWorktree: Record<string, { status: string } | undefined>
+  gitBranchCompareSummaryByWorktree: Record<string, { status: string } | null | undefined>
 }
 
 // Why the ready gate: openDiffAtLocation falls back to a changes-mode tab when it finds no diff.

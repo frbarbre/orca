@@ -1155,6 +1155,20 @@ extension applies them by rewriting SVG files.
 | `src/renderer/src/components/settings/GeneralEditorSettingsSection.tsx`, `general-editor-search.ts` | `FileIconsSetting` and its search entry. |
 | `package.json`, `pnpm-lock.yaml` | `material-icon-theme` 5.39.0. |
 
+### 29. The right sidebar follows the active file's kind
+
+However a tab becomes active (a click, Cmd+click, the next-changed-file hotkey, the command menu,
+history), the right sidebar shows source control for a diff (a diff or conflict-review tab, or a
+file in its changes view) and the explorer's files for a plain file
+(`lib/right-sidebar-follows-file.ts`, installed in `main.tsx`). It switches only when the kind
+changes, so a panel the user picks stays while they move between diffs or between files.
+Terminals, browsers and other tabs change nothing. It switches the tab without opening a closed
+sidebar.
+
+| File | What is ours |
+| --- | --- |
+| `src/renderer/src/main.tsx` | `installRightSidebarFollowsFile()`. |
+
 ## Verify
 
 Verify runs on GitHub, not locally: `fork-verify.yml` runs it on every pull request against `main`,

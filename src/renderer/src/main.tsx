@@ -27,6 +27,7 @@ import { installBrowserClientPageRenderer } from './components/browser-pane/brow
 import { setMainReleaseRepoOverride } from '../../shared/release-channel'
 import { installOsFileDropCancellationGuard } from './lib/os-file-drop-cancellation-guard'
 import { startMaterialIconConfigSync } from './lib/material-icons/material-icon-config-sync'
+import { installRightSidebarFollowsFile } from './lib/right-sidebar-follows-file'
 
 const disposeOsFileDropGuard = installOsFileDropCancellationGuard()
 import.meta.hot?.dispose(disposeOsFileDropGuard)
@@ -35,6 +36,7 @@ installRendererCrashDiagnostics()
 installTypingLatencyDiagnostic()
 installAutomationHostDiagnostic()
 startMaterialIconConfigSync()
+installRightSidebarFollowsFile()
 // Why a build flag: the renderer cannot read the main process's env, and the fork's release links
 // must point at the repo it updates from. Unset in upstream builds, which keep upstream's links.
 if (import.meta.env.VITE_ORCA_RELEASES_REPO) {

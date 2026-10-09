@@ -61,6 +61,42 @@ describe('resolvePythonProject', () => {
     ).toEqual({ projectRoot: '/repo', venvPath: '/opt/venvs/app', pyrefly: 'pyrefly' })
   })
 
+  it("borrows the main checkout's venv when the worktree has none of its own", () => {
+    const exists = existsIn([
+      '/wt/e-5139/apps/backend/pyproject.toml',
+      '/repo/apps/backend/.venv/bin/pyrefly'
+    ])
+    expect(
+      resolvePythonProject({
+        filePath: '/wt/e-5139/apps/backend/djank/models.py',
+        worktreeRoot: '/wt/e-5139',
+        repoRoot: '/repo',
+        venvSetting: null,
+        exists
+      })
+    ).toEqual({
+      projectRoot: '/wt/e-5139/apps/backend',
+      venvPath: '/repo/apps/backend/.venv',
+      pyrefly: '/repo/apps/backend/.venv/bin/pyrefly'
+    })
+  })
+
+  it('resolves a relative venv setting against the main checkout when the worktree lacks it', () => {
+    const exists = existsIn([
+      '/wt/e-5139/apps/backend/pyproject.toml',
+      '/repo/apps/backend/.venv/bin/pyrefly'
+    ])
+    expect(
+      resolvePythonProject({
+        filePath: '/wt/e-5139/apps/backend/a.py',
+        worktreeRoot: '/wt/e-5139',
+        repoRoot: '/repo',
+        venvSetting: 'apps/backend/.venv',
+        exists
+      }).pyrefly
+    ).toBe('/repo/apps/backend/.venv/bin/pyrefly')
+  })
+
   it('treats the worktree as the project when no config file is found', () => {
     expect(
       resolvePythonProject({

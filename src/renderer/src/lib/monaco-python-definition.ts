@@ -1,4 +1,6 @@
 import type * as Monaco from 'monaco-editor'
+import { toast } from 'sonner'
+import { translate } from '@/i18n/i18n'
 import { detectLanguage } from '@/lib/language-detect'
 import { activateAndRevealWorktree } from '@/lib/worktree-activation'
 import { useAppStore } from '@/store'
@@ -77,6 +79,23 @@ function openDefinition(
 
 // Fork: Cmd+click in a local Python file, or either side of its diff, asks pyrefly (main process)
 // where the symbol is defined.
+const reportedFailures = new Set<string>()
+
+// Why once per message: hover fires constantly, and a missing pyrefly would otherwise fail silently.
+function reportServerFailure(error: string): void {
+  if (reportedFailures.has(error)) {
+    return
+  }
+  reportedFailures.add(error)
+  toast.error(
+    translate(
+      'auto.lib.pythonDefinition.unavailable',
+      'Python go-to-definition is unavailable ({{error}}). Set a Python Environment in the project settings.',
+      { error }
+    )
+  )
+}
+
 export function installMonacoPythonDefinition(monaco: typeof Monaco): void {
   monaco.languages.registerDefinitionProvider('python', {
     provideDefinition: async (model, position) => {
@@ -87,11 +106,15 @@ export function installMonacoPythonDefinition(monaco: typeof Monaco): void {
       const result = await window.api.python.definition({
         filePath: source.filePath,
         worktreeRoot: source.worktreeRoot,
+        repoRoot: source.repoRoot,
         venvSetting: source.venvSetting,
         text: model.getValue(),
         line: position.lineNumber - 1,
         character: position.column - 1
       })
+      if (!result.ok) {
+        reportServerFailure(result.error)
+      }
       const location = result.ok ? result.locations[0] : undefined
       if (!location) {
         return null
@@ -115,6 +138,7 @@ export function installMonacoPythonDefinition(monaco: typeof Monaco): void {
       const result = await window.api.python.hover({
         filePath: source.filePath,
         worktreeRoot: source.worktreeRoot,
+        repoRoot: source.repoRoot,
         venvSetting: source.venvSetting,
         text: model.getValue(),
         line: position.lineNumber - 1,

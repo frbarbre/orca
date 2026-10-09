@@ -8,7 +8,7 @@ function readRequest(value: unknown): PythonDefinitionRequest | null {
   if (typeof value !== 'object' || value === null) {
     return null
   }
-  const { filePath, worktreeRoot, venvSetting, text, line, character } = value as Record<
+  const { filePath, worktreeRoot, repoRoot, venvSetting, text, line, character } = value as Record<
     string,
     unknown
   >
@@ -24,6 +24,7 @@ function readRequest(value: unknown): PythonDefinitionRequest | null {
   return {
     filePath,
     worktreeRoot,
+    repoRoot: typeof repoRoot === 'string' && repoRoot ? repoRoot : null,
     venvSetting: typeof venvSetting === 'string' ? venvSetting : null,
     text,
     line,

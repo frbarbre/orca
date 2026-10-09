@@ -4,6 +4,8 @@ export type PythonDefinitionLocation = { filePath: string; line: number; charact
 export type PythonDefinitionRequest = {
   filePath: string
   worktreeRoot: string
+  /** The repo's main checkout; its venv covers worktrees that have none. */
+  repoRoot: string | null
   venvSetting: string | null
   text: string
   line: number

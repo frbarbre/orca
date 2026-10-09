@@ -6,13 +6,19 @@ type DefinitionState = {
   worktreesByRepo: Record<string, readonly { id: string; path: string; repoId: string }[]>
   repos: readonly {
     id: string
+    path: string
     connectionId?: string | null
     executionHostId?: string | null
-    pythonVenvPath?: string
+    pythonVenvPath?: string | null
   }[]
 }
 
-type DefinitionContext = { worktreeId: string; worktreeRoot: string; venvSetting: string | null }
+type DefinitionContext = {
+  worktreeId: string
+  worktreeRoot: string
+  repoRoot: string
+  venvSetting: string | null
+}
 
 function localWorktree(state: DefinitionState, worktreeId: string): DefinitionContext | null {
   for (const worktrees of Object.values(state.worktreesByRepo)) {
@@ -28,6 +34,7 @@ function localWorktree(state: DefinitionState, worktreeId: string): DefinitionCo
     return {
       worktreeId,
       worktreeRoot: worktree.path.replace(/\/+$/, ''),
+      repoRoot: repo.path.replace(/\/+$/, ''),
       venvSetting: repo.pythonVenvPath ?? null
     }
   }

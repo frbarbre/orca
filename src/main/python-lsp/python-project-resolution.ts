@@ -22,11 +22,15 @@ function findProjectRoot(filePath: string, worktreeRoot: string, exists: (p: str
   return worktreeRoot
 }
 
-function findVenv(projectRoot: string, worktreeRoot: string, exists: (p: string) => boolean) {
-  for (const root of new Set([projectRoot, worktreeRoot])) {
+function isVenv(venv: string, exists: (p: string) => boolean): boolean {
+  return exists(join(venv, 'bin', 'pyrefly')) || exists(join(venv, 'bin', 'python'))
+}
+
+function findVenv(roots: readonly string[], exists: (p: string) => boolean) {
+  for (const root of new Set(roots)) {
     for (const name of VENV_DIRS) {
       const venv = join(root, name)
-      if (exists(join(venv, 'bin', 'pyrefly')) || exists(join(venv, 'bin', 'python'))) {
+      if (isVenv(venv, exists)) {
         return venv
       }
     }
@@ -37,19 +41,36 @@ function findVenv(projectRoot: string, worktreeRoot: string, exists: (p: string)
 export function resolvePythonProject({
   filePath,
   worktreeRoot,
+  repoRoot,
   venvSetting,
   exists
 }: {
   filePath: string
   worktreeRoot: string
+  /** The repo's main checkout, whose venv a fresh worktree can borrow. */
+  repoRoot?: string | null
   venvSetting: string | null
   exists: (path: string) => boolean
 }): PythonProject {
   const projectRoot = findProjectRoot(filePath, worktreeRoot, exists)
+  // Why the main checkout too: new worktrees rarely get their own venv, and the packages match.
+  const mainCheckout = repoRoot && repoRoot !== worktreeRoot ? repoRoot : null
   const configured = venvSetting?.trim()
-  const venvPath = configured
-    ? resolve(worktreeRoot, configured)
-    : findVenv(projectRoot, worktreeRoot, exists)
+  let venvPath: string | null
+  if (configured) {
+    const inWorktree = resolve(worktreeRoot, configured)
+    const inMainCheckout = mainCheckout ? resolve(mainCheckout, configured) : null
+    venvPath =
+      !isVenv(inWorktree, exists) && inMainCheckout && isVenv(inMainCheckout, exists)
+        ? inMainCheckout
+        : inWorktree
+  } else {
+    const roots = [projectRoot, worktreeRoot]
+    if (mainCheckout) {
+      roots.push(join(mainCheckout, relative(worktreeRoot, projectRoot)), mainCheckout)
+    }
+    venvPath = findVenv(roots, exists)
+  }
   const venvPyrefly = venvPath ? join(venvPath, 'bin', 'pyrefly') : null
   return {
     projectRoot,

@@ -39,13 +39,13 @@ export function createPythonDefinitionService({
   })
 
   const withSession = async <T>(
-    { filePath, worktreeRoot, venvSetting }: PythonDefinitionRequest,
+    { filePath, worktreeRoot, repoRoot, venvSetting }: PythonDefinitionRequest,
     ask: (session: Session) => Promise<T>
   ): Promise<{ ok: true; value: T } | { ok: false; error: string }> => {
     if (!isAbsolute(filePath) || !isAbsolute(worktreeRoot) || !PYTHON_FILE.test(filePath)) {
       return { ok: false, error: 'Not a Python file in a local worktree.' }
     }
-    const project = resolvePythonProject({ filePath, worktreeRoot, venvSetting, exists })
+    const project = resolvePythonProject({ filePath, worktreeRoot, repoRoot, venvSetting, exists })
     const key = JSON.stringify([project.pyrefly, project.projectRoot, project.venvPath])
     projects.set(key, project)
     try {

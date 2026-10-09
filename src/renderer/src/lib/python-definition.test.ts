@@ -14,16 +14,17 @@ const state = {
     'repo-ssh': [{ id: 'wt-ssh', path: '/remote/wt', repoId: 'repo-ssh' }]
   },
   repos: [
-    { id: 'repo-1', connectionId: null, pythonVenvPath: 'apps/backend/.venv' },
-    { id: 'repo-ssh', connectionId: 'ssh-target' }
+    { id: 'repo-1', path: '/repo', connectionId: null, pythonVenvPath: 'apps/backend/.venv' },
+    { id: 'repo-ssh', path: '/remote/repo', connectionId: 'ssh-target' }
   ]
 }
 
 describe('pythonDefinitionContext', () => {
-  it("gives the file's worktree root and the repo's venv setting", () => {
+  it("gives the file's worktree root, the main checkout and the repo's venv setting", () => {
     expect(pythonDefinitionContext(state, '/wt/e-4974/apps/backend/a.py')).toEqual({
       worktreeId: 'wt-1',
       worktreeRoot: '/wt/e-4974',
+      repoRoot: '/repo',
       venvSetting: 'apps/backend/.venv'
     })
   })
@@ -70,6 +71,7 @@ describe('trackedFileContext', () => {
       filePath: '/wt/e-4974/apps/backend/a.py',
       worktreeId: 'wt-1',
       worktreeRoot: '/wt/e-4974',
+      repoRoot: '/repo',
       venvSetting: 'apps/backend/.venv'
     })
   })

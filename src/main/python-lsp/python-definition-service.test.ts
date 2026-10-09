@@ -4,6 +4,7 @@ import { createPythonDefinitionService } from './python-definition-service'
 const request = {
   filePath: '/repo/apps/backend/a.py',
   worktreeRoot: '/repo',
+  repoRoot: '/repo',
   venvSetting: null,
   text: 'import b',
   line: 0,
@@ -19,6 +20,7 @@ function setup() {
   const service = createPythonDefinitionService({
     exists: (path) =>
       path === '/repo/apps/backend/pyproject.toml' ||
+      path === '/wt/e-5139/apps/backend/pyproject.toml' ||
       path === '/repo/apps/backend/.venv/bin/pyrefly',
     startSession
   })
@@ -26,6 +28,19 @@ function setup() {
 }
 
 describe('python definition service', () => {
+  it("runs a venv-less worktree on the main checkout's venv", async () => {
+    const { service, startSession } = setup()
+
+    await service.definition({
+      ...request,
+      filePath: '/wt/e-5139/apps/backend/a.py',
+      worktreeRoot: '/wt/e-5139'
+    })
+    expect(startSession).toHaveBeenCalledWith(
+      expect.objectContaining({ pyrefly: '/repo/apps/backend/.venv/bin/pyrefly' })
+    )
+  })
+
   it('answers hovers from the same pyrefly as definitions', async () => {
     const { service, startSession, hover } = setup()
 

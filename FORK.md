@@ -1000,7 +1000,10 @@ a pool that stops a server after 15 idle minutes and keeps at most 4 (`pyrefly-l
 `python-definition-service.ts` and the spawn (`pyrefly-process.ts`, which sets `VIRTUAL_ENV`).
 pyrefly comes from the venv's `bin/`, else `PATH`. The venv is the repo's new `pythonVenvPath`
 setting (Settings → project → Python Environment; relative to the worktree or absolute), else the
-nearest `.venv`/`venv`. Remote (SSH/runtime) worktrees are skipped.
+nearest `.venv`/`venv`. A worktree without one borrows the main checkout's venv at the same
+relative path (`repoRoot` in the request); a relative setting falls back there too. When the server
+can't run, one toast per error says so instead of failing silently. Remote (SSH/runtime) worktrees
+are skipped.
 
 The renderer registers a Monaco definition provider for `python` and an editor opener that opens
 a jump into another file as an Orca tab (`lib/monaco-python-definition.ts`, logic and tests in

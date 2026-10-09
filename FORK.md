@@ -739,7 +739,7 @@ New files: `src/shared/git-review-attributes.ts` (+ test), `src/main/git/check-r
 | `src/relay/git-handler-read-operations.ts`, `git-handler-registration.ts` | `checkReviewAttributes` and its registration. |
 | `src/preload/api/git-bridge.ts`, `git-inspection-api.ts`, `src/renderer/src/web/preload-api/web-git-api.ts` | `checkReviewAttributes`. |
 | `src/renderer/src/runtime/runtime-git-status-client.ts`, `runtime-git-client.ts` | `getRuntimeGitReviewAttributes`. |
-| `source-control/panel/use-panel-view-state.ts` | `hiddenFileCategories` / `toggleFileCategory`, deliberately not reset on worktree switch. |
+| `source-control/panel/use-panel-view-state.ts` | `hiddenFileCategories` / `toggleFileCategory`, kept per worktree (`hiddenFileCategoriesByWorktree`) so each remembers its own filter; test `use-panel-view-state.file-types.test.ts`. |
 | `source-control/panel/use-panel-foundation.ts`, `listing/use-file-listing.ts` | Passing `hiddenFileCategories` and `reviewAttributes` into the projection. |
 | `source-control/listing/use-file-projection.ts` | `categoryGrouped` feeds both the text filter and `unfilteredDisplaySectionsById`, so section Stage all / Discard all / View all never act on hidden files. Branch entries are category-filtered before the text filter. |
 | `source-control/panel/panel-content.tsx`, `listing/content-status.tsx` | The filter under the commit surface and the "All changed files are hidden" empty state. |

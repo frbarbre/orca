@@ -795,6 +795,10 @@ visible (not `inert`) pane focuses the page and runs `claude-web-prompt-focus.ts
 polls up to 10 s for `[data-testid="code-prompt-input"]` (fallback `[role="textbox"][aria-label="Prompt"]`)
 and puts the caret at the end. A view restored after a reload has no request and never takes focus.
 
+Links: claude.ai opens links in a new tab, which a `<webview>` drops unless the host handles it.
+`claude-web-external-links.ts` (+ test), installed on attach, opens http(s) ones in the default
+browser and denies every other window.
+
 Window focus: terminal wake recovery refocuses the active pane on every window `focus`; for a pane
 under the web view that meant the cover, which forwards to the page, which blurs Orca's window
 mid-press and cancels a tab-strip click (the tab strip cancels a press on window blur). So clicks on

@@ -3,6 +3,7 @@ import type { KeybindingOverrides } from '../../shared/keybindings'
 import type { ClaudeRemoteSessionUrlResult } from '../../shared/claude-remote-session'
 import { resolveClaudeRemoteSessionUrl } from '../claude/claude-remote-session-url'
 import { installClaudeWebGuestShortcuts } from '../claude/claude-web-guest-shortcuts'
+import { installClaudeWebExternalLinks } from '../claude/claude-web-external-links'
 import { sendResolvedWindowShortcutAction } from '../window/main-window-shortcut-actions'
 
 export function registerClaudeRemoteSessionHandlers(
@@ -29,6 +30,7 @@ export function registerClaudeRemoteSessionHandlers(
         return
       }
       const host = event.sender
+      installClaudeWebExternalLinks(guest)
       installClaudeWebGuestShortcuts(
         guest,
         getKeybindings,

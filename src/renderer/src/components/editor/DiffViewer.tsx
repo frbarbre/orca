@@ -37,6 +37,7 @@ import { monacoFindOptions } from './monaco-find-options'
 import { editorThemeName, ensureCustomEditorThemes } from '@/lib/custom-editor-theme'
 import { usePendingReviewForDiff } from '@/components/pending-review/use-pending-review-for-diff'
 import { useDocumentDarkTheme } from '@/hooks/use-document-dark-theme'
+import { trackDiffEditorFile } from '@/lib/diff-editor-model-files'
 
 export default function DiffViewer({
   modelKey,
@@ -233,6 +234,9 @@ export default function DiffViewer({
     (diffEditor, monaco) => {
       diffEditorRef.current = diffEditor
       registerDiffEditor(diffEditor)
+      if (worktreeId) {
+        trackDiffEditorFile(diffEditor, { worktreeId, relativePath })
+      }
       // Why: Monaco applies the inline-layout wrap override after mount, once width is known.
       wordWrapMountFrameRef.current = requestAnimationFrame(() => {
         if (diffEditorRef.current !== diffEditor) {
@@ -308,6 +312,8 @@ export default function DiffViewer({
       setupCopy,
       modelKey,
       filePath,
+      relativePath,
+      worktreeId,
       sideBySide,
       registerDiffEditor,
       unregisterDiffEditor,

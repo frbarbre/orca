@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest'
 import {
   definitionOpenTarget,
   pythonDefinitionContext,
-  toEditorPosition
+  toEditorPosition,
+  trackedFileContext
 } from './python-definition'
 
 const state = {
@@ -39,11 +40,7 @@ describe('pythonDefinitionContext', () => {
 describe('definitionOpenTarget', () => {
   it('opens a target inside the worktree by its relative path', () => {
     expect(
-      definitionOpenTarget(
-        state,
-        '/wt/e-4974/apps/backend/a.py',
-        '/wt/e-4974/apps/backend/domain/frame_parameter.py'
-      )
+      definitionOpenTarget(state, 'wt-1', '/wt/e-4974/apps/backend/domain/frame_parameter.py')
     ).toEqual({
       worktreeId: 'wt-1',
       filePath: '/wt/e-4974/apps/backend/domain/frame_parameter.py',
@@ -52,13 +49,32 @@ describe('definitionOpenTarget', () => {
   })
 
   it('opens a target outside the worktree by its absolute path', () => {
-    expect(
-      definitionOpenTarget(state, '/wt/e-4974/apps/backend/a.py', '/opt/typeshed/builtins.pyi')
-    ).toEqual({
+    expect(definitionOpenTarget(state, 'wt-1', '/opt/typeshed/builtins.pyi')).toEqual({
       worktreeId: 'wt-1',
       filePath: '/opt/typeshed/builtins.pyi',
       relativePath: '/opt/typeshed/builtins.pyi'
     })
+  })
+
+  it('opens nothing for a remote worktree', () => {
+    expect(definitionOpenTarget(state, 'wt-ssh', '/remote/wt/b.py')).toBeNull()
+  })
+})
+
+describe('trackedFileContext', () => {
+  it('turns a diff side into its file on disk, with the worktree and venv setting', () => {
+    expect(
+      trackedFileContext(state, { worktreeId: 'wt-1', relativePath: 'apps/backend/a.py' })
+    ).toEqual({
+      filePath: '/wt/e-4974/apps/backend/a.py',
+      worktreeId: 'wt-1',
+      worktreeRoot: '/wt/e-4974',
+      venvSetting: 'apps/backend/.venv'
+    })
+  })
+
+  it('has nothing for a remote worktree', () => {
+    expect(trackedFileContext(state, { worktreeId: 'wt-ssh', relativePath: 'a.py' })).toBeNull()
   })
 })
 

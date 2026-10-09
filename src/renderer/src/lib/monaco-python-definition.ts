@@ -2,20 +2,31 @@ import type * as Monaco from 'monaco-editor'
 import { detectLanguage } from '@/lib/language-detect'
 import { activateAndRevealWorktree } from '@/lib/worktree-activation'
 import { useAppStore } from '@/store'
+import { modelFileFor } from './diff-editor-model-files'
 import {
   definitionOpenTarget,
   pythonDefinitionContext,
-  toEditorPosition
+  toEditorPosition,
+  trackedFileContext
 } from './python-definition'
 
-function openDefinition(
-  sourceFilePath: string,
-  targetFilePath: string,
-  line: number,
-  column: number
-): boolean {
+function definitionSource(uri: Monaco.Uri) {
+  const state = useAppStore.getState()
+  const tracked = modelFileFor(uri.toString())
+  if (tracked) {
+    return trackedFileContext(state, tracked)
+  }
+  // A fragment marks a remote or runtime-owned model; pyrefly only sees local checkouts.
+  if (uri.scheme !== 'file' || uri.fragment) {
+    return null
+  }
+  const context = pythonDefinitionContext(state, uri.fsPath)
+  return context ? { filePath: uri.fsPath, ...context } : null
+}
+
+function openDefinition(worktreeId: string, targetFilePath: string, line: number, column: number) {
   const store = useAppStore.getState()
-  const target = definitionOpenTarget(store, sourceFilePath, targetFilePath)
+  const target = definitionOpenTarget(store, worktreeId, targetFilePath)
   if (!target) {
     return false
   }
@@ -42,23 +53,19 @@ function openDefinition(
   return true
 }
 
-// Fork: Cmd+click in a local Python file asks pyrefly (main process) where the symbol is defined.
+// Fork: Cmd+click in a local Python file, or either side of its diff, asks pyrefly (main process)
+// where the symbol is defined.
 export function installMonacoPythonDefinition(monaco: typeof Monaco): void {
   monaco.languages.registerDefinitionProvider('python', {
     provideDefinition: async (model, position) => {
-      // A fragment marks a remote or runtime-owned model; pyrefly only sees local checkouts.
-      if (model.uri.scheme !== 'file' || model.uri.fragment) {
-        return null
-      }
-      const filePath = model.uri.fsPath
-      const context = pythonDefinitionContext(useAppStore.getState(), filePath)
-      if (!context) {
+      const source = definitionSource(model.uri)
+      if (!source) {
         return null
       }
       const result = await window.api.python.definition({
-        filePath,
-        worktreeRoot: context.worktreeRoot,
-        venvSetting: context.venvSetting,
+        filePath: source.filePath,
+        worktreeRoot: source.worktreeRoot,
+        venvSetting: source.venvSetting,
         text: model.getValue(),
         line: position.lineNumber - 1,
         character: position.column - 1
@@ -68,8 +75,10 @@ export function installMonacoPythonDefinition(monaco: typeof Monaco): void {
         return null
       }
       const { lineNumber, column } = toEditorPosition(location)
+      // Why the diff's own model for a same-file hit: the jump then stays in the diff editor.
+      const sameFile = location.filePath === source.filePath
       return {
-        uri: monaco.Uri.file(location.filePath),
+        uri: sameFile ? model.uri : monaco.Uri.file(location.filePath),
         range: new monaco.Range(lineNumber, column, lineNumber, column)
       }
     }
@@ -77,13 +86,14 @@ export function installMonacoPythonDefinition(monaco: typeof Monaco): void {
 
   // Why: standalone Monaco cannot open another file itself, so route a jump to an Orca tab.
   monaco.editor.registerEditorOpener({
-    openCodeEditor: (source, resource, selectionOrPosition) => {
-      const sourceUri = source.getModel()?.uri
+    openCodeEditor: (sourceEditor, resource, selectionOrPosition) => {
+      const sourceUri = sourceEditor.getModel()?.uri
+      const source = sourceUri ? definitionSource(sourceUri) : null
       if (
         !sourceUri ||
-        sourceUri.fragment ||
+        !source ||
         resource.scheme !== 'file' ||
-        resource.fsPath === sourceUri.fsPath
+        resource.toString() === sourceUri.toString()
       ) {
         return false
       }
@@ -91,7 +101,7 @@ export function installMonacoPythonDefinition(monaco: typeof Monaco): void {
         selectionOrPosition && 'startLineNumber' in selectionOrPosition
           ? { line: selectionOrPosition.startLineNumber, column: selectionOrPosition.startColumn }
           : { line: selectionOrPosition?.lineNumber ?? 1, column: selectionOrPosition?.column ?? 1 }
-      return openDefinition(sourceUri.fsPath, resource.fsPath, start.line, start.column)
+      return openDefinition(source.worktreeId, resource.fsPath, start.line, start.column)
     }
   })
 }

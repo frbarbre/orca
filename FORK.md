@@ -1006,6 +1006,10 @@ The renderer registers a Monaco definition provider for `python` and an editor o
 a jump into another file as an Orca tab (`lib/monaco-python-definition.ts`, logic and tests in
 `lib/python-definition.ts`), installed from `monaco-setup.ts`. IPC: `python:definition`
 (`ipc/python-lsp.ts`, `preload/api/python-bridge.ts`, `python` in `api-types.ts`).
+Diff editors name their models with internal diff paths, so `DiffViewer.tsx` and
+`DiffSectionItem.tsx` record each side's file with `trackDiffEditorFile`
+(`lib/diff-editor-model-files.ts`); Cmd+click in either side of a diff then works too, and a
+same-file hit stays in the diff.
 
 | File | What is ours |
 | --- | --- |

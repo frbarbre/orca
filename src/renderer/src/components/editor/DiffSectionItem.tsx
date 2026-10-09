@@ -20,6 +20,7 @@ import { useDiffSectionFallbackCleanup } from './useDiffSectionFallbackCleanup'
 import { submitDiffSectionComment } from './diff-section-comment-submit'
 import type { DiffSectionItemProps } from './diff-section-item-props'
 import { useDiffSectionModelLifecycle } from './use-diff-section-model-lifecycle'
+import { trackDiffEditorFile } from '@/lib/diff-editor-model-files'
 
 export function DiffSectionItem({
   section,
@@ -175,6 +176,9 @@ export function DiffSectionItem({
 
   const handleMount: DiffOnMount = (editor, _monaco) => {
     diffEditorRef.current = editor
+    if (worktreeId) {
+      trackDiffEditorFile(editor, { worktreeId, relativePath: section.path })
+    }
     lineNumberOptionsSubRef.current?.dispose()
     lineNumberOptionsSubRef.current = applyDiffEditorLineNumberOptions(editor, sideBySide)
     const modified = editor.getModifiedEditor()

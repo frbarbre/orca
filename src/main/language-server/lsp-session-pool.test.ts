@@ -1,17 +1,28 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { createPyreflySessionPool } from './pyrefly-lsp-pool'
+import { createLspSessionPool } from './lsp-session-pool'
 
 function fakeSession() {
   return { closed: false, dispose: vi.fn(), definition: vi.fn() }
 }
 
-describe('pyrefly session pool', () => {
+describe('LSP session pool', () => {
   beforeEach(() => vi.useFakeTimers())
   afterEach(() => vi.useRealTimers())
 
+  it('stops only the sessions whose key matches', () => {
+    const pool = createLspSessionPool({ start: fakeSession, idleMs: 60_000, maxSessions: 4 })
+    const python = pool.acquire('python:a')
+    const typescript = pool.acquire('typescript:a')
+
+    pool.disposeMatching((key) => key.startsWith('typescript:'))
+    expect(typescript.dispose).toHaveBeenCalled()
+    expect(python.dispose).not.toHaveBeenCalled()
+    expect(pool.acquire('python:a')).toBe(python)
+  })
+
   it('reuses a session per key and stops it once idle', () => {
     const start = vi.fn(fakeSession)
-    const pool = createPyreflySessionPool({ start, idleMs: 1000, maxSessions: 3 })
+    const pool = createLspSessionPool({ start, idleMs: 1000, maxSessions: 3 })
 
     const first = pool.acquire('a')
     vi.advanceTimersByTime(900)
@@ -25,7 +36,7 @@ describe('pyrefly session pool', () => {
   })
 
   it('stops the least recently used session past the cap, and replaces a closed one', () => {
-    const pool = createPyreflySessionPool({ start: fakeSession, idleMs: 60_000, maxSessions: 2 })
+    const pool = createLspSessionPool({ start: fakeSession, idleMs: 60_000, maxSessions: 2 })
 
     const a = pool.acquire('a')
     const b = pool.acquire('b')
@@ -39,7 +50,7 @@ describe('pyrefly session pool', () => {
   })
 
   it('stops everything on dispose', () => {
-    const pool = createPyreflySessionPool({ start: fakeSession, idleMs: 60_000, maxSessions: 3 })
+    const pool = createLspSessionPool({ start: fakeSession, idleMs: 60_000, maxSessions: 3 })
     const a = pool.acquire('a')
     const b = pool.acquire('b')
 

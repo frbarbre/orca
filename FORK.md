@@ -990,43 +990,58 @@ turns Review / Commit & push into icon buttons with tooltips below a 560px panel
 | `src/renderer/src/components/right-sidebar/workspace-actions/WorkspaceActionButtons.tsx` | `ActionButton` with the `showLabels` prop. |
 | `src/renderer/src/components/right-sidebar/index.tsx` | Renders `PreviewDeploymentButton` and passes `showLabels`. |
 
-### 26. Python go-to-definition (pyrefly)
+### 26. Language servers: Python (pyrefly) and TypeScript (tsgo)
 
-Cmd+click in a local Python file jumps to the definition, in the same file, another file of the
-worktree, or the venv's packages. Main runs one `pyrefly lsp` per Python project (nearest
-`pyrefly.toml`/`pyproject.toml`) in `src/main/python-lsp/`: framing (`lsp-message-framing.ts`),
-project + venv resolution (`python-project-resolution.ts`), the session (`pyrefly-lsp-session.ts`),
-a pool that stops a server after 15 idle minutes and keeps at most 4 (`pyrefly-lsp-pool.ts`),
-`python-definition-service.ts` and the spawn (`pyrefly-process.ts`, which sets `VIRTUAL_ENV`).
-pyrefly comes from the venv's `bin/`, else `PATH`. The venv is the repo's new `pythonVenvPath`
-setting (Settings → project → Python Environment; relative to the worktree or absolute), else the
-nearest `.venv`/`venv`. A worktree without one borrows the main checkout's venv at the same
-relative path (`repoRoot` in the request); a relative setting falls back there too. When the server
-can't run, one toast per error says so instead of failing silently. Remote (SSH/runtime) worktrees
-are skipped.
+Cmd+click jumps to the definition and hover shows types in local Python and TypeScript/JavaScript
+files: same file, another file of the worktree, or installed packages. Main runs one language server
+per project in `src/main/language-server/`: framing (`lsp-message-framing.ts`), the session
+(`lsp-session.ts`, which opens each file with its own language id), a pool that stops a server after
+15 idle minutes and keeps at most 4 (`lsp-session-pool.ts`), `language-server-service.ts` (picks the
+server per request `language`, `stopLanguage`) and the spawn (`language-server-process.ts`, which
+sets `VIRTUAL_ENV` for a venv).
 
-The renderer registers a Monaco definition provider for `python` and an editor opener that opens
-a jump into another file as an Orca tab (`lib/monaco-python-definition.ts`, logic and tests in
-`lib/python-definition.ts`), installed from `monaco-setup.ts`. IPC: `python:definition`
-(`ipc/python-lsp.ts`, `preload/api/python-bridge.ts`, `python` in `api-types.ts`).
+- **Python:** `pyrefly lsp` for the nearest `pyrefly.toml`/`pyproject.toml`
+  (`python-project-resolution.ts`). pyrefly comes from the venv's `bin/`, else `PATH`. The venv is
+  the repo's `pythonVenvPath` setting (Settings → project → Python Environment; relative to the
+  worktree or absolute), else the nearest `.venv`/`venv`. A worktree without one borrows the main
+  checkout's venv at the same relative path (`repoRoot` in the request); a relative setting falls
+  back there too.
+- **TypeScript/JavaScript:** `tsgo --lsp --stdio` (`@typescript/native-preview`) for the nearest
+  `tsconfig.json`/`jsconfig.json` (`typescript-project-resolution.ts`), from the nearest
+  `node_modules/.bin/tsgo`, then the main checkout's, then `PATH`. `bun check` was considered: it
+  is a CLI type checker with no language server, so it can't answer definitions or hovers.
+
+Settings → General → Editor → **Language Servers** has a switch per language
+(`LanguageServersSetting.tsx`, `languageServers` in `GlobalSettings`, read as on unless `false`
+because the setting is stored shallowly). Turning one off stops its servers (`languageServer:stop`).
+Monaco's own TS hover/definition are turned off once at startup — this Monaco reads
+`modeConfiguration` only when the TS mode is first set up — and the providers call the built-in TS
+worker themselves (`built-in-typescript-fallback.ts`) when tsgo is off, can't answer, or the file
+is remote. When a server can't run, one toast per error says so instead of failing silently. Remote
+(SSH/runtime) worktrees never start a server.
+
+The renderer registers definition and hover providers for `python`, `typescript` and `javascript`
+plus an editor opener that opens a jump into another file as an Orca tab
+(`lib/monaco-language-servers.ts`, logic and tests in `lib/language-server-editor.ts`), installed
+from `monaco-setup.ts`. IPC: `languageServer:definition|hover|stop` (`ipc/language-server.ts`,
+`preload/api/language-server-bridge.ts`, `languageServer` in `api-types.ts`).
 Diff editors name their models with internal diff paths, so `DiffViewer.tsx` and
 `DiffSectionItem.tsx` record each side's file with `trackDiffEditorFile`
 (`lib/diff-editor-model-files.ts`); Cmd+click in either side of a diff then works too, and a
 same-file hit stays in the diff. From a diff, a target file that has its own changes
 (`targetHasDiff`) opens in its diff via `openDiffAtLocation`, which prefers the uncommitted diff
 (the newest version) over the branch diff; an unchanged target opens in a normal tab.
-
-Hover over a Python symbol shows pyrefly's type and docs (`textDocument/hover`): `hover` on the
-session (`readHoverMarkdown` handles all three LSP content shapes), the service and
-`python:hover`, and a Monaco hover provider next to the definition provider. pyrefly's
-"Go to …" links are `file://…#Lline,col` and route through the same editor opener.
+Hover content handles all three LSP shapes (`readHoverMarkdown`); pyrefly's "Go to …" links are
+`file://…#Lline,col` and route through the same editor opener.
 
 | File | What is ours |
 | --- | --- |
 | `src/shared/repo-types.ts`, `ipc/repos/repo-update-handler.ts`, `repo-update-operations.ts`, `repo-lifecycle-operations.ts`, `store/repos/repo-state.ts` | `pythonVenvPath` (trimmed, non-strings dropped). |
 | `src/renderer/src/components/settings/RepositoryPane.tsx`, `repository-git-worktree-search-entries.ts` | The Python Environment section (`PythonEnvironmentSection.tsx`) and its search entry. |
-| `src/main/ipc/register-core-handlers/register-core-handlers.ts` (+ test mock) | `registerPythonLspHandlers()`. |
-| `src/preload/index.ts`, `src/preload/api-types.ts` | `python` API. |
+| `src/shared/global-settings-types.ts` | `languageServers`. |
+| `src/renderer/src/components/settings/GeneralEditorSettingsSection.tsx`, `general-editor-search.ts` | `LanguageServersSetting` and its search entry. |
+| `src/main/ipc/register-core-handlers/register-core-handlers.ts` (+ test mock) | `registerLanguageServerHandlers()`. |
+| `src/preload/index.ts`, `src/preload/api-types.ts` | `languageServer` API. |
 
 ## Verify
 

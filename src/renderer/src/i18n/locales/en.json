@@ -1137,8 +1137,9 @@
       "clipboardWriteFailure": {
         "tooLarge": "The text is too large to copy."
       },
-      "pythonDefinition": {
-        "unavailable": "Python go-to-definition is unavailable ({{error}}). Set a Python Environment in the project settings."
+      "languageServer": {
+        "pythonUnavailable": "Python go-to-definition is unavailable ({{error}}). Set a Python Environment in the project settings.",
+        "typescriptUnavailable": "TypeScript go-to-definition is unavailable ({{error}}). Add @typescript/native-preview (tsgo) to the project."
       },
       "previewDeployment": {
         "openOf": "Open preview of {{sha}}",
@@ -9237,6 +9238,14 @@
           "cd9fe37556": "Microphone permission granted",
           "openAiKeyName": "Your OpenAI transcription key"
         },
+        "LanguageServersSetting": {
+          "title": "Language Servers",
+          "description": "Cmd+click go-to-definition and hover types. Each runs a background process per project.",
+          "python": "Python (pyrefly)",
+          "pythonDescription": "Uses the project's venv, or the main checkout's when a worktree has none.",
+          "typescript": "TypeScript and JavaScript (tsgo)",
+          "typescriptDescription": "Uses the project's @typescript/native-preview. Off falls back to the editor's built-in, open-files-only TypeScript."
+        },
         "PythonEnvironmentSection": {
           "placeholder": ".venv",
           "hint": "Relative to the worktree, or absolute. Empty finds the nearest .venv. Cmd+click in a Python file runs pyrefly from this venv, or from PATH."
@@ -10171,6 +10180,10 @@
             "a51d23f4a1": "spell check",
             "641358460a": "spelling",
             "d755962089": "red underline",
+            "languageServer": "language server",
+            "goToDefinition": "go to definition",
+            "hoverTypes": "hover",
+            "lsp": "lsp",
             "projectRuntime": "project runtime",
             "runtime": "runtime",
             "windowsHost": "windows host",

@@ -1,5 +1,5 @@
 import { fileURLToPath, pathToFileURL } from 'node:url'
-import type { PythonDefinitionLocation } from '../../shared/python-definition'
+import type { LanguageServerLocation } from '../../shared/language-server'
 import { createLspMessageReader, encodeLspMessage, type LspMessage } from './lsp-message-framing'
 
 export type LspTransport = {
@@ -11,9 +11,9 @@ export type LspTransport = {
 
 export type DefinitionRequest = { filePath: string; text: string; line: number; character: number }
 
-export type PyreflySession = {
+export type LspSession = {
   readonly closed: boolean
-  definition: (request: DefinitionRequest) => Promise<PythonDefinitionLocation[]>
+  definition: (request: DefinitionRequest) => Promise<LanguageServerLocation[]>
   hover: (request: DefinitionRequest) => Promise<string | null>
   dispose: () => void
 }
@@ -44,7 +44,19 @@ function readRange(value: unknown): Range | null {
     : null
 }
 
-function toLocation(value: unknown): PythonDefinitionLocation | null {
+const LANGUAGE_IDS: readonly [RegExp, string][] = [
+  [/\.pyi?$/i, 'python'],
+  [/\.[mc]?tsx$/i, 'typescriptreact'],
+  [/\.[mc]?ts$/i, 'typescript'],
+  [/\.jsx$/i, 'javascriptreact'],
+  [/\.[mc]?js$/i, 'javascript']
+]
+
+export function languageIdForFile(filePath: string): string {
+  return LANGUAGE_IDS.find(([pattern]) => pattern.test(filePath))?.[1] ?? 'plaintext'
+}
+
+function toLocation(value: unknown): LanguageServerLocation | null {
   if (!isRecord(value)) {
     return null
   }
@@ -56,7 +68,7 @@ function toLocation(value: unknown): PythonDefinitionLocation | null {
   return { filePath: fileURLToPath(uri), line: range.start.line, character: range.start.character }
 }
 
-export function readDefinitionLocations(result: unknown): PythonDefinitionLocation[] {
+export function readDefinitionLocations(result: unknown): LanguageServerLocation[] {
   const items = Array.isArray(result) ? result : [result]
   return items.flatMap((item) => {
     const location = toLocation(item)
@@ -85,13 +97,15 @@ export function readHoverMarkdown(result: unknown): string | null {
   return parts.length > 0 ? parts.join('\n\n') : null
 }
 
-export function createPyreflySession({
+export function createLspSession({
   transport,
-  rootPath
+  rootPath,
+  serverName = 'language server'
 }: {
   transport: LspTransport
   rootPath: string
-}): PyreflySession {
+  serverName?: string
+}): LspSession {
   const pending = new Map<
     number,
     { resolve: (value: unknown) => void; reject: (error: Error) => void }
@@ -120,13 +134,13 @@ export function createPyreflySession({
 
   const request = (method: string, params: unknown): Promise<unknown> => {
     if (closed) {
-      return Promise.reject(new Error('pyrefly exited'))
+      return Promise.reject(new Error(`${serverName} exited`))
     }
     const id = nextId++
     return new Promise((resolve, reject) => {
       const timer = setTimeout(() => {
         pending.delete(id)
-        reject(new Error(`pyrefly did not answer ${method} in time`))
+        reject(new Error(`${serverName} did not answer ${method} in time`))
       }, REQUEST_TIMEOUT_MS)
       pending.set(id, {
         resolve: (value) => {
@@ -157,13 +171,13 @@ export function createPyreflySession({
       const waiter = pending.get(message.id)
       pending.delete(message.id)
       if (message.error) {
-        waiter?.reject(new Error(message.error.message ?? 'pyrefly request failed'))
+        waiter?.reject(new Error(message.error.message ?? `${serverName} request failed`))
       } else {
         waiter?.resolve(message.result)
       }
     })
   )
-  transport.onExit(() => close('pyrefly exited'))
+  transport.onExit(() => close(`${serverName} exited`))
 
   const ensureInitialized = (): Promise<void> => {
     initialized ??= (async () => {
@@ -172,7 +186,12 @@ export function createPyreflySession({
         processId: process.pid,
         rootUri,
         workspaceFolders: [{ uri: rootUri, name: rootPath }],
-        capabilities: { textDocument: { definition: { linkSupport: true } } }
+        capabilities: {
+          textDocument: {
+            definition: { linkSupport: true },
+            hover: { contentFormat: ['markdown', 'plaintext'] }
+          }
+        }
       })
       send({ method: 'initialized', params: {} })
     })()
@@ -186,7 +205,9 @@ export function createPyreflySession({
       documents.set(uri, { version: 1, text })
       send({
         method: 'textDocument/didOpen',
-        params: { textDocument: { uri, languageId: 'python', version: 1, text } }
+        params: {
+          textDocument: { uri, languageId: languageIdForFile(filePath), version: 1, text }
+        }
       })
     } else if (known.text !== text) {
       const version = known.version + 1
@@ -230,7 +251,7 @@ export function createPyreflySession({
         .catch(() => {})
         .finally(() => transport.kill())
       setTimeout(() => {
-        close('pyrefly stopped')
+        close(`${serverName} stopped`)
         transport.kill()
       }, 2000).unref?.()
     }

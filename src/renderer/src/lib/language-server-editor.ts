@@ -1,5 +1,26 @@
-import type { PythonDefinitionLocation } from '../../../shared/python-definition'
+import type {
+  LanguageServerLanguage,
+  LanguageServerLocation
+} from '../../../shared/language-server'
 import { getRepoExecutionHostId, LOCAL_EXECUTION_HOST_ID } from '../../../shared/execution-host'
+
+const SERVER_LANGUAGE_BY_MONACO_ID: Record<string, LanguageServerLanguage> = {
+  python: 'python',
+  typescript: 'typescript',
+  javascript: 'typescript'
+}
+
+export function serverLanguageFor(monacoLanguageId: string): LanguageServerLanguage | null {
+  return SERVER_LANGUAGE_BY_MONACO_ID[monacoLanguageId] ?? null
+}
+
+// Why `!== false`: the setting is stored shallowly, so an unset language means on.
+export function languageServerEnabled(
+  settings: { languageServers?: Partial<Record<LanguageServerLanguage, boolean>> } | null,
+  language: LanguageServerLanguage
+): boolean {
+  return settings?.languageServers?.[language] !== false
+}
 
 type DefinitionState = {
   openFiles: readonly { filePath: string; worktreeId: string }[]
@@ -41,7 +62,7 @@ function localWorktree(state: DefinitionState, worktreeId: string): DefinitionCo
   return null
 }
 
-export function pythonDefinitionContext(
+export function openFileContext(
   state: DefinitionState,
   filePath: string
 ): DefinitionContext | null {
@@ -97,7 +118,7 @@ export function targetHasDiff(
   )
 }
 
-export function toEditorPosition(location: PythonDefinitionLocation): {
+export function toEditorPosition(location: LanguageServerLocation): {
   lineNumber: number
   column: number
 } {

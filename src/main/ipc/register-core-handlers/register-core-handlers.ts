@@ -29,7 +29,7 @@ import { registerAiVaultSearchHandlers } from '../ai-vault-search'
 import { registerNativeChatHandlers } from '../native-chat'
 import { registerNotificationHandlers } from '../notifications'
 import { registerNotebookHandlers } from '../notebook'
-import { registerPythonLspHandlers } from '../python-lsp'
+import { registerLanguageServerHandlers } from '../language-server'
 import { registerOnboardingHandlers } from '../onboarding'
 import { registerDashboardPopoutHandlers } from '../dashboard-popout'
 import { registerTerminalPreviewHandlers } from '../terminal-preview'
@@ -176,7 +176,7 @@ export function registerCoreHandlers(
   registerMemoryHandlers(store)
   registerNotificationHandlers(store, runtime)
   registerNotebookHandlers(store)
-  registerPythonLspHandlers()
+  registerLanguageServerHandlers()
   registerOnboardingHandlers(store)
   registerDashboardPopoutHandlers(store, keybindings)
   registerTerminalPreviewHandlers(runtime)

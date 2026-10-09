@@ -1,11 +1,31 @@
 import { describe, expect, it } from 'vitest'
 import {
   definitionOpenTarget,
-  pythonDefinitionContext,
+  languageServerEnabled,
+  openFileContext,
+  serverLanguageFor,
   targetHasDiff,
   toEditorPosition,
   trackedFileContext
-} from './python-definition'
+} from './language-server-editor'
+
+describe('serverLanguageFor', () => {
+  it('sends Python to pyrefly and TypeScript or JavaScript to tsgo', () => {
+    expect(serverLanguageFor('python')).toBe('python')
+    expect(serverLanguageFor('typescript')).toBe('typescript')
+    expect(serverLanguageFor('javascript')).toBe('typescript')
+    expect(serverLanguageFor('markdown')).toBeNull()
+  })
+})
+
+describe('languageServerEnabled', () => {
+  it('is on unless the language is switched off', () => {
+    expect(languageServerEnabled(null, 'python')).toBe(true)
+    expect(languageServerEnabled({}, 'typescript')).toBe(true)
+    expect(languageServerEnabled({ languageServers: { python: false } }, 'typescript')).toBe(true)
+    expect(languageServerEnabled({ languageServers: { python: false } }, 'python')).toBe(false)
+  })
+})
 
 const state = {
   openFiles: [{ filePath: '/wt/e-4974/apps/backend/a.py', worktreeId: 'wt-1' }],
@@ -19,9 +39,9 @@ const state = {
   ]
 }
 
-describe('pythonDefinitionContext', () => {
+describe('openFileContext', () => {
   it("gives the file's worktree root, the main checkout and the repo's venv setting", () => {
-    expect(pythonDefinitionContext(state, '/wt/e-4974/apps/backend/a.py')).toEqual({
+    expect(openFileContext(state, '/wt/e-4974/apps/backend/a.py')).toEqual({
       worktreeId: 'wt-1',
       worktreeRoot: '/wt/e-4974',
       repoRoot: '/repo',
@@ -34,8 +54,8 @@ describe('pythonDefinitionContext', () => {
       ...state,
       openFiles: [{ filePath: '/remote/wt/a.py', worktreeId: 'wt-ssh' }]
     }
-    expect(pythonDefinitionContext(remote, '/remote/wt/a.py')).toBeNull()
-    expect(pythonDefinitionContext(state, '/elsewhere/b.py')).toBeNull()
+    expect(openFileContext(remote, '/remote/wt/a.py')).toBeNull()
+    expect(openFileContext(state, '/elsewhere/b.py')).toBeNull()
   })
 })
 

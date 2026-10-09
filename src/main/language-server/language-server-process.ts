@@ -1,10 +1,10 @@
 import { delimiter, join } from 'node:path'
 import { spawnProcess } from '../../shared/child-process/run-process'
 import { forceTerminateProcessTree } from '../../shared/child-process/process-tree-termination'
-import type { PythonProject } from './python-project-resolution'
-import { createPyreflySession, type PyreflySession } from './pyrefly-lsp-session'
+import type { LanguageServerLaunch } from './language-server-service'
+import { createLspSession, type LspSession } from './lsp-session'
 
-export function pyreflyEnvironment(
+export function languageServerEnvironment(
   venvPath: string | null,
   base: NodeJS.ProcessEnv
 ): NodeJS.ProcessEnv {
@@ -19,12 +19,12 @@ export function pyreflyEnvironment(
   }
 }
 
-export function startPyreflyProcessSession(project: PythonProject): PyreflySession {
+export function startLanguageServerSession(launch: LanguageServerLaunch): LspSession {
   const child = spawnProcess({
-    program: project.pyrefly,
-    args: ['lsp'],
-    cwd: project.projectRoot,
-    env: pyreflyEnvironment(project.venvPath, process.env),
+    program: launch.program,
+    args: launch.args,
+    cwd: launch.projectRoot,
+    env: languageServerEnvironment(launch.venvPath, process.env),
     detached: process.platform !== 'win32'
   })
   // Why: an unhandled stream error crashes main; a write racing the server's exit raises EPIPE.
@@ -32,8 +32,9 @@ export function startPyreflyProcessSession(project: PythonProject): PyreflySessi
     stream.on('error', () => {})
   }
   child.stderr.resume()
-  return createPyreflySession({
-    rootPath: project.projectRoot,
+  return createLspSession({
+    rootPath: launch.projectRoot,
+    serverName: launch.serverName,
     transport: {
       write: (chunk) => {
         if (child.stdin.writable) {

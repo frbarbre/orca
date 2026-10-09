@@ -72,10 +72,11 @@ import type {
   ClaudeWebReplayedKey
 } from '../shared/claude-remote-session'
 import type {
-  PythonDefinitionRequest,
-  PythonDefinitionResult,
-  PythonHoverResult
-} from '../shared/python-definition'
+  LanguageServerDefinitionResult,
+  LanguageServerHoverResult,
+  LanguageServerLanguage,
+  LanguageServerRequest
+} from '../shared/language-server'
 import type { FolderWorkspacesApi, SparsePresetsApi, WorktreeApi } from './api/worktree-api'
 
 // Flattens contracts that share one PreloadApi key: an intersection is not type-identical to the flat shape.
@@ -151,9 +152,10 @@ export type PreloadApi = {
     attachGuest: (args: { webContentsId: number }) => Promise<void>
     onReplayKey: (callback: (key: ClaudeWebReplayedKey) => void) => () => void
   }
-  python: {
-    definition: (args: PythonDefinitionRequest) => Promise<PythonDefinitionResult>
-    hover: (args: PythonDefinitionRequest) => Promise<PythonHoverResult>
+  languageServer: {
+    definition: (args: LanguageServerRequest) => Promise<LanguageServerDefinitionResult>
+    hover: (args: LanguageServerRequest) => Promise<LanguageServerHoverResult>
+    stop: (args: { language: LanguageServerLanguage }) => Promise<void>
   }
   codexUsage: CodexUsageApi
   openCodeUsage: OpenCodeUsageApi

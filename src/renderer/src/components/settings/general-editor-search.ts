@@ -151,6 +151,28 @@ export const getGeneralEditorSearchEntries = createLocalizedCatalog(() => [
     ]
   },
   {
+    title: translate('auto.components.settings.LanguageServersSetting.title', 'Language Servers'),
+    description: translate(
+      'auto.components.settings.LanguageServersSetting.description',
+      'Cmd+click go-to-definition and hover types. Each runs a background process per project.'
+    ),
+    keywords: [
+      ...translateSearchKeyword(
+        'auto.components.settings.general.search.languageServer',
+        'language server'
+      ),
+      ...translateSearchKeyword(
+        'auto.components.settings.general.search.goToDefinition',
+        'go to definition'
+      ),
+      ...translateSearchKeyword('auto.components.settings.general.search.hoverTypes', 'hover'),
+      ...translateSearchKeyword('auto.components.settings.general.search.lsp', 'lsp', {
+        englishOnly: true,
+        aliases: ['pyrefly', 'tsgo']
+      })
+    ]
+  },
+  {
     title: translate('auto.components.settings.general.search.128bc09325', 'Markdown Review Notes'),
     description: translate(
       'auto.components.settings.general.search.694613d47f',

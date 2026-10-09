@@ -1,5 +1,6 @@
 import { createDrainMigrationRowLookup } from './drain-migration-row-lookup.js'
 import { HeapWindowReaper } from './heap-window-reaper.js'
+import { PlacementLoadBand } from './placement-load-band.js'
 import {
   selectIdleRegionalRehomes,
   type IdleRegionalRehomeCandidate,
@@ -71,6 +72,8 @@ import {
 } from './database.js'
 import type { RelayCellConfig } from './config.js'
 import type { CellLockHoldSite } from './cell-inventory-hold-samples.js'
+import { isPostgresPoolConnectFailure } from './postgres-pool-pressure.js'
+import { isPostgresReadTimeout } from './relay-database-rejection-fence.js'
 import type {
   RelayDatabase,
   RelayLockOptions,
@@ -80,10 +83,13 @@ import type {
 import type { RegionalRehomeSafetySnapshot } from './relay-observability.js'
 import {
   combineRegionalRehomeSafety,
+  nextRegionalRehomeSqlFailuresBreach,
   REGIONAL_REHOME_RECONNECTS_PER_CELL_LIMIT,
   REGIONAL_REHOME_SQL_FAILURES_PER_CELL_LIMIT,
   regionalRehomePoolPressure,
-  regionalRehomeSafetyFailure
+  regionalRehomeSafetyFailure,
+  regionalRehomeSqlFailuresSustained,
+  type RegionalRehomeSqlFailuresBreach
 } from './regional-rehome-safety.js'
 import {
   REGIONAL_REHOME_ARRIVAL_WINDOW_MS,
@@ -126,6 +132,8 @@ type RelayAssignmentStoreOptions = {
   regionalRehomeDirectorRegion?: RelayRegion
   requireLiveCells?: boolean
   heartbeatTtlMs?: number
+  // Absent keeps the strict least-loaded pick (tests that assert exact cells).
+  placementLoadBand?: PlacementLoadBand
   recordControlRenewal?: (durationMs: number, outcome: ControlRenewalOutcome) => void
 }
 
@@ -561,6 +569,7 @@ export class RelayAssignmentStore {
     { failures: number; until: number }
   >()
   private readonly recordControlRenewal?: RelayAssignmentStoreOptions['recordControlRenewal']
+  private readonly placementLoadBand?: PlacementLoadBand
   private readonly admissionSelector: RelayCellAdmissionSelector
   private readonly migrationCellRegistrar: RelayMigrationCellRegistrar
   private readonly activityQueue = new AssignmentIdentityQueue()
@@ -587,6 +596,7 @@ export class RelayAssignmentStore {
     this.requireLiveCells = options.requireLiveCells ?? false
     this.heartbeatTtlMs = options.heartbeatTtlMs ?? 45_000
     this.recordControlRenewal = options.recordControlRenewal
+    this.placementLoadBand = options.placementLoadBand
     this.admissionSelector = new RelayCellAdmissionSelector(database, now)
     this.migrationCellRegistrar = new RelayMigrationCellRegistrar(database, now)
   }
@@ -3755,6 +3765,7 @@ export class RelayAssignmentStore {
   }
 
   private idleRegionalCandidateCursor: IdleRehomeHostCursor = null
+  private regionalRehomeSqlFailuresBreach: RegionalRehomeSqlFailuresBreach = null
   private readonly regionalRehomePollTelemetry = new RegionalRehomePollTelemetry()
 
   async selectIdleRegionalRehomeCandidates(
@@ -3786,6 +3797,19 @@ export class RelayAssignmentStore {
       return gated('budget-closed')
     }
     const fleetSafety = await this.readRegionalRehomeFleetSafety(this.database, now)
+    const sqlBreach = nextRegionalRehomeSqlFailuresBreach(
+      this.regionalRehomeSqlFailuresBreach,
+      combineRegionalRehomeSafety(processSafety, fleetSafety).sqlFailures,
+      now
+    )
+    this.regionalRehomeSqlFailuresBreach = sqlBreach
+    // Source cells only pause on sql failures; the poll is the regular observer that latches.
+    if (sqlBreach && regionalRehomeSqlFailuresSustained(sqlBreach)) {
+      const event = await this.disableRegionalRehomeForSafety(this.database, now, 'sql_failures', fleetSafety)
+      if (event) console.warn(JSON.stringify({ ...event, sustainedMs: now - sqlBreach.since }))
+      this.regionalRehomeSqlFailuresBreach = null
+      return gated('fleet-safety')
+    }
     if (regionalRehomeFleetSafetyFailure(processSafety, fleetSafety, now)) return gated('fleet-safety')
     const startedAt = performance.now()
     const selection = await selectIdleRegionalRehomes({
@@ -3821,8 +3845,8 @@ export class RelayAssignmentStore {
       return { outcome: 'deferred', reason: 'cohort-closed' }
     }
     let safetyDisable: Record<string, string | number> | null = null
-    // Set on every fleet-safety failure, disable or not: the pause is durable
-    // and global either way, so no later candidate in this poll can get past it.
+    // Set on every fleet-safety failure, disable or not: the pause is global
+    // either way, so no later candidate in this poll can get past it.
     let safetyPaused = false
     let targetDeferral: RegionalRehomeTargetDeferral | null = null
     // Lock order: control, worker, host rows, then the target cell row alone,
@@ -4044,7 +4068,7 @@ export class RelayAssignmentStore {
     rows: readonly ControlRenewalRequest[],
     now: number
   ): Promise<ControlRenewalOutcome[]> {
-    if (rows.length === 1) return [await this.renewOneControlActivity(rows[0]!, now)]
+    if (rows.length === 1) return [await this.renewOneControlActivity(rows[0]!, now, 'priority')]
     if (this.database.dialect !== 'postgres') {
       // Correctness over throughput: the SQLite writer is serialized anyway, and
       // this is the dialect the unit suites run on.
@@ -4054,7 +4078,7 @@ export class RelayAssignmentStore {
     const outcomes = new Array<ControlRenewalOutcome>(rows.length)
     try {
       const parsed = readControlRenewalOutcomes(
-        await this.database.query(
+        await this.priorityQuery(
           CONTROL_RENEWAL_BATCH_SQL,
           controlRenewalBatchParams(ordered, now)
         ),
@@ -4073,6 +4097,11 @@ export class RelayAssignmentStore {
           message: String((error as { message?: unknown }).message)
         })
       )
+      // No connection at all, or a lost reply: per-host statements would only queue up
+      // behind the same saturated pool or stalled server, multiplying the load.
+      if (isPostgresPoolConnectFailure(error) || isPostgresReadTimeout(error)) {
+        return outcomes.fill('database_error')
+      }
       await Promise.all(
         ordered.map(async (row) => {
           try {
@@ -4084,6 +4113,12 @@ export class RelayAssignmentStore {
       )
       return outcomes
     }
+  }
+
+  private async priorityQuery(sql: string, params: unknown[]): Promise<SqlRow[]> {
+    return this.database.queryPriority
+      ? await this.database.queryPriority(sql, params)
+      : await this.database.query(sql, params)
   }
 
   private async renewControlActivitiesInSeries(
@@ -4104,14 +4139,15 @@ export class RelayAssignmentStore {
   // Returns the outcome; a driver or pool failure reaches the caller unchanged.
   private async renewOneControlActivity(
     row: ControlRenewalRequest,
-    now: number
+    now: number,
+    lane: 'general' | 'priority' = 'general'
   ): Promise<ControlRenewalOutcome> {
     if (this.database.dialect === 'postgres') {
+      const params = controlRenewalBatchParams([row], now)
       return readControlRenewalOutcomes(
-        await this.database.query(
-          CONTROL_RENEWAL_BATCH_SQL,
-          controlRenewalBatchParams([row], now)
-        ),
+        lane === 'priority'
+          ? await this.priorityQuery(CONTROL_RENEWAL_BATCH_SQL, params)
+          : await this.database.query(CONTROL_RENEWAL_BATCH_SQL, params),
         1
       )[0]!
     }
@@ -5968,7 +6004,9 @@ export class RelayAssignmentStore {
       input.now
     )
     if (safetyFailure) {
-      input.onSafetyDisabled(await this.pauseRegionalRehomeForSafety(
+      // A sql spike alone is usually one DB stall: pause this claim and leave
+      // the latch to the director's sustained-breach check.
+      input.onSafetyDisabled(safetyFailure === 'sql_failures' ? null : await this.pauseRegionalRehomeForSafety(
         transaction,
         input.worker,
         input.now,
@@ -6343,7 +6381,18 @@ export class RelayAssignmentStore {
     reason: string,
     fleetSafety: RegionalRehomeFleetSafety
   ): Promise<Record<string, string | number> | null> {
-    const disabled = await transaction.query(
+    const event = await this.disableRegionalRehomeForSafety(transaction, now, reason, fleetSafety)
+    await this.incrementRegionalRehomeWorkerFailure(transaction, worker, now)
+    return event
+  }
+
+  private async disableRegionalRehomeForSafety(
+    database: RelayDatabase,
+    now: number,
+    reason: string,
+    fleetSafety: RegionalRehomeFleetSafety
+  ): Promise<Record<string, string | number> | null> {
+    const disabled = await database.query(
       `UPDATE relay_region_rehome_control
        SET generation = generation + 1, enabled = 0, updated_at = ?
        WHERE control_id = 'global' AND enabled = 1
@@ -6353,27 +6402,23 @@ export class RelayAssignmentStore {
     // The durable disable is otherwise invisible: nothing else records why
     // claims stopped and inspection only shows enabled=false. Logged after
     // the transaction commits so a rollback cannot fabricate the record.
-    let event: Record<string, string | number> | null = null
-    if (disabled.length > 0) {
-      event = {
-        event: 'orca_relay_regional_rehome_safety_disabled',
-        reason,
-        controlGeneration: integer(disabled[0]!, 'generation'),
-        now,
-        requiredCells: fleetSafety.requiredCells,
-        missingCells: fleetSafety.missingCells,
-        observedAt: fleetSafety.observedAt,
-        sqlFailures: fleetSafety.sqlFailures,
-        reconnects: fleetSafety.reconnects,
-        maxReconnects: fleetSafety.maxReconnects,
-        controlActivityRecoveryFailures: fleetSafety.controlActivityRecoveryFailures,
-        databasePoolWaiting: fleetSafety.databasePoolWaiting,
-        databasePoolWaitersMax: fleetSafety.databasePoolWaitersMax,
-        databasePoolWaitMsMax: fleetSafety.databasePoolWaitMsMax
-      }
+    if (disabled.length === 0) return null
+    return {
+      event: 'orca_relay_regional_rehome_safety_disabled',
+      reason,
+      controlGeneration: integer(disabled[0]!, 'generation'),
+      now,
+      requiredCells: fleetSafety.requiredCells,
+      missingCells: fleetSafety.missingCells,
+      observedAt: fleetSafety.observedAt,
+      sqlFailures: fleetSafety.sqlFailures,
+      reconnects: fleetSafety.reconnects,
+      maxReconnects: fleetSafety.maxReconnects,
+      controlActivityRecoveryFailures: fleetSafety.controlActivityRecoveryFailures,
+      databasePoolWaiting: fleetSafety.databasePoolWaiting,
+      databasePoolWaitersMax: fleetSafety.databasePoolWaitersMax,
+      databasePoolWaitMsMax: fleetSafety.databasePoolWaitMsMax
     }
-    await this.incrementRegionalRehomeWorkerFailure(transaction, worker, now)
-    return event
   }
 
 
@@ -7759,25 +7804,25 @@ export class RelayAssignmentStore {
         connectionHeadroom.get(cellId) !== false
       )
     })
-    candidates.sort((left, right) => {
-      const leftLoad =
-        integer(left, 'reserved_requests') +
-        (runtimeLoad?.get(text(left, 'cell_id')) ?? integer(left, 'observed_requests'))
-      const rightLoad =
-        integer(right, 'reserved_requests') +
-        (runtimeLoad?.get(text(right, 'cell_id')) ?? integer(right, 'observed_requests'))
-      const loadDifference =
-        leftLoad / integer(left, 'capacity_requests') -
-        rightLoad / integer(right, 'capacity_requests')
-      return loadDifference || text(left, 'cell_id').localeCompare(text(right, 'cell_id'))
-    })
-    const preferred = candidates.filter(
-      (candidate) =>
-        (regions.get(text(candidate, 'cell_id')) ?? RELAY_DEFAULT_REGION) === preferredRegion
+    const loadRatio = (row: SqlRow) =>
+      (integer(row, 'reserved_requests') +
+        (runtimeLoad?.get(text(row, 'cell_id')) ?? integer(row, 'observed_requests'))) /
+      integer(row, 'capacity_requests')
+    const ranked = candidates
+      .map((row) => ({ row, cellId: text(row, 'cell_id'), loadRatio: loadRatio(row) }))
+      .sort(
+        (left, right) =>
+          left.loadRatio - right.loadRatio || left.cellId.localeCompare(right.cellId)
+      )
+    const preferred = ranked.filter(
+      (candidate) => (regions.get(candidate.cellId) ?? RELAY_DEFAULT_REGION) === preferredRegion
     )
-    const selected = regionMode === 'require' ? preferred[0] : (preferred[0] ?? candidates[0])
+    const pool = regionMode === 'require' || preferred.length > 0 ? preferred : ranked
+    const selected = this.placementLoadBand
+      ? this.placementLoadBand.pick(pool, this.now())
+      : pool[0]
     return selected
-      ? cell(selected, regions.get(text(selected, 'cell_id')) ?? RELAY_DEFAULT_REGION)
+      ? cell(selected.row, regions.get(selected.cellId) ?? RELAY_DEFAULT_REGION)
       : null
   }
 

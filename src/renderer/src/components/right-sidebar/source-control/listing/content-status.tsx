@@ -21,6 +21,8 @@ export function SourceControlContentStatus({
   repositoryHuge,
   worktreeId,
   onRetryStatus,
+  onStageAllChanges,
+  isExecutingBulk,
   showGenericEmptyState,
   normalizedFilter,
   branchBaseRef,
@@ -40,6 +42,8 @@ export function SourceControlContentStatus({
   repositoryHuge: { limit: number } | null | undefined
   worktreeId: string
   onRetryStatus: (signal: AbortSignal) => Promise<void>
+  onStageAllChanges: () => Promise<void>
+  isExecutingBulk: boolean
   showGenericEmptyState: boolean
   normalizedFilter: string
   branchBaseRef: string | null
@@ -82,6 +86,8 @@ export function SourceControlContentStatus({
             key={worktreeId}
             limit={repositoryHuge.limit}
             onRetry={onRetryStatus}
+            onStageAll={onStageAllChanges}
+            isStageAllDisabled={isExecutingBulk}
           />
         </div>
       )}

@@ -173,10 +173,10 @@ async function startHost(): Promise<void> {
     hostId: 'local',
     claimKeyId: 'key-1',
     resolveWorkspacePath: async () => root,
-    resolveClaudeAuthPolicy: () => ({ stripAuthEnv: true }),
+    resolveLaunchArgs: () => [],
+    resolveClaudeAuthPolicy: () => ({ account: 'managed' }),
     resolveCodexCommand: () => 'codex',
     resolveEnvironment: async () => ({ PATH: process.env.PATH }),
-    resolveLaunchArgs: () => [],
     openCodexConnection: openConnection,
     readProcessStartTime: async () => 1_700_000_000_000
   })

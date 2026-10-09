@@ -11,6 +11,9 @@ export function createWebAppApi(): Partial<PreloadApi> {
       // Why nulls: the web client has no ~/.orca to read theme files from, so the editor keeps its
       // stock themes there.
       getCustomEditorThemes: () => Promise.resolve({ dark: null, light: null }),
+      // Browser preferences do not use the desktop profile writer.
+      isProfileStateSaveDelayed: () => Promise.resolve(false),
+      onProfileStateSaveDelayChanged: () => () => undefined,
       getIdentity: () =>
         Promise.resolve({
           name: 'Orca',

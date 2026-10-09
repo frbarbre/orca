@@ -20,12 +20,17 @@ import { createRelayApp } from './app.js'
 import { RelayAssignmentStore } from './assignment-store.js'
 import type { RelayConfig } from './config.js'
 import { RelayCredentialStore } from './credential-store.js'
-import { readRelayDatabasePoolPressure, type RelayDatabase } from './database.js'
+import {
+  readRelayDatabasePoolOldestWaitMs,
+  readRelayDatabasePoolPressure,
+  type RelayDatabase
+} from './database.js'
 import { HostSessionRegistry } from './host-session-registry.js'
 import { observeRelayDatabase } from './observed-relay-database.js'
 import { RelayObservability } from './relay-observability.js'
 import { combineRegionalRehomeSafety } from './regional-rehome-safety.js'
 import { RelayConnectionLedger, type RelayConnectionUpgrade } from './relay-connection-ledger.js'
+import { PlacementLoadBand } from './placement-load-band.js'
 import { createRelayReadiness } from './relay-readiness.js'
 import { createRelayTokenVerifier, readBearer } from './relay-token-verifier.js'
 import { closeRelayWebSocket } from './relay-websocket-close.js'
@@ -41,8 +46,23 @@ function decodePathSegment(value: string): string | null {
   }
 }
 
-function rejectUpgrade(socket: NodeJS.WritableStream, status: number, message: string): void {
-  socket.write(`HTTP/1.1 ${status} ${message}\r\nConnection: close\r\nContent-Length: 0\r\n\r\n`)
+// Healthy cells peak at 2 waiters (p99, 2026-10-07). A head that has waited half
+// the 2 s acquire timeout with a whole pool's worth queued behind it means
+// hellos are already timing out; the count floor keeps one slow waiter from
+// tripping it. On 10-07 every window that met both also logged SQL failures.
+export const HOST_HELLO_SHED_OLDEST_WAIT_MS = 1_000
+const HOST_HELLO_SHED_RETRY_AFTER_SECONDS = 2
+
+function rejectUpgrade(
+  socket: NodeJS.WritableStream,
+  status: number,
+  message: string,
+  retryAfterSeconds?: number
+): void {
+  const retryAfter = retryAfterSeconds === undefined ? '' : `Retry-After: ${retryAfterSeconds}\r\n`
+  socket.write(
+    `HTTP/1.1 ${status} ${message}\r\n${retryAfter}Connection: close\r\nContent-Length: 0\r\n\r\n`
+  )
   if ('destroy' in socket && typeof socket.destroy === 'function') socket.destroy()
 }
 
@@ -110,6 +130,7 @@ export function createRelayServer(
   const store = new RelayCredentialStore(observedDatabase, options.now)
   const assignments = new RelayAssignmentStore(observedDatabase, options.now, {
     requireLiveCells: config.role === 'director',
+    placementLoadBand: config.role === 'director' ? new PlacementLoadBand(options.random) : undefined,
     regionalRehomeCohortPercent: config.regionCorrectionCohortPercent ?? 0,
     // The director runs in the database's region; only its rehome readers use this.
     regionalRehomeDirectorRegion:
@@ -156,6 +177,7 @@ export function createRelayServer(
     },
     regionalRehomeTrustProbeHostExists: (input) => sessions.get(input) !== null,
     cellIncarnation,
+    cellSeatFeed: (sinceSeq) => sessions.seatFeed(sinceSeq),
     isDraining: () => sessions.isDraining(),
     runtimeCounts: () => runtimeCounts(),
     regionalRehomeSafetySnapshot: () => ({
@@ -506,6 +528,20 @@ export function createRelayServer(
         userId: identity.sub,
         relayHostId: identity.relayHostId
       })
+      // A hello costs several pooled queries, each failing after a 2 s wait. Shed
+      // only while the pool is already timing them out: the refused desktop gets
+      // the same connect error and backoff a timed-out hello gives it today, 2 s
+      // sooner (shipped desktops ignore Retry-After). A rebind over a live control
+      // is a lease rotation, not a reconnect, so it is never refused here.
+      if (
+        !isRebind &&
+        readRelayDatabasePoolPressure(database).databasePoolWaiting >= config.databasePoolMax &&
+        readRelayDatabasePoolOldestWaitMs(database) >= HOST_HELLO_SHED_OLDEST_WAIT_MS
+      ) {
+        observability.recordHostHelloShed()
+        rejectUpgrade(socket, 503, 'Service Unavailable', HOST_HELLO_SHED_RETRY_AFTER_SECONDS)
+        return
+      }
       const controlUpgrade = connectionLedger?.tryReserveControl(isRebind) ?? null
       if (
         (connectionLedger && !controlUpgrade) ||

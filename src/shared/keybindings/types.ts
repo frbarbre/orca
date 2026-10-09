@@ -8,6 +8,7 @@ export type KeybindingScope =
   | 'editor'
   | 'fileExplorer'
   | 'composer'
+  | 'chat'
   | 'settings'
 
 export type KeybindingContext = 'app' | 'terminal' | 'browser'
@@ -83,6 +84,7 @@ export type KeybindingActionId =
   | 'tab.openQuickCommandsMenu'
   | 'tab.runQuickCommand'
   | 'browser.find'
+  | 'chat.find'
   | 'browser.back'
   | 'browser.forward'
   | 'browser.reload'

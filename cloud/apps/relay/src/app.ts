@@ -37,6 +37,8 @@ import {
 } from './assignment-store.js'
 import { AssignmentRejectionLogWindow } from './assignment-rejection-log-window.js'
 import { CELL_ADMISSION_STATES } from './cell-admission-selector.js'
+import { registerCellSeatFeedRoute } from './cell-seat-feed-route.js'
+import type { CellSeatFeedPage } from './cell-seat-log.js'
 import { RELAY_MAX_CELL_CAPACITY_REQUESTS, type RelayConfig } from './config.js'
 import type { RelayCredentialStore } from './credential-store.js'
 import { isRelayDatabaseTransientError } from './database.js'
@@ -73,8 +75,9 @@ const ASSIGNMENT_REJECTION_LOG_WINDOW_MS = 10_000
 // A release holds the row for about one lock timeout, so one second is enough.
 const ASSIGNMENT_ROW_BUSY_RETRY_AFTER_SECONDS = 1
 const REGION_CATALOG_CACHE_MS = 30_000
-// A drain that outlives the roll step it belongs to is an outage, not a pacing win.
-const DRAIN_PACE_WINDOW_MAX_MS = 5 * 60 * 1_000
+// A drain that outlives the roll step it belongs to is an outage, not a pacing win. The roll
+// step's timeout scales with the window, up to the same-cap wave's slowest pace.
+const DRAIN_PACE_WINDOW_MAX_MS = 20 * 60 * 1_000
 
 type AdmissionRejectionLogEntry = {
   route: 'assign' | 'resolve'
@@ -111,6 +114,7 @@ export function createRelayApp(
     regionalRehomeFetch?: typeof fetch
     regionalRehomeTrustProbeHostExists?: (input: { userId: string; relayHostId: string }) => boolean
     cellIncarnation?: string
+    cellSeatFeed?: (sinceSeq: number | null) => CellSeatFeedPage
     isDraining?: () => boolean
     regionalRehomeSafetySnapshot?: () => RegionalRehomeSafetySnapshot
     runtimeCounts?: () => RelayRuntimeCounts
@@ -267,7 +271,9 @@ export function createRelayApp(
   app.use('/v1/admin/*', async (context, next) => {
     if (
       context.req.path === '/v1/admin/cell-heartbeat' ||
-      context.req.path === '/v1/admin/cell-rehome-status'
+      context.req.path === '/v1/admin/cell-rehome-status' ||
+      // Its own route checks the rehome identity; an admin check first would verify each poll twice.
+      context.req.path === '/v1/admin/cell-seats'
     ) {
       return await next()
     }
@@ -279,9 +285,23 @@ export function createRelayApp(
     return await next()
   })
 
+  registerCellSeatFeedRoute(app, config, {
+    verifyRegionalRehomeToken,
+    cellIncarnation: operations.cellIncarnation,
+    seatFeed: operations.cellSeatFeed,
+    isDraining: operations.isDraining,
+    runtimeCounts: operations.runtimeCounts
+  })
+
   // Not /healthz: Google Front End reserves that path before the container.
+  // The drain pace cap is read before a roll isolates a cell, so a slower pace than the cell
+  // accepts stops with the cell untouched.
   app.get('/health', (context) =>
-    context.json({ ok: true, connectionCapacityProtocol: 2 })
+    context.json({
+      ok: true,
+      connectionCapacityProtocol: 2,
+      drainPaceWindowMaxMs: DRAIN_PACE_WINDOW_MAX_MS
+    })
   )
   app.get('/ready', async (context) => {
     if (!(await operations.ready())) return context.json({ error: 'dependency_unavailable' }, 503)

@@ -45,6 +45,7 @@ export function useSourceControlFileListing({
   isMac,
   refreshActiveGitStatusAfterMutation,
   remoteActionError,
+  repositoryHuge,
   rightSidebarTab,
   sourceControlGroupOrder,
   sourceControlRef,
@@ -70,6 +71,7 @@ export function useSourceControlFileListing({
   isMac: boolean
   refreshActiveGitStatusAfterMutation: SourceControlStatusRefresh['refreshActiveGitStatusAfterMutation']
   remoteActionError: SourceControlActionError | null
+  repositoryHuge: SourceControlWorktreeContext['repositoryHuge']
   rightSidebarTab: SourceControlWorktreeContext['rightSidebarTab']
   sourceControlGroupOrder: SourceControlPanelViewState['sourceControlGroupOrder']
   sourceControlRef: SourceControlPanelViewState['sourceControlRef']
@@ -230,8 +232,10 @@ export function useSourceControlFileListing({
     handleBulkStage,
     handleBulkUnstage,
     handleStageAllPaths,
+    handleStageSectionPaths,
     handleUnstagePaths,
-    handleStageAllPrimary
+    handleStageAllPrimary,
+    handleStageWorktreeChanges
   } = useSourceControlBulkActions({
     selectedKeys,
     flatEntriesByKey,
@@ -239,6 +243,7 @@ export function useSourceControlFileListing({
     activeWorktreeId,
     worktreePath,
     grouped,
+    isStatusTruncated: repositoryHuge !== undefined,
     clearSelection,
     refreshActiveGitStatusAfterMutation
   })
@@ -287,6 +292,8 @@ export function useSourceControlFileListing({
     handleSelect,
     handleStageAllPaths,
     handleStageAllPrimary,
+    handleStageSectionPaths,
+    handleStageWorktreeChanges,
     handleUnstagePaths,
     isExecutingBulk,
     isCategoryFilterActive,

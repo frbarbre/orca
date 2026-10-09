@@ -47,6 +47,7 @@ async function updateAgentNotes(
 export const AGENT_NOTE_METHODS = [
   defineMethod({
     name: 'agentNote.add',
+    permission: 'workspace',
     params: AgentNoteAdd,
     handler: async (params, { runtime }) => {
       let note: DiffComment | null = null
@@ -72,6 +73,7 @@ export const AGENT_NOTE_METHODS = [
   }),
   defineMethod({
     name: 'agentNote.reply',
+    permission: 'workspace',
     params: AgentNoteReply,
     handler: async (params, { runtime }) => {
       const worktree = await runtime.showManagedWorktree(params.worktree)
@@ -105,6 +107,7 @@ export const AGENT_NOTE_METHODS = [
   }),
   defineMethod({
     name: 'agentNote.list',
+    permission: 'workspace',
     params: AgentNoteList,
     handler: async (params, { runtime }) => {
       const worktree = await runtime.showManagedWorktree(params.worktree)
@@ -113,6 +116,7 @@ export const AGENT_NOTE_METHODS = [
   }),
   defineMethod({
     name: 'agentNote.remove',
+    permission: 'workspace',
     params: AgentNoteRemove,
     handler: async (params, { runtime }) => {
       const { before, after } = await updateAgentNotes(runtime, params.worktree, (notes) =>

@@ -93,6 +93,28 @@ vi.mock('./TabSessionSurfaceSwitchMenuItems', () => ({
   )
 }))
 
+vi.mock('../terminal-pane/AgentViewSubmenu', () => ({
+  AgentViewSubmenu: ({
+    canChat,
+    isChat,
+    onToggleChat
+  }: {
+    canChat: boolean
+    isChat: boolean
+    onToggleChat?: () => void
+  }) => (
+    <button
+      type="button"
+      data-testid="agent-view-submenu"
+      data-can-chat={String(canChat)}
+      data-is-chat={String(isChat)}
+      onClick={() => onToggleChat?.()}
+    >
+      View
+    </button>
+  )
+}))
+
 vi.mock('../../store', () => ({
   useAppStore: Object.assign(
     (selector: (state: Record<string, unknown>) => unknown) => selector(storeMock.state),
@@ -253,7 +275,8 @@ describe('SortableTabContextMenu', () => {
     expect(container.textContent).not.toContain('Switch to chat view')
   })
 
-  it('keeps the way back for a tab already in chat view, in the chat/CLI move section', () => {
+  // Fork: the View submenu replaces upstream's "Switch to terminal view" item.
+  it('keeps the way back for a tab already in chat view, in the View submenu', () => {
     const onToggleViewMode = vi.fn()
     const { container } = renderMenu({
       canToggleViewMode: true,
@@ -261,13 +284,19 @@ describe('SortableTabContextMenu', () => {
       onToggleViewMode
     })
     const marker = getSurfaceSwitchMarker(container)
+    const submenu = getButton(container, 'View')
 
-    expect(getButton(container, 'Switch to terminal view').compareDocumentPosition(marker)).toBe(
-      Node.DOCUMENT_POSITION_FOLLOWING
-    )
-    expect(marker.getAttribute('data-leading-separator')).toBe('false')
-    act(() => getButton(container, 'Switch to terminal view').click())
+    expect(submenu.getAttribute('data-can-chat')).toBe('true')
+    expect(submenu.getAttribute('data-is-chat')).toBe('true')
+    expect(submenu.compareDocumentPosition(marker)).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
+    act(() => submenu.click())
     expect(onToggleViewMode).toHaveBeenCalled()
+  })
+
+  it('does not offer switching a terminal tab into chat view', () => {
+    const { container } = renderMenu({ canToggleViewMode: true, isChatView: false })
+
+    expect(getButton(container, 'View').getAttribute('data-can-chat')).toBe('false')
   })
 
   it('offers the session-history chat/CLI move right above Pin Tab', () => {

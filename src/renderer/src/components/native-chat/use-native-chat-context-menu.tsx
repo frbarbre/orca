@@ -94,6 +94,8 @@ export type NativeChatContextMenuActions = {
   onCopyAgentSessionId: () => void
   canClosePane: boolean
   onClosePane: () => void
+  /** Fork: the pane the View submenu (terminal / chat / Claude web) acts on. */
+  agentView?: { tabId: string; leafId: string | null }
 }
 
 /** No-op defaults for when the view has no pane-management actions wired. */
@@ -122,8 +124,8 @@ export function useNativeChatContextMenu({
   composerRef,
   enabled = true,
   onSwitchToTerminal,
-  agentView,
   actions,
+  agentView = actions.agentView,
   showTerminalPaneActions = true,
   splitShortcutLabels,
   workspaceLayout,

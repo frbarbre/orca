@@ -30,7 +30,7 @@ export function SourceControlContentStatus({
   hasFilteredUncommittedEntries,
   hasFilteredBranchEntries,
   filterQuery,
-  isCategoryFilterActive
+  isCategoryFilterActive = false
 }: {
   unresolvedConflictCount: number
   conflictOperation: GitConflictOperation
@@ -51,7 +51,7 @@ export function SourceControlContentStatus({
   hasFilteredUncommittedEntries: boolean
   hasFilteredBranchEntries: boolean
   filterQuery: string
-  isCategoryFilterActive: boolean
+  isCategoryFilterActive?: boolean
 }): React.JSX.Element {
   return (
     <>

@@ -69,6 +69,7 @@ export const GIT_METHODS = [
   }),
   defineMethod({
     name: 'git.checkReviewAttributes',
+    permission: 'workspace',
     params: GitCheckReviewAttributes,
     handler: async (params, { runtime }) =>
       runtime.checkRuntimeGitReviewAttributes(params.worktree, params.paths)

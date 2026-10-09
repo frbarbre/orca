@@ -61,7 +61,8 @@ export function TerminalPaneNativeChatPortal({
     onCopyAgentSessionId: () =>
       void contextMenu.runForPane(chatPane.id, contextMenu.onCopyAgentSessionId),
     canClosePane: managedPanes.length > 1,
-    onClosePane: () => contextMenu.runForPane(chatPane.id, contextMenu.onClosePane)
+    onClosePane: () => contextMenu.runForPane(chatPane.id, contextMenu.onClosePane),
+    agentView: { tabId, leafId: chatPane.leafId }
   }
 
   return createPortal(

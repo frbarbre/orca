@@ -3,6 +3,7 @@ import { callAbortableRuntimeEnvironment } from '../../runtime/abortable-runtime
 import { toRuntimeWorktreeSelector } from '../../runtime/runtime-worktree-selector'
 import { translate } from '@/i18n/i18n'
 import { callRuntimeResult } from './web-runtime-calls'
+import { createWebGitReviewAttributesApi } from './web-git-review-attributes-api'
 import { requireGitStageWorktreeScopeReceipt } from '../../../../shared/git-stage-worktree-scope'
 import { requireActiveEnvironment, updateEnvironmentFromResponse } from './web-runtime-session'
 import {
@@ -85,13 +86,7 @@ export function createGitApi(): NonNullable<Partial<PreloadApi>['git']> {
         paths
       })
     },
-    checkReviewAttributes: async ({ worktreePath, paths }) => {
-      const worktree = await resolveRuntimeWorktreeByPath(worktreePath)
-      return callRuntimeResult('git.checkReviewAttributes', {
-        worktree: toRuntimeWorktreeSelector(worktree.id),
-        paths
-      })
-    },
+    ...createWebGitReviewAttributesApi(),
     // Why: the "add huge folder to .gitignore" flow is desktop-only; the web runtime makes no offer, so return no candidates.
     findHugeFoldersToIgnore: async () => [],
     appendGitignore: async () => false,

@@ -71,7 +71,11 @@ import type {
   ClaudeRemoteSessionUrlResult,
   ClaudeWebReplayedKey
 } from '../shared/claude-remote-session'
-import type { PythonDefinitionRequest, PythonDefinitionResult } from '../shared/python-definition'
+import type {
+  PythonDefinitionRequest,
+  PythonDefinitionResult,
+  PythonHoverResult
+} from '../shared/python-definition'
 import type { FolderWorkspacesApi, SparsePresetsApi, WorktreeApi } from './api/worktree-api'
 
 // Flattens contracts that share one PreloadApi key: an intersection is not type-identical to the flat shape.
@@ -149,6 +153,7 @@ export type PreloadApi = {
   }
   python: {
     definition: (args: PythonDefinitionRequest) => Promise<PythonDefinitionResult>
+    hover: (args: PythonDefinitionRequest) => Promise<PythonHoverResult>
   }
   codexUsage: CodexUsageApi
   openCodeUsage: OpenCodeUsageApi

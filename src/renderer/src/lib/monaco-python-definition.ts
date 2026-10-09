@@ -106,6 +106,38 @@ export function installMonacoPythonDefinition(monaco: typeof Monaco): void {
     }
   })
 
+  monaco.languages.registerHoverProvider('python', {
+    provideHover: async (model, position) => {
+      const source = definitionSource(model.uri)
+      if (!source) {
+        return null
+      }
+      const result = await window.api.python.hover({
+        filePath: source.filePath,
+        worktreeRoot: source.worktreeRoot,
+        venvSetting: source.venvSetting,
+        text: model.getValue(),
+        line: position.lineNumber - 1,
+        character: position.column - 1
+      })
+      if (!result.ok || !result.markdown) {
+        return null
+      }
+      const word = model.getWordAtPosition(position)
+      return {
+        contents: [{ value: result.markdown }],
+        range: word
+          ? new monaco.Range(
+              position.lineNumber,
+              word.startColumn,
+              position.lineNumber,
+              word.endColumn
+            )
+          : undefined
+      }
+    }
+  })
+
   // Why: standalone Monaco cannot open another file itself, so route a jump to an Orca tab.
   monaco.editor.registerEditorOpener({
     openCodeEditor: (sourceEditor, resource, selectionOrPosition) => {

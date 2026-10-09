@@ -10,6 +10,8 @@ export type PythonDefinitionRequest = {
   character: number
 }
 
+export type PythonHoverResult = { ok: true; markdown: string | null } | { ok: false; error: string }
+
 export type PythonDefinitionResult =
   | { ok: true; locations: PythonDefinitionLocation[] }
   | { ok: false; error: string }

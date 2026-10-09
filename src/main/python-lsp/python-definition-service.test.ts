@@ -14,17 +14,35 @@ function setup() {
   const definition = vi.fn(async () => [
     { filePath: '/repo/apps/backend/b.py', line: 0, character: 0 }
   ])
-  const startSession = vi.fn(() => ({ closed: false, dispose: vi.fn(), definition }))
+  const hover = vi.fn(async () => '```python\nx: int\n```')
+  const startSession = vi.fn(() => ({ closed: false, dispose: vi.fn(), definition, hover }))
   const service = createPythonDefinitionService({
     exists: (path) =>
       path === '/repo/apps/backend/pyproject.toml' ||
       path === '/repo/apps/backend/.venv/bin/pyrefly',
     startSession
   })
-  return { service, startSession, definition }
+  return { service, startSession, definition, hover }
 }
 
 describe('python definition service', () => {
+  it('answers hovers from the same pyrefly as definitions', async () => {
+    const { service, startSession, hover } = setup()
+
+    await service.definition(request)
+    await expect(service.hover(request)).resolves.toEqual({
+      ok: true,
+      markdown: '```python\nx: int\n```'
+    })
+    expect(startSession).toHaveBeenCalledTimes(1)
+    expect(hover).toHaveBeenCalledWith({
+      filePath: '/repo/apps/backend/a.py',
+      text: 'import b',
+      line: 0,
+      character: 7
+    })
+  })
+
   it("starts one pyrefly per project, in the project's venv, and reuses it", async () => {
     const { service, startSession, definition } = setup()
 

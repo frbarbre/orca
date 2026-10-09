@@ -14,6 +14,7 @@ export type DefinitionRequest = { filePath: string; text: string; line: number; 
 export type PyreflySession = {
   readonly closed: boolean
   definition: (request: DefinitionRequest) => Promise<PythonDefinitionLocation[]>
+  hover: (request: DefinitionRequest) => Promise<string | null>
   dispose: () => void
 }
 
@@ -61,6 +62,27 @@ export function readDefinitionLocations(result: unknown): PythonDefinitionLocati
     const location = toLocation(item)
     return location ? [location] : []
   })
+}
+
+function markedStringToMarkdown(value: unknown): string | null {
+  if (typeof value === 'string') {
+    return value
+  }
+  if (isRecord(value) && typeof value.value === 'string') {
+    return typeof value.language === 'string'
+      ? `\`\`\`${value.language}\n${value.value}\n\`\`\``
+      : value.value
+  }
+  return null
+}
+
+// Why three shapes: LSP hover contents is MarkupContent, a MarkedString, or a MarkedString[].
+export function readHoverMarkdown(result: unknown): string | null {
+  const contents = isRecord(result) ? result.contents : null
+  const parts = (Array.isArray(contents) ? contents : [contents])
+    .map(markedStringToMarkdown)
+    .filter((part): part is string => Boolean(part?.trim()))
+  return parts.length > 0 ? parts.join('\n\n') : null
 }
 
 export function createPyreflySession({
@@ -189,6 +211,15 @@ export function createPyreflySession({
         position: { line, character }
       })
       return readDefinitionLocations(result)
+    },
+    hover: async ({ filePath, text, line, character }) => {
+      await ensureInitialized()
+      const uri = syncDocument(filePath, text)
+      const result = await request('textDocument/hover', {
+        textDocument: { uri },
+        position: { line, character }
+      })
+      return readHoverMarkdown(result)
     },
     dispose: () => {
       if (closed) {

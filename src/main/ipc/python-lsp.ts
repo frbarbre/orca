@@ -43,5 +43,9 @@ export function registerPythonLspHandlers(): void {
       ? service.definition(request)
       : { ok: false, error: 'Invalid Python definition request.' }
   })
+  ipcMain.handle('python:hover', async (_event, args: unknown) => {
+    const request = readRequest(args)
+    return request ? service.hover(request) : { ok: false, error: 'Invalid Python hover request.' }
+  })
   app.once('will-quit', () => service.disposeAll())
 }

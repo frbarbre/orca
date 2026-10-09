@@ -1013,6 +1013,11 @@ same-file hit stays in the diff. From a diff, a target file that has its own cha
 (`targetHasDiff`) opens in its diff via `openDiffAtLocation`, which prefers the uncommitted diff
 (the newest version) over the branch diff; an unchanged target opens in a normal tab.
 
+Hover over a Python symbol shows pyrefly's type and docs (`textDocument/hover`): `hover` on the
+session (`readHoverMarkdown` handles all three LSP content shapes), the service and
+`python:hover`, and a Monaco hover provider next to the definition provider. pyrefly's
+"Go to …" links are `file://…#Lline,col` and route through the same editor opener.
+
 | File | What is ours |
 | --- | --- |
 | `src/shared/repo-types.ts`, `ipc/repos/repo-update-handler.ts`, `repo-update-operations.ts`, `repo-lifecycle-operations.ts`, `store/repos/repo-state.ts` | `pythonVenvPath` (trimmed, non-strings dropped). |

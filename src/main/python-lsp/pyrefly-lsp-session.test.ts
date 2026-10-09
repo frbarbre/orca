@@ -4,7 +4,7 @@ import { createPyreflySession, type LspTransport } from './pyrefly-lsp-session'
 
 type Message = { id?: number; method?: string; params?: Record<string, unknown> }
 
-function fakeServer(definitionResult: unknown) {
+function fakeServer(definitionResult: unknown, hoverResult: unknown = null) {
   const received: Message[] = []
   let deliver: (chunk: Buffer) => void = () => {}
   let exit: () => void = () => {}
@@ -17,6 +17,8 @@ function fakeServer(definitionResult: unknown) {
       reply({ id: 900, method: 'workspace/configuration', params: { items: [{}] } })
     } else if (message.method === 'textDocument/definition') {
       reply({ id: message.id, result: definitionResult })
+    } else if (message.method === 'textDocument/hover') {
+      reply({ id: message.id, result: hoverResult })
     }
   })
   const transport: LspTransport = {
@@ -83,6 +85,29 @@ describe('pyrefly LSP session', () => {
     await expect(session.definition(request(''))).resolves.toEqual([
       { filePath: '/repo/b.py', line: 2, character: 4 }
     ])
+  })
+
+  it('asks for hover text at a position and returns it as markdown', async () => {
+    const markup = { kind: 'markdown', value: '```python\nx: FrameParameterId\n```' }
+    const server = fakeServer(null, { contents: markup })
+    const session = createPyreflySession({ transport: server.transport, rootPath: '/repo' })
+
+    await expect(session.hover(request('x = 1'))).resolves.toBe(markup.value)
+    const hover = server.received.find((message) => message.method === 'textDocument/hover')
+    expect(hover?.params?.position).toEqual({ line: 3, character: 8 })
+  })
+
+  it('reads the older hover shapes and an empty hover', async () => {
+    const strings = fakeServer(null, {
+      contents: [{ language: 'python', value: 'def f() -> int' }, 'Docs.']
+    })
+    const fromStrings = createPyreflySession({ transport: strings.transport, rootPath: '/repo' })
+    await expect(fromStrings.hover(request(''))).resolves.toBe(
+      '```python\ndef f() -> int\n```\n\nDocs.'
+    )
+
+    const empty = createPyreflySession({ transport: fakeServer(null).transport, rootPath: '/r' })
+    await expect(empty.hover(request(''))).resolves.toBeNull()
   })
 
   it('fails pending requests and reports itself closed when the server exits', async () => {

@@ -9,7 +9,11 @@ import { toast } from 'sonner'
 import { translate } from '@/i18n/i18n'
 import { useAppStore } from '@/store'
 import { modelFileFor } from './diff-editor-model-files'
-import { builtInTypeScriptDefinition, builtInTypeScriptHover } from './built-in-typescript-fallback'
+import {
+  builtInTypeScriptDefinition,
+  builtInTypeScriptHover,
+  builtInTypeScriptReferences
+} from './built-in-typescript-fallback'
 import type { CodeLocation } from './code-navigation-history'
 import {
   goInCodeHistory,
@@ -21,16 +25,19 @@ import {
   definitionOpenTarget,
   languageServerEnabled,
   openFileContext,
-  previewModelText,
   serverLanguageFor,
   targetHasDiff,
   toEditorPosition,
   trackedFileContext
 } from './language-server-editor'
+import {
+  definitionModelUri,
+  PREVIEW_SCHEME,
+  referenceModelUri,
+  wordRangeAt
+} from './language-server-preview-models'
 
 const MONACO_LANGUAGE_IDS = ['python', 'typescript', 'javascript']
-const PREVIEW_SCHEME = 'orca-definition'
-const MAX_PREVIEW_MODELS = 20
 const MOUSE_BACK_BUTTON = 3
 const MOUSE_FORWARD_BUTTON = 4
 
@@ -105,24 +112,25 @@ function editorLocation(editor: Monaco.editor.ICodeEditor): CodeLocation | null 
     : null
 }
 
-// Why a model per target: Monaco underlines a Cmd+hovered name only once it can load the target's
-// model, and standalone Monaco loads none it doesn't already hold.
-function previewModelUri(monaco: typeof Monaco, location: LanguageServerLocation): Monaco.Uri {
-  const uri = monaco.Uri.file(location.filePath).with({ scheme: PREVIEW_SCHEME })
-  const text = previewModelText(location)
-  const existing = monaco.editor.getModel(uri)
-  if (existing) {
-    if (existing.getValue() !== text) {
-      existing.setValue(text)
+function referenceLocations(
+  monaco: typeof Monaco,
+  model: Monaco.editor.ITextModel,
+  sourcePath: string,
+  locations: readonly LanguageServerLocation[],
+  files: Record<string, string>
+): Monaco.languages.Location[] {
+  return locations.flatMap((location) => {
+    // Why the asking model for its own file: a diff side keeps its references in the diff.
+    const uri =
+      location.filePath === sourcePath
+        ? model.uri
+        : referenceModelUri(monaco, location.filePath, files[location.filePath])
+    if (!uri) {
+      return []
     }
-    return uri
-  }
-  const previews = monaco.editor.getModels().filter((model) => model.uri.scheme === PREVIEW_SCHEME)
-  for (const stale of previews.slice(0, Math.max(0, previews.length - MAX_PREVIEW_MODELS + 1))) {
-    stale.dispose()
-  }
-  monaco.editor.createModel(text, 'plaintext', uri)
-  return uri
+    const { lineNumber, column } = toEditorPosition(location)
+    return [{ uri, range: wordRangeAt(monaco, monaco.editor.getModel(uri), lineNumber, column) }]
+  })
 }
 
 const reportedFailures = new Set<string>()
@@ -149,14 +157,15 @@ function reportServerFailure(language: LanguageServerLanguage, error: string): v
   )
 }
 
-// Why: Monaco reads this once at setup, so its own TS hover/definition stay off for good and the
-// providers below call the built-in worker themselves whenever tsgo is off or can't answer.
+// Why: Monaco reads this once at setup, so its own TS hover/definition/references stay off for
+// good and the providers below call the built-in worker themselves whenever tsgo is off or can't answer.
 function turnOffBuiltInTypeScriptProviders(monacoTS: typeof Monaco.typescript): void {
   for (const defaults of [monacoTS.typescriptDefaults, monacoTS.javascriptDefaults]) {
     defaults.setModeConfiguration({
       ...defaults.modeConfiguration,
       definitions: false,
-      hovers: false
+      hovers: false,
+      references: false
     })
   }
 }
@@ -186,10 +195,15 @@ export function installMonacoLanguageServers(
           if (location) {
             const { lineNumber, column } = toEditorPosition(location)
             // Why the diff's own model for a same-file hit: the jump then stays in the diff editor.
-            const sameFile = location.filePath === request.filePath
+            const uri =
+              location.filePath === request.filePath
+                ? model.uri
+                : definitionModelUri(monaco, location)
+            // Why the whole name: clicking a declaration then reads as "already here", and Monaco
+            // shows its references instead, like VS Code.
             return {
-              uri: sameFile ? model.uri : previewModelUri(monaco, location),
-              range: new monaco.Range(lineNumber, column, lineNumber, column)
+              uri,
+              range: wordRangeAt(monaco, monaco.editor.getModel(uri), lineNumber, column)
             }
           }
         }
@@ -219,6 +233,28 @@ export function installMonacoLanguageServers(
         }
         return hasBuiltInTypeScript(model)
           ? builtInTypeScriptHover(monaco, monacoTS, model, position)
+          : null
+      }
+    })
+
+    monaco.languages.registerReferenceProvider(languageId, {
+      provideReferences: async (model, position) => {
+        const request = serverRequest(model, position)
+        if (request) {
+          const result = await window.api.languageServer.references(request)
+          if (result.ok) {
+            return referenceLocations(
+              monaco,
+              model,
+              request.filePath,
+              result.locations,
+              result.files
+            )
+          }
+          reportServerFailure(request.language, result.error)
+        }
+        return hasBuiltInTypeScript(model)
+          ? builtInTypeScriptReferences(monaco, monacoTS, model, position)
           : null
       }
     })

@@ -35,18 +35,21 @@ function readRequest(value: unknown): LanguageServerRequest | null {
 const PREVIEW_LINES = 10
 const MAX_PREVIEW_FILE_BYTES = 5_000_000
 
-function readPreview(filePath: string, line: number): string | null {
+function readFile(filePath: string): string | null {
   try {
-    if (statSync(filePath).size > MAX_PREVIEW_FILE_BYTES) {
-      return null
-    }
-    return readFileSync(filePath, 'utf8')
-      .split(/\r?\n/)
-      .slice(line, line + PREVIEW_LINES)
-      .join('\n')
+    return statSync(filePath).size > MAX_PREVIEW_FILE_BYTES ? null : readFileSync(filePath, 'utf8')
   } catch {
     return null
   }
+}
+
+function readPreview(filePath: string, line: number): string | null {
+  return (
+    readFile(filePath)
+      ?.split(/\r?\n/)
+      .slice(line, line + PREVIEW_LINES)
+      .join('\n') ?? null
+  )
 }
 
 // Fork: Cmd+click and hover ask a language server (pyrefly for Python, tsgo for TypeScript).
@@ -54,6 +57,7 @@ export function registerLanguageServerHandlers(): void {
   const service = createLanguageServerService({
     exists: existsSync,
     readPreview,
+    readFile,
     startSession: startLanguageServerSession
   })
   ipcMain.handle('languageServer:definition', async (_event, args: unknown) => {
@@ -66,6 +70,12 @@ export function registerLanguageServerHandlers(): void {
     const request = readRequest(args)
     return request
       ? service.hover(request)
+      : { ok: false, error: 'Invalid language server request.' }
+  })
+  ipcMain.handle('languageServer:references', async (_event, args: unknown) => {
+    const request = readRequest(args)
+    return request
+      ? service.references(request)
       : { ok: false, error: 'Invalid language server request.' }
   })
   ipcMain.handle('languageServer:stop', (_event, args: unknown) => {

@@ -23,15 +23,22 @@ function setup() {
     { filePath: '/repo/apps/backend/b.py', line: 0, character: 0 }
   ])
   const hover = vi.fn(async () => '```python\nx: int\n```')
+  const references = vi.fn(async () => [
+    { filePath: '/repo/apps/backend/a.py', line: 19, character: 6 },
+    { filePath: '/repo/apps/backend/c.py', line: 4, character: 10 },
+    { filePath: '/repo/apps/backend/c.py', line: 9, character: 10 }
+  ])
   const sessions: { dispose: ReturnType<typeof vi.fn> }[] = []
   const startSession = vi.fn(() => {
-    const session = { closed: false, dispose: vi.fn(), definition, hover }
+    const session = { closed: false, dispose: vi.fn(), definition, hover, references }
     sessions.push(session)
     return session
   })
   const readPreview = vi.fn((_filePath: string, _line: number): string | null => null)
+  const readFile = vi.fn((filePath: string): string | null => `text of ${filePath}`)
   const service = createLanguageServerService({
     readPreview,
+    readFile,
     exists: (path) =>
       path === '/repo/apps/backend/pyproject.toml' ||
       path === '/wt/e-5139/apps/backend/pyproject.toml' ||
@@ -41,10 +48,25 @@ function setup() {
       path === '/repo/apps/frontend/node_modules/.bin/tsgo',
     startSession
   })
-  return { service, startSession, definition, hover, sessions, readPreview }
+  return { service, startSession, definition, hover, references, sessions, readPreview, readFile }
 }
 
 describe('language server service', () => {
+  it('finds references with the text of each other file they are in, for the peek view', async () => {
+    const { service, readFile } = setup()
+
+    await expect(service.references(request)).resolves.toEqual({
+      ok: true,
+      locations: [
+        { filePath: '/repo/apps/backend/a.py', line: 19, character: 6 },
+        { filePath: '/repo/apps/backend/c.py', line: 4, character: 10 },
+        { filePath: '/repo/apps/backend/c.py', line: 9, character: 10 }
+      ],
+      files: { '/repo/apps/backend/c.py': 'text of /repo/apps/backend/c.py' }
+    })
+    expect(readFile).toHaveBeenCalledTimes(1)
+  })
+
   it("runs a bare worktree on the main checkout's venv and tsgo", async () => {
     const { service, startSession } = setup()
     const bare = { worktreeRoot: '/wt/e-5139' }

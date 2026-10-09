@@ -8,7 +8,11 @@ type Message = {
   params?: Record<string, unknown> & { textDocument?: { languageId?: string } }
 }
 
-function fakeServer(definitionResult: unknown, hoverResult: unknown = null) {
+function fakeServer(
+  definitionResult: unknown,
+  hoverResult: unknown = null,
+  referencesResult: unknown = null
+) {
   const received: Message[] = []
   let deliver: (chunk: Buffer) => void = () => {}
   let exit: () => void = () => {}
@@ -23,6 +27,8 @@ function fakeServer(definitionResult: unknown, hoverResult: unknown = null) {
       reply({ id: message.id, result: definitionResult })
     } else if (message.method === 'textDocument/hover') {
       reply({ id: message.id, result: hoverResult })
+    } else if (message.method === 'textDocument/references') {
+      reply({ id: message.id, result: referencesResult })
     }
   })
   const transport: LspTransport = {
@@ -99,6 +105,26 @@ describe('LSP session', () => {
       'textDocument/definition'
     ])
     expect(server.received[0]?.params?.rootUri).toBe('file:///repo/apps/backend')
+  })
+
+  it('finds every reference, the declaration included', async () => {
+    const at = (line: number) => ({
+      uri: 'file:///repo/apps/backend/models/base.py',
+      range: { start: { line, character: 6 }, end: { line, character: 18 } }
+    })
+    const server = fakeServer(null, null, [at(19), at(40)])
+    const session = createLspSession({
+      transport: server.transport,
+      rootPath: '/repo/apps/backend'
+    })
+
+    await expect(session.references(request('x = 1'))).resolves.toEqual([
+      { filePath: '/repo/apps/backend/models/base.py', line: 19, character: 6 },
+      { filePath: '/repo/apps/backend/models/base.py', line: 40, character: 6 }
+    ])
+    const asked = server.received.find((message) => message.method === 'textDocument/references')
+    expect(asked?.params?.context).toEqual({ includeDeclaration: true })
+    expect(asked?.params?.position).toEqual({ line: 3, character: 8 })
   })
 
   it('reads location links too', async () => {

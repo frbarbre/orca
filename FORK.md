@@ -1041,9 +1041,19 @@ Hover content handles all three LSP shapes (`readHoverMarkdown`); pyrefly's "Go 
 Holding Cmd over a name underlines it and previews the target. Standalone Monaco only underlines
 when it already holds the target's model (`StandaloneTextModelService` rejects others with "Model
 not found"), so main sends the target's first 10 lines with each definition (`preview`, read in
-`ipc/language-server.ts`) and the renderer keeps up to 20 `orca-definition:` plaintext models of
-them, the lines placed at their own line number (`previewModelText`); the opener maps that scheme
-back to the file.
+`ipc/language-server.ts`) and the renderer keeps `orca-definition:` plaintext models of them, the
+lines placed at their own line number (`previewModelText`); the opener maps that scheme back to the
+file. A file that is open is used as it is.
+
+**Find references** (context menu Go to References / Peek References, Shift+F12, or Cmd+click on a
+declaration, which Monaco turns into references because the definition is "already here"): main
+asks the server for `textDocument/references` (declaration included) and sends the text of every
+other referenced file (up to 50); the renderer shows them in Monaco's peek through whole-file
+`orca-definition:` models with the file's language (`lib/language-server-preview-models.ts`, up to
+80 copies; a definition snippet never overwrites a whole copy). Opening a reference from the peek
+goes through the same opener, so it replaces the tab and lands in the history. Monaco's own TS
+references are switched off with the hover and definition; `builtInTypeScriptReferences` answers
+for open files when tsgo is off.
 
 A jump replaces the tab it started in instead of adding one (`replaceableTabId`): not when that
 tab has unsaved changes, already shows something else (the all-changes view), or the target has its

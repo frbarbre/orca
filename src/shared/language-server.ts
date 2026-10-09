@@ -31,6 +31,11 @@ export type LanguageServerDefinitionResult =
   | { ok: true; locations: LanguageServerLocation[] }
   | { ok: false; error: string }
 
+/** `files` holds the text of each referenced file other than the asking one. */
+export type LanguageServerReferencesResult =
+  | { ok: true; locations: LanguageServerLocation[]; files: Record<string, string> }
+  | { ok: false; error: string }
+
 export function isLanguageServerLanguage(value: unknown): value is LanguageServerLanguage {
   return LANGUAGE_SERVER_LANGUAGES.some((language) => language === value)
 }

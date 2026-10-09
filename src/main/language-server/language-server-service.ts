@@ -3,6 +3,7 @@ import type {
   LanguageServerDefinitionResult,
   LanguageServerHoverResult,
   LanguageServerLanguage,
+  LanguageServerReferencesResult,
   LanguageServerRequest
 } from '../../shared/language-server'
 import { resolvePythonProject } from './python-project-resolution'
@@ -12,6 +13,7 @@ import { createLspSessionPool } from './lsp-session-pool'
 
 const IDLE_MS = 15 * 60_000
 const MAX_SESSIONS = 4
+const MAX_REFERENCE_FILES = 50
 const FILE_PATTERNS: Record<LanguageServerLanguage, RegExp> = {
   python: /\.pyi?$/i,
   typescript: /\.[mc]?[jt]sx?$/i
@@ -26,7 +28,7 @@ export type LanguageServerLaunch = {
   venvPath: string | null
 }
 
-type Session = Pick<LspSession, 'closed' | 'definition' | 'hover' | 'dispose'>
+type Session = Pick<LspSession, 'closed' | 'definition' | 'hover' | 'references' | 'dispose'>
 
 function isInside(root: string, path: string): boolean {
   const rel = relative(root, path)
@@ -66,14 +68,17 @@ function sessionKey(launch: LanguageServerLaunch): string {
 export function createLanguageServerService({
   exists,
   readPreview,
+  readFile,
   startSession
 }: {
   exists: (path: string) => boolean
   readPreview: (filePath: string, line: number) => string | null
+  readFile: (filePath: string) => string | null
   startSession: (launch: LanguageServerLaunch) => Session
 }): {
   definition: (request: LanguageServerRequest) => Promise<LanguageServerDefinitionResult>
   hover: (request: LanguageServerRequest) => Promise<LanguageServerHoverResult>
+  references: (request: LanguageServerRequest) => Promise<LanguageServerReferencesResult>
   stopLanguage: (language: LanguageServerLanguage) => void
   disposeAll: () => void
 } {
@@ -142,6 +147,28 @@ export function createLanguageServerService({
         session.hover({ filePath, text, line, character })
       )
       return result.ok ? { ok: true, markdown: result.value } : result
+    },
+    references: async (request) => {
+      const { filePath, text, line, character } = request
+      const result = await withSession(request, (session) =>
+        session.references({ filePath, text, line, character })
+      )
+      if (!result.ok) {
+        return result
+      }
+      // Why the texts: the peek view shows each reference in its file, and the renderer only
+      // holds the files that are open.
+      const files: Record<string, string> = {}
+      const others = [...new Set(result.value.map((location) => location.filePath))].filter(
+        (path) => path !== filePath
+      )
+      for (const path of others.slice(0, MAX_REFERENCE_FILES)) {
+        const content = readFile(path)
+        if (content !== null) {
+          files[path] = content
+        }
+      }
+      return { ok: true, locations: result.value, files }
     },
     stopLanguage: (language) => pool.disposeMatching((key) => key.startsWith(`${language}\0`)),
     disposeAll: () => pool.disposeAll()

@@ -15,6 +15,7 @@ export type LspSession = {
   readonly closed: boolean
   definition: (request: DefinitionRequest) => Promise<LanguageServerLocation[]>
   hover: (request: DefinitionRequest) => Promise<string | null>
+  references: (request: DefinitionRequest) => Promise<LanguageServerLocation[]>
   dispose: () => void
 }
 
@@ -189,7 +190,8 @@ export function createLspSession({
         capabilities: {
           textDocument: {
             definition: { linkSupport: true },
-            hover: { contentFormat: ['markdown', 'plaintext'] }
+            hover: { contentFormat: ['markdown', 'plaintext'] },
+            references: {}
           }
         }
       })
@@ -241,6 +243,16 @@ export function createLspSession({
         position: { line, character }
       })
       return readHoverMarkdown(result)
+    },
+    references: async ({ filePath, text, line, character }) => {
+      await ensureInitialized()
+      const uri = syncDocument(filePath, text)
+      const result = await request('textDocument/references', {
+        textDocument: { uri },
+        position: { line, character },
+        context: { includeDeclaration: true }
+      })
+      return Array.isArray(result) ? readDefinitionLocations(result) : []
     },
     dispose: () => {
       if (closed) {

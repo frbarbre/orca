@@ -75,6 +75,7 @@ import type {
   LanguageServerDefinitionResult,
   LanguageServerHoverResult,
   LanguageServerLanguage,
+  LanguageServerReferencesResult,
   LanguageServerRequest
 } from '../shared/language-server'
 import type {
@@ -161,6 +162,7 @@ export type PreloadApi = {
   languageServer: {
     definition: (args: LanguageServerRequest) => Promise<LanguageServerDefinitionResult>
     hover: (args: LanguageServerRequest) => Promise<LanguageServerHoverResult>
+    references: (args: LanguageServerRequest) => Promise<LanguageServerReferencesResult>
     stop: (args: { language: LanguageServerLanguage }) => Promise<void>
   }
   gitBlame: {

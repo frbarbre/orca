@@ -54,6 +54,18 @@ export async function builtInTypeScriptHover(
   }
 }
 
+function openModelLocations(
+  monaco: typeof Monaco,
+  entries: readonly { fileName: string; textSpan: TextSpan }[]
+): Monaco.languages.Location[] {
+  return entries.flatMap((entry) => {
+    const targetModel = monaco.editor.getModel(monaco.Uri.parse(entry.fileName))
+    return targetModel
+      ? [{ uri: targetModel.uri, range: spanToRange(monaco, targetModel, entry.textSpan) }]
+      : []
+  })
+}
+
 export async function builtInTypeScriptDefinition(
   monaco: typeof Monaco,
   monacoTS: typeof Monaco.typescript,
@@ -63,13 +75,17 @@ export async function builtInTypeScriptDefinition(
   const worker = await workerFor(monacoTS, model)
   const entries: readonly { fileName: string; textSpan: TextSpan }[] | undefined =
     await worker.getDefinitionAtPosition(model.uri.toString(), model.getOffsetAt(position))
-  if (!entries || model.isDisposed()) {
-    return null
-  }
-  return entries.flatMap((entry) => {
-    const targetModel = monaco.editor.getModel(monaco.Uri.parse(entry.fileName))
-    return targetModel
-      ? [{ uri: targetModel.uri, range: spanToRange(monaco, targetModel, entry.textSpan) }]
-      : []
-  })
+  return entries && !model.isDisposed() ? openModelLocations(monaco, entries) : null
+}
+
+export async function builtInTypeScriptReferences(
+  monaco: typeof Monaco,
+  monacoTS: typeof Monaco.typescript,
+  model: Monaco.editor.ITextModel,
+  position: Monaco.Position
+): Promise<Monaco.languages.Location[] | null> {
+  const worker = await workerFor(monacoTS, model)
+  const entries: readonly { fileName: string; textSpan: TextSpan }[] | undefined =
+    await worker.getReferencesAtPosition(model.uri.toString(), model.getOffsetAt(position))
+  return entries && !model.isDisposed() ? openModelLocations(monaco, entries) : null
 }

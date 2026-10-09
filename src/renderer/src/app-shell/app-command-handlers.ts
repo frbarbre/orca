@@ -6,6 +6,7 @@ import { requestScrollToCurrentWorkspaceRevealAndRename } from '@/lib/scroll-to-
 import { requestVirtualizedScrollAnchorRecord } from '@/hooks/requestVirtualizedScrollAnchorRecord'
 import { showTerminalShortcutCaptureNotification } from '@/lib/terminal-shortcut-capture-notification'
 import { shouldShowWorktreeHistoryControls } from '../lib/titlebar-worktree-history-controls'
+import { goInCodeHistory } from '@/lib/code-navigation'
 import { TOGGLE_WORKSPACE_BOARD_EVENT } from '../components/sidebar/useWorkspaceBoardPanel'
 import {
   getRenderedLineageChipKeys,
@@ -161,7 +162,7 @@ export function createAppCommandHandlers(
         if (creationLayoutActive || !shouldShowWorktreeHistoryControls(activeView)) {
           return false
         }
-        return claim('worktree.history.back', () => useAppStore.getState().goBackWorktree())
+        return claim('worktree.history.back', () => goInCodeHistory('back'))
       }
     ],
     [
@@ -170,7 +171,7 @@ export function createAppCommandHandlers(
         if (creationLayoutActive || !shouldShowWorktreeHistoryControls(activeView)) {
           return false
         }
-        return claim('worktree.history.forward', () => useAppStore.getState().goForwardWorktree())
+        return claim('worktree.history.forward', () => goInCodeHistory('forward'))
       }
     ],
     ['sidebar.left.toggle', () => claim('sidebar.left.toggle', () => actions.toggleSidebar())],

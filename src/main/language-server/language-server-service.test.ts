@@ -29,7 +29,9 @@ function setup() {
     sessions.push(session)
     return session
   })
+  const readPreview = vi.fn((_filePath: string, _line: number): string | null => null)
   const service = createLanguageServerService({
+    readPreview,
     exists: (path) =>
       path === '/repo/apps/backend/pyproject.toml' ||
       path === '/wt/e-5139/apps/backend/pyproject.toml' ||
@@ -39,7 +41,7 @@ function setup() {
       path === '/repo/apps/frontend/node_modules/.bin/tsgo',
     startSession
   })
-  return { service, startSession, definition, hover, sessions }
+  return { service, startSession, definition, hover, sessions, readPreview }
 }
 
 describe('language server service', () => {
@@ -105,6 +107,24 @@ describe('language server service', () => {
       line: 0,
       character: 7
     })
+  })
+
+  it("sends the target's lines with each definition, for the Cmd+hover preview", async () => {
+    const { service, readPreview } = setup()
+    readPreview.mockReturnValue('def b():\n    pass')
+
+    await expect(service.definition(request)).resolves.toEqual({
+      ok: true,
+      locations: [
+        {
+          filePath: '/repo/apps/backend/b.py',
+          line: 0,
+          character: 0,
+          preview: 'def b():\n    pass'
+        }
+      ]
+    })
+    expect(readPreview).toHaveBeenCalledWith('/repo/apps/backend/b.py', 0)
   })
 
   it("starts tsgo's language server for TypeScript, from the project's node_modules", async () => {

@@ -1034,6 +1034,21 @@ same-file hit stays in the diff. From a diff, a target file that has its own cha
 Hover content handles all three LSP shapes (`readHoverMarkdown`); pyrefly's "Go to …" links are
 `file://…#Lline,col` and route through the same editor opener.
 
+Holding Cmd over a name underlines it and previews the target. Standalone Monaco only underlines
+when it already holds the target's model (`StandaloneTextModelService` rejects others with "Model
+not found"), so main sends the target's first 10 lines with each definition (`preview`, read in
+`ipc/language-server.ts`) and the renderer keeps up to 20 `orca-definition:` plaintext models of
+them, the lines placed at their own line number (`previewModelText`); the opener maps that scheme
+back to the file.
+
+A jump replaces the tab it started in instead of adding one (`replaceableTabId`): not when that
+tab has unsaved changes, already shows something else (the all-changes view), or the target has its
+own tab. Every jump, same-file ones too, is recorded in a back/forward history
+(`lib/code-navigation-history.ts`, 50 places, with the cursor's spot when leaving; opening and the
+store in `lib/code-navigation.ts`). The titlebar's Back/Forward buttons, their shortcuts
+(`worktree.history.back|forward`) and the mouse's back/forward buttons walk this history instead of
+the worktree history. The file editor's `smoothScrolling` is off, so a reveal is instant.
+
 | File | What is ours |
 | --- | --- |
 | `src/shared/repo-types.ts`, `ipc/repos/repo-update-handler.ts`, `repo-update-operations.ts`, `repo-lifecycle-operations.ts`, `store/repos/repo-state.ts` | `pythonVenvPath` (trimmed, non-strings dropped). |
@@ -1042,6 +1057,8 @@ Hover content handles all three LSP shapes (`readHoverMarkdown`); pyrefly's "Go 
 | `src/renderer/src/components/settings/GeneralEditorSettingsSection.tsx`, `general-editor-search.ts` | `LanguageServersSetting` and its search entry. |
 | `src/main/ipc/register-core-handlers/register-core-handlers.ts` (+ test mock) | `registerLanguageServerHandlers()`. |
 | `src/preload/index.ts`, `src/preload/api-types.ts` | `languageServer` API. |
+| `src/renderer/src/app-shell/TitlebarLeftControls.tsx`, `app-command-handlers.ts`, `hooks/ipc-events/workspace-shortcut-ipc-bridge.ts` | Back/Forward call `goInCodeHistory` instead of `goBackWorktree`/`goForwardWorktree`. |
+| `src/renderer/src/components/editor/MonacoEditor.tsx` | `smoothScrolling: false`. |
 
 ## Verify
 

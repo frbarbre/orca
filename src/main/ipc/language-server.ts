@@ -1,4 +1,4 @@
-import { existsSync } from 'node:fs'
+import { existsSync, readFileSync, statSync } from 'node:fs'
 import { app, ipcMain } from 'electron'
 import { isLanguageServerLanguage, type LanguageServerRequest } from '../../shared/language-server'
 import { createLanguageServerService } from '../language-server/language-server-service'
@@ -32,10 +32,28 @@ function readRequest(value: unknown): LanguageServerRequest | null {
   }
 }
 
+const PREVIEW_LINES = 10
+const MAX_PREVIEW_FILE_BYTES = 5_000_000
+
+function readPreview(filePath: string, line: number): string | null {
+  try {
+    if (statSync(filePath).size > MAX_PREVIEW_FILE_BYTES) {
+      return null
+    }
+    return readFileSync(filePath, 'utf8')
+      .split(/\r?\n/)
+      .slice(line, line + PREVIEW_LINES)
+      .join('\n')
+  } catch {
+    return null
+  }
+}
+
 // Fork: Cmd+click and hover ask a language server (pyrefly for Python, tsgo for TypeScript).
 export function registerLanguageServerHandlers(): void {
   const service = createLanguageServerService({
     exists: existsSync,
+    readPreview,
     startSession: startLanguageServerSession
   })
   ipcMain.handle('languageServer:definition', async (_event, args: unknown) => {

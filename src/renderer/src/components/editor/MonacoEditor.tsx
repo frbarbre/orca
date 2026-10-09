@@ -288,7 +288,7 @@ export default function MonacoEditor({
                 handleMouseWheel: autoHeightUsesInternalScroll
               }
             : undefined,
-          smoothScrolling: true,
+          smoothScrolling: false,
           cursorSmoothCaretAnimation: 'off',
           padding: { top: 0 },
           find: monacoFindOptions,

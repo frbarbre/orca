@@ -4,6 +4,7 @@ import { activateTabNumberShortcut } from '@/lib/tab-number-shortcuts'
 import { emitCmdJRowIndexJump } from '@/lib/cmd-j-row-index-jump'
 import { getVisibleWorktreeShortcutTargets } from '@/components/sidebar/visible-worktrees'
 import { activateAndRevealWorkspace } from '@/lib/worktree-activation'
+import { goInCodeHistory } from '@/lib/code-navigation'
 import { deleteHoveredWorkspaceImmediately } from '@/components/sidebar/hovered-workspace-delete'
 import { isFloatingWorkspacePanelFocused } from '@/lib/floating-workspace-terminal-actions'
 import { isGitRepoKind } from '../../../../shared/repo-kind'
@@ -120,11 +121,7 @@ export function registerWorkspaceShortcutIpcBridge(unsubs: (() => void)[]): void
       if (store.activeView !== 'terminal') {
         return
       }
-      if (direction === 'back') {
-        store.goBackWorktree()
-      } else {
-        store.goForwardWorktree()
-      }
+      goInCodeHistory(direction)
     })
   )
 

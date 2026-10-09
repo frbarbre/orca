@@ -3,6 +3,8 @@ import {
   definitionOpenTarget,
   languageServerEnabled,
   openFileContext,
+  previewModelText,
+  replaceableTabId,
   serverLanguageFor,
   targetHasDiff,
   toEditorPosition,
@@ -120,6 +122,70 @@ describe('targetHasDiff', () => {
       gitBranchCompareSummaryByWorktree: { 'wt-1': { status: 'loading' } }
     }
     expect(targetHasDiff(loading, 'wt-1', 'apps/backend/branch.py')).toBe(false)
+  })
+})
+
+describe('replaceableTabId', () => {
+  const tab = (id: string, filePath: string, mode: string) => ({
+    id,
+    filePath,
+    worktreeId: 'wt-1',
+    mode,
+    isDirty: false
+  })
+  const tabs = {
+    activeFileId: '/repo/a.py',
+    openFiles: [
+      tab('/repo/a.py', '/repo/a.py', 'edit'),
+      tab('diff:/repo/c.py', '/repo/c.py', 'diff'),
+      tab('/repo/open.py', '/repo/open.py', 'edit')
+    ],
+    editorDrafts: {}
+  }
+  const fromA = { worktreeId: 'wt-1', filePath: '/repo/a.py', inDiff: false }
+
+  it("is the active tab the jump started in, so the target takes that tab's place", () => {
+    expect(replaceableTabId(tabs, fromA, '/repo/b.py')).toBe('/repo/a.py')
+    expect(
+      replaceableTabId(
+        { ...tabs, activeFileId: 'diff:/repo/c.py' },
+        { worktreeId: 'wt-1', filePath: '/repo/c.py', inDiff: true },
+        '/repo/b.py'
+      )
+    ).toBe('diff:/repo/c.py')
+  })
+
+  it('keeps a tab with unsaved changes', () => {
+    const dirty = { ...tabs, openFiles: [{ ...tabs.openFiles[0], isDirty: true }] }
+    const drafted = { ...tabs, editorDrafts: { '/repo/a.py': 'x = 1' } }
+    expect(replaceableTabId(dirty, fromA, '/repo/b.py')).toBeNull()
+    expect(replaceableTabId(drafted, fromA, '/repo/b.py')).toBeNull()
+  })
+
+  it('keeps the tab when the target already has its own tab', () => {
+    expect(replaceableTabId(tabs, fromA, '/repo/open.py')).toBeNull()
+  })
+
+  it('keeps a tab showing more than the source file, like the all-changes view', () => {
+    expect(
+      replaceableTabId(
+        { ...tabs, activeFileId: 'diff:/repo/c.py' },
+        { worktreeId: 'wt-1', filePath: '/repo/d.py', inDiff: true },
+        '/repo/b.py'
+      )
+    ).toBeNull()
+  })
+})
+
+describe('previewModelText', () => {
+  it("puts the target's lines at their own line number, so Monaco previews the right ones", () => {
+    const text = previewModelText({ filePath: '/b.py', line: 2, character: 4, preview: 'def b():' })
+    expect(text.split('\n')).toEqual(['', '', 'def b():'])
+  })
+
+  it('still reaches the line when the server sent no lines', () => {
+    const text = previewModelText({ filePath: '/b.py', line: 1, character: 0 })
+    expect(text.split('\n')).toHaveLength(2)
   })
 })
 

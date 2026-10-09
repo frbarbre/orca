@@ -1,17 +1,27 @@
 import type * as Monaco from 'monaco-editor'
-import type { LanguageServerLanguage, LanguageServerRequest } from '../../../shared/language-server'
+import type {
+  LanguageServerLanguage,
+  LanguageServerLocation,
+  LanguageServerRequest
+} from '../../../shared/language-server'
 import { LANGUAGE_SERVER_LANGUAGES } from '../../../shared/language-server'
 import { toast } from 'sonner'
 import { translate } from '@/i18n/i18n'
-import { detectLanguage } from '@/lib/language-detect'
-import { activateAndRevealWorktree } from '@/lib/worktree-activation'
 import { useAppStore } from '@/store'
 import { modelFileFor } from './diff-editor-model-files'
 import { builtInTypeScriptDefinition, builtInTypeScriptHover } from './built-in-typescript-fallback'
+import type { CodeLocation } from './code-navigation-history'
+import {
+  goInCodeHistory,
+  jumpToCode,
+  recordCodeJump,
+  setCurrentCodeLocationReader
+} from './code-navigation'
 import {
   definitionOpenTarget,
   languageServerEnabled,
   openFileContext,
+  previewModelText,
   serverLanguageFor,
   targetHasDiff,
   toEditorPosition,
@@ -19,6 +29,10 @@ import {
 } from './language-server-editor'
 
 const MONACO_LANGUAGE_IDS = ['python', 'typescript', 'javascript']
+const PREVIEW_SCHEME = 'orca-definition'
+const MAX_PREVIEW_MODELS = 20
+const MOUSE_BACK_BUTTON = 3
+const MOUSE_FORWARD_BUTTON = 4
 
 function fileSource(uri: Monaco.Uri) {
   const state = useAppStore.getState()
@@ -55,53 +69,60 @@ function serverRequest(
     : null
 }
 
-function openDefinition(
-  source: { worktreeId: string; worktreeRoot: string; fromDiff: boolean },
-  targetFilePath: string,
-  line: number,
-  column: number
-) {
-  const store = useAppStore.getState()
-  const target = definitionOpenTarget(store, source.worktreeId, targetFilePath)
+function codeLocation(
+  source: { worktreeId: string; worktreeRoot: string; filePath: string; fromDiff: boolean },
+  filePath: string,
+  position: { line: number; column: number }
+): CodeLocation | null {
+  const state = useAppStore.getState()
+  const target = definitionOpenTarget(state, source.worktreeId, filePath)
   if (!target) {
-    return false
+    return null
   }
-  activateAndRevealWorktree(target.worktreeId, { providesInitialSurface: true })
-  // Why: reading a diff, a jump into another changed file should land in that file's diff too.
-  if (
+  // Why: reading a diff, a place in another changed file is shown in that file's diff too.
+  const inDiff =
     source.fromDiff &&
-    target.relativePath !== target.filePath &&
-    targetHasDiff(store, target.worktreeId, target.relativePath)
-  ) {
-    store.openDiffAtLocation({
-      worktreeId: target.worktreeId,
-      worktreePath: source.worktreeRoot,
-      relativePath: target.relativePath,
-      line,
-      preview: false
-    })
-    return true
+    (filePath === source.filePath ||
+      (target.relativePath !== target.filePath &&
+        targetHasDiff(state, target.worktreeId, target.relativePath)))
+  return {
+    worktreeId: target.worktreeId,
+    worktreeRoot: source.worktreeRoot,
+    filePath,
+    relativePath: target.relativePath,
+    line: position.line,
+    column: position.column,
+    inDiff
   }
-  store.openFile(
-    {
-      filePath: target.filePath,
-      relativePath: target.relativePath,
-      worktreeId: target.worktreeId,
-      language: detectLanguage(target.relativePath),
-      mode: 'edit'
-    },
-    { forceContentReload: true }
-  )
-  store.setPendingEditorReveal(null)
-  // Why two frames: opening can swap the active tab and mount Monaco before it can reveal a line.
-  requestAnimationFrame(() =>
-    requestAnimationFrame(() =>
-      useAppStore
-        .getState()
-        .setPendingEditorReveal({ filePath: target.filePath, line, column, matchLength: 0 })
-    )
-  )
-  return true
+}
+
+function editorLocation(editor: Monaco.editor.ICodeEditor): CodeLocation | null {
+  const uri = editor.getModel()?.uri
+  const position = editor.getPosition()
+  const source = uri ? fileSource(uri) : null
+  return source && position
+    ? codeLocation(source, source.filePath, { line: position.lineNumber, column: position.column })
+    : null
+}
+
+// Why a model per target: Monaco underlines a Cmd+hovered name only once it can load the target's
+// model, and standalone Monaco loads none it doesn't already hold.
+function previewModelUri(monaco: typeof Monaco, location: LanguageServerLocation): Monaco.Uri {
+  const uri = monaco.Uri.file(location.filePath).with({ scheme: PREVIEW_SCHEME })
+  const text = previewModelText(location)
+  const existing = monaco.editor.getModel(uri)
+  if (existing) {
+    if (existing.getValue() !== text) {
+      existing.setValue(text)
+    }
+    return uri
+  }
+  const previews = monaco.editor.getModels().filter((model) => model.uri.scheme === PREVIEW_SCHEME)
+  for (const stale of previews.slice(0, Math.max(0, previews.length - MAX_PREVIEW_MODELS + 1))) {
+    stale.dispose()
+  }
+  monaco.editor.createModel(text, 'plaintext', uri)
+  return uri
 }
 
 const reportedFailures = new Set<string>()
@@ -167,7 +188,7 @@ export function installMonacoLanguageServers(
             // Why the diff's own model for a same-file hit: the jump then stays in the diff editor.
             const sameFile = location.filePath === request.filePath
             return {
-              uri: sameFile ? model.uri : monaco.Uri.file(location.filePath),
+              uri: sameFile ? model.uri : previewModelUri(monaco, location),
               range: new monaco.Range(lineNumber, column, lineNumber, column)
             }
           }
@@ -208,21 +229,49 @@ export function installMonacoLanguageServers(
     openCodeEditor: (sourceEditor, resource, selectionOrPosition) => {
       const sourceUri = sourceEditor.getModel()?.uri
       const source = sourceUri ? fileSource(sourceUri) : null
-      if (
-        !sourceUri ||
-        !source ||
-        resource.scheme !== 'file' ||
-        resource.toString() === sourceUri.toString()
-      ) {
+      const from = editorLocation(sourceEditor)
+      const sameModel = resource.toString() === sourceUri?.toString()
+      if (!source || !from || (!sameModel && ![PREVIEW_SCHEME, 'file'].includes(resource.scheme))) {
         return false
       }
       const start =
         selectionOrPosition && 'startLineNumber' in selectionOrPosition
           ? { line: selectionOrPosition.startLineNumber, column: selectionOrPosition.startColumn }
           : { line: selectionOrPosition?.lineNumber ?? 1, column: selectionOrPosition?.column ?? 1 }
-      return openDefinition(source, resource.fsPath, start.line, start.column)
+      const targetPath = sameModel ? source.filePath : resource.with({ scheme: 'file' }).fsPath
+      const to = codeLocation(source, targetPath, start)
+      if (!to) {
+        return false
+      }
+      // Why false for the same model: Monaco moves within the open editor itself.
+      if (sameModel) {
+        recordCodeJump(from, to)
+        return false
+      }
+      jumpToCode(from, to)
+      return true
     }
   })
+
+  let lastFocusedEditor: Monaco.editor.ICodeEditor | null = null
+  monaco.editor.onDidCreateEditor((editor) => {
+    editor.onDidFocusEditorText(() => {
+      lastFocusedEditor = editor
+    })
+  })
+  setCurrentCodeLocationReader(() => (lastFocusedEditor ? editorLocation(lastFocusedEditor) : null))
+
+  // Why mouseup: Chromium reports the mouse's back/forward buttons as buttons 3 and 4.
+  window.addEventListener(
+    'mouseup',
+    (event) => {
+      if (event.button === MOUSE_BACK_BUTTON || event.button === MOUSE_FORWARD_BUTTON) {
+        event.preventDefault()
+        goInCodeHistory(event.button === MOUSE_BACK_BUTTON ? 'back' : 'forward')
+      }
+    },
+    true
+  )
 
   const enabledLanguages = (): Record<LanguageServerLanguage, boolean> => {
     const settings = useAppStore.getState().settings

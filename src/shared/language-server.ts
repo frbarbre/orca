@@ -2,8 +2,13 @@ export const LANGUAGE_SERVER_LANGUAGES = ['python', 'typescript'] as const
 
 export type LanguageServerLanguage = (typeof LANGUAGE_SERVER_LANGUAGES)[number]
 
-/** Zero-based, as the language server reports it. */
-export type LanguageServerLocation = { filePath: string; line: number; character: number }
+/** Zero-based, as the language server reports it. `preview` is the target's first lines. */
+export type LanguageServerLocation = {
+  filePath: string
+  line: number
+  character: number
+  preview?: string
+}
 
 export type LanguageServerRequest = {
   language: LanguageServerLanguage

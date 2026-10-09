@@ -60,9 +60,11 @@ function sessionKey(launch: LanguageServerLaunch): string {
 
 export function createLanguageServerService({
   exists,
+  readPreview,
   startSession
 }: {
   exists: (path: string) => boolean
+  readPreview: (filePath: string, line: number) => string | null
   startSession: (launch: LanguageServerLaunch) => Session
 }): {
   definition: (request: LanguageServerRequest) => Promise<LanguageServerDefinitionResult>
@@ -108,7 +110,16 @@ export function createLanguageServerService({
       const result = await withSession(request, (session) =>
         session.definition({ filePath, text, line, character })
       )
-      return result.ok ? { ok: true, locations: result.value } : result
+      if (!result.ok) {
+        return result
+      }
+      return {
+        ok: true,
+        locations: result.value.map((location) => {
+          const preview = readPreview(location.filePath, location.line)
+          return preview === null ? location : { ...location, preview }
+        })
+      }
     },
     hover: async (request) => {
       const { filePath, text, line, character } = request

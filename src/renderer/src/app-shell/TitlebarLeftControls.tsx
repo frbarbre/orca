@@ -10,9 +10,11 @@ import {
 } from '@/components/ui/context-menu'
 import { shouldShowWorktreeHistoryControls } from '../lib/titlebar-worktree-history-controls'
 import {
-  canGoBackWorktreeHistory,
-  canGoForwardWorktreeHistory
-} from '@/store/slices/worktree-nav-history'
+  canGoBackInCode,
+  canGoForwardInCode,
+  goInCodeHistory,
+  useCodeHistory
+} from '@/lib/code-navigation'
 import { useShortcutLabel } from '../hooks/useShortcutLabel'
 import { useAppStore } from '../store'
 import { hasCustomTitleBar, isMac } from './app-window-chrome'
@@ -26,8 +28,9 @@ import type { AppChromeLayout } from './use-app-chrome-layout'
 export function TitlebarLeftControls({ layout }: { layout: AppChromeLayout }): React.JSX.Element {
   const toggleSidebar = useAppStore((s) => s.toggleSidebar)
   const updateSettings = useAppStore((s) => s.updateSettings)
-  const canGoBackWorktree = useAppStore(canGoBackWorktreeHistory)
-  const canGoForwardWorktree = useAppStore(canGoForwardWorktreeHistory)
+  // Fork: Back/Forward walk the code navigation history (definition jumps), not worktrees.
+  const canGoBack = useCodeHistory(canGoBackInCode)
+  const canGoForward = useCodeHistory(canGoForwardInCode)
   const leftSidebarShortcutLabel = useShortcutLabel('sidebar.left.toggle')
   const historyBackShortcutLabel = useShortcutLabel('worktree.history.back')
   const historyForwardShortcutLabel = useShortcutLabel('worktree.history.forward')
@@ -116,8 +119,8 @@ export function TitlebarLeftControls({ layout }: { layout: AppChromeLayout }): R
             <TooltipTrigger asChild>
               <button
                 className="sidebar-toggle sidebar-toggle-compact"
-                onClick={() => useAppStore.getState().goBackWorktree()}
-                disabled={!canGoBackWorktree}
+                onClick={() => goInCodeHistory('back')}
+                disabled={!canGoBack}
                 aria-label={translate('auto.App.064bd07810', 'Go back')}
               >
                 <ArrowLeft size={12} />
@@ -133,8 +136,8 @@ export function TitlebarLeftControls({ layout }: { layout: AppChromeLayout }): R
             <TooltipTrigger asChild>
               <button
                 className="sidebar-toggle sidebar-toggle-compact"
-                onClick={() => useAppStore.getState().goForwardWorktree()}
-                disabled={!canGoForwardWorktree}
+                onClick={() => goInCodeHistory('forward')}
+                disabled={!canGoForward}
                 aria-label={translate('auto.App.cf9099fe98', 'Go forward')}
               >
                 <ArrowRight size={12} />

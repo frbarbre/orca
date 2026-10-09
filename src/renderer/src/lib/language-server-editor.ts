@@ -118,6 +118,46 @@ export function targetHasDiff(
   )
 }
 
+type TabState = {
+  activeFileId: string | null
+  openFiles: readonly {
+    id: string
+    filePath: string
+    worktreeId: string
+    mode: string
+    isDirty: boolean
+  }[]
+  editorDrafts: Record<string, unknown>
+}
+
+export function replaceableTabId(
+  state: TabState,
+  source: { worktreeId: string; filePath: string; inDiff: boolean },
+  targetFilePath: string
+): string | null {
+  const active = state.openFiles.find((file) => file.id === state.activeFileId)
+  const targetHasTab = state.openFiles.some(
+    (file) => file.worktreeId === source.worktreeId && file.filePath === targetFilePath
+  )
+  if (
+    !active ||
+    targetHasTab ||
+    active.isDirty ||
+    state.editorDrafts[active.id] !== undefined ||
+    active.worktreeId !== source.worktreeId ||
+    active.filePath !== source.filePath ||
+    (active.mode === 'diff') !== source.inDiff
+  ) {
+    return null
+  }
+  return active.id
+}
+
+// Why blank lines first: Monaco previews a definition by its line number in this model.
+export function previewModelText(location: LanguageServerLocation): string {
+  return '\n'.repeat(location.line) + (location.preview ?? '')
+}
+
 export function toEditorPosition(location: LanguageServerLocation): {
   lineNumber: number
   column: number

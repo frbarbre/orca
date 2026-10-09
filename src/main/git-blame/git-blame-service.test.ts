@@ -34,12 +34,18 @@ function setup(blameOutput = porcelain(SHA, 'feat: paste between pages (#3339)')
     args[0] === 'config' ? 'FBA@flowbase.io\n' : blameOutput
   )
   const fetchCommitPulls = vi.fn(async (): Promise<unknown> => [])
+  const fetchCommit = vi.fn(async (): Promise<unknown> => ({
+    author: { login: 'someone', avatar_url: 'https://avatars.githubusercontent.com/u/42?v=4' }
+  }))
+  const fetchViewerLogin = vi.fn(async () => 'frbarbre')
   const service = createGitBlameService({
     runGit,
     ownerRepoFor: async () => ({ owner: 'flowbase', repo: 'flowbase' }),
-    fetchCommitPulls
+    fetchCommitPulls,
+    fetchCommit,
+    fetchViewerLogin
   })
-  return { service, runGit, fetchCommitPulls }
+  return { service, runGit, fetchCommitPulls, fetchCommit, fetchViewerLogin }
 }
 
 describe('git blame service', () => {
@@ -105,9 +111,34 @@ describe('git blame service', () => {
         number: 3339,
         title: 'feat: paste between pages',
         url: 'https://github.com/flowbase/flowbase/pull/3339'
-      }
+      },
+      avatarUrl: 'https://avatars.githubusercontent.com/u/42?v=4&s=64',
+      authorIsViewer: false
     })
     expect(fetchCommitPulls).not.toHaveBeenCalled()
+  })
+
+  it('knows a commit is mine when its GitHub author is the account gh is logged in as', async () => {
+    const { service, fetchCommit, fetchViewerLogin } = setup()
+    fetchCommit.mockResolvedValue({ author: { login: 'FRBarbre', avatar_url: null } })
+
+    const links = await service.links({ worktreeRoot: '/repo', sha: SHA, summary: 'x (#1)' })
+    await service.links({ worktreeRoot: '/repo', sha: `${SHA.slice(0, -1)}e`, summary: 'y' })
+    expect(links.authorIsViewer).toBe(true)
+    expect(fetchViewerLogin).toHaveBeenCalledTimes(1)
+  })
+
+  it("has the author's GitHub avatar, asked for once per commit", async () => {
+    const { service, fetchCommit } = setup()
+    const commit = { worktreeRoot: '/repo', sha: SHA, summary: 'x (#1)' }
+
+    await service.links(commit)
+    await service.links(commit)
+    expect(fetchCommit).toHaveBeenCalledTimes(1)
+
+    fetchCommit.mockResolvedValue({ author: null })
+    const unlinked = await service.links({ ...commit, sha: UNCOMMITTED.replace(/0/g, 'a') })
+    expect(unlinked.avatarUrl).toBeNull()
   })
 
   it('asks GitHub for the PR of any other commit, once, preferring the merged one', async () => {
@@ -132,11 +163,18 @@ describe('git blame service', () => {
     const service = createGitBlameService({
       runGit: async () => '',
       ownerRepoFor: async () => null,
-      fetchCommitPulls: async () => []
+      fetchCommitPulls: async () => [],
+      fetchCommit: async () => ({}),
+      fetchViewerLogin: async () => 'frbarbre'
     })
 
     await expect(
       service.links({ worktreeRoot: '/repo', sha: SHA, summary: 'x (#1)' })
-    ).resolves.toEqual({ commitUrl: null, pullRequest: null })
+    ).resolves.toEqual({
+      commitUrl: null,
+      pullRequest: null,
+      avatarUrl: null,
+      authorIsViewer: false
+    })
   })
 })

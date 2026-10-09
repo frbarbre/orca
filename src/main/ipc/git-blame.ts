@@ -3,6 +3,7 @@ import type { GitBlameLinksRequest, GitBlameRequest } from '../../shared/git-bla
 import { gitExecFileAsync } from '../git/runner'
 import { ghExecFileAsync } from '../github/gh-utils'
 import { getOwnerRepo } from '../github/github-owner-repo-selection'
+import type { OwnerRepo } from '../github/github-repository-identity'
 import { githubHostExecOptions } from '../github/github-repository-host'
 import { noteRepositoryRateLimitSpend, repositoryRateLimitGuard } from '../github/rate-limit'
 import { createGitBlameService } from '../git-blame/git-blame-service'
@@ -33,23 +34,28 @@ function readLinksRequest(value: unknown): GitBlameLinksRequest | null {
     : null
 }
 
+async function githubApi(ownerRepo: OwnerRepo, endpoint: string): Promise<unknown> {
+  if (repositoryRateLimitGuard(ownerRepo, 'core').blocked) {
+    throw new Error('GitHub rate limit reached.')
+  }
+  noteRepositoryRateLimitSpend(ownerRepo, 'core', 1)
+  const { stdout } = await ghExecFileAsync(['api', endpoint], githubHostExecOptions(ownerRepo))
+  return JSON.parse(stdout) as unknown
+}
+
 // Fork: the Git Blame line annotation (author, commit and PR of the cursor's line).
 export function registerGitBlameHandlers(): void {
   const service = createGitBlameService({
     runGit: async (args, { cwd, stdin }) =>
       (await gitExecFileAsync(args, { cwd, stdin, admissionTier: 'interactive' })).stdout,
     ownerRepoFor: (worktreeRoot) => getOwnerRepo(worktreeRoot),
-    fetchCommitPulls: async (ownerRepo, sha) => {
-      const options = githubHostExecOptions(ownerRepo)
-      if (repositoryRateLimitGuard(ownerRepo, 'core', options).blocked) {
-        throw new Error('GitHub rate limit reached.')
-      }
-      noteRepositoryRateLimitSpend(ownerRepo, 'core', 1, options)
-      const { stdout } = await ghExecFileAsync(
-        ['api', `repos/${ownerRepo.owner}/${ownerRepo.repo}/commits/${sha}/pulls`],
-        options
-      )
-      return JSON.parse(stdout) as unknown
+    fetchCommitPulls: (ownerRepo, sha) =>
+      githubApi(ownerRepo, `repos/${ownerRepo.owner}/${ownerRepo.repo}/commits/${sha}/pulls`),
+    fetchCommit: (ownerRepo, sha) =>
+      githubApi(ownerRepo, `repos/${ownerRepo.owner}/${ownerRepo.repo}/commits/${sha}`),
+    fetchViewerLogin: async (ownerRepo) => {
+      const user = (await githubApi(ownerRepo, 'user')) as { login?: unknown } | null
+      return typeof user?.login === 'string' ? user.login : ''
     }
   })
   ipcMain.handle('gitBlame:line', async (_event, args: unknown) => {
@@ -58,6 +64,8 @@ export function registerGitBlameHandlers(): void {
   })
   ipcMain.handle('gitBlame:links', async (_event, args: unknown) => {
     const request = readLinksRequest(args)
-    return request ? service.links(request) : { commitUrl: null, pullRequest: null }
+    return request
+      ? service.links(request)
+      : { commitUrl: null, pullRequest: null, avatarUrl: null, authorIsViewer: false }
   })
 }

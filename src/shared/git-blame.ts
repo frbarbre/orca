@@ -25,4 +25,11 @@ export type GitBlameLinksRequest = { worktreeRoot: string; sha: string; summary:
 
 export type GitBlamePullRequest = { number: number; title: string; url: string }
 
-export type GitBlameLinks = { commitUrl: string | null; pullRequest: GitBlamePullRequest | null }
+export type GitBlameLinks = {
+  commitUrl: string | null
+  pullRequest: GitBlamePullRequest | null
+  /** The author's GitHub avatar, when the commit's email belongs to a GitHub account. */
+  avatarUrl: string | null
+  /** The commit's GitHub author is the account gh is logged in as. */
+  authorIsViewer: boolean
+}

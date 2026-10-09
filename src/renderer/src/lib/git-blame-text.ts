@@ -3,6 +3,8 @@ import { translate } from '@/i18n/i18n'
 
 type BlameTextOptions = { youForMyCommits: boolean; now: number }
 
+const MAX_INLINE_SUMMARY = 50
+
 // Why `!== false`: settings are stored shallowly, so an unset switch means on.
 export function gitBlameSettings(
   settings: { gitBlame?: { enabled?: boolean; youForMyCommits?: boolean } } | null
@@ -42,19 +44,28 @@ function commandLink(label: string, command: string, arg: string): string {
 
 function authorLabel(
   commit: { authorName: string; isCurrentUser: boolean },
+  links: GitBlameLinks | null,
   { youForMyCommits }: BlameTextOptions
 ): string {
-  return youForMyCommits && commit.isCurrentUser
+  return youForMyCommits && (commit.isCurrentUser || links?.authorIsViewer)
     ? translate('auto.lib.gitBlame.you', 'You')
     : commit.authorName
 }
 
-export function blameInlineText(blame: GitBlameLine, options: BlameTextOptions): string {
+export function blameInlineText(
+  blame: GitBlameLine,
+  options: BlameTextOptions,
+  links: GitBlameLinks | null = null
+): string {
   if (blame.uncommitted) {
     return `${translate('auto.lib.gitBlame.you', 'You')} • ${translate('auto.lib.gitBlame.uncommitted', 'Uncommitted change')}`
   }
   const { commit } = blame
-  return `${authorLabel(commit, options)}, ${timeAgo(commit.authorTime, options.now)} • ${commit.summary}`
+  const summary =
+    commit.summary.length > MAX_INLINE_SUMMARY
+      ? `${commit.summary.slice(0, MAX_INLINE_SUMMARY)}…`
+      : commit.summary
+  return `${authorLabel(commit, links, options)}, ${timeAgo(commit.authorTime, options.now)} • ${summary}`
 }
 
 export function blameHoverMarkdown(
@@ -71,8 +82,9 @@ export function blameHoverMarkdown(
   const { commit } = blame
   const shortSha = commit.sha.slice(0, 8)
   const date = new Date(commit.authorTime * 1000).toLocaleString()
+  const avatar = links?.avatarUrl ? `![](${links.avatarUrl}|width=16,height=16) ` : ''
   const lines = [
-    `**${escapeMarkdown(authorLabel(commit, options))}** · ${timeAgo(commit.authorTime, options.now)} (${escapeMarkdown(date)})`,
+    `${avatar}**${escapeMarkdown(authorLabel(commit, links, options))}** · ${timeAgo(commit.authorTime, options.now)} (${escapeMarkdown(date)})`,
     escapeMarkdown(commit.summary)
   ]
   if (links?.pullRequest) {

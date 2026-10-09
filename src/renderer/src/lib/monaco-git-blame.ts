@@ -92,7 +92,7 @@ function attachBlame(monaco: typeof Monaco, editor: Monaco.editor.ICodeEditor): 
           showIfCollapsed: true,
           after: {
             // Why spaces, not a CSS margin: Monaco splits long injected text into several spans.
-            content: `${INLINE_GAP}${blameInlineText(blame, options)}`,
+            content: `${INLINE_GAP}${blameInlineText(blame, options, links)}`,
             inlineClassName: 'orca-git-blame-inline',
             cursorStops: monaco.editor.InjectedTextCursorStops.None
           },

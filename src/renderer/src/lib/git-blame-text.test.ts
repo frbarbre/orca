@@ -19,7 +19,9 @@ const links = {
     number: 3339,
     title: 'feat: paste between pages',
     url: 'https://github.com/flowbase/flowbase/pull/3339'
-  }
+  },
+  avatarUrl: 'https://avatars.githubusercontent.com/u/42?v=4&s=64',
+  authorIsViewer: false
 }
 
 function commandArgs(markdown: string, command: string): unknown {
@@ -68,6 +70,24 @@ describe('blameInlineText', () => {
     expect(blameInlineText(theirs, { youForMyCommits: true, now: NOW })).toMatch(/^Frederik Barbre/)
   })
 
+  it('says "You" when GitHub knows the commit is mine, even under another git email', () => {
+    const otherEmail = { uncommitted: false as const, commit: { ...commit, isCurrentUser: false } }
+    const mine = { ...links, authorIsViewer: true }
+    expect(blameInlineText(otherEmail, { youForMyCommits: true, now: NOW }, mine)).toMatch(/^You,/)
+    expect(blameHoverMarkdown(otherEmail, mine, { youForMyCommits: true, now: NOW })).toContain(
+      '**You**'
+    )
+  })
+
+  it('shortens a long summary so the text stays on the line', () => {
+    const long = {
+      uncommitted: false as const,
+      commit: { ...commit, summary: `feat: ${'x'.repeat(80)}` }
+    }
+    const text = blameInlineText(long, { youForMyCommits: false, now: NOW })
+    expect(text).toBe(`Frederik Barbre, 2 days ago • feat: ${'x'.repeat(44)}…`)
+  })
+
   it('says a line that is not committed yet is an uncommitted change', () => {
     expect(blameInlineText({ uncommitted: true }, { youForMyCommits: true, now: NOW })).toBe(
       'You • Uncommitted change'
@@ -86,6 +106,13 @@ describe('blameHoverMarkdown', () => {
     expect(markdown).toContain('3f2a9c1e')
     expect(commandArgs(markdown, 'orca.gitBlame.copyHash')).toEqual([commit.sha])
     expect(commandArgs(markdown, 'orca.gitBlame.showCommit')).toEqual([commit.sha])
+  })
+
+  it("shows the author's GitHub avatar next to their name", () => {
+    const markdown = blameHoverMarkdown(committed, links, { youForMyCommits: false, now: NOW })
+    expect(markdown).toContain(
+      '![](https://avatars.githubusercontent.com/u/42?v=4&s=64|width=16,height=16) **Frederik Barbre**'
+    )
   })
 
   it('escapes the commit summary so it renders as text', () => {

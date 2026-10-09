@@ -1076,7 +1076,10 @@ current text so unsaved edits count, and compares the author email with `git con
 (`git-blame/git-blame-service.ts`, IPC `gitBlame:line|links` in `ipc/git-blame.ts`,
 `preload/api/git-blame-bridge.ts`). The pull request comes from a squash merge's "(#N)" suffix
 when there is one, else from GitHub's `commits/{sha}/pulls` via `gh` (cached per commit, the merged
-one first). The renderer (`lib/monaco-git-blame.ts`, text in `lib/git-blame-text.ts`) blames 250ms
+one first). GitHub's `commits/{sha}` gives the author's avatar (shown in the card) and login; a
+commit also counts as "You" when that login is `gh`'s own (`user`), since squash merges carry your
+GitHub email, not necessarily the checkout's `user.email`. Tailwind's base makes images blocks, so
+`main.css` puts hover images back inline. The renderer (`lib/monaco-git-blame.ts`, text in `lib/git-blame-text.ts`) blames 250ms
 after the cursor changes line or the text changes, only in focused local file editors (not diffs,
 not remote worktrees, not files over 16,384 lines). The gap before the text is non-breaking spaces,
 not a CSS margin, because Monaco splits long injected text into several spans. Settings → General →

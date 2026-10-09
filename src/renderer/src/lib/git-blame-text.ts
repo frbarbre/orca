@@ -4,6 +4,14 @@ import { translate } from '@/i18n/i18n'
 type BlameTextOptions = { youForMyCommits: boolean; now: number }
 
 const MAX_INLINE_SUMMARY = 50
+const MIN_INLINE_CHARS = 12
+
+export function fitInlineText(text: string, maxChars: number): string | null {
+  if (maxChars < MIN_INLINE_CHARS) {
+    return null
+  }
+  return text.length > maxChars ? `${text.slice(0, maxChars - 1)}…` : text
+}
 
 // Why `!== false`: settings are stored shallowly, so an unset switch means on.
 export function gitBlameSettings(

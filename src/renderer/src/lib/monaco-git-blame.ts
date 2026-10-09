@@ -4,7 +4,12 @@ import type { GitBlameLine, GitBlameLinks } from '../../../shared/git-blame'
 import { translate } from '@/i18n/i18n'
 import { useAppStore } from '@/store'
 import { modelFileFor } from './diff-editor-model-files'
-import { blameHoverMarkdown, blameInlineText, gitBlameSettings } from './git-blame-text'
+import {
+  blameHoverMarkdown,
+  blameInlineText,
+  fitInlineText,
+  gitBlameSettings
+} from './git-blame-text'
 import { openFileContext } from './language-server-editor'
 
 const BLAME_DELAY_MS = 250
@@ -78,13 +83,35 @@ function attachBlame(monaco: typeof Monaco, editor: Monaco.editor.ICodeEditor): 
   let request = 0
   let blamedLine = 0
 
+  let lastRender: { line: number; blame: GitBlameLine; links: GitBlameLinks | null } | null = null
+
+  // Why measure: the text must end at the editor's edge, never wrap the line or scroll it sideways.
+  const roomForText = (line: number, end: number): number => {
+    const position = editor.getScrolledVisiblePosition({ lineNumber: line, column: end })
+    if (!position) {
+      return 0
+    }
+    const layout = editor.getLayoutInfo()
+    const right = layout.contentLeft + layout.contentWidth - layout.verticalScrollbarWidth
+    const charWidth = editor.getOption(
+      monaco.editor.EditorOption.fontInfo
+    ).typicalHalfwidthCharacterWidth
+    return Math.floor((right - position.left) / charWidth) - INLINE_GAP.length - 2
+  }
+
   const render = (line: number, blame: GitBlameLine, links: GitBlameLinks | null): void => {
     const model = editor.getModel()
     if (!model || line > model.getLineCount()) {
       return
     }
+    lastRender = { line, blame, links }
     const options = { ...gitBlameSettings(useAppStore.getState().settings), now: Date.now() }
     const end = model.getLineMaxColumn(line)
+    const text = fitInlineText(blameInlineText(blame, options, links), roomForText(line, end))
+    if (!text) {
+      decorations.clear()
+      return
+    }
     decorations.set([
       {
         range: new monaco.Range(line, end, line, end),
@@ -92,7 +119,7 @@ function attachBlame(monaco: typeof Monaco, editor: Monaco.editor.ICodeEditor): 
           showIfCollapsed: true,
           after: {
             // Why spaces, not a CSS margin: Monaco splits long injected text into several spans.
-            content: `${INLINE_GAP}${blameInlineText(blame, options, links)}`,
+            content: `${INLINE_GAP}${text}`,
             inlineClassName: 'orca-git-blame-inline',
             cursorStops: monaco.editor.InjectedTextCursorStops.None
           },
@@ -155,6 +182,7 @@ function attachBlame(monaco: typeof Monaco, editor: Monaco.editor.ICodeEditor): 
   const schedule = (): void => {
     request++
     blamedLine = 0
+    lastRender = null
     decorations.clear()
     clearTimeout(timer)
     timer = setTimeout(() => void blame(), BLAME_DELAY_MS)
@@ -171,6 +199,11 @@ function attachBlame(monaco: typeof Monaco, editor: Monaco.editor.ICodeEditor): 
     editor.onDidFocusEditorText(() => {
       if (!blamedLine) {
         schedule()
+      }
+    }),
+    editor.onDidLayoutChange(() => {
+      if (lastRender) {
+        render(lastRender.line, lastRender.blame, lastRender.links)
       }
     })
   ]

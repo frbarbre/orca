@@ -34,6 +34,14 @@ export function useDiffViewerFirstChangeAutoScroll({
       // Why: reset the per-modelKey one-shot here before the first-diff guard runs for the new file.
       didAutoScrollFirstDiffRef.current = false
     }
+    // Fork. Why before the editor check: a slow diff can apply and clear the reveal before its
+    // editor reaches this hook, which then scrolled a definition jump back to the first change.
+    if (pendingScrollCommentId || hasPendingReveal) {
+      // Why: the decorator or a pending reveal owns this scroll, so set the one-shot flag; else we'd
+      // re-run and overwrite it when that request flips back to null.
+      didAutoScrollFirstDiffRef.current = true
+      return
+    }
     const diffEditor = diffEditorRef.current
     if (!diffEditor || !modifiedEditor) {
       return
@@ -42,12 +50,6 @@ export function useDiffViewerFirstChangeAutoScroll({
       return
     }
     if (diffViewStateCache.get(modelKey)) {
-      return
-    }
-    if (pendingScrollCommentId || hasPendingReveal) {
-      // Why: the decorator or a pending reveal owns this scroll, so set the one-shot flag; else we'd
-      // re-run and overwrite it when that request flips back to null.
-      didAutoScrollFirstDiffRef.current = true
       return
     }
     let rafId: number | null = null

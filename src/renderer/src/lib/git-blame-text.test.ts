@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { blameHoverMarkdown, blameInlineText, gitBlameSettings, timeAgo } from './git-blame-text'
+import {
+  blameHoverMarkdown,
+  blameInlineText,
+  fitInlineText,
+  gitBlameSettings,
+  timeAgo
+} from './git-blame-text'
 
 const NOW = Date.UTC(2026, 9, 9, 12, 0, 0)
 const SECOND = 1000
@@ -92,6 +98,22 @@ describe('blameInlineText', () => {
     expect(blameInlineText({ uncommitted: true }, { youForMyCommits: true, now: NOW })).toBe(
       'You • Uncommitted change'
     )
+  })
+})
+
+describe('fitInlineText', () => {
+  it('keeps text that fits the room left on the line', () => {
+    expect(fitInlineText('Ann, 2 days ago • fix', 40)).toBe('Ann, 2 days ago • fix')
+  })
+
+  it('cuts text to the room left, ending in an ellipsis, so it never wraps', () => {
+    const fitted = fitInlineText('Vitaliy Steffensen, 5 months ago • Editor tools are prone', 30)
+    expect(fitted).toBe('Vitaliy Steffensen, 5 months …')
+    expect(fitted).toHaveLength(30)
+  })
+
+  it('shows nothing when the code leaves almost no room', () => {
+    expect(fitInlineText('Ann, 2 days ago • fix', 8)).toBeNull()
   })
 })
 

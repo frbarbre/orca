@@ -1084,7 +1084,10 @@ GitHub email, not necessarily the checkout's `user.email`. Tailwind's base makes
 `main.css` puts hover images back inline. The renderer (`lib/monaco-git-blame.ts`, text in `lib/git-blame-text.ts`) blames 250ms
 after the cursor changes line or the text changes, only in focused local file editors (not diffs,
 not remote worktrees, not files over 16,384 lines). The gap before the text is non-breaking spaces,
-not a CSS margin, because Monaco splits long injected text into several spans. Settings → General →
+not a CSS margin, because Monaco splits long injected text into several spans. The text never wraps
+or scrolls the line sideways: it is cut with "…" to the room between the line's end and the editor's
+right edge (`fitInlineText`, measured again on layout changes), and hidden when under 12 characters
+fit. Settings → General →
 Editor → **Git Blame** has "Show line blame" and "Show "You" for my commits" (`GitBlameSetting.tsx`,
 `gitBlame` in `GlobalSettings`, read as on unless `false`).
 
@@ -1096,6 +1099,7 @@ Editor → **Git Blame** has "Show line blame" and "Show "You" for my commits" (
 | `src/preload/index.ts`, `src/preload/api-types.ts` | `gitBlame` API. |
 | `src/renderer/src/lib/monaco-setup.ts` | The `git blame` setup step. |
 | `src/renderer/src/assets/main.css` | `.orca-git-blame-inline`. |
+| `src/renderer/src/components/editor/useDiffViewerFirstChangeAutoScroll.ts` (+ test) | A pending reveal (a definition jump into a diff) is latched before the editor exists, so a slow diff no longer scrolls the jump back to its first change. |
 
 ## Verify
 

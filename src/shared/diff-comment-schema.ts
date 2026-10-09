@@ -21,6 +21,10 @@ export const MobileDiffReviewSchema = z.object({
 
 export const DiffCommentSchema = z.object({
   id: z.string(),
+  // Fork: agent-note fields; without them worktree.set strips replies and authors.
+  agentAuthor: z.object({ kind: z.literal('agent'), name: z.string() }).optional(),
+  githubCommentUrl: z.string().optional(),
+  replyToNoteId: z.string().optional(),
   worktreeId: z.string(),
   filePath: z.string(),
   source: z.enum(['diff', 'markdown']).optional(),

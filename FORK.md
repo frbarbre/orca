@@ -672,8 +672,10 @@ local preview up until the signed URL arrives. An attachment it cannot resolve r
 An earlier version uploaded to a public Hetzner bucket through a Helios signer; that was removed with
 its infrastructure, so the few bucket links posted in that window no longer load.
 
-The preload's document-level file-drop handler skips `[data-review-asset-drop]` elements
-(`preload-runtime-support.ts`) so these boxes receive the File objects.
+Upstream's unclaimed-drop guard (`os-file-drop-cancellation-guard.ts`) refuses any OS file drop no
+owner claims, so `review-asset-drop-claim.ts` claims drags over a box with uploads on: it stops them
+on the box after the editor's own drop handler, which also keeps an enclosing owner (the editor
+group) from opening the files as tabs.
 
 Rendering: the compact comment markdown (PR panel, inline diff threads) shows GitHub attachment
 images and `uploads.linear.app` images besides its app-managed `blob:`/`data:` images; every other
@@ -823,7 +825,7 @@ and in `src/renderer/src/components/terminal-pane/`: `claude-web-view-state.ts` 
 | `src/main/menu/register-app-menu.ts` (+ test) | The Paste item comes from `createAppMenuPasteItem` (new `app-menu-paste-item.ts`, which also holds upstream's paste routing); the test's "pastes natively into a focused guest webview" case. |
 | `src/preload/api-types.ts`, `src/preload/index.ts` | `claudeRemoteSession`. |
 | `src/shared/global-settings-types.ts`, `default-global-settings.ts` | `openClaudeTabsInWebView`. |
-| `src/renderer/src/components/settings/NativeChatExperimentalSetting.tsx` | The Claude web option of Default view. |
+| `src/renderer/src/components/settings/NativeChatExperimentalSetting.tsx`, `ClaudeWebDefaultViewSetting.tsx` | The "Open Claude in Claude web" switch (upstream removed the Default view select it used to be an option of). |
 | `src/renderer/src/components/terminal-pane/TerminalPaneSurface.tsx` | `<TerminalPaneClaudeWebPortal>`, the `claudeWebTabId` / `claudeWebLeafId` props and `webViewLeafId`. |
 | `src/renderer/src/components/terminal-pane/TerminalPaneHeaderOverlay.tsx` | The optional `webViewLeafId` prop and its single-pane early return. |
 | `src/renderer/src/components/terminal-pane/use-terminal-window-wake-recovery.ts` (+ test), `use-terminal-pane-global-effects.ts` | The optional `tabId` and the web-view clause beside the chat-cover check; the caller passes `tabId`. |
@@ -1161,6 +1163,46 @@ blaming the merge for a failure, check whether upstream fixed it after the merge
 sync hit exactly that (#23062 landed two commits later) and was fixed by merging again.
 
 ### Sync log
+
+**1.4.214 → 1.4.214** (`cc6006779f..e72044a936`, 387 upstream commits, twenty-three conflicts)
+
+- `package.json` still says 1.4.214, so the branch name repeats a fifth time.
+- Generated files — `bundled-skill-guides.ts`, `rpc-params-catalog.generated.ts`, `en.json`,
+  `en-runtime-required.json`: took upstream's and regenerated (`generate:bundled-skill-guides`,
+  `generate:rpc-params-catalog`, `sync:localization-catalog`, `sync:localization-runtime-catalog`).
+  This needed `pnpm install`.
+- `src/main/runtime/rpc/methods/git-params.ts` — upstream deleted the re-export file; `git.ts` now
+  imports from `shared/rpc-contract/git-params.ts`, which still carries `GitCheckReviewAttributes`.
+- `runtime-git-status-commands.ts` — upstream moved local git behind `createLocalGitProvider`
+  (`providers/local-git-provider.ts`), so `requireRuntimeGitProvider` always returns a provider.
+  `checkRuntimeGitReviewAttributes` now calls the provider, and the local provider gained
+  `checkReviewAttributes`.
+- `runtime-git-client.ts` — upstream turned the re-exports into `export { … } from`. Took it and
+  added `getRuntimeGitReviewAttributes`.
+- `preload-runtime-support.ts` — upstream removed the preload's document drop handler (#25748) in
+  favour of element owners and a renderer guard. Took the removal; the fork's
+  `[data-review-asset-drop]` skip went with it, and `review-asset-drop-claim.ts` (fork fix commit)
+  claims drops over the comment boxes instead.
+- `NativeChatExperimentalSetting.tsx`, `global-settings-types.ts`, `default-global-settings.ts` —
+  upstream dropped `openAgentTabsInChatByDefault`, `experimentalStructuredNativeChat` and the
+  Default view select (Chat UI is now one switch). Took upstream's; `openClaudeTabsInWebView` stays,
+  and a fork fix commit gives it its own switch (`ClaudeWebDefaultViewSetting.tsx`).
+- `SortableTabContextMenu.tsx` — upstream hides "switch into chat view" (only a chat tab gets
+  "Switch to terminal view") and adds `TabSessionSurfaceSwitchMenuItems`. Kept the fork's
+  `AgentViewSubmenu` with `canChat` set to upstream's `showTerminalViewSwitch`, plus upstream's new
+  items.
+- `CommentMarkdown.tsx` — upstream renders block by block (`MemoizedMarkdown` per block) and moved
+  component selection to `selectCommentMarkdownComponents`. Wrapped the blocks in the fork's
+  `MediaGalleryProvider` and dropped upstream's `expandImages` again (every image expands here).
+- `worktree-params.ts` — upstream validates `diffComments` with `DiffCommentSchema`, which strips
+  unknown keys; kept `pendingReviewComments`, and a fork fix commit adds `agentAuthor`,
+  `githubCommentUrl` and `replyToNoteId` to the schema so agent notes and replies survive.
+- Import-only conflicts, kept both sides: `register-app-menu.ts`, `ssh-git-working-tree-provider.ts`,
+  `app-api.ts`, `web-app-api.ts`, `main.tsx`, `use-native-chat-context-menu.tsx`,
+  `TerminalPaneSurface.tsx`, `use-worktree-card-controller.ts` (`showLinearTitle` beside upstream's
+  new Linear context), `WorktreeOpenInMenu.tsx` (the Mod+O shortcut label beside upstream's new
+  availability arguments).
+- Upstream's Vitest is now 5.x.
 
 **1.4.214 → 1.4.214** (`2b0ce17514..cc6006779f`, 164 upstream commits, eight conflicts)
 

@@ -91,6 +91,12 @@ describe('agent note zone card', () => {
     expect(onDelete).toHaveBeenCalledWith('agent-1')
   })
 
+  it('draws no divider when delete is the only action', () => {
+    act(() => renderDiffCommentZoneCard(root, agentNote, context()))
+
+    expect(container.querySelector('.orca-diff-comment-pill-divider')).toBeNull()
+  })
+
   it('links to the GitHub comment it answers, inside Orca', () => {
     const url = 'https://github.com/acme/app/pull/12#discussion_r1'
     act(() => renderDiffCommentZoneCard(root, { ...agentNote, githubCommentUrl: url }, context()))

@@ -118,6 +118,11 @@ export function renderDiffCommentZoneCard(
   }: DiffCommentZoneCardContext
 ): void {
   const agentName = comment.agentAuthor?.name
+  const gitHubLinkUrl = agentName ? comment.githubCommentUrl : undefined
+  const sendWorktreeId =
+    comment.author === undefined && (!agentName || unsentThreadNotes(comment).length > 0)
+      ? worktreeId
+      : undefined
   root.render(
     // View zones are separate React roots outside the app root, so App.tsx context providers don't reach them.
     <TooltipProvider delayDuration={400}>
@@ -158,26 +163,24 @@ export function renderDiffCommentZoneCard(
           ) : undefined
         }
         headerActions={
-          <>
-            {agentName && comment.githubCommentUrl ? (
-              <AgentNoteGitHubLink url={comment.githubCommentUrl} />
-            ) : null}
-            {worktreeId &&
-            comment.author === undefined &&
-            (!agentName || unsentThreadNotes(comment).length > 0) ? (
-              <NotesSendMenu
-                worktreeId={worktreeId}
-                groupId={activeGroupId}
-                modeIdParts={['diff-comment-note', worktreeId, filePath, comment.id]}
-                scopes={getSingleCommentSendScopes(comment, worktreeId, formatCommentPrompt)}
-                targetModeLabel="This note"
-                triggerClassName="orca-diff-comment-edit"
-                disabledTooltip="Note already sent"
-                focusRequestKey={comment.id}
-                onDelivered={(notes) => void clearDeliveredDiffComments(worktreeId, notes)}
-              />
-            ) : null}
-          </>
+          gitHubLinkUrl || sendWorktreeId ? (
+            <>
+              {gitHubLinkUrl ? <AgentNoteGitHubLink url={gitHubLinkUrl} /> : null}
+              {sendWorktreeId ? (
+                <NotesSendMenu
+                  worktreeId={sendWorktreeId}
+                  groupId={activeGroupId}
+                  modeIdParts={['diff-comment-note', sendWorktreeId, filePath, comment.id]}
+                  scopes={getSingleCommentSendScopes(comment, sendWorktreeId, formatCommentPrompt)}
+                  targetModeLabel="This note"
+                  triggerClassName="orca-diff-comment-edit"
+                  disabledTooltip="Note already sent"
+                  focusRequestKey={comment.id}
+                  onDelivered={(notes) => void clearDeliveredDiffComments(sendWorktreeId, notes)}
+                />
+              ) : null}
+            </>
+          ) : undefined
         }
       />
     </TooltipProvider>

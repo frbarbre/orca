@@ -30,6 +30,7 @@ import { registerNativeChatHandlers } from '../native-chat'
 import { registerNotificationHandlers } from '../notifications'
 import { registerNotebookHandlers } from '../notebook'
 import { registerLanguageServerHandlers } from '../language-server'
+import { registerGitBlameHandlers } from '../git-blame'
 import { registerOnboardingHandlers } from '../onboarding'
 import { registerDashboardPopoutHandlers } from '../dashboard-popout'
 import { registerTerminalPreviewHandlers } from '../terminal-preview'
@@ -177,6 +178,7 @@ export function registerCoreHandlers(
   registerNotificationHandlers(store, runtime)
   registerNotebookHandlers(store)
   registerLanguageServerHandlers()
+  registerGitBlameHandlers()
   registerOnboardingHandlers(store)
   registerDashboardPopoutHandlers(store, keybindings)
   registerTerminalPreviewHandlers(runtime)

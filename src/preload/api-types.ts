@@ -77,6 +77,12 @@ import type {
   LanguageServerLanguage,
   LanguageServerRequest
 } from '../shared/language-server'
+import type {
+  GitBlameLinks,
+  GitBlameLinksRequest,
+  GitBlameRequest,
+  GitBlameResult
+} from '../shared/git-blame'
 import type { FolderWorkspacesApi, SparsePresetsApi, WorktreeApi } from './api/worktree-api'
 
 // Flattens contracts that share one PreloadApi key: an intersection is not type-identical to the flat shape.
@@ -156,6 +162,10 @@ export type PreloadApi = {
     definition: (args: LanguageServerRequest) => Promise<LanguageServerDefinitionResult>
     hover: (args: LanguageServerRequest) => Promise<LanguageServerHoverResult>
     stop: (args: { language: LanguageServerLanguage }) => Promise<void>
+  }
+  gitBlame: {
+    line: (args: GitBlameRequest) => Promise<GitBlameResult>
+    links: (args: GitBlameLinksRequest) => Promise<GitBlameLinks>
   }
   codexUsage: CodexUsageApi
   openCodeUsage: OpenCodeUsageApi

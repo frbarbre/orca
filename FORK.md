@@ -1064,6 +1064,34 @@ The file editor's `smoothScrolling` is off, so a reveal is instant.
 | `src/renderer/src/components/editor/MonacoEditor.tsx` | `smoothScrolling: false`. |
 | `src/main/window/main-window-state-lifecycle.ts` | `installMainWindowNavigationGestures(mainWindow)`. |
 
+### 27. Git Blame for the cursor's line
+
+Like VS Code's Git Blame extension (Sertion/vscode-gitblame): the focused file editor shows faded
+text after the cursor's line — "Author, 2 days ago • summary", "You" for your own commits, or "You •
+Uncommitted change" — and hovering it shows the author, date, summary, the GitHub pull request and
+commit as links, plus Show commit (Orca's commit diff) and Copy hash.
+
+Main blames one line with `git blame --porcelain -L n,n --contents -`, feeding the editor's
+current text so unsaved edits count, and compares the author email with `git config user.email`
+(`git-blame/git-blame-service.ts`, IPC `gitBlame:line|links` in `ipc/git-blame.ts`,
+`preload/api/git-blame-bridge.ts`). The pull request comes from a squash merge's "(#N)" suffix
+when there is one, else from GitHub's `commits/{sha}/pulls` via `gh` (cached per commit, the merged
+one first). The renderer (`lib/monaco-git-blame.ts`, text in `lib/git-blame-text.ts`) blames 250ms
+after the cursor changes line or the text changes, only in focused local file editors (not diffs,
+not remote worktrees, not files over 16,384 lines). The gap before the text is non-breaking spaces,
+not a CSS margin, because Monaco splits long injected text into several spans. Settings → General →
+Editor → **Git Blame** has "Show line blame" and "Show "You" for my commits" (`GitBlameSetting.tsx`,
+`gitBlame` in `GlobalSettings`, read as on unless `false`).
+
+| File | What is ours |
+| --- | --- |
+| `src/shared/global-settings-types.ts` | `gitBlame`. |
+| `src/renderer/src/components/settings/GeneralEditorSettingsSection.tsx`, `general-editor-search.ts` | `GitBlameSetting` and its search entry. |
+| `src/main/ipc/register-core-handlers/register-core-handlers.ts` (+ test mock) | `registerGitBlameHandlers()`. |
+| `src/preload/index.ts`, `src/preload/api-types.ts` | `gitBlame` API. |
+| `src/renderer/src/lib/monaco-setup.ts` | The `git blame` setup step. |
+| `src/renderer/src/assets/main.css` | `.orca-git-blame-inline`. |
+
 ## Verify
 
 Verify runs on GitHub, not locally: `fork-verify.yml` runs it on every pull request against `main`,

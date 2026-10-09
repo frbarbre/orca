@@ -1141,6 +1141,18 @@
         "pythonUnavailable": "Python go-to-definition is unavailable ({{error}}). Set a Python Environment in the project settings.",
         "typescriptUnavailable": "TypeScript go-to-definition is unavailable ({{error}}). Add @typescript/native-preview (tsgo) to the project."
       },
+      "gitBlame": {
+        "you": "You",
+        "uncommitted": "Uncommitted change",
+        "uncommittedDetail": "This line has changes that are not committed yet.",
+        "pullRequest": "Pull request",
+        "commit": "Commit",
+        "committedBy": "committed by",
+        "showCommit": "Show commit",
+        "copyHash": "Copy hash",
+        "copied": "Commit hash copied",
+        "showCommitFailed": "Failed to load the commit"
+      },
       "previewDeployment": {
         "openOf": "Open preview of {{sha}}",
         "open": "Open preview",
@@ -9246,6 +9258,14 @@
           "typescript": "TypeScript and JavaScript (tsgo)",
           "typescriptDescription": "Uses the project's @typescript/native-preview. Off falls back to the editor's built-in, open-files-only TypeScript."
         },
+        "GitBlameSetting": {
+          "title": "Git Blame",
+          "description": "Show who last changed the cursor's line, when, and in which commit and pull request.",
+          "enabled": "Show line blame",
+          "enabledDescription": "Faded text after the line; hover it for the commit, the pull request and actions.",
+          "youForMyCommits": "Show \"You\" for my commits",
+          "youForMyCommitsDescription": "Uses \"You\" instead of your name when the line's author email is your git user.email."
+        },
         "PythonEnvironmentSection": {
           "placeholder": ".venv",
           "hint": "Relative to the worktree, or absolute. Empty finds the nearest .venv. Cmd+click in a Python file runs pyrefly from this venv, or from PATH."
@@ -10184,6 +10204,10 @@
             "goToDefinition": "go to definition",
             "hoverTypes": "hover",
             "lsp": "lsp",
+            "blame": "blame",
+            "author": "author",
+            "commit": "commit",
+            "pullRequest": "pull request",
             "projectRuntime": "project runtime",
             "runtime": "runtime",
             "windowsHost": "windows host",

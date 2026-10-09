@@ -22,6 +22,7 @@ import { installMonacoPeekReferencesPreviewOptions } from './monaco-peek-preview
 import { installMonacoContextMenuPaste } from '@/components/editor/install-monaco-context-menu-paste'
 import { runMonacoSetupSteps } from './monaco-setup-steps'
 import { installMonacoLanguageServers } from './monaco-language-servers'
+import { installMonacoGitBlame } from './monaco-git-blame'
 
 globalThis.MonacoEnvironment = {
   getWorker(_workerId, label) {
@@ -96,7 +97,8 @@ runMonacoSetupSteps([
   // Orca's sandboxed renderer. Route it through the trusted IPC bridge so right-click Paste
   // works like Cmd+V (which already works via native events).
   ['context-menu paste', () => installMonacoContextMenuPaste(monaco)],
-  ['language servers', () => installMonacoLanguageServers(monaco, monacoTS)]
+  ['language servers', () => installMonacoLanguageServers(monaco, monacoTS)],
+  ['git blame', () => installMonacoGitBlame(monaco)]
 ])
 
 // Configure Monaco to use the locally bundled editor instead of CDN

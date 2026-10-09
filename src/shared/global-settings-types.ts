@@ -89,6 +89,8 @@ export type GlobalSettings = NativeChatGlobalSettings & {
   richMarkdownSpellcheckEnabled?: boolean
   /** Fork: per-language go-to-definition/hover servers; a missing language means on. */
   languageServers?: Partial<Record<LanguageServerLanguage, boolean>>
+  /** Fork: the cursor line's blame annotation; an unset switch means on. */
+  gitBlame?: { enabled?: boolean; youForMyCommits?: boolean }
   /** Whether local markdown review note controls and the review panel are shown. */
   markdownReviewToolsEnabled: boolean
   /** Why: mirrors terminal selection-paste muscle memory without mutating the

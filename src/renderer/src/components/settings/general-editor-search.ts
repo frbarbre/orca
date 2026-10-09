@@ -173,6 +173,22 @@ export const getGeneralEditorSearchEntries = createLocalizedCatalog(() => [
     ]
   },
   {
+    title: translate('auto.components.settings.GitBlameSetting.title', 'Git Blame'),
+    description: translate(
+      'auto.components.settings.GitBlameSetting.description',
+      "Show who last changed the cursor's line, when, and in which commit and pull request."
+    ),
+    keywords: [
+      ...translateSearchKeyword('auto.components.settings.general.search.blame', 'blame'),
+      ...translateSearchKeyword('auto.components.settings.general.search.author', 'author'),
+      ...translateSearchKeyword('auto.components.settings.general.search.commit', 'commit'),
+      ...translateSearchKeyword(
+        'auto.components.settings.general.search.pullRequest',
+        'pull request'
+      )
+    ]
+  },
+  {
     title: translate('auto.components.settings.general.search.128bc09325', 'Markdown Review Notes'),
     description: translate(
       'auto.components.settings.general.search.694613d47f',

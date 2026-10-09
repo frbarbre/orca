@@ -219,6 +219,10 @@ vi.mock('../language-server', () => ({
   registerLanguageServerHandlers: vi.fn()
 }))
 
+vi.mock('../git-blame', () => ({
+  registerGitBlameHandlers: vi.fn()
+}))
+
 vi.mock('../notifications', () => ({
   registerNotificationHandlers: registerNotificationHandlersMock
 }))

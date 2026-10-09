@@ -1137,6 +1137,11 @@
       "clipboardWriteFailure": {
         "tooLarge": "The text is too large to copy."
       },
+      "previewDeployment": {
+        "openOf": "Open preview of {{sha}}",
+        "open": "Open preview",
+        "behind": "not the latest commit"
+      },
       "dropSkipReason": {
         "missing": "No longer at its original path.",
         "symlink": "Symbolic links cannot be attached.",

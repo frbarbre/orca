@@ -13,16 +13,21 @@ function useAgentTurns(worktreePath: string): AgentTurn[] {
     turns: []
   })
   useEffect(() => {
+    // Why: the web client's preload has no agentTurns bridge; turns are a desktop-only feature.
+    const api = window.api?.agentTurns
+    if (!api) {
+      return
+    }
     let cancelled = false
     const load = (): void => {
-      void window.api.agentTurns.list({ worktreePath }).then((turns) => {
+      void api.list({ worktreePath }).then((turns) => {
         if (!cancelled) {
           setLoaded({ worktreePath, turns })
         }
       })
     }
     load()
-    const unsubscribe = window.api.agentTurns.onChanged((change) => {
+    const unsubscribe = api.onChanged((change) => {
       if (change.worktreePath === worktreePath) {
         load()
       }

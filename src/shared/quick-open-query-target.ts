@@ -7,7 +7,12 @@ export function parseQuickOpenQueryTarget(query: string): QuickOpenQueryTarget {
   if (isQuickOpenQueryTooLarge(query)) {
     return { pathQuery: query }
   }
-  const trimmed = query.trim()
+  // Fork: a trailing ':' is a line number still being typed, so it must not empty the results.
+  const typed = query.trim()
+  const trimmed =
+    typed.endsWith(':') && !typed.endsWith('::') && !/^[A-Za-z]:$/.test(typed)
+      ? typed.slice(0, -1)
+      : typed
   const match = /^(.*?):([0-9]+)(?::([0-9]+))?$/.exec(trimmed)
   if (!match || !match[1] || /^[A-Za-z]$/.test(match[1]) || match[1].endsWith(':')) {
     return { pathQuery: trimmed }

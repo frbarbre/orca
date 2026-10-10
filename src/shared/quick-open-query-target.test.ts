@@ -6,7 +6,9 @@ it.each([
   ['C:\\src\\app.ts:12:3', { pathQuery: 'C:\\src\\app.ts', line: 12, column: 3 }],
   ['\\\\server\\share\\app.ts:2', { pathQuery: '\\\\server\\share\\app.ts', line: 2 }],
   ['/home/a b/file.ts:7:8', { pathQuery: '/home/a b/file.ts', line: 7, column: 8 }],
-  ['file:part:2', { pathQuery: 'file:part', line: 2 }]
+  ['file:part:2', { pathQuery: 'file:part', line: 2 }],
+  ['base.py:', { pathQuery: 'base.py' }],
+  ['file:1:', { pathQuery: 'file', line: 1 }]
 ])('parses the trailing location in %s', (query, target) => {
   expect(parseQuickOpenQueryTarget(query)).toEqual(target)
 })
@@ -15,7 +17,7 @@ it.each([
   'C:12',
   'file:0',
   'file:1:0',
-  'file:1:',
+  'C:',
   'file:-2',
   'file:1:9007199254740992',
   'file::2',

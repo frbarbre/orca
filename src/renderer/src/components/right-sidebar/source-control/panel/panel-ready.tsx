@@ -121,7 +121,7 @@ export function SourceControlPanelReady(props: SourceControlPanelReadyProps) {
             // Why scroll-pb-9: the Commits header is sticky to the bottom of this scroller, so a row
             // scrolled flush to the bottom edge lands underneath it. Reserving its height keeps a
             // revealed row clear of it, for scrollIntoView and for the virtualizer's own scrolling.
-            className="relative flex flex-1 flex-col overflow-auto scrollbar-sleek pt-1 scroll-pb-9"
+            className="relative flex flex-1 flex-col overflow-auto scrollbar-sleek scroll-pb-9"
             style={{ paddingBottom: selectedKeys.size > 0 ? 50 : undefined }}
           >
             <SourceControlPanelContent {...props} />

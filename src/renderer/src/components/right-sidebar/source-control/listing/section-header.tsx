@@ -1,7 +1,6 @@
 import React from 'react'
 import { ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { Button } from '@/components/ui/button'
 import { translate } from '@/i18n/i18n'
 
 export function SectionHeader({
@@ -25,41 +24,40 @@ export function SectionHeader({
   /** Overrides the outer spacing for a section that sits in a differently padded shelf. */
   className?: string
 }): React.JSX.Element {
-  // Why: shared rounded container so the hover background spans the whole row instead of clipping around the label.
+  // Fork: the Commits header's row, sticky so a long section keeps its title and actions in view.
   return (
-    <div className={cn('pl-1 pr-3 pt-3 pb-1', className)}>
-      <div className="group/section flex items-center gap-x-1 rounded-md pr-1 hover:bg-accent hover:text-accent-foreground">
-        <Button
+    <div
+      className={cn(
+        'sticky top-0 z-[2] h-7 shrink-0 border-t border-border bg-sidebar pl-1 pr-3',
+        className
+      )}
+    >
+      <div className="group/section flex h-full items-stretch rounded-md pr-1">
+        <button
           type="button"
-          variant="ghost"
-          size="xs"
-          className="h-auto min-h-6 min-w-0 flex-1 justify-start gap-x-1 gap-y-0 py-0.5 text-left font-semibold uppercase tracking-wider text-foreground/70 group-hover/section:text-accent-foreground"
+          className="flex min-w-0 flex-1 items-center gap-1 px-0.5 text-left text-[11px] font-semibold uppercase tracking-wider text-foreground/70 outline-none hover:text-foreground focus-visible:text-foreground"
           onClick={onToggle}
           aria-expanded={!isCollapsed}
         >
           <ChevronDown
-            className={cn('size-3.5 shrink-0 transition-transform', isCollapsed && '-rotate-90')}
+            className={cn('size-3 shrink-0 transition-transform', isCollapsed && '-rotate-90')}
           />
-          <span className="min-w-0 flex-1">
-            <span className="flex min-w-0 items-center gap-1">
-              <span className="min-w-0 truncate" title={label}>
-                {label}
-              </span>
-              {/* Why: no aria-label here — inside the toggle button it would rewrite the
-              button's accessible name; the explanation stays a hover-only title. */}
-              <span className="shrink-0 text-[11px] font-medium tabular-nums" title={countTitle}>
-                {count}
-              </span>
-            </span>
-            {conflictCount > 0 && (
-              <span className="block truncate text-[11px] font-medium text-destructive/80">
-                {conflictCount}{' '}
-                {translate('auto.components.right.sidebar.SourceControl.413a3ba113', 'conflict')}
-                {conflictCount === 1 ? '' : 's'}
-              </span>
-            )}
+          <span className="min-w-0 truncate" title={label}>
+            {label}
           </span>
-        </Button>
+          {/* Why: no aria-label here — inside the toggle button it would rewrite the
+              button's accessible name; the explanation stays a hover-only title. */}
+          <span className="shrink-0 text-[10px] font-medium tabular-nums" title={countTitle}>
+            {count}
+          </span>
+          {conflictCount > 0 && (
+            <span className="min-w-0 truncate text-[10px] font-medium normal-case tracking-normal text-destructive/80">
+              {conflictCount}{' '}
+              {translate('auto.components.right.sidebar.SourceControl.413a3ba113', 'conflict')}
+              {conflictCount === 1 ? '' : 's'}
+            </span>
+          )}
+        </button>
         <div className="ml-auto flex shrink-0 items-center justify-end">{actions}</div>
       </div>
     </div>

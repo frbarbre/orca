@@ -32,8 +32,6 @@ export function AgentNotesShelf({
         count={notes.length}
         isCollapsed={!expanded}
         onToggle={() => setExpanded((prev) => !prev)}
-        // Why even padding: this header stands alone between two dividers, not atop a file list.
-        className="py-2"
         actions={
           <button
             type="button"

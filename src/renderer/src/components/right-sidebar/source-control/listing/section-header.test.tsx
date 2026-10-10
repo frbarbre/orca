@@ -1,5 +1,5 @@
 // @vitest-environment happy-dom
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, within } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { SectionHeader } from './section-header'
 
@@ -33,6 +33,26 @@ describe('SectionHeader', () => {
     // Ensure label has truncate to prevent overflowing row on narrow widths
     const labelSpan = screen.getByText('Changes')
     expect(labelSpan.className).toContain('truncate')
+  })
+
+  it('is a sticky 28px row styled like the Commits header', () => {
+    const { container } = render(
+      <SectionHeader
+        label="Changes"
+        count={2}
+        conflictCount={1}
+        isCollapsed={false}
+        onToggle={vi.fn()}
+      />
+    )
+    const root = container.firstElementChild
+    expect(root?.className).toContain('sticky')
+    expect(root?.className).toContain('top-0')
+    expect(root?.className).toContain('h-7')
+    expect(root?.className).toContain('bg-sidebar')
+    const toggle = within(container as HTMLElement).getByRole('button', { name: /Changes/i })
+    expect(toggle.className).toContain('text-[11px]')
+    expect(toggle.textContent).toContain('1 conflict')
   })
 
   it('calls onToggle when header button is clicked', () => {

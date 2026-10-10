@@ -1223,7 +1223,9 @@ the user last dragged it to, kept per section in `localStorage`, or until then t
 to half the panel. A section the user dragged smaller than its content keeps that height
 (`panel/shelf-sizing.ts`). The sections' fixed `max-h-64` caps are gone. Agent notes and agent
 turns use the shared `SectionHeader`, so every section has the same heading, chevron, count and
-actions row.
+actions row. That header (`listing/section-header.tsx`) is the Commits header's 28px row (border,
+spacing, 11px uppercase label, 10px count) and is `sticky top-0` within its section. A long section
+keeps its title and actions in view until the next one pushes it out.
 
 Your own notes have no section here: upstream's Notes shelf (`notes/notes-shelf.tsx`) and the
 overflow menu's "Notes" item are removed, and notes stay in the diff viewer. The "send review

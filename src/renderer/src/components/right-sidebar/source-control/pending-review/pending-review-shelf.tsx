@@ -154,7 +154,6 @@ export function SourceControlPendingReviewShelf({
             count={queue.comments.length}
             isCollapsed={!expanded}
             onToggle={() => setExpanded((prev) => !prev)}
-            className="pt-3 pb-3"
           />
           <div className={cn('px-3 pb-2', !expanded && 'hidden')}>
             <div className="space-y-2">

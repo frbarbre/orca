@@ -4,8 +4,8 @@ import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/componen
 import { shelfResizeTarget } from './shelf-sizing'
 
 const DEFAULT_SHELF_HEIGHT_PX = 240
-// Why 40: a SectionHeader's height, so dragging can shrink a section to its header but never cut it.
-const SHELF_MIN_HEIGHT_PX = 40
+// Why 28: a SectionHeader's height, so dragging can shrink a section to its header but never cut it.
+const SHELF_MIN_HEIGHT_PX = 28
 const FILES_MIN_HEIGHT_PX = 120
 const STORAGE_PREFIX = 'orca.sourceControl.sectionHeight.'
 

@@ -105,6 +105,7 @@ export type KeybindingActionId =
   | 'editor.openInExternalApp'
   | 'editor.addReviewNote'
   | 'sourceControl.sendReviewNotes'
+  | 'sourceControl.openLatestAgentTurn'
   | 'fileExplorer.undo'
   | 'fileExplorer.redo'
   | 'fileExplorer.copyPath'

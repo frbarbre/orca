@@ -1,9 +1,7 @@
 import { timeAgo } from '@/lib/git-blame-text'
 import type { AgentTurn } from '../../../../../../shared/agent-turns'
 
-export function agentTurnTitle(turn: AgentTurn): string {
-  return turn.prompt.trim().split('\n')[0]?.trim() || 'Agent turn'
-}
+export { agentTurnTitle } from '@/lib/agent-turn-open'
 
 export function agentTurnDetail(turn: AgentTurn, now: number): string {
   const files = `${turn.files} ${turn.files === 1 ? 'file' : 'files'}`

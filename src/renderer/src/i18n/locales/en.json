@@ -19556,7 +19556,8 @@
     }
   },
   "agentTurns": {
-    "title": "Agent turns"
+    "title": "Agent turns",
+    "none": "No agent turns in this workspace yet."
   },
   "quickOpen": {
     "moreMatchesAvailable": "More matches may be available. Refine your search to narrow the results.",

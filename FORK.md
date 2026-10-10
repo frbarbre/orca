@@ -1240,6 +1240,22 @@ notes" shortcut no longer reveals source control. The diff viewer's notes menus 
 | `src/renderer/src/components/right-sidebar/source-control/notes/agent-notes-shelf.tsx` | `SectionHeader` header, no list cap. |
 | `src/renderer/src/components/right-sidebar/source-control/pending-review/pending-review-shelf.tsx` | No list cap or border. |
 
+### 33. Latest-turn shortcut and horizontal trackpad scroll in combined diffs
+
+`sourceControl.openLatestAgentTurn` (Cmd+Option+Shift+T on macOS, unbound elsewhere because
+Ctrl+Alt is AltGr) opens the active workspace's newest agent turn in the commit diff view
+(`lib/agent-turn-open.ts`, shared with the Agent turns section; handled in
+`use-global-keybindings.ts`). Combined-diff sections turn off Monaco's wheel handling so vertical
+scrolling reaches the outer list, and upstream re-added only Shift+wheel for sideways scrolling. A
+mostly horizontal trackpad swipe now scrolls the pane too (`diff-editor-shift-wheel-scroll.ts`).
+
+| File | What is ours |
+| --- | --- |
+| `src/shared/keybindings/definitions-core-3.ts`, `types.ts` | `sourceControl.openLatestAgentTurn`. |
+| `src/renderer/src/app-shell/use-global-keybindings.ts` | The shortcut's handler. |
+| `src/renderer/src/components/editor/diff-editor-shift-wheel-scroll.ts` | Horizontal swipes without Shift. |
+| `src/renderer/src/i18n/locales/en.json` | `agentTurns.none`. |
+
 ## Verify
 
 Verify runs on GitHub, not locally: `fork-verify.yml` runs it on every pull request against `main`,

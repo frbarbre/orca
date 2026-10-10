@@ -79,6 +79,21 @@ describe('installDiffEditorShiftWheelScroll', () => {
     dispose()
   })
 
+  it('scrolls sideways for a mostly horizontal trackpad swipe without shift', () => {
+    const original = createPaneFixture()
+    const modified = createPaneFixture()
+    const dispose = installDiffEditorShiftWheelScroll({
+      getOriginalEditor: () => original,
+      getModifiedEditor: () => modified
+    })
+
+    const event = dispatchWheel(original.input, { deltaX: 30, deltaY: 4 })
+
+    expect(event.defaultPrevented).toBe(true)
+    expect(original.setScrollLeft).toHaveBeenCalledWith(40)
+    dispose()
+  })
+
   it('leaves ordinary vertical wheel input for the outer combined-diff scroller', () => {
     const original = createPaneFixture()
     const modified = createPaneFixture()

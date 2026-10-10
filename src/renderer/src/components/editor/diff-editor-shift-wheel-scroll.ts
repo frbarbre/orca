@@ -30,7 +30,9 @@ function canScrollHorizontally(editor: HorizontalScrollEditor): boolean {
 function installPaneShiftWheelScroll(editor: HorizontalScrollEditor): () => void {
   const container = editor.getContainerDomNode()
   const handleWheel = (event: WheelEvent): void => {
-    if (event.defaultPrevented || !event.shiftKey) {
+    // Fork: a trackpad swipe that is mostly sideways scrolls too, not only a shift-wheel.
+    const horizontalSwipe = Math.abs(event.deltaX) > Math.abs(event.deltaY)
+    if (event.defaultPrevented || (!event.shiftKey && !horizontalSwipe)) {
       return
     }
 

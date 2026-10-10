@@ -6,6 +6,7 @@ import { SectionHeader } from '../listing/section-header'
 import { translate } from '@/i18n/i18n'
 import type { AgentTurn } from '../../../../../../shared/agent-turns'
 import { agentTurnDetail, agentTurnTitle } from './agent-turn-label'
+import { openAgentTurn } from '@/lib/agent-turn-open'
 
 function useAgentTurns(worktreePath: string): AgentTurn[] {
   const [loaded, setLoaded] = useState<{ worktreePath: string; turns: AgentTurn[] }>({
@@ -64,18 +65,10 @@ export function AgentTurnsSection({
   const openTurn = useCallback(
     async (turn: AgentTurn) => {
       try {
-        const result = await window.api.git.commitCompare({ worktreePath, commitId: turn.oid })
-        if (result.summary.status !== 'ready') {
-          throw new Error(result.summary.errorMessage ?? 'The turn could not be loaded.')
-        }
-        openCommitAllDiffs(
-          worktreeId,
-          worktreePath,
-          result.summary,
-          result.entries,
-          agentTurnTitle(turn),
-          turn.prompt
-        )
+        await openAgentTurn(worktreeId, worktreePath, turn, {
+          commitCompare: window.api.git.commitCompare,
+          openCommitAllDiffs
+        })
       } catch (error) {
         toast.error(error instanceof Error ? error.message : String(error))
       }

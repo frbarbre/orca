@@ -20,6 +20,7 @@ import {
 } from '../components/right-sidebar/file-search-include-pattern'
 import { usePluginCommands } from '@/store/plugin-panels'
 import { useAppStore } from '../store'
+import { takeSourceControlShortcut } from './source-control-shortcuts'
 import {
   keybindingMatchesAction,
   type KeybindingActionId,
@@ -264,12 +265,10 @@ export function useGlobalKeybindings(args: {
         }
       }
 
-      // Unbound by default, so it runs after the built-in alias handlers above; only consumes the chord when the active worktree has unsent notes.
-      if (canRevealRightSidebar && matchShortcut('sourceControl.sendReviewNotes')) {
-        if (actions.openDiffNotesSendMenuForActiveWorktree()) {
-          input.preventDefault()
-          notifyTerminalCapture('sourceControl.sendReviewNotes')
-        }
+      const taken = takeSourceControlShortcut(matchShortcut, canRevealRightSidebar, actions)
+      if (taken) {
+        input.preventDefault()
+        notifyTerminalCapture(taken)
       }
     }
 

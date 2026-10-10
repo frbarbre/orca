@@ -11,6 +11,7 @@ import {
   stopAllSyntheticTitleSpinners
 } from './synthetic-title-runtime'
 import { mainProcessState as state } from './main-process-state'
+import { observeAgentTurn } from '../agent-turns/agent-turn-recorder'
 
 export type MainWindowAgentStatusOptions = {
   window: BrowserWindow
@@ -74,6 +75,16 @@ export function installMainWindowAgentStatusListeners(options: MainWindowAgentSt
       }
       if (!restoredUnconfirmed) {
         options.maybeAutoRenameBranchOnFirstWork({ paneKey, tabId, worktreeId, payload, isReplay })
+      }
+      const store = state.store
+      if (store && !restoredUnconfirmed && !isReplay) {
+        observeAgentTurn(
+          { paneKey, tabId, worktreeId, payload, turnStartedAt },
+          {
+            getRepo: (repoId) => store.getRepo(repoId),
+            resolveWorktreeIdForTab: (id) => store.getWorktreeIdForTab(id)
+          }
+        )
       }
       const runtime = state.runtime
       const orchestration = runtime?.getAgentStatusOrchestrationContextForPaneKey(paneKey)

@@ -1,4 +1,5 @@
 import { GitHistoryPanel } from '../sync/git-history-panel'
+import { AgentTurnsSection } from '../agent-turns/agent-turns-section'
 import { shouldShowSourceControlCompareUnavailableCard } from './header-toolbar'
 import { shouldRenderCommitArea } from '../commit/component-gates'
 import { SourceControlBranchSection } from '../listing/branch-section'
@@ -238,6 +239,15 @@ export function SourceControlPanelContent(props: SourceControlPanelReadyProps) {
           diffCommentCountByPath={diffCommentCountByPath}
           reviewThreadCountByPath={reviewThreadCountByPath}
           pendingReviewCountByPath={pendingReviewCountByPath}
+        />
+      )}
+
+      {!activeConnectionId && (
+        <AgentTurnsSection
+          worktreeId={currentWorktreeId}
+          worktreePath={worktreePath}
+          collapsed={collapsedSections.has('agent-turns')}
+          onToggle={() => toggleSection('agent-turns')}
         />
       )}
 

@@ -227,6 +227,10 @@ vi.mock('../material-icons', () => ({
   registerMaterialIconHandlers: vi.fn()
 }))
 
+vi.mock('../agent-turns', () => ({
+  registerAgentTurnHandlers: vi.fn()
+}))
+
 vi.mock('../notifications', () => ({
   registerNotificationHandlers: registerNotificationHandlersMock
 }))

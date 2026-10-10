@@ -1185,6 +1185,34 @@ in the active editor file. `file:line` already worked upstream (`quick-open-mode
 | `src/renderer/src/components/quick-open-history-ranking.ts` | Filename tiers and dependency-folder demotion. |
 | `src/renderer/src/i18n/locales/en.json` | `quickOpen.*` mode strings. |
 
+A trailing `:` (`base.py:`, `file:12:`) is a line number still being typed, so the parser drops
+it instead of searching for a literal colon (`src/shared/quick-open-query-target.ts`; upstream kept
+`file:1:` literal).
+
+### 31. Agent turn snapshots
+
+Every agent turn in a local git worktree gets its own diff, independent of what was committed or
+staged. Orca's hook listener (`main-window-agent-status.ts`) feeds `agent-turns/agent-turn-recorder.ts`:
+a new `turnStartedAt` snapshots the worktree, and `done` snapshots it again
+(`agent-turn-tracker.ts`). A snapshot is `git add -A` into a copy of the index under
+`GIT_INDEX_FILE`, so untracked files are captured, ignored files are not, and the real index is
+never touched. The end snapshot is a commit whose parent is the start snapshot. Its message holds
+the turn as JSON (prompt, agent, pane, times, stats), and it is kept under
+`refs/worktree/orca-turns/<completedAt>-<oid>`. Turns that changed nothing are skipped, and only the
+newest 50 are kept per worktree (`agent-turn-snapshots.ts`). Because a turn is an ordinary commit,
+source control's "Agent turns" section opens it through `git.commitCompare` and
+`openCommitAllDiffs`, the same view a commit uses
+(`right-sidebar/source-control/agent-turns/`). SSH and folder workspaces are skipped. Two agents in
+one worktree, or your own edits during a turn, land in that turn's diff.
+
+| File | What is ours |
+| --- | --- |
+| `src/main/startup/main-window-agent-status.ts` | `observeAgentTurn(...)` per hook event. |
+| `src/main/ipc/register-core-handlers/register-core-handlers.ts` | `registerAgentTurnHandlers()`. |
+| `src/preload/index.ts`, `src/preload/api-types.ts` | `agentTurns` bridge. |
+| `src/renderer/src/components/right-sidebar/source-control/panel/panel-content.tsx` | `AgentTurnsSection`. |
+| `src/renderer/src/i18n/locales/en.json` | `agentTurns.title`. |
+
 ## Verify
 
 Verify runs on GitHub, not locally: `fork-verify.yml` runs it on every pull request against `main`,

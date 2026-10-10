@@ -19562,6 +19562,9 @@
       "readyToastOpen": "Open"
     }
   },
+  "agentTurns": {
+    "title": "Agent turns"
+  },
   "quickOpen": {
     "moreMatchesAvailable": "More matches may be available. Refine your search to narrow the results.",
     "recentValidationFailed": "Recent files could not be checked: {{error}}",

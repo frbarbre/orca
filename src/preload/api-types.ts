@@ -1,4 +1,5 @@
 import type { SettingsTransferApi } from './api/settings-transfer-bridge'
+import type { AgentTurn } from '../shared/agent-turns'
 import type {
   ClaudeAccountsApi,
   CodexAccountsApi,
@@ -170,6 +171,10 @@ export type PreloadApi = {
     read: () => Promise<MaterialIconConfigSnapshot>
     ensure: () => Promise<MaterialIconConfigSnapshot>
     onChanged: (callback: (snapshot: MaterialIconConfigSnapshot) => void) => () => void
+  }
+  agentTurns: {
+    list: (args: { worktreePath: string }) => Promise<AgentTurn[]>
+    onChanged: (callback: (change: { worktreePath: string }) => void) => () => void
   }
   gitBlame: {
     line: (args: GitBlameRequest) => Promise<GitBlameResult>

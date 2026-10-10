@@ -19565,7 +19565,15 @@
   },
   "quickOpen": {
     "moreMatchesAvailable": "More matches may be available. Refine your search to narrow the results.",
-    "recentValidationFailed": "Recent files could not be checked: {{error}}"
+    "recentValidationFailed": "Recent files could not be checked: {{error}}",
+    "placeholder": "Go to file... (% search text, : go to line)",
+    "textSearchHint": "Type text to search for in every file.",
+    "textSearching": "Searching...",
+    "textNoMatches": "No matching text.",
+    "goToLineHint": "Type a line number to go to in the current file.",
+    "goToLineNoFile": "Open a file to go to a line.",
+    "goToLine": "Go to line {{line}}",
+    "goToLineColumn": "Go to line {{line}}, column {{column}}"
   },
   "checksPanel": {
     "unlinked": {

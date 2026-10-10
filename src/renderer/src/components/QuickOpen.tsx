@@ -13,8 +13,22 @@ import {
 import { FilePathCursorTooltip, splitTrailingSegment } from '@/components/file-path-cursor-tooltip'
 import {
   parseQuickOpenQueryTarget,
-  isQuickOpenAbsolutePath
+  isQuickOpenAbsolutePath,
+  type QuickOpenQueryTarget
 } from '../../../shared/quick-open-query-target'
+import { scheduleEditorLineReveal } from '@/store/slices/editor/focus/editor-focus-reveal'
+import {
+  parseQuickOpenGoToLine,
+  parseQuickOpenTextQuery,
+  quickOpenTextSearchRows,
+  type QuickOpenTextRow
+} from './quick-open-modes'
+import { useQuickOpenTextSearch } from './use-quick-open-text-search'
+import {
+  QUICK_OPEN_GO_TO_LINE_VALUE,
+  QuickOpenGoToLineItem,
+  QuickOpenTextItems
+} from './QuickOpenModeItems'
 import { openQuickOpenFile } from './quick-open-file-navigation'
 import { rankQuickOpenFilesWithHistory } from './quick-open-history-ranking'
 import { useQuickOpenHistory } from '@/lib/quick-open-file-history'
@@ -34,6 +48,10 @@ function FooterKey({ children }: { children: React.ReactNode }): React.JSX.Eleme
       {children}
     </span>
   )
+}
+
+function QuickOpenHint({ children }: { children: React.ReactNode }): React.JSX.Element {
+  return <div className="py-6 px-4 text-center text-sm text-muted-foreground">{children}</div>
 }
 
 export default function QuickOpen(): React.JSX.Element | null {
@@ -64,13 +82,30 @@ function QuickOpenContent({ visible }: { visible: boolean }): React.JSX.Element 
   const deferredQuery = useDeferredValue(query)
   const parsedTarget = useMemo(() => parseQuickOpenQueryTarget(deferredQuery), [deferredQuery])
   const absoluteQuery = isQuickOpenAbsolutePath(parsedTarget.pathQuery)
+  const textQuery = parseQuickOpenTextQuery(deferredQuery)
+  const goToLine = textQuery === null ? parseQuickOpenGoToLine(deferredQuery) : null
+  const fileMode = textQuery === null && goToLine === null
   const [openError, setOpenError] = useState<string | null>(null)
   const { opening, invalidate, begin } = useQuickOpenInteraction(activeWorktreeId)
   const [selectedPath, setSelectedPath] = useState('')
   const worktreePath = activeWorktree?.path ?? null
   const history = useQuickOpenHistory(activeWorktreeId, worktreePath)
+  const textSearch = useQuickOpenTextSearch(
+    visible ? activeWorktreeId : null,
+    worktreePath,
+    textQuery
+  )
+  const textRows = useMemo(
+    () => (textSearch.result ? quickOpenTextSearchRows(textSearch.result) : []),
+    [textSearch.result]
+  )
+  const activeEditorFile = useAppStore((s) =>
+    s.activeTabType === 'editor'
+      ? (s.openFiles.find((file) => file.id === s.activeFileId) ?? null)
+      : null
+  )
   const { files, loading, loadError, truncated, recentError } = useRuntimeFileListForWorktree({
-    enabled: visible && !absoluteQuery,
+    enabled: visible && !absoluteQuery && fileMode,
     worktreeId: activeWorktreeId,
     query: parsedTarget.pathQuery,
     recentPaths: history
@@ -104,8 +139,8 @@ function QuickOpenContent({ visible }: { visible: boolean }): React.JSX.Element 
     return rankQuickOpenFilesWithHistory(effectiveTarget.pathQuery, files, history)
   }, [absoluteQuery, parsedTarget.pathQuery, effectiveTarget.pathQuery, files, history])
 
-  const handleSelect = useCallback(
-    async (selectedPath: string) => {
+  const openPath = useCallback(
+    async (selectedPath: string, navigation: QuickOpenQueryTarget, rawQuery?: string) => {
       if (!activeWorktreeId || !worktreePath || opening) {
         return
       }
@@ -116,8 +151,8 @@ function QuickOpenContent({ visible }: { visible: boolean }): React.JSX.Element 
           selectedPath,
           activeWorktreeId,
           worktreePath,
-          effectiveTarget,
-          deferredQuery,
+          navigation,
+          rawQuery,
           interaction.assertCurrent
         )
         interaction.assertCurrent()
@@ -131,17 +166,50 @@ function QuickOpenContent({ visible }: { visible: boolean }): React.JSX.Element 
         interaction.finish()
       }
     },
-    [
-      activeWorktreeId,
-      worktreePath,
-      effectiveTarget,
-      deferredQuery,
-      opening,
-      begin,
-      closeModal,
-      skipReturnFocus
-    ]
+    [activeWorktreeId, worktreePath, opening, begin, closeModal, skipReturnFocus]
   )
+
+  const handleSelect = useCallback(
+    (path: string) => openPath(path, effectiveTarget, deferredQuery),
+    [openPath, effectiveTarget, deferredQuery]
+  )
+
+  const handleTextRowSelect = useCallback(
+    (row: QuickOpenTextRow) => {
+      void openPath(
+        row.relativePath,
+        row.kind === 'match'
+          ? { pathQuery: row.relativePath, line: row.line, column: row.column }
+          : { pathQuery: row.relativePath }
+      )
+    },
+    [openPath]
+  )
+
+  const handleGoToLine = useCallback(() => {
+    if (!activeEditorFile || !goToLine?.line) {
+      return
+    }
+    closeModal()
+    scheduleEditorLineReveal(
+      useAppStore.getState,
+      activeEditorFile.filePath,
+      goToLine.line,
+      goToLine.column,
+      activeEditorFile.id
+    )
+  }, [activeEditorFile, goToLine?.line, goToLine?.column, closeModal])
+
+  const itemValues = fileMode
+    ? filtered.map((item) => item.path)
+    : textQuery !== null
+      ? textRows.map((row) => row.key)
+      : activeEditorFile && goToLine?.line
+        ? [QUICK_OPEN_GO_TO_LINE_VALUE]
+        : []
+  const showsMoreMatches = fileMode
+    ? truncated && !loading && !loadError
+    : Boolean(textQuery && textSearch.result?.truncated)
 
   const handleOpenChange = useCallback(
     (open: boolean) => {
@@ -168,9 +236,7 @@ function QuickOpenContent({ visible }: { visible: boolean }): React.JSX.Element 
       onOpenChange={handleOpenChange}
       shouldFilter={false}
       commandProps={{
-        value: filtered.some((item) => item.path === selectedPath)
-          ? selectedPath
-          : (filtered[0]?.path ?? ''),
+        value: itemValues.includes(selectedPath) ? selectedPath : (itemValues[0] ?? ''),
         onValueChange: setSelectedPath
       }}
       onOpenAutoFocus={handleOpenAutoFocus}
@@ -179,7 +245,10 @@ function QuickOpenContent({ visible }: { visible: boolean }): React.JSX.Element 
       description={translate('auto.components.QuickOpen.9e97f08d0f', 'Search for a file to open')}
     >
       <CommandInput
-        placeholder={translate('auto.components.QuickOpen.1cb6ef47b7', 'Go to file...')}
+        placeholder={translate(
+          'quickOpen.placeholder',
+          'Go to file... (% search text, : go to line)'
+        )}
         value={query}
         onValueChange={(value) => {
           invalidate()
@@ -200,7 +269,43 @@ function QuickOpenContent({ visible }: { visible: boolean }): React.JSX.Element 
             {openError}
           </div>
         ) : null}
-        {loading && !absoluteQuery ? (
+        {textQuery !== null ? (
+          !textQuery.trim() ? (
+            <QuickOpenHint>
+              {translate('quickOpen.textSearchHint', 'Type text to search for in every file.')}
+            </QuickOpenHint>
+          ) : textSearch.error ? (
+            <QuickOpenHint>{textSearch.error}</QuickOpenHint>
+          ) : textRows.length > 0 ? (
+            <QuickOpenTextItems rows={textRows} disabled={opening} onSelect={handleTextRowSelect} />
+          ) : (
+            <QuickOpenHint>
+              {textSearch.loading
+                ? translate('quickOpen.textSearching', 'Searching...')
+                : translate('quickOpen.textNoMatches', 'No matching text.')}
+            </QuickOpenHint>
+          )
+        ) : goToLine ? (
+          !activeEditorFile ? (
+            <QuickOpenHint>
+              {translate('quickOpen.goToLineNoFile', 'Open a file to go to a line.')}
+            </QuickOpenHint>
+          ) : goToLine.line ? (
+            <QuickOpenGoToLineItem
+              relativePath={activeEditorFile.relativePath}
+              line={goToLine.line}
+              column={goToLine.column}
+              onSelect={handleGoToLine}
+            />
+          ) : (
+            <QuickOpenHint>
+              {translate(
+                'quickOpen.goToLineHint',
+                'Type a line number to go to in the current file.'
+              )}
+            </QuickOpenHint>
+          )
+        ) : loading && !absoluteQuery ? (
           <div className="py-6 text-center text-sm text-muted-foreground">
             {translate('auto.components.QuickOpen.722a21e1a8', 'Loading files...')}
           </div>
@@ -259,7 +364,7 @@ function QuickOpenContent({ visible }: { visible: boolean }): React.JSX.Element 
             )
           })
         )}
-        {truncated && !loading && !loadError ? (
+        {showsMoreMatches ? (
           <div className="px-3 py-2 text-center text-xs text-muted-foreground">
             {translate(
               'quickOpen.moreMatchesAvailable',

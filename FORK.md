@@ -1169,6 +1169,22 @@ sidebar.
 | --- | --- |
 | `src/renderer/src/main.tsx` | `installRightSidebarFollowsFile()`. |
 
+### 30. Quick Open: filename-first ranking, `%` text search, `:` go to line
+
+Quick Open ranks by how the filename matches the query's last segment before recency: exact
+name, then name prefix, then name substring, then name fuzzy, then path-only matches. Inside each
+level, files in dependency folders (`node_modules`, `.venv`, `site-packages`, …) go after project
+files (`quick-open-history-ranking.ts`). A query starting with `%` searches file contents through
+the project search (`searchRuntimeFiles`) and lists matches grouped by file. `:line[:col]` jumps
+in the active editor file. `file:line` already worked upstream (`quick-open-modes.ts`,
+`use-quick-open-text-search.ts`, `QuickOpenModeItems.tsx`).
+
+| File | What is ours |
+| --- | --- |
+| `src/renderer/src/components/QuickOpen.tsx` | Text and go-to-line modes, `openPath`, the placeholder. |
+| `src/renderer/src/components/quick-open-history-ranking.ts` | Filename tiers and dependency-folder demotion. |
+| `src/renderer/src/i18n/locales/en.json` | `quickOpen.*` mode strings. |
+
 ## Verify
 
 Verify runs on GitHub, not locally: `fork-verify.yml` runs it on every pull request against `main`,

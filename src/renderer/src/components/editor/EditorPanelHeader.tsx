@@ -183,6 +183,7 @@ export function EditorPanelHeader({
           showFileScope
           triggerLabel="AI notes"
           triggerCount={fileDiffComments.length}
+          respondToOpenRequest
           triggerClassName="h-6 shrink-0 gap-1 rounded-full border border-border/70 bg-muted/40 px-2 text-[11px] font-medium leading-none text-foreground/80 hover:bg-accent hover:text-foreground"
           iconClassName="size-3"
         />

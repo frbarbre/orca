@@ -12850,7 +12850,6 @@
             "a1f2c8d901": "Affichage"
           },
           "SourceControl": {
-            "1406954883": "Effacer toutes les notes...",
             "conflictsSection": "Conflits",
             "cc05b2d088": "Ouvrir dans l'explorateur de fichiers",
             "03194cfff4": "État de session local issu d'un conflit que vous avez ouvert ici.",
@@ -12923,9 +12922,6 @@
             "78ce2d37ac": "Pousse vers le fork",
             "c05fe04839": "Pousse vers le fork situé à {{value0}} (pas origin)",
             "c35baf2f1e": "Filtrer les fichiers…",
-            "2fe2a67580": "Autres actions de note",
-            "eae2d051af": "Copier toutes les notes",
-            "cc474e0b8c": "Notes",
             "e131cd7128": "Le contrôle de code source n'est disponible que pour les dépôts Git",
             "c07b236287": "Sélectionnez un espace de travail pour afficher les modifications",
             "dc5a6465fc": "{{value0}} (ex. {{value1}}{{value2}})",
@@ -12987,7 +12983,6 @@
             "9febd8ab5f": "create_pr",
             "f62ce91ade": "origin",
             "3a231c845b": "unknown",
-            "3baf6c77b4": "Copier toutes les notes dans le presse-papiers",
             "0fad573938": "Non committé",
             "77afaa8152": "Tous",
             "d6fb1df5fe": "{{value0}} est déjà ouvert",

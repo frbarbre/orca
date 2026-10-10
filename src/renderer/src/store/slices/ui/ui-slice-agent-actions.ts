@@ -95,8 +95,7 @@ export function createUiAgentActions(
       ) {
         return false
       }
-      get().setRightSidebarTab('source-control')
-      get().setRightSidebarOpen(true)
+      // Fork: the diff viewer's notes menu answers this, since source control no longer lists notes.
       const nonce = (get().diffNotesSendMenuOpenRequest?.nonce ?? 0) + 1
       set({ diffNotesSendMenuOpenRequest: { worktreeId, nonce, issuedAt: Date.now() } })
       return true

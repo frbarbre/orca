@@ -826,11 +826,11 @@ describe('openDiffNotesSendMenuForActiveWorktree', () => {
     return { store, setRightSidebarTab }
   }
 
-  it('reveals Source Control and bumps the open request when unsent notes exist', () => {
+  it('bumps the open request for the diff viewer when unsent notes exist, leaving the sidebar alone', () => {
     const { store, setRightSidebarTab } = stubDiffNotesStore([{ sentAt: 10 }, {}])
 
     expect(store.getState().openDiffNotesSendMenuForActiveWorktree()).toBe(true)
-    expect(setRightSidebarTab).toHaveBeenCalledWith('source-control')
+    expect(setRightSidebarTab).not.toHaveBeenCalled()
     expect(store.getState().diffNotesSendMenuOpenRequest).toMatchObject({
       worktreeId: 'wt-1',
       nonce: 1

@@ -1215,21 +1215,26 @@ one worktree, or your own edits during a turn, land in that turn's diff.
 
 ### 32. Resizable, uniform source-control sections
 
-The pending-review, notes and agent-notes sections and the changed-file list share one vertical
+The pending-review and agent-notes sections and the changed-file list share one vertical
 `react-resizable-panels` group (shadcn's `components/ui/resizable.tsx`, v4 API), with a drag
 handle between each (`panel/resizable-sections.tsx`). A section's max size is its content height,
 so a collapsed one stays at its header. When its content grows (expand) it opens to the height
 the user last dragged it to, kept per section in `localStorage`, or until then to its content up
 to half the panel. A section the user dragged smaller than its content keeps that height
-(`panel/shelf-sizing.ts`). The sections' fixed `max-h-64` caps are gone. Notes, agent notes and
-agent turns use the shared `SectionHeader`, so every section has the same heading, chevron,
-count and actions row.
+(`panel/shelf-sizing.ts`). The sections' fixed `max-h-64` caps are gone. Agent notes and agent
+turns use the shared `SectionHeader`, so every section has the same heading, chevron, count and
+actions row.
+
+Your own notes have no section here: upstream's Notes shelf (`notes/notes-shelf.tsx`) and the
+overflow menu's "Notes" item are removed, and notes stay in the diff viewer. The "send review
+notes" shortcut no longer reveals source control. The diff viewer's notes menus answer it instead
+(`EditorPanelHeader.tsx`, `combined-diff-toolbar.tsx`, `ui-slice-agent-actions.ts`).
 
 | File | What is ours |
 | --- | --- |
 | `package.json` | `react-resizable-panels` 4.13.3. |
-| `src/renderer/src/components/right-sidebar/source-control/panel/panel-ready.tsx` | Shelves passed to `SourceControlResizableSections`. |
-| `src/renderer/src/components/right-sidebar/source-control/notes/notes-shelf.tsx` | `SectionHeader` header. |
+| `src/renderer/src/components/right-sidebar/source-control/panel/panel-ready.tsx` | Shelves passed to `SourceControlResizableSections`; no Notes shelf. |
+| `src/renderer/src/components/right-sidebar/source-control/panel/header-toolbar.tsx`, `header-overflow-menu.tsx` | No Notes item. |
 | `src/renderer/src/components/right-sidebar/source-control/notes/agent-notes-shelf.tsx` | `SectionHeader` header, no list cap. |
 | `src/renderer/src/components/right-sidebar/source-control/pending-review/pending-review-shelf.tsx` | No list cap or border. |
 

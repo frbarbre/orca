@@ -12745,7 +12745,6 @@
             "a1f2c8d901": "Ver"
           },
           "SourceControl": {
-            "1406954883": "Borrar todas las notas...",
             "conflictsSection": "Conflictos",
             "cc05b2d088": "Abrir en el Explorador de archivos",
             "03194cfff4": "Estado de la sesión local derivado de un conflicto que abrió aquí.",
@@ -12818,9 +12817,6 @@
             "78ce2d37ac": "Push al fork",
             "c05fe04839": "Hace push al fork en {{value0}} (no a origin)",
             "c35baf2f1e": "Filtrar archivos…",
-            "2fe2a67580": "Más acciones de notas",
-            "eae2d051af": "Copiar todas las notas",
-            "cc474e0b8c": "Notas",
             "e131cd7128": "Source Control sólo está disponible para repositorios Git",
             "c07b236287": "Seleccione un espacio de trabajo para ver los cambios",
             "dc5a6465fc": "{{value0}} (por ejemplo, {{value1}}{{value2}})",
@@ -12884,7 +12880,6 @@
             "9febd8ab5f": "crear_pr",
             "f62ce91ade": "origin",
             "3a231c845b": "desconocido",
-            "3baf6c77b4": "Copiar todas las notas al portapapeles",
             "0fad573938": "Sin commit",
             "77afaa8152": "Todo",
             "d6fb1df5fe": "{{value0}} ya está abierto",

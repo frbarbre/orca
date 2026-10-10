@@ -69,8 +69,6 @@ function renderToolbar(options?: {
       onChangeBaseRef={vi.fn()}
       onRefreshBranchCompare={vi.fn()}
       branchCompareRefreshDisabled={false}
-      diffCommentCount={0}
-      onExpandNotes={vi.fn()}
       branchSummary={options?.branchSummary === undefined ? readySummary : options.branchSummary}
       compareBaseRef={options?.compareBaseRef === undefined ? null : options.compareBaseRef}
       headDisplay={

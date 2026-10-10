@@ -1,17 +1,16 @@
 import { BulkActionBar } from '../commit/bulk-action-bar'
 import { SourceControlHeaderToolbar } from './header-toolbar'
-import { SourceControlNotesShelf } from '../notes/notes-shelf'
-import { AgentNotesShelf } from '../notes/agent-notes-shelf'
 import { SourceControlPendingReviewShelf } from '../pending-review/pending-review-shelf'
+import { AgentNotesShelf } from '../notes/agent-notes-shelf'
+import { useWorktreeAgentNotes } from '@/lib/agent-notes'
 import { usePendingReviewQueue } from '@/components/pending-review/use-pending-review-queue'
 import { useSubmitReviewVerdict } from '@/components/pending-review/use-submit-review-verdict'
 import { SourceControlPanelContent } from './panel-content'
 import { SourceControlResizableSections, type ResizableShelf } from './resizable-sections'
-import { useWorktreeAgentNotes } from '@/lib/agent-notes'
 import { SourceControlPanelDialogs } from './panel-dialogs'
 import type { SourceControlPanelReadyProps } from './panel-props'
 
-/** The panel chrome: toolbar, notes shelf, the scrolling file surface, bulk bar and dialog layer. */
+/** The panel chrome: toolbar, review and agent-notes shelves, the file surface, bulk bar and dialogs. */
 export function SourceControlPanelReady(props: SourceControlPanelReadyProps) {
   const { model, worktreePath } = props
   const pendingReviewQueue = usePendingReviewQueue(props.model.activeWorktreeId ?? null)
@@ -20,7 +19,6 @@ export function SourceControlPanelReady(props: SourceControlPanelReadyProps) {
     pendingReviewQueue
   )
   const {
-    activeGroupId,
     activeWorktreeId,
     branchLineTotal,
     branchSummary,
@@ -28,17 +26,11 @@ export function SourceControlPanelReady(props: SourceControlPanelReadyProps) {
     bulkUnstagePaths,
     clearSelection,
     compareBaseRef,
-    deleteDiffComment,
-    diffCommentCount,
-    diffCommentsCopied,
-    diffCommentsExpanded,
-    diffCommentsForActive,
     filterExpanded,
     filterQuery,
     gitIdentityDisplay,
     handleBulkStage,
     handleBulkUnstage,
-    handleCopyDiffComments,
     handleCreatePrHeaderClick,
     handleOpenComment,
     handleRelinkSuppressedGitHubPR,
@@ -54,19 +46,19 @@ export function SourceControlPanelReady(props: SourceControlPanelReadyProps) {
     refreshBranchCompare,
     selectedKeys,
     setBaseRefDialogOpen,
-    setDiffCommentsExpanded,
     setFileListScrollElement,
     setFilterExpanded,
     setFilterQuery,
-    setPendingDiffCommentsClear,
     setSourceControlRoot,
     settings,
     sourceControlViewMode,
     suppressedGitHubPRState,
     visibleCreatePrHeaderAction
   } = model
+
   const agentNoteCount = useWorktreeAgentNotes(activeWorktreeId).length
 
+  // Fork: your own notes live in the diff viewer only; agent notes keep a section here.
   const shelves: ResizableShelf[] = []
   // Why not gated on drafts: a verdict stands on its own — an approve needs no comments.
   if (submitReviewVerdict.prNumber !== null) {
@@ -77,27 +69,6 @@ export function SourceControlPanelReady(props: SourceControlPanelReadyProps) {
           queue={pendingReviewQueue}
           submitter={submitReviewVerdict}
           worktreeId={props.model.activeWorktreeId ?? null}
-        />
-      )
-    })
-  }
-  // Why: hidden when count is 0 — notes are created from the diff view, so an empty Notes shelf here is pure chrome.
-  if (activeWorktreeId && worktreePath && diffCommentCount > 0) {
-    shelves.push({
-      id: 'notes',
-      node: (
-        <SourceControlNotesShelf
-          activeWorktreeId={activeWorktreeId}
-          activeGroupId={activeGroupId}
-          diffCommentsForActive={diffCommentsForActive}
-          diffCommentCount={diffCommentCount}
-          diffCommentsExpanded={diffCommentsExpanded}
-          setDiffCommentsExpanded={setDiffCommentsExpanded}
-          diffCommentsCopied={diffCommentsCopied}
-          handleCopyDiffComments={handleCopyDiffComments}
-          setPendingDiffCommentsClear={setPendingDiffCommentsClear}
-          deleteDiffComment={deleteDiffComment}
-          handleOpenComment={handleOpenComment}
         />
       )
     })
@@ -137,8 +108,6 @@ export function SourceControlPanelReady(props: SourceControlPanelReadyProps) {
           onChangeBaseRef={() => setBaseRefDialogOpen(true)}
           onRefreshBranchCompare={() => void refreshBranchCompare()}
           branchCompareRefreshDisabled={!branchSummary || branchSummary.status === 'loading'}
-          diffCommentCount={diffCommentCount}
-          onExpandNotes={() => setDiffCommentsExpanded(true)}
           branchSummary={branchSummary}
           branchLineTotal={branchLineTotal}
           compareBaseRef={compareBaseRef}

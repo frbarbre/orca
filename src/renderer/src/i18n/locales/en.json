@@ -13169,7 +13169,6 @@
             "a1f2c8d901": "View"
           },
           "SourceControl": {
-            "1406954883": "Clear all notes...",
             "conflictsSection": "Conflicts",
             "cc05b2d088": "Open in File Explorer",
             "03194cfff4": "Local session state derived from a conflict you opened here.",
@@ -13242,9 +13241,6 @@
             "78ce2d37ac": "Pushes to fork",
             "c05fe04839": "Pushes to the fork at {{value0}} (not origin)",
             "c35baf2f1e": "Filter files…",
-            "2fe2a67580": "More note actions",
-            "eae2d051af": "Copy all notes",
-            "cc474e0b8c": "Notes",
             "e131cd7128": "Source Control is only available for Git repositories",
             "c07b236287": "Select a workspace to view changes",
             "dc5a6465fc": "{{value0}} (e.g. {{value1}}{{value2}})",
@@ -13308,7 +13304,6 @@
             "9febd8ab5f": "create_pr",
             "f62ce91ade": "origin",
             "3a231c845b": "unknown",
-            "3baf6c77b4": "Copy all notes to clipboard",
             "0fad573938": "Uncommitted",
             "77afaa8152": "All",
             "d6fb1df5fe": "{{value0}} is already open",

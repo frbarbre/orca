@@ -6,6 +6,8 @@ import { SourceControlPendingReviewShelf } from '../pending-review/pending-revie
 import { usePendingReviewQueue } from '@/components/pending-review/use-pending-review-queue'
 import { useSubmitReviewVerdict } from '@/components/pending-review/use-submit-review-verdict'
 import { SourceControlPanelContent } from './panel-content'
+import { SourceControlResizableSections, type ResizableShelf } from './resizable-sections'
+import { useWorktreeAgentNotes } from '@/lib/agent-notes'
 import { SourceControlPanelDialogs } from './panel-dialogs'
 import type { SourceControlPanelReadyProps } from './panel-props'
 
@@ -63,6 +65,49 @@ export function SourceControlPanelReady(props: SourceControlPanelReadyProps) {
     suppressedGitHubPRState,
     visibleCreatePrHeaderAction
   } = model
+  const agentNoteCount = useWorktreeAgentNotes(activeWorktreeId).length
+
+  const shelves: ResizableShelf[] = []
+  // Why not gated on drafts: a verdict stands on its own — an approve needs no comments.
+  if (submitReviewVerdict.prNumber !== null) {
+    shelves.push({
+      id: 'pending-review',
+      node: (
+        <SourceControlPendingReviewShelf
+          queue={pendingReviewQueue}
+          submitter={submitReviewVerdict}
+          worktreeId={props.model.activeWorktreeId ?? null}
+        />
+      )
+    })
+  }
+  // Why: hidden when count is 0 — notes are created from the diff view, so an empty Notes shelf here is pure chrome.
+  if (activeWorktreeId && worktreePath && diffCommentCount > 0) {
+    shelves.push({
+      id: 'notes',
+      node: (
+        <SourceControlNotesShelf
+          activeWorktreeId={activeWorktreeId}
+          activeGroupId={activeGroupId}
+          diffCommentsForActive={diffCommentsForActive}
+          diffCommentCount={diffCommentCount}
+          diffCommentsExpanded={diffCommentsExpanded}
+          setDiffCommentsExpanded={setDiffCommentsExpanded}
+          diffCommentsCopied={diffCommentsCopied}
+          handleCopyDiffComments={handleCopyDiffComments}
+          setPendingDiffCommentsClear={setPendingDiffCommentsClear}
+          deleteDiffComment={deleteDiffComment}
+          handleOpenComment={handleOpenComment}
+        />
+      )
+    })
+  }
+  if (activeWorktreeId && worktreePath && agentNoteCount > 0) {
+    shelves.push({
+      id: 'agent-notes',
+      node: <AgentNotesShelf worktreeId={activeWorktreeId} onOpenNote={handleOpenComment} />
+    })
+  }
 
   return (
     <>
@@ -101,43 +146,18 @@ export function SourceControlPanelReady(props: SourceControlPanelReadyProps) {
           manualReviewUrl={manualReviewUrl}
         />
 
-        {/* Why not gated on drafts: a verdict stands on its own — an approve needs no comments. */}
-        <SourceControlPendingReviewShelf
-          queue={pendingReviewQueue}
-          submitter={submitReviewVerdict}
-          worktreeId={props.model.activeWorktreeId ?? null}
-        />
-
-        {/* Why: hidden when count is 0 — notes are created from the diff view, so an empty Notes shelf here is pure chrome. */}
-        {activeWorktreeId && worktreePath && diffCommentCount > 0 && (
-          <SourceControlNotesShelf
-            activeWorktreeId={activeWorktreeId}
-            activeGroupId={activeGroupId}
-            diffCommentsForActive={diffCommentsForActive}
-            diffCommentCount={diffCommentCount}
-            diffCommentsExpanded={diffCommentsExpanded}
-            setDiffCommentsExpanded={setDiffCommentsExpanded}
-            diffCommentsCopied={diffCommentsCopied}
-            handleCopyDiffComments={handleCopyDiffComments}
-            setPendingDiffCommentsClear={setPendingDiffCommentsClear}
-            deleteDiffComment={deleteDiffComment}
-            handleOpenComment={handleOpenComment}
-          />
-        )}
-        {activeWorktreeId && worktreePath && (
-          <AgentNotesShelf worktreeId={activeWorktreeId} onOpenNote={handleOpenComment} />
-        )}
-
-        <div
-          ref={setFileListScrollElement}
-          // Why scroll-pb-9: the Commits header is sticky to the bottom of this scroller, so a row
-          // scrolled flush to the bottom edge lands underneath it. Reserving its height keeps a
-          // revealed row clear of it, for scrollIntoView and for the virtualizer's own scrolling.
-          className="relative flex flex-1 flex-col overflow-auto scrollbar-sleek pt-1 scroll-pb-9"
-          style={{ paddingBottom: selectedKeys.size > 0 ? 50 : undefined }}
-        >
-          <SourceControlPanelContent {...props} />
-        </div>
+        <SourceControlResizableSections shelves={shelves}>
+          <div
+            ref={setFileListScrollElement}
+            // Why scroll-pb-9: the Commits header is sticky to the bottom of this scroller, so a row
+            // scrolled flush to the bottom edge lands underneath it. Reserving its height keeps a
+            // revealed row clear of it, for scrollIntoView and for the virtualizer's own scrolling.
+            className="relative flex flex-1 flex-col overflow-auto scrollbar-sleek pt-1 scroll-pb-9"
+            style={{ paddingBottom: selectedKeys.size > 0 ? 50 : undefined }}
+          >
+            <SourceControlPanelContent {...props} />
+          </div>
+        </SourceControlResizableSections>
 
         {selectedKeys.size > 0 && (
           <BulkActionBar

@@ -88,7 +88,7 @@ describe('AgentNotesShelf', () => {
     expect(container.textContent).toBe('')
   })
 
-  it('lists agent notes under a bot header, opens one, and removes one', () => {
+  it('lists agent notes under a section header, opens one, and removes one', () => {
     const onOpenNote = vi.fn()
     render(<AgentNotesShelf worktreeId="wt-1" onOpenNote={onOpenNote} />)
 
@@ -97,7 +97,7 @@ describe('AgentNotesShelf', () => {
     expect(screen.queryByText('Resolved on 3')).toBeNull()
 
     fireEvent.click(screen.getByText('Agent notes'))
-    expect(screen.getByTestId('agent-notes-shelf-list').className).toContain('max-h-')
+    expect(screen.getByTestId('agent-notes-shelf-list')).toBeDefined()
     fireEvent.click(screen.getByText('Resolved on 3'))
     expect(onOpenNote).toHaveBeenCalledWith(expect.objectContaining({ id: 'a1' }))
 

@@ -1,8 +1,8 @@
 import React, { useCallback, useEffect, useState } from 'react'
-import { Bot, ChevronDown } from 'lucide-react'
+import { Bot } from 'lucide-react'
 import { toast } from 'sonner'
 import { useAppStore } from '@/store'
-import { cn } from '@/lib/utils'
+import { SectionHeader } from '../listing/section-header'
 import { translate } from '@/i18n/i18n'
 import type { AgentTurn } from '../../../../../../shared/agent-turns'
 import { agentTurnDetail, agentTurnTitle } from './agent-turn-label'
@@ -87,20 +87,13 @@ export function AgentTurnsSection({
     return null
   }
   return (
-    <div className="border-t border-border/60 py-1">
-      <div className="h-7 pl-1 pr-3">
-        <button
-          type="button"
-          className="flex h-full w-full min-w-0 items-center gap-1 px-0.5 text-left text-[11px] font-semibold uppercase tracking-wider text-foreground/70"
-          onClick={onToggle}
-        >
-          <ChevronDown
-            className={cn('size-3 shrink-0 transition-transform', collapsed && '-rotate-90')}
-          />
-          <span>{translate('agentTurns.title', 'Agent turns')}</span>
-          <span className="text-[10px] font-medium tabular-nums">{turns.length}</span>
-        </button>
-      </div>
+    <div>
+      <SectionHeader
+        label={translate('agentTurns.title', 'Agent turns')}
+        count={turns.length}
+        isCollapsed={collapsed}
+        onToggle={onToggle}
+      />
       {!collapsed &&
         turns.map((turn) => (
           <button

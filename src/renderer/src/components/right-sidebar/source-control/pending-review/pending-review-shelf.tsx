@@ -141,7 +141,7 @@ export function SourceControlPendingReviewShelf({
             : null
 
   return (
-    <div className="border-b border-border">
+    <div>
       <PendingReviewReviewers reviewers={submitter.reviewers} onRerequest={submitter.rerequest} />
       {/* Why hidden at zero: a disclosure that opens onto nothing is chrome, and the form
           below is the part of this shelf that is always worth showing. */}
@@ -157,7 +157,7 @@ export function SourceControlPendingReviewShelf({
             className="pt-3 pb-3"
           />
           <div className={cn('px-3 pb-2', !expanded && 'hidden')}>
-            <div className="scrollbar-sleek max-h-64 space-y-2 overflow-y-auto">
+            <div className="space-y-2">
               {queue.comments.map((comment) => (
                 <PendingReviewCommentCard
                   key={comment.id}

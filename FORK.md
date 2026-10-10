@@ -1245,14 +1245,15 @@ notes" shortcut no longer reveals source control. The diff viewer's notes menus 
 `sourceControl.openLatestAgentTurn` (Cmd+Option+Shift+T on macOS, unbound elsewhere because
 Ctrl+Alt is AltGr) opens the active workspace's newest agent turn in the commit diff view
 (`lib/agent-turn-open.ts`, shared with the Agent turns section; handled in
-`use-global-keybindings.ts`). Combined-diff sections turn off Monaco's wheel handling so vertical
+`app-shell/source-control-shortcuts.ts`, which also holds upstream's send-notes block moved out of
+`use-global-keybindings.ts` to keep it under the line limit). Combined-diff sections turn off Monaco's wheel handling so vertical
 scrolling reaches the outer list, and upstream re-added only Shift+wheel for sideways scrolling. A
 mostly horizontal trackpad swipe now scrolls the pane too (`diff-editor-shift-wheel-scroll.ts`).
 
 | File | What is ours |
 | --- | --- |
-| `src/shared/keybindings/definitions-core-3.ts`, `types.ts` | `sourceControl.openLatestAgentTurn`. |
-| `src/renderer/src/app-shell/use-global-keybindings.ts` | The shortcut's handler. |
+| `src/shared/keybindings/definitions-core-4.ts`, `types.ts` | `sourceControl.openLatestAgentTurn`. |
+| `src/renderer/src/app-shell/use-global-keybindings.ts` | One `takeSourceControlShortcut(...)` call for both source-control shortcuts. |
 | `src/renderer/src/components/editor/diff-editor-shift-wheel-scroll.ts` | Horizontal swipes without Shift. |
 | `src/renderer/src/i18n/locales/en.json` | `agentTurns.none`. |
 

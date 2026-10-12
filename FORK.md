@@ -1513,10 +1513,17 @@ pointer to the guest page, and the window blur that followed tripped the missed-
 (`tab-group/tab-drag-missed-end-listeners.ts`), dropping the tab nowhere. It now enrols in the
 same drag passthrough (`terminal-pane/claude-web-drag-passthrough.ts`).
 
+A tab drag also preview-activates the tabs it hovers, and the Claude cover handed focus to its
+page whenever it was shown or focused. Focusing a guest blurs the embedder, which again read as the
+drag ending, so a drag over a Claude tab, or bringing the dragged Claude tab back into the window,
+dropped it. `focusClaudeWebview` holds that focus back while a drag is in flight, like browser
+tabs do, and the page takes it once the drag ends if the cover still holds focus.
+
 | File | What is ours |
 | --- | --- |
-| `terminal-pane/claude-web-drag-passthrough.ts` | The enrolment. |
-| `terminal-pane/ClaudeWebView.tsx` | Enrolling on attach, leaving on detach. |
+| `terminal-pane/claude-web-drag-passthrough.ts` | The enrolment; `focusClaudeWebview`. |
+| `terminal-pane/ClaudeWebView.tsx` | Enrolling on attach, leaving on detach; drag-safe focus. |
+| `terminal-pane/TerminalPaneClaudeWebPortal.tsx` | The cover's drag-safe focus hand-off. |
 
 ## Verify
 

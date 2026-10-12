@@ -173,7 +173,7 @@ describe('getStatusOp branch line total', () => {
       branchLineTotalMergeBase: mergeBase
     })
 
-    expect(result.branchLineTotal).toEqual({
+    expect(result.branchLineTotal).toMatchObject({
       added: 3 + UNTRACKED_LINES,
       removed: 2,
       mergeBase,
@@ -372,7 +372,7 @@ describe('getStatusOp branch line total', () => {
       reuseLineStats: true
     })
 
-    expect(first.branchLineTotal).toEqual({
+    expect(first.branchLineTotal).toMatchObject({
       added: 12 + UNTRACKED_LINES,
       removed: 5,
       mergeBase: MERGE_BASE,
@@ -413,7 +413,7 @@ describe('getStatusOp branch line total', () => {
 
     expect(rangedDiffCalls(git.mock.calls)).toHaveLength(1)
     expect(first.branchLineTotal).toEqual(second.branchLineTotal)
-    expect(first.branchLineTotal).toEqual({
+    expect(first.branchLineTotal).toMatchObject({
       added: 12 + UNTRACKED_LINES,
       removed: 5,
       mergeBase: MERGE_BASE,
@@ -435,7 +435,7 @@ describe('getStatusOp branch line total', () => {
       reuseLineStats: true
     })
 
-    expect(moved.branchLineTotal).toEqual({
+    expect(moved.branchLineTotal).toMatchObject({
       added: 12 + UNTRACKED_LINES,
       removed: 5,
       mergeBase: OTHER_MERGE_BASE,
@@ -492,7 +492,7 @@ describe('getStatusOp branch line total', () => {
         branchLineTotalMergeBase: MERGE_BASE
       })
 
-      expect(result.branchLineTotal).toEqual({
+      expect(result.branchLineTotal).toMatchObject({
         added: UNTRACKED_LINES,
         removed: 0,
         mergeBase: MERGE_BASE,

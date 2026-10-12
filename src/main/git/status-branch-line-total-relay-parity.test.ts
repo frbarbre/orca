@@ -138,7 +138,7 @@ describe('branch line total parity between main and relay', () => {
       branchLineTotalMergeBase: mergeBase
     })
 
-    expect(mainStatus.branchLineTotal).toEqual({ ...EXPECTED_TOTAL, mergeBase })
+    expect(mainStatus.branchLineTotal).toMatchObject({ ...EXPECTED_TOTAL, mergeBase })
     expect(relayStatus.branchLineTotal).toEqual(mainStatus.branchLineTotal)
     // Both sides model the same worktree, so a parity pass on a mismatched
     // entry list would be meaningless.

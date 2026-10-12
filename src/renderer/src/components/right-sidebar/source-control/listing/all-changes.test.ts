@@ -92,6 +92,27 @@ describe('buildAllChangeEntries', () => {
     })
   })
 
+  it("takes a file's exact count against the base when the host measured it", () => {
+    const lineCounts = {
+      'both.ts': { added: 11, removed: 3 },
+      'two-areas.ts': { added: 2, removed: 1 }
+    }
+    for (const uncommittedOnly of [false, true]) {
+      const entries = buildAllChangeEntries(
+        [
+          status({ path: 'both.ts', added: 2, removed: 1 }),
+          status({ path: 'two-areas.ts', area: 'staged', added: 1, removed: 0 }),
+          status({ path: 'two-areas.ts', added: 1, removed: 1 })
+        ],
+        [branch({ path: 'both.ts', added: 10, removed: 3 })],
+        { uncommittedOnly, lineCounts }
+      )
+      expect(
+        Object.fromEntries(entries.map((entry) => [entry.path, [entry.added, entry.removed]]))
+      ).toEqual({ 'both.ts': [11, 3], 'two-areas.ts': [2, 1] })
+    }
+  })
+
   it("highlights a file's one row whichever kind of tab has it open, a previewed commit's too", () => {
     for (const source of [
       undefined,

@@ -249,5 +249,8 @@ export async function computeGitBranchLineTotal(input: {
   if (tracked === null) {
     return undefined
   }
-  return sumGitBranchLineTotal({ mergeBase: input.mergeBase, tracked, untracked })
+  return {
+    ...sumGitBranchLineTotal({ mergeBase: input.mergeBase, tracked, untracked }),
+    files: Object.fromEntries([...tracked, ...untracked])
+  }
 }

@@ -1670,6 +1670,22 @@ Escape in the box lets go of it.
 | `app-shell/source-control-shortcuts.ts` | Taking the chord only with the panel showing a Review section. |
 | `source-control/pending-review/pending-review-shelf.tsx` | Expanding and focusing on request. |
 
+### 55. The Changes header totals the listed lines
+
+The Changes header shows +added −removed for the files it lists, so Uncommitted, a turn, a commit
+and the file-type filter narrow it with the list. Every row needs its own exact count for that: the
+branch total's ranged diff (merge base → working tree) now also returns its per-file counts
+(`files` on `GitBranchLineTotal`), which a row touched both on the branch and since takes in place of
+the per-area counts it could not add up. Turns and commits already count their rows.
+
+| File | What is ours |
+| --- | --- |
+| `src/shared/git-branch-line-total.ts`, `git-status-types.ts` | Per-file counts on the total. |
+| `src/shared/git-branch-line-total-files.ts`, `store/slices/editor/actions/git-status-actions.ts` | Republishing when only a file's count moved. |
+| `source-control/listing/all-changes.ts`, `use-all-changes-projection.ts` | Rows taking the exact count. |
+| `source-control/listing/all-changes-section.tsx` | The header total. |
+| `src/renderer/src/i18n/locales/en.json` | `allChanges.lineTotal`. |
+
 ## Verify
 
 Verify runs on GitHub, not locally: `fork-verify.yml` runs it on every pull request against `main`,

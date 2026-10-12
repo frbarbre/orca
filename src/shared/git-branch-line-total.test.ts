@@ -245,12 +245,30 @@ describe('computeGitBranchLineTotal', () => {
         untrackedPaths: ['new.txt'],
         runDiffNumstat: async () => '4\t1\tsrc/a.ts\0'
       })
-    ).resolves.toEqual({
+    ).resolves.toMatchObject({
       added: 7,
       removed: 1,
       mergeBase: MERGE_BASE,
       test: NO_LINES,
       generated: NO_LINES
+    })
+  })
+
+  it("keeps each file's own count so a narrowed list can total just its rows", async () => {
+    const worktreePath = await createWorktreeDir({ 'new.txt': 'one\ntwo\nthree\n' })
+
+    const total = await computeGitBranchLineTotal({
+      worktreePath,
+      hostKey: 'native',
+      mergeBase: OTHER_MERGE_BASE,
+      untrackedPaths: ['new.txt'],
+      runDiffNumstat: async () => '4\t1\tsrc/a.ts\0-\t-\tlogo.png\0'
+    })
+
+    expect(total?.files).toEqual({
+      'src/a.ts': { added: 4, removed: 1 },
+      'logo.png': {},
+      'new.txt': { added: 3 }
     })
   })
 
@@ -290,7 +308,7 @@ describe('computeGitBranchLineTotal', () => {
     const both = Promise.all([computeGitBranchLineTotal(input), computeGitBranchLineTotal(input)])
     release()
 
-    expect(await both).toEqual([
+    expect(await both).toMatchObject([
       { added: 4, removed: 1, mergeBase: MERGE_BASE, test: NO_LINES, generated: NO_LINES },
       { added: 4, removed: 1, mergeBase: MERGE_BASE, test: NO_LINES, generated: NO_LINES }
     ])
@@ -459,12 +477,12 @@ describe('computeGitBranchLineTotal ranged-diff cooldown', () => {
     const runDiffNumstat = diffTaking(900)
     const input = inputFor(runDiffNumstat)
 
-    await expect(computeGitBranchLineTotal(input)).resolves.toEqual(TOTAL)
+    await expect(computeGitBranchLineTotal(input)).resolves.toMatchObject(TOTAL)
     await expect(computeGitBranchLineTotal(input)).resolves.toBeUndefined()
     expect(runDiffNumstat).toHaveBeenCalledTimes(1)
 
     nowMs += 900
-    await expect(computeGitBranchLineTotal(input)).resolves.toEqual(TOTAL)
+    await expect(computeGitBranchLineTotal(input)).resolves.toMatchObject(TOTAL)
     expect(runDiffNumstat).toHaveBeenCalledTimes(2)
   })
 
@@ -472,8 +490,8 @@ describe('computeGitBranchLineTotal ranged-diff cooldown', () => {
     const runDiffNumstat = diffTaking(GIT_BRANCH_LINE_TOTAL_SOFT_DEADLINE_MS - 1)
     const input = inputFor(runDiffNumstat)
 
-    await expect(computeGitBranchLineTotal(input)).resolves.toEqual(TOTAL)
-    await expect(computeGitBranchLineTotal(input)).resolves.toEqual(TOTAL)
+    await expect(computeGitBranchLineTotal(input)).resolves.toMatchObject(TOTAL)
+    await expect(computeGitBranchLineTotal(input)).resolves.toMatchObject(TOTAL)
     expect(runDiffNumstat).toHaveBeenCalledTimes(2)
   })
 
@@ -493,9 +511,9 @@ describe('computeGitBranchLineTotal ranged-diff cooldown', () => {
     const runDiffNumstat = diffTaking(900)
     const input = inputFor(runDiffNumstat)
 
-    await expect(computeGitBranchLineTotal(input)).resolves.toEqual(TOTAL)
+    await expect(computeGitBranchLineTotal(input)).resolves.toMatchObject(TOTAL)
     invalidateGitBranchLineTotalInFlight()
-    await expect(computeGitBranchLineTotal(input)).resolves.toEqual(TOTAL)
+    await expect(computeGitBranchLineTotal(input)).resolves.toMatchObject(TOTAL)
     expect(runDiffNumstat).toHaveBeenCalledTimes(2)
   })
 
@@ -503,9 +521,9 @@ describe('computeGitBranchLineTotal ranged-diff cooldown', () => {
     const slow = diffTaking(900)
     const other = diffTaking(900)
 
-    await expect(computeGitBranchLineTotal(inputFor(slow, '/repo'))).resolves.toEqual(TOTAL)
+    await expect(computeGitBranchLineTotal(inputFor(slow, '/repo'))).resolves.toMatchObject(TOTAL)
     await expect(computeGitBranchLineTotal(inputFor(slow, '/repo'))).resolves.toBeUndefined()
-    await expect(computeGitBranchLineTotal(inputFor(other, '/other'))).resolves.toEqual(TOTAL)
+    await expect(computeGitBranchLineTotal(inputFor(other, '/other'))).resolves.toMatchObject(TOTAL)
 
     expect(slow).toHaveBeenCalledTimes(1)
     expect(other).toHaveBeenCalledTimes(1)

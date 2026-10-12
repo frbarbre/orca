@@ -63,6 +63,7 @@ export type GitBranchLineTotal = {
   // for pre-split hosts (absent = unknown, not zero).
   test?: { added: number; removed: number }
   generated?: { added: number; removed: number }
+  files?: Record<string, { added?: number; removed?: number }>
 }
 
 export type GitStatusResult = {

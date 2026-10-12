@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import type { GitBranchChangeEntry } from '../../../../../../shared/git-diff-compare-types'
 import type { GitStatusEntry } from '../../../../../../shared/git-status-types'
+import { useAppStore } from '@/store'
 import type { SourceControlViewMode } from '../../../../../../shared/ui-chrome-types'
 import {
   buildSourceControlTree,
@@ -41,6 +42,15 @@ export function useAllChangesProjection({
   collapsedTreeDirs: ReadonlySet<string>
 }) {
   const enabled = sourceControlGrouping === 'all'
+  // Why the merge-base check: a total can outlive the fork point it measured, like the branch chip's.
+  const lineCounts = useAppStore((s) => {
+    const total = activeWorktreeId ? s.gitBranchLineTotalByWorktree?.[activeWorktreeId] : undefined
+    return total &&
+      activeWorktreeId &&
+      total.mergeBase === s.gitBranchCompareSummaryByWorktree[activeWorktreeId]?.mergeBase
+      ? total.files
+      : undefined
+  })
   const changesFilter = useChangesFilter(activeWorktreeId)
   const uncommittedOnly = changesFilter?.kind === 'uncommitted'
   // Fork: a previewed turn or commit lists its own files in place of the branch's.
@@ -56,9 +66,9 @@ export function useAllChangesProjection({
     return buildAllChangeEntries(
       [...filteredGrouped.staged, ...filteredGrouped.unstaged, ...filteredGrouped.untracked],
       filteredBranchEntries,
-      { uncommittedOnly }
+      { uncommittedOnly, ...(lineCounts ? { lineCounts } : {}) }
     )
-  }, [enabled, filteredBranchEntries, filteredGrouped, sourceEntries, uncommittedOnly])
+  }, [enabled, filteredBranchEntries, filteredGrouped, lineCounts, sourceEntries, uncommittedOnly])
   const totalAllChangeCount = useMemo(() => {
     if (!enabled) {
       return 0

@@ -74,6 +74,19 @@ describe('SourceControlAllChangesSection', () => {
     expect(props.onToggle).not.toHaveBeenCalled()
   })
 
+  it('totals the lines of the files it lists, so a filter narrows the total too', () => {
+    renderSection({})
+    expect(screen.getByTestId('source-control-changes-line-total').textContent).toBe('+7-1')
+    cleanup()
+    renderSection({ entries: [entries[0]], filterBadge: { label: 'Latest turn' } })
+    expect(screen.getByTestId('source-control-changes-line-total').textContent).toBe('+3-1')
+  })
+
+  it('shows no line total when the listed files changed no lines', () => {
+    renderSection({ entries: [{ path: 'logo.png', status: 'added' }] })
+    expect(screen.queryByTestId('source-control-changes-line-total')).toBeNull()
+  })
+
   it('shows no badge, and no View all, while every change is listed', () => {
     renderSection({})
     expect(screen.queryByRole('button', { name: 'Show all changes' })).toBeNull()

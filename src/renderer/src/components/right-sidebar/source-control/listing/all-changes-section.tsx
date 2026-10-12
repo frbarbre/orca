@@ -1,6 +1,6 @@
-import React from 'react'
+import React, { useMemo } from 'react'
 import { X } from 'lucide-react'
-import { translate } from '@/i18n/i18n'
+import { getIntlLocale, translate } from '@/i18n/i18n'
 import type { GitBranchChangeEntry } from '../../../../../../shared/git-diff-compare-types'
 import type { SourceControlViewMode } from '../../../../../../shared/ui-chrome-types'
 import type { SourceControlTreeNode } from '../../source-control-tree'
@@ -16,6 +16,46 @@ export type AllChangesTreeNode = SourceControlTreeNode<
   GitBranchChangeEntry,
   typeof ALL_CHANGES_AREA
 >
+
+function ListedLineTotal({
+  entries
+}: {
+  entries: readonly GitBranchChangeEntry[]
+}): React.JSX.Element | null {
+  const { added, removed } = useMemo(
+    () =>
+      entries.reduce(
+        (total, entry) => ({
+          added: total.added + (entry.added ?? 0),
+          removed: total.removed + (entry.removed ?? 0)
+        }),
+        { added: 0, removed: 0 }
+      ),
+    [entries]
+  )
+  if (added === 0 && removed === 0) {
+    return null
+  }
+  const locale = getIntlLocale()
+  return (
+    <span
+      data-testid="source-control-changes-line-total"
+      title={translate(
+        'allChanges.lineTotal',
+        '{{added}} lines added, {{removed}} lines deleted in the listed files',
+        { added, removed }
+      )}
+      className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap text-[10px] font-medium tabular-nums"
+    >
+      <span className="text-[color:var(--git-decoration-added)]">
+        +{added.toLocaleString(locale)}
+      </span>
+      <span className="text-[color:var(--git-decoration-deleted)]">
+        -{removed.toLocaleString(locale)}
+      </span>
+    </span>
+  )
+}
 
 // Fork: one section for every file changed against the base, committed or not, each row showing
 // the file as it is on disk now.
@@ -119,6 +159,7 @@ export function SourceControlAllChangesSection({
         onToggle={onToggle}
         actions={
           <>
+            <ListedLineTotal entries={entries} />
             {filterBadge && (
               <span
                 title={filterBadge.title}

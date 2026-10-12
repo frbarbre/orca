@@ -19545,6 +19545,7 @@
   },
   "allChanges": {
     "title": "Changes",
+    "lineTotal": "{{added}} lines added, {{removed}} lines deleted in the listed files",
     "groupByStatus": "Group by status",
     "showOneList": "Show all changes in one list",
     "uncommittedOnly": "Uncommitted",

@@ -10,6 +10,7 @@ import {
   createLoadingBranchCompareSummary,
   getKnownGitHead
 } from '../git/branch-compare-state'
+import { sameBranchLineTotalFiles } from '../../../../../../shared/git-branch-line-total-files'
 
 export function createGitStatusActions(
   set: EditorSet,
@@ -158,7 +159,8 @@ export function createGitStatusActions(
             (prevBranchLineTotal.generated?.added ?? null) ===
               (nextBranchLineTotal.generated?.added ?? null) &&
             (prevBranchLineTotal.generated?.removed ?? null) ===
-              (nextBranchLineTotal.generated?.removed ?? null))
+              (nextBranchLineTotal.generated?.removed ?? null) &&
+            sameBranchLineTotalFiles(prevBranchLineTotal.files, nextBranchLineTotal.files))
 
         const prevStatusHead = s.gitStatusHeadByWorktree[worktreeId]
         const nextStatusHead = getKnownGitHead(status.head)

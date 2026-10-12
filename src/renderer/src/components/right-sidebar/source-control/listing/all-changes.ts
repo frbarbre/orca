@@ -50,7 +50,13 @@ function localStatus(local: readonly GitStatusEntry[]): {
 export function buildAllChangeEntries(
   statusEntries: readonly GitStatusEntry[],
   branchEntries: readonly GitBranchChangeEntry[],
-  { uncommittedOnly = false }: { uncommittedOnly?: boolean } = {}
+  {
+    uncommittedOnly = false,
+    lineCounts
+  }: {
+    uncommittedOnly?: boolean
+    lineCounts?: Readonly<Record<string, { added?: number; removed?: number }>>
+  } = {}
 ): GitBranchChangeEntry[] {
   const byPath = new Map<string, { branch?: GitBranchChangeEntry; local: GitStatusEntry[] }>()
   for (const entry of branchEntries) {
@@ -82,7 +88,8 @@ export function buildAllChangeEntries(
     // Why only a single source: per-area counts overlap, so adding them would double-count a line
     // touched both on the branch and since.
     const sources = [...(branch ? [branch] : []), ...local]
-    const counts: { added?: number; removed?: number } = sources.length === 1 ? sources[0] : {}
+    const counts: { added?: number; removed?: number } =
+      lineCounts?.[path] ?? (sources.length === 1 ? sources[0] : {})
     entries.push({
       path,
       status: deletedLocally ? 'deleted' : fromBase.status,

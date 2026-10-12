@@ -69,6 +69,27 @@ describe('createEditorSlice branch line total', () => {
     })
   })
 
+  it("republishes when a file's count moves even though the totals did not", () => {
+    const store = createEditorStore()
+    const total = { added: 5, removed: 0, mergeBase: MERGE_BASE }
+    store.getState().setGitStatus(
+      'wt-1',
+      status({
+        branchLineTotal: { ...total, files: { 'a.ts': { added: 3 }, 'b.ts': { added: 2 } } }
+      })
+    )
+    store.getState().setGitStatus(
+      'wt-1',
+      status({
+        branchLineTotal: { ...total, files: { 'a.ts': { added: 1 }, 'b.ts': { added: 4 } } }
+      })
+    )
+
+    expect(store.getState().gitBranchLineTotalByWorktree['wt-1']?.files?.['b.ts']).toEqual({
+      added: 4
+    })
+  })
+
   it('keeps the published total when a later status omits the field', () => {
     const store = createEditorStore()
     store

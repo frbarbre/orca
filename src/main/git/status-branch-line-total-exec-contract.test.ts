@@ -259,7 +259,7 @@ describe('branch line total exec budget', () => {
       getStatus(repo, { branchLineTotalMergeBase: mergeBase })
     ])
 
-    expect(first.branchLineTotal).toEqual({
+    expect(first.branchLineTotal).toMatchObject({
       added: 1,
       removed: 0,
       mergeBase,
@@ -288,7 +288,7 @@ describe('branch line total exec budget', () => {
       getStatus(repo, { branchLineTotalMergeBase: mergeBase, limit: 4096 })
     ])
 
-    expect(first.branchLineTotal).toEqual({
+    expect(first.branchLineTotal).toMatchObject({
       added: 1,
       removed: 0,
       mergeBase,
@@ -320,7 +320,7 @@ describe('branch line total exec budget', () => {
     })
 
     expect(second.branchLineTotal).toEqual(first.branchLineTotal)
-    expect(second.branchLineTotal).toEqual({
+    expect(second.branchLineTotal).toMatchObject({
       added: 1,
       removed: 0,
       mergeBase,
@@ -344,7 +344,7 @@ describe('branch line total exec budget', () => {
       reuseLineStats: true
     })
 
-    expect(result.branchLineTotal).toEqual({
+    expect(result.branchLineTotal).toMatchObject({
       added: 0,
       removed: 0,
       mergeBase: laterMergeBase,

@@ -83,7 +83,7 @@ describe('branch line total against a real repository', () => {
     const result = await getStatus(repo, { branchLineTotalMergeBase: mergeBase })
 
     expect(rangedDiffTotal(repo, mergeBase)).toEqual({ added: 1, removed: 0 })
-    expect(result.branchLineTotal).toEqual({
+    expect(result.branchLineTotal).toMatchObject({
       added: 1,
       removed: 0,
       mergeBase,
@@ -106,7 +106,7 @@ describe('branch line total against a real repository', () => {
 
     const result = await getStatus(repo, { branchLineTotalMergeBase: mergeBase })
 
-    expect(result.branchLineTotal).toEqual({
+    expect(result.branchLineTotal).toMatchObject({
       added: 0,
       removed: 0,
       mergeBase,
@@ -122,7 +122,7 @@ describe('branch line total against a real repository', () => {
     await write(repo, 'f.txt', 'a\nb\nc\n')
 
     const beforeCommit = await getStatus(repo, { branchLineTotalMergeBase: mergeBase })
-    expect(beforeCommit.branchLineTotal).toEqual({
+    expect(beforeCommit.branchLineTotal).toMatchObject({
       added: 2,
       removed: 0,
       mergeBase,
@@ -132,7 +132,7 @@ describe('branch line total against a real repository', () => {
 
     commitAll(repo, 'commit the edit')
     const afterCommit = await getStatus(repo, { branchLineTotalMergeBase: mergeBase })
-    expect(afterCommit.branchLineTotal).toEqual({
+    expect(afterCommit.branchLineTotal).toMatchObject({
       added: 2,
       removed: 0,
       mergeBase,
@@ -142,7 +142,7 @@ describe('branch line total against a real repository', () => {
 
     await write(repo, 'f.txt', 'a\nb\nc\nd\n')
     const afterSecondEdit = await getStatus(repo, { branchLineTotalMergeBase: mergeBase })
-    expect(afterSecondEdit.branchLineTotal).toEqual({
+    expect(afterSecondEdit.branchLineTotal).toMatchObject({
       added: 3,
       removed: 0,
       mergeBase,
@@ -162,7 +162,7 @@ describe('branch line total against a real repository', () => {
     const result = await getStatus(repo, { branchLineTotalMergeBase: mergeBase })
 
     expect(rangedDiffTotal(repo, mergeBase)).toEqual({ added: 1, removed: 0 })
-    expect(result.branchLineTotal).toEqual({
+    expect(result.branchLineTotal).toMatchObject({
       added: 1,
       removed: 0,
       mergeBase,
@@ -180,7 +180,7 @@ describe('branch line total against a real repository', () => {
     const result = await getStatus(repo, { branchLineTotalMergeBase: mergeBase })
 
     expect(result.entries.map((entry) => entry.area)).toEqual(['untracked'])
-    expect(result.branchLineTotal).toEqual({
+    expect(result.branchLineTotal).toMatchObject({
       added: 3,
       removed: 0,
       mergeBase,
@@ -198,7 +198,7 @@ describe('branch line total against a real repository', () => {
     const result = await getStatus(repo, { branchLineTotalMergeBase: mergeBase })
 
     expect(git(repo, ['diff', '--numstat', mergeBase, '--'])).toMatch(/^-\t-\t/)
-    expect(result.branchLineTotal).toEqual({
+    expect(result.branchLineTotal).toMatchObject({
       added: 0,
       removed: 0,
       mergeBase,
@@ -215,7 +215,7 @@ describe('branch line total against a real repository', () => {
 
     const result = await getStatus(repo, { branchLineTotalMergeBase: mergeBase })
 
-    expect(result.branchLineTotal).toEqual({
+    expect(result.branchLineTotal).toMatchObject({
       added: 0,
       removed: 0,
       mergeBase,
@@ -235,7 +235,7 @@ describe('branch line total against a real repository', () => {
     const result = await getStatus(repo, { branchLineTotalMergeBase: mergeBase })
 
     expect(rangedDiffTotal(repo, mergeBase)).toEqual({ added: 1, removed: 0 })
-    expect(result.branchLineTotal).toEqual({
+    expect(result.branchLineTotal).toMatchObject({
       added: 9,
       removed: 0,
       mergeBase,
@@ -255,7 +255,7 @@ describe('branch line total against a real repository', () => {
     const result = await getStatus(repo, { branchLineTotalMergeBase: mergeBase })
 
     expect(rangedDiffTotal(repo, mergeBase)).toEqual({ added: 1, removed: 0 })
-    expect(result.branchLineTotal).toEqual({
+    expect(result.branchLineTotal).toMatchObject({
       added: 5,
       removed: 0,
       mergeBase,
@@ -281,7 +281,7 @@ describe('branch line total against a real repository', () => {
       ['untracked', 'gone.txt']
     ])
     expect(rangedDiffTotal(repo, mergeBase)).toEqual({ added: 0, removed: 3 })
-    expect(result.branchLineTotal).toEqual({
+    expect(result.branchLineTotal).toMatchObject({
       added: 2,
       removed: 3,
       mergeBase,

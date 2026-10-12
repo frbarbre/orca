@@ -272,6 +272,21 @@ describe('computeGitBranchLineTotal', () => {
     })
   })
 
+  it('adds up a file deleted in git and recreated untracked, as the total does', async () => {
+    const worktreePath = await createWorktreeDir({ 'redo.txt': 'one\ntwo\n' })
+
+    const total = await computeGitBranchLineTotal({
+      worktreePath,
+      hostKey: 'native',
+      mergeBase: OTHER_MERGE_BASE,
+      untrackedPaths: ['redo.txt'],
+      runDiffNumstat: async () => '0\t4\tredo.txt\0'
+    })
+
+    expect(total?.files?.['redo.txt']).toEqual({ added: 2, removed: 4 })
+    expect(total).toMatchObject({ added: 2, removed: 4 })
+  })
+
   it('omits the total when the ranged numstat fails instead of publishing untracked-only zeros', async () => {
     const worktreePath = await createWorktreeDir({ 'new.txt': 'one\ntwo\n' })
 

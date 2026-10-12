@@ -251,6 +251,29 @@ export async function computeGitBranchLineTotal(input: {
   }
   return {
     ...sumGitBranchLineTotal({ mergeBase: input.mergeBase, tracked, untracked }),
-    files: Object.fromEntries([...tracked, ...untracked])
+    files: mergeLineStatsByPath(tracked, untracked)
   }
+}
+
+function addLineCount(a: number | undefined, b: number | undefined): number | undefined {
+  return a === undefined && b === undefined ? undefined : (a ?? 0) + (b ?? 0)
+}
+
+// Why add rather than overwrite: a file deleted in git and recreated untracked is in both maps,
+// and the total counts both halves.
+function mergeLineStatsByPath(
+  tracked: ReadonlyMap<string, GitLineStats>,
+  untracked: ReadonlyMap<string, GitLineStats>
+): Record<string, GitLineStats> {
+  const files: Record<string, GitLineStats> = Object.fromEntries(tracked)
+  for (const [path, stats] of untracked) {
+    const existing = files[path]
+    files[path] = existing
+      ? {
+          added: addLineCount(existing.added, stats.added),
+          removed: addLineCount(existing.removed, stats.removed)
+        }
+      : stats
+  }
+  return files
 }

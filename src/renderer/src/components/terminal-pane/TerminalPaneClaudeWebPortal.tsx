@@ -12,6 +12,7 @@ import {
 import { useCoveredTerminalFocusHandoff } from './use-covered-terminal-focus-handoff'
 import { useClaudeWebAutoOpen } from './use-claude-web-auto-open'
 import { CLAUDE_WEB_COVER_ATTRIBUTE } from './claude-web-covered-pane'
+import { focusClaudeWebview } from './claude-web-drag-passthrough'
 import type { TerminalPaneController } from './use-terminal-pane-controller'
 
 function ClaudeWebPaneCover({
@@ -36,8 +37,9 @@ function ClaudeWebPaneCover({
       // paste/copy/focus handling stands aside and these chords reach the page. z-20 sits above chat.
       className="native-chat-pane-shell absolute inset-0 z-20 flex min-h-0 min-w-0 bg-background focus:outline-none"
       onFocus={(event) => {
-        if (event.target === event.currentTarget) {
-          event.currentTarget.querySelector<HTMLElement>('webview')?.focus()
+        const webview = event.currentTarget.querySelector<HTMLElement>('webview')
+        if (event.target === event.currentTarget && webview) {
+          focusClaudeWebview(webview)
         }
       }}
     >

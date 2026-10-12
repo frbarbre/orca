@@ -9,7 +9,10 @@ import { pollClaudeRemoteSessionUrl } from './claude-remote-session-poll'
 import { ensureClaudeWebKeyReplay } from './claude-web-key-replay'
 import { FOCUS_CLAUDE_PROMPT_SCRIPT } from './claude-web-prompt-focus'
 import { claudeWebView } from './claude-web-view-state'
-import { enrolClaudeWebviewInDragPassthrough } from './claude-web-drag-passthrough'
+import {
+  enrolClaudeWebviewInDragPassthrough,
+  focusClaudeWebview
+} from './claude-web-drag-passthrough'
 
 type PageState = 'loading' | 'ready' | 'failed'
 
@@ -59,13 +62,13 @@ function attachClaudeWebview(
     // retained hidden tab keeps its layout, so `inert` is what marks it.
     const isVisible = container.getClientRects().length > 0 && !container.closest('[inert]')
     if (takePromptFocusRequest() && isVisible) {
-      webview.focus()
+      focusClaudeWebview(webview)
       void webview.executeJavaScript(FOCUS_CLAUDE_PROMPT_SCRIPT).catch(() => undefined)
       return
     }
     // Why: the cover took focus from the terminal before the page existed; hand it to the page.
     if (container.parentElement?.contains(document.activeElement)) {
-      webview.focus()
+      focusClaudeWebview(webview)
     }
   }
   webview.addEventListener('did-start-loading', onStart)

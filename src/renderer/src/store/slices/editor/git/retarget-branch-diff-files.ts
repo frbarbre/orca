@@ -25,7 +25,6 @@ export function retargetBranchDiffFiles(
       file.worktreeId !== worktreeId ||
       file.mode !== 'diff' ||
       !file.branchCompare ||
-      file.branchBasePinned ||
       (file.diffSource !== 'branch' &&
         file.diffSource !== 'combined-branch' &&
         file.diffSource !== 'branch-worktree') ||

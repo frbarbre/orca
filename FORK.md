@@ -1534,10 +1534,8 @@ turn's or commit's files under a removable badge — "Latest turn", "Historical 
 "Commit abc1234" — opens the first, and every file opens in the normal diff viewer
 (`store/slices/editor/actions/open-changes-filter-entry.ts`, used by row clicks and keyboard steps):
 
-- The latest turn opens live, from its start snapshot to disk: a `branch-worktree` tab whose base is
-  pinned (`OpenFile.branchBasePinned`) so the branch compare refresh does not move it back. Opening
-  the same file without the filter unpins it.
-- An older turn and a commit open their frozen `commit` diff.
+- A turn, the latest one included, and a commit open their frozen `commit` diff: the latest turn is
+  what that turn changed, not what a running agent is changing now.
 
 Uncommitted (§38) is the same filter, so turning it on clears a turn or commit and the reverse.
 A previewed turn turns "Historical changes" once a newer turn lands (`syncLatestAgentTurn`, from
@@ -1550,7 +1548,6 @@ code for the "Group by status" sections' view buttons.
 | `src/renderer/src/lib/show-in-changes.ts` | Setting a turn or commit filter and opening its first file. |
 | `store/slices/editor/actions/open-changes-filter-entry.ts` | Which diff a row opens under the filter. |
 | `store/slices/editor/actions/open-diff-at-location.ts`, `source-control/listing/use-row-opening.ts` | Asking it first. |
-| `store/slices/editor/actions/open-branch-worktree-diff.ts`, `git/retarget-branch-diff-files.ts`, `types/open-file.ts` | `pinBranchBase` / `branchBasePinned`. |
 | `source-control/listing/use-all-changes-projection.ts`, `all-changes-section.tsx`, `all-changes.ts`, `panel/panel-content.tsx` | The filtered list, the badge, commit-tab row highlight, no View all. |
 | `src/renderer/src/lib/agent-turn-open.ts`, `agent-turns/agent-turns-section.tsx`, `sync/use-git-history-commit-actions.ts`, `sync/git-history-commit-files.tsx`, `src/renderer/src/lib/monaco-git-blame.ts`, `src/renderer/src/app-shell/source-control-shortcuts.ts` | The entry points. |
 | `src/renderer/src/i18n/locales/*.json` | `allChanges.*`; the old "Open all changes together" key removed. |

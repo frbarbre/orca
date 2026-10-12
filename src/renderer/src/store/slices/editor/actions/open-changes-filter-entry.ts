@@ -2,16 +2,13 @@ import { getChangesFilter } from '@/lib/changes-filter'
 import type { EditorSlice } from '../types/editor-slice'
 import type { EditorOpenTargetOptions } from '../types/open-file'
 
-const TURN_START_LABEL = 'turn start'
-const WORKING_TREE_LABEL = 'working tree'
-
 /**
- * Fork: opens a Changes row while a turn or commit is previewed. The latest turn shows live, from
- * just before it to disk; an older turn and a commit show what they changed. Returns false when no
- * turn or commit is previewed, so the caller opens the row its usual way.
+ * Fork: opens a Changes row while a turn or commit is previewed, as what that turn or commit
+ * changed, the latest turn included. Returns false when no turn or commit is previewed, so the
+ * caller opens the row its usual way.
  */
 export function openChangesFilterEntry(
-  state: Pick<EditorSlice, 'openCommitDiff' | 'openBranchWorktreeDiff'>,
+  state: Pick<EditorSlice, 'openCommitDiff'>,
   worktreeId: string,
   worktreePath: string,
   relativePath: string,
@@ -25,25 +22,6 @@ export function openChangesFilterEntry(
   const entry = filter.entries.find((candidate) => candidate.path === relativePath) ?? {
     path: relativePath,
     status: 'modified' as const
-  }
-  const start = filter.compare.parentOid
-  if (filter.kind === 'turn' && filter.latest && start) {
-    state.openBranchWorktreeDiff(
-      worktreeId,
-      worktreePath,
-      entry,
-      {
-        baseRef: TURN_START_LABEL,
-        baseOid: start,
-        compareRef: WORKING_TREE_LABEL,
-        headOid: filter.compare.commitOid,
-        // Why mergeBase: it is what the left side reads, so the turn's start snapshot is the base.
-        mergeBase: start
-      },
-      language,
-      { ...options, pinBranchBase: true }
-    )
-    return true
   }
   state.openCommitDiff(
     worktreeId,

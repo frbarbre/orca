@@ -108,8 +108,6 @@ export type OpenFile = {
   markdownPreviewAnchor?: string
   diffSource?: DiffSource
   branchCompare?: BranchCompareSnapshot
-  /** Fork: a latest-turn diff keeps its turn-start base when the branch compare refreshes. */
-  branchBasePinned?: boolean
   commitCompare?: CommitCompareSnapshot
   branchOldPath?: string
   combinedAlternate?: CombinedDiffAlternate
@@ -186,6 +184,4 @@ export type EditorOpenTargetOptions = {
   preview?: boolean
   runtimeEnvironmentId?: string | null
   forceContentReload?: boolean
-  /** Fork: see `OpenFile.branchBasePinned`. */
-  pinBranchBase?: boolean
 }

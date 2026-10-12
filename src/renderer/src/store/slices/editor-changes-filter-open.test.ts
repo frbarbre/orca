@@ -5,19 +5,6 @@ import { clearChangesFilter, setChangesFilter } from '@/lib/changes-filter'
 const START = 's'.repeat(40)
 const END = 'e'.repeat(40)
 
-function branchCompare(baseOid: string) {
-  return {
-    baseRef: 'refs/remotes/origin/main',
-    baseOid,
-    compareRef: 'feature',
-    headOid: 'head-1',
-    mergeBase: baseOid,
-    changedFiles: 1,
-    commitsAhead: 1,
-    status: 'ready' as const
-  }
-}
-
 function turnFilter(latest: boolean) {
   return {
     kind: 'turn' as const,
@@ -40,38 +27,14 @@ function stepOnto(store: ReturnType<typeof createEditorStore>): void {
 afterEach(() => clearChangesFilter('wt-1'))
 
 describe('opening a Changes row under a turn or commit filter', () => {
-  it('shows the latest turn live, from just before it to disk, and keeps it there', () => {
+  it('shows the latest turn as what it changed, not what the agent is changing now', () => {
     const store = createEditorStore()
     setChangesFilter('wt-1', turnFilter(true))
     stepOnto(store)
     expect(store.getState().openFiles[0]).toMatchObject({
-      diffSource: 'branch-worktree',
-      branchBasePinned: true,
-      branchCompare: { mergeBase: START }
+      diffSource: 'commit',
+      commitCompare: { commitOid: END, parentOid: START }
     })
-
-    const next = branchCompare('base-2')
-    store.getState().beginGitBranchCompareRequest('wt-1', 'req-2', next.baseRef)
-    store.getState().setGitBranchCompareResult('wt-1', 'req-2', { summary: next, entries: [] })
-    expect(store.getState().openFiles[0]?.branchCompare?.mergeBase).toBe(START)
-  })
-
-  it('lets the same file go back to the branch base when opened without the filter', () => {
-    const store = createEditorStore()
-    setChangesFilter('wt-1', turnFilter(true))
-    stepOnto(store)
-    store
-      .getState()
-      .openBranchWorktreeDiff(
-        'wt-1',
-        '/repo',
-        { path: 'src/a.ts', status: 'modified' },
-        branchCompare('base-1'),
-        'ts'
-      )
-    expect(store.getState().openFiles).toHaveLength(1)
-    expect(store.getState().openFiles[0]?.branchBasePinned).toBeUndefined()
-    expect(store.getState().openFiles[0]?.branchCompare?.mergeBase).toBe('base-1')
   })
 
   it('shows an older turn as what it changed, frozen', () => {

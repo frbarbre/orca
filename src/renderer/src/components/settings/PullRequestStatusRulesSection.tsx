@@ -154,7 +154,10 @@ export function PullRequestStatusRulesSection(): React.JSX.Element {
             control={
               <Input
                 value={config.reviewEnteredCommand}
-                placeholder="mise run bd"
+                placeholder={translate(
+                  'auto.components.settings.prRules.reviewCommandPlaceholder',
+                  'mise run bd'
+                )}
                 onChange={(event) => patch({ reviewEnteredCommand: event.target.value })}
                 className="h-7 w-[220px] font-mono"
               />

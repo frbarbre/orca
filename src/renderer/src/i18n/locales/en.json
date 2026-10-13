@@ -12813,6 +12813,7 @@
           "resolveConflictsDescription": "When one of your pull requests lands in the Conflicts column, starts an agent in its workspace that merges the base branch, resolves the conflicts and pushes. Never force-pushes.",
           "reviewCommand": "Run a command when your pull request enters Review",
           "reviewCommandDescription": "Runs once in the workspace's folder each time it moves into the Review column, for example to stop its dev stack. Leave empty to run nothing.",
+          "reviewCommandPlaceholder": "mise run bd",
           "reviewInbox": "Open a workspace when you are asked to review",
           "reviewInboxDescription": "Creates the workspace, points the diff at the pull request base, and starts the agent on the prompt below. Every review already waiting on you is picked up on the first check.",
           "prompt": "Prompt for a first review",

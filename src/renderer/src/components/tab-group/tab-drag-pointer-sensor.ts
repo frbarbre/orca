@@ -7,44 +7,13 @@ import type {
   SensorInstance,
   SensorProps
 } from '@dnd-kit/core'
+import { ListenerBag } from './tab-drag-listener-bag'
 
 type PointerCoordinates = { x: number; y: number }
 
 const DEFAULT_COORDINATES: PointerCoordinates = { x: 0, y: 0 }
 const TAB_DRAG_EARLY_MOVE_CONFIRMATION_MS = 50
 const TAB_DRAG_CONFIRMED_DISTANCE_SAMPLE_COUNT = 2
-
-type ListenerEntry = {
-  eventName: string
-  handler: EventListener
-  options?: AddEventListenerOptions | boolean
-  target: EventTarget
-}
-
-class ListenerBag {
-  private readonly listeners: ListenerEntry[] = []
-
-  add<T extends Event>(
-    target: EventTarget | null,
-    eventName: string,
-    handler: (event: T) => void,
-    options?: AddEventListenerOptions | boolean
-  ): void {
-    if (!target) {
-      return
-    }
-    const listener = handler as EventListener
-    target.addEventListener(eventName, listener, options)
-    this.listeners.push({ eventName, handler: listener, options, target })
-  }
-
-  removeAll = (): void => {
-    for (const { eventName, handler, options, target } of this.listeners) {
-      target.removeEventListener(eventName, handler, options)
-    }
-    this.listeners.length = 0
-  }
-}
 
 function isDistanceConstraint(
   constraint: PointerActivationConstraint
@@ -150,15 +119,21 @@ export class TabDragPointerSensor implements SensorInstance {
   private readonly windowListeners = new ListenerBag()
   private overThresholdSampleCount = 0
   private timeoutId: number | null = null
+  // Fork: focus moving into or out of one of this window's own <webview> guests fires window
+  // blur/focus too, though the user never left the app; pressing a tab beside a focused page did that.
+  private focusInGuest: boolean
 
   constructor(props: SensorProps<PointerSensorOptions>) {
     this.props = props
     this.document = getOwnerDocument(props.event.target)
+    this.focusInGuest = isWebviewFocused(this.document)
     this.initialCoordinates = getPointerCoordinates(props.event) ?? DEFAULT_COORDINATES
     this.handleStart = this.handleStart.bind(this)
     this.handleMove = this.handleMove.bind(this)
     this.handleEnd = this.handleEnd.bind(this)
     this.handleCancel = this.handleCancel.bind(this)
+    this.handleWindowBlur = this.handleWindowBlur.bind(this)
+    this.handleWindowFocus = this.handleWindowFocus.bind(this)
     this.handleKeydown = this.handleKeydown.bind(this)
     this.removeTextSelection = this.removeTextSelection.bind(this)
     this.attach()
@@ -175,8 +150,8 @@ export class TabDragPointerSensor implements SensorInstance {
     this.windowListeners.add(win, 'dragstart', preventDefault)
     this.windowListeners.add(win, 'visibilitychange', this.handleCancel)
     this.windowListeners.add(win, 'contextmenu', preventDefault)
-    this.windowListeners.add(win, 'blur', this.handleCancel)
-    this.windowListeners.add(win, 'focus', this.handleCancel)
+    this.windowListeners.add(win, 'blur', this.handleWindowBlur)
+    this.windowListeners.add(win, 'focus', this.handleWindowFocus)
     this.documentListeners.add(this.document, 'keydown', this.handleKeydown)
 
     if (!activationConstraint) {
@@ -304,6 +279,22 @@ export class TabDragPointerSensor implements SensorInstance {
     this.props.onCancel()
   }
 
+  private handleWindowBlur(): void {
+    if (isWebviewFocused(this.document)) {
+      this.focusInGuest = true
+      return
+    }
+    this.handleCancel()
+  }
+
+  private handleWindowFocus(): void {
+    if (this.focusInGuest) {
+      this.focusInGuest = false
+      return
+    }
+    this.handleCancel()
+  }
+
   private handleKeydown(event: KeyboardEvent): void {
     if (event.code === 'Escape') {
       this.handleCancel()
@@ -313,6 +304,10 @@ export class TabDragPointerSensor implements SensorInstance {
   private removeTextSelection(): void {
     this.document.getSelection()?.removeAllRanges()
   }
+}
+
+function isWebviewFocused(document: Document): boolean {
+  return document.activeElement?.tagName === 'WEBVIEW'
 }
 
 function preventDefault(event: Event): void {

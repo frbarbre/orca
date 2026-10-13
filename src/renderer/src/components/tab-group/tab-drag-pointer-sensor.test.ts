@@ -96,6 +96,54 @@ describe('tab drag pointer sensor cancellation', () => {
     expect(callbacks.onCancel).toHaveBeenCalledOnce()
   })
 
+  describe('focus moving between the window and its own webview', () => {
+    function mountWebview(): HTMLElement {
+      const webview = document.createElement('webview')
+      webview.tabIndex = 0
+      document.body.appendChild(webview)
+      return webview
+    }
+
+    afterEach(() => {
+      document.body.replaceChildren()
+    })
+
+    it('keeps a pending gesture when pressing the tab hands focus into a webview', () => {
+      const webview = mountWebview()
+      const callbacks = startSensor({ activationConstraint: { distance: 5 } })
+
+      webview.focus()
+      window.dispatchEvent(new Event('blur'))
+      vi.advanceTimersByTime(60)
+      movePointer()
+
+      expect(callbacks.onCancel).not.toHaveBeenCalled()
+      expect(callbacks.onStart).toHaveBeenCalledOnce()
+    })
+
+    it('keeps a pending gesture when the window takes focus back from its webview', () => {
+      const webview = mountWebview()
+      webview.focus()
+      const callbacks = startSensor({ activationConstraint: { distance: 5 } })
+
+      webview.blur()
+      window.dispatchEvent(new Event('focus'))
+      vi.advanceTimersByTime(60)
+      movePointer()
+
+      expect(callbacks.onCancel).not.toHaveBeenCalled()
+      expect(callbacks.onStart).toHaveBeenCalledOnce()
+    })
+
+    it('still cancels when the window regains focus from another app', () => {
+      const callbacks = startSensor({ activationConstraint: { distance: 5 } })
+
+      window.dispatchEvent(new Event('focus'))
+
+      expect(callbacks.onCancel).toHaveBeenCalledOnce()
+    })
+  })
+
   it('ignores the old Escape listener while a new gesture is active', () => {
     const previous = startSensor()
     window.dispatchEvent(new Event('blur'))

@@ -141,6 +141,42 @@ describe('orca file CLI handlers', () => {
   })
 
   // Why: an older host still answers a PDF with opened:false (STA-9113); that must not read as success.
+  it('opens a file at a line and column', async () => {
+    queueFixtures(
+      callMock,
+      okFixture('req_open', {
+        worktree: 'wt-1',
+        relativePath: 'src/App.tsx',
+        kind: 'text',
+        opened: true
+      })
+    )
+
+    await main(
+      ['file', 'open', 'src/App.tsx', '--line', '42', '--column', '7', '--worktree', 'id:wt-1'],
+      '/tmp/repo'
+    )
+
+    expect(callMock).toHaveBeenCalledWith('files.open', {
+      worktree: 'id:wt-1',
+      relativePath: 'src/App.tsx',
+      navigation: 'caller',
+      line: 42,
+      column: 7
+    })
+  })
+
+  it('rejects a line that is not a positive whole number before any RPC call', async () => {
+    await main(
+      ['file', 'open', 'src/App.tsx', '--line', 'zero', '--worktree', 'id:wt-1'],
+      '/tmp/repo'
+    )
+
+    expect(callMock).not.toHaveBeenCalled()
+    expect(process.exitCode).toBe(1)
+    process.exitCode = undefined
+  })
+
   it('fails an unopened file open with ok:false in --json mode', async () => {
     queueFixtures(
       callMock,

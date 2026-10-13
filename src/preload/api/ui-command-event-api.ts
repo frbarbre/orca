@@ -8,6 +8,7 @@ import type {
 } from '../../shared/agent-launch-tab-publication'
 import type { AgentLaunchPaneVerdictEvent } from '../../shared/agent-launch-pane-verdict'
 import type { RuntimeNavigationTarget } from '../../shared/runtime-navigation'
+import type { RuntimeFileReveal } from '../../shared/runtime-file-reveal'
 import type { TerminalSurfaceCloseTarget } from '../../shared/terminal-surface-close-target'
 import type {
   WorktreeDefaultTabsLaunch,
@@ -236,6 +237,7 @@ export type UiCommandEventApi = {
       relativePath: string
       runtimeEnvironmentId?: string | null
       navigation?: RuntimeNavigationTarget
+      reveal?: RuntimeFileReveal
     }) => void
   ) => () => void
   onOpenDiffFromMobile: (

@@ -1705,6 +1705,21 @@ comment. The Comments list no longer heads open threads with "Needs review · N"
 | `checks-panel/comment-row.tsx` | `<ReviewStateBadge>` after the author name (badge in `review-state-badge.tsx`). |
 | `checks-panel/comments-list.tsx` | The "Needs review" label removed; open threads render first, unlabelled. |
 
+### 57. `orca file open --line/--column`
+
+`orca file open <path> --line <n> [--column <n>]` opens the file with the cursor on that spot, so a
+"go to source" link (a framework devtools inspector, say) can target Orca like any editor. The line
+rides the existing open path as an optional `RuntimeFileReveal` and ends in the renderer's
+`setPendingEditorReveal`, the same reveal terminal file links use (`reveal-opened-file.ts`).
+
+| File | What is ours |
+| --- | --- |
+| `src/cli/specs/file.ts`, `src/cli/handlers/file.ts` | The two flags, sent only with a line. |
+| `src/shared/rpc-contract/files-params.ts` | Optional `line`/`column` on `FileOpenTab` (so the generated catalog is unchanged). |
+| `src/main/runtime/rpc/methods/files.ts`, `runtime-file-command-access.ts`, `runtime-file-command-host.ts`, `orca-runtime-file-commands.ts`, `runtime-notifier-contract.ts`, `src/main/window/runtime-window-lifecycle.ts` | A trailing optional `reveal`, passed only when set. |
+| `src/preload/api/ui-command-event-api.ts`, `ui-bridge-terminal-and-session-tabs.ts` | `reveal` on the open-file payload. |
+| `src/renderer/src/hooks/ipc-events/mobile-terminal-close-ipc-bridge.ts` | Calls `revealOpenedFile` after the open. |
+
 ## Verify
 
 Verify runs on GitHub, not locally: `fork-verify.yml` runs it on every pull request against `main`,

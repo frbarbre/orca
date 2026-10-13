@@ -46,6 +46,25 @@ describe('file open RPC navigation', () => {
     expect(runtime.openMobileDiff).toHaveBeenCalledWith('id:wt-1', 'a.ts', false, 'host')
   })
 
+  it('passes a line and column to reveal through a file open', async () => {
+    const { runtime, dispatcher } = createDispatcher()
+
+    await dispatcher.dispatch(
+      makeRequest('files.open', { worktree: 'id:wt-1', relativePath: 'a.ts', line: 42, column: 7 })
+    )
+    await dispatcher.dispatch(
+      makeRequest('files.open', { worktree: 'id:wt-1', relativePath: 'a.ts', line: 3 })
+    )
+
+    expect(runtime.openMobileFile).toHaveBeenNthCalledWith(1, 'id:wt-1', 'a.ts', undefined, {
+      line: 42,
+      column: 7
+    })
+    expect(runtime.openMobileFile).toHaveBeenNthCalledWith(2, 'id:wt-1', 'a.ts', undefined, {
+      line: 3
+    })
+  })
+
   it('leaves navigation absent for callers that send none (phones, older CLIs)', async () => {
     const { runtime, dispatcher } = createDispatcher()
 

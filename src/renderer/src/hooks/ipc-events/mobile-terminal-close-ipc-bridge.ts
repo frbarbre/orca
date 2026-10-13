@@ -7,6 +7,7 @@ import { persistWorkspaceSessionByHost } from '@/lib/workspace-session-host-pers
 import { useAppStore } from '../../store'
 import type { AppState } from '../../store/types'
 import type { EditorTabSelection } from '../../store/slices/editor/types/open-file'
+import { revealOpenedFile } from './reveal-opened-file'
 import {
   navigationTargetsHost,
   type RuntimeNavigationTarget
@@ -39,8 +40,9 @@ export function registerMobileAndTerminalCloseIpcBridge(
 ): void {
   unsubs.push(
     window.api.ui.onOpenFileFromMobile(
-      ({ worktreeId, filePath, relativePath, runtimeEnvironmentId, navigation }) => {
+      ({ worktreeId, filePath, relativePath, runtimeEnvironmentId, navigation, reveal }) => {
         const basename = relativePath.split(/[\\/]/).pop() || relativePath
+        const language = detectLanguage(basename)
         openRuntimeEditorTab(worktreeId, navigation, (store, selection) =>
           // Why: renderer owns tab creation so grouped order and markdown bridges share the desktop File Explorer's store path.
           store.openFile(
@@ -48,13 +50,16 @@ export function registerMobileAndTerminalCloseIpcBridge(
               filePath,
               relativePath,
               worktreeId,
-              language: detectLanguage(basename),
+              language,
               runtimeEnvironmentId,
               mode: 'edit'
             },
             { selection }
           )
         )
+        if (reveal) {
+          revealOpenedFile(worktreeId, filePath, language, reveal)
+        }
       }
     )
   )

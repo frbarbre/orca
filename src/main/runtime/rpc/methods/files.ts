@@ -66,7 +66,14 @@ export const FILE_METHODS = [
     permission: 'workspace',
     params: FileOpenTab,
     handler: async (params, { runtime }) =>
-      runtime.openMobileFile(params.worktree, params.relativePath, params.navigation)
+      runtime.openMobileFile(
+        params.worktree,
+        params.relativePath,
+        params.navigation,
+        ...(params.line
+          ? [{ line: params.line, ...(params.column ? { column: params.column } : {}) }]
+          : [])
+      )
   }),
   defineMethod({
     name: 'files.openDiff',

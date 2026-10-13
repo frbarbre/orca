@@ -14,6 +14,7 @@ import {
 } from './runtime-file-command-host'
 import type { RuntimeFileOpenResult } from '../../shared/runtime-types'
 import type { RuntimeNavigationTarget } from '../../shared/runtime-navigation'
+import type { RuntimeFileReveal } from '../../shared/runtime-file-reveal'
 import {
   isMobilePreviewableImagePath,
   type TerminalFileGrant
@@ -58,7 +59,8 @@ export class RuntimeFileCommandAccess {
   async openMobileFile(
     worktreeSelector: string,
     relativePath: string,
-    navigation?: RuntimeNavigationTarget
+    navigation?: RuntimeNavigationTarget,
+    reveal?: RuntimeFileReveal
   ): Promise<RuntimeFileOpenResult> {
     const target = await this.host.resolveRuntimeFileTarget(worktreeSelector)
     const { worktree } = target
@@ -81,7 +83,8 @@ export class RuntimeFileCommandAccess {
       filePath,
       relativePath,
       runtimeOwnerForTarget(target),
-      navigation
+      navigation,
+      ...(reveal ? [reveal] : [])
     )
     return { worktree: worktree.id, relativePath, kind, opened: true }
   }

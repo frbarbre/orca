@@ -9,6 +9,7 @@ import type { TerminalPaneSplitSource } from '../../shared/feature-education-tel
 import type { TerminalRevealIdentity } from '../../shared/terminal-reveal-identity'
 import type { TuiAgent } from '../../shared/tui-agent'
 import type { RuntimeNavigationTarget } from '../../shared/runtime-navigation'
+import type { RuntimeFileReveal } from '../../shared/runtime-file-reveal'
 import type { ClientHostedBrowserRowsEvent } from '../../shared/client-hosted-browser-rows'
 import type {
   WorktreeBaseStatusEvent,
@@ -126,7 +127,8 @@ export type RuntimeNotifier = {
     filePath: string,
     relativePath: string,
     runtimeEnvironmentId?: string | null,
-    navigation?: RuntimeNavigationTarget
+    navigation?: RuntimeNavigationTarget,
+    reveal?: RuntimeFileReveal
   ): void
   openDiff?(
     worktreeId: string,

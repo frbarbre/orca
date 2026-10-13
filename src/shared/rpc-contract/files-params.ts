@@ -47,7 +47,10 @@ export const ResolveTerminalPath = WorktreeSelector.extend({
 
 // Why: absent `navigation` (phones, older CLIs) keeps the original host switch; 'caller'/'clients' open without moving it.
 export const FileOpenTab = FileOpen.extend({
-  navigation: z.enum(RUNTIME_NAVIGATION_TARGETS).optional()
+  navigation: z.enum(RUNTIME_NAVIGATION_TARGETS).optional(),
+  // Fork: 1-based cursor target for "go to source" opens; a diff open ignores them.
+  line: z.number().int().positive().optional(),
+  column: z.number().int().positive().optional()
 })
 
 export const FileOpenDiff = FileOpenTab.extend({

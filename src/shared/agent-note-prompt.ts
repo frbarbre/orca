@@ -3,14 +3,19 @@ import { formatDiffComment } from './diff-comments-format'
 
 // Fork: these sentences make agents answer in Orca's diff with `orca notes add`, which shows as a bot note.
 
-const ADD_COMMAND = 'orca notes add --file <path> --line <n> [--end-line <n>] --body "<text>"'
+const ADD_COMMAND = "orca notes add --file <path> --line <n> [--end-line <n>] --body '<markdown>'"
 
-export const NOTES_AGENT_NOTE_INSTRUCTION = `When you have addressed a note, reply to it saying what you did and why: orca notes reply --id <note id> --body "<text>". Skip this if the orca command is not available.`
+// Why spelled out here: agents rarely read the CLI help, and a double-quoted body lets the shell
+// run its `backticks` as commands, so notes came out as one plain paragraph.
+const BODY_FORMAT =
+  'The body is markdown: lead with the point in one sentence, put \\n\\n between paragraphs, use "- " lists, and `backticks` for code; single-quote it so the shell leaves the backticks alone.'
 
-export const REVIEW_AGENT_NOTE_INSTRUCTION = `Also leave each finding as an agent note on its lines so it shows in the diff: ${ADD_COMMAND}. Skip this if the orca command is not available.`
+export const NOTES_AGENT_NOTE_INSTRUCTION = `When you have addressed a note, reply to it saying what you did and why: orca notes reply --id <note id> --body '<markdown>'. ${BODY_FORMAT} Skip this if the orca command is not available.`
+
+export const REVIEW_AGENT_NOTE_INSTRUCTION = `Also leave each finding as an agent note on its lines so it shows in the diff: ${ADD_COMMAND}. ${BODY_FORMAT} Skip this if the orca command is not available.`
 
 export function githubCommentAgentNoteInstruction(url: string | undefined): string {
-  return `When you have addressed a review comment, leave an agent note on the lines you changed saying what you did, linked to that comment: ${ADD_COMMAND} --github-comment ${url ?? '<comment url>'}. Skip this if the orca command is not available.`
+  return `When you have addressed a review comment, leave an agent note on the lines you changed saying what you did, linked to that comment: ${ADD_COMMAND} --github-comment ${url ?? '<comment url>'}. ${BODY_FORMAT} Skip this if the orca command is not available.`
 }
 
 function threadHistory(earlier: readonly DiffComment[]): string {

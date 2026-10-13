@@ -18,6 +18,29 @@ const note: DiffComment = {
   side: 'modified'
 }
 
+describe('agent note formatting', () => {
+  const instructions = [
+    formatDiffCommentsForAgent([note]),
+    REVIEW_AGENT_NOTE_INSTRUCTION,
+    githubCommentAgentNoteInstruction('https://github.com/o/r/pull/1#discussion_r1')
+  ]
+
+  it('tells every agent the body is markdown and how to lay it out', () => {
+    for (const instruction of instructions) {
+      expect(instruction).toContain('markdown')
+      expect(instruction).toContain('`backticks`')
+      expect(instruction).toContain('\\n\\n')
+    }
+  })
+
+  it('single-quotes the body, so the shell keeps its backticks', () => {
+    for (const instruction of instructions) {
+      expect(instruction).toContain("--body '")
+      expect(instruction).not.toContain('--body "')
+    }
+  })
+})
+
 describe('agent note prompt instructions', () => {
   it('asks the agent to answer diff notes with agent notes on the changed lines', () => {
     const prompt = formatDiffCommentsForAgent([note])

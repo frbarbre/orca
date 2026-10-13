@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { useAppStore } from '@/store'
 import { claudeWebView, findClaudeWebLeafId } from './claude-web-view-state'
 import { ensureWokenPaneTracking, paneWakeCount, tabHasWokenPane } from './claude-web-woken-panes'
+import { isTabInChatView } from './claude-web-auto-open-eligibility'
 
 const RENDERER_STARTED_AT = Date.now()
 const autoOpenedPaneKeys = new Set<string>()
@@ -22,7 +23,9 @@ export function useClaudeWebAutoOpen(tabId: string, shownLeafId: string | null):
       )
   )
   const claudeLeafId = useAppStore((state) =>
-    enabled && createdThisRun ? findClaudeWebLeafId(state, tabId) : null
+    enabled && createdThisRun && !isTabInChatView(state.tabsByWorktree, tabId)
+      ? findClaudeWebLeafId(state, tabId)
+      : null
   )
   // Why the wake count in the key: each wake is a new session start, so it gets its own one open.
   const wakeCount = useAppStore(() =>

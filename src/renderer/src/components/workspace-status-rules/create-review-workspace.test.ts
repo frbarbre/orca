@@ -9,7 +9,8 @@ const mocks = vi.hoisted(() => ({
   launchAgentBackgroundSession: vi.fn(),
   updateWorktreeMeta: vi.fn(),
   resolveBase: vi.fn(),
-  openReviewWorkspaceLayout: vi.fn()
+  openReviewWorkspaceLayout: vi.fn(),
+  setTabViewMode: vi.fn()
 }))
 
 vi.mock('@/store', () => ({
@@ -18,7 +19,8 @@ vi.mock('@/store', () => ({
       settings: null,
       repos: [{ id: 'repo-1', path: '/work/flowbasedk/flowbase' }],
       createWorktree: mocks.createWorktree,
-      updateWorktreeMeta: mocks.updateWorktreeMeta
+      updateWorktreeMeta: mocks.updateWorktreeMeta,
+      setTabViewMode: mocks.setTabViewMode
     })
   }
 }))
@@ -95,6 +97,17 @@ describe('createReviewWorkspace', () => {
       defaultTabs: undefined
     })
     expect(mocks.launchAgentBackgroundSession).toHaveBeenCalled()
+  })
+
+  it('opens the review agent in Chat UI, whatever the default view is', async () => {
+    mocks.ensureHooksConfirmed.mockResolvedValue('skip')
+    mocks.createWorktree.mockResolvedValue({ worktree: { id: 'wt-1', path: '/work/review-3170' } })
+    mocks.launchAgentBackgroundSession.mockResolvedValue({ tabId: 'agent-tab' })
+    mocks.setTabViewMode.mockReset()
+
+    await createReviewWorkspace(PR, config())
+
+    expect(mocks.setTabViewMode).toHaveBeenCalledWith('agent-tab', 'chat')
   })
 
   it('lays the review out as the agent beside the first file of the PR', async () => {

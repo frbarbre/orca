@@ -135,6 +135,10 @@ export async function createReviewWorkspace(
         }
       )
     })
+    // Fork: a review is read, not driven, so it always opens in Chat UI whatever the default view.
+    if (launched?.tabId) {
+      useAppStore.getState().setTabViewMode(launched.tabId, 'chat')
+    }
     // Why the store first: a rebased re-review moved the worktree's base to the interdiff ref.
     const baseRef =
       useAppStore.getState().getKnownWorktreeById?.(created.worktree.id)?.baseRef ??

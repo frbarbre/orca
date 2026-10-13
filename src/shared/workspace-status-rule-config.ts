@@ -48,6 +48,8 @@ export type WorkspaceStatusRuleConfig = {
   onReviewed: 'delete' | 'none'
   /** Starts an agent to merge the base branch and push when your pull request lands in Conflicts. */
   resolveConflictsWithAgent: boolean
+  /** Shell command run in the workspace when your pull request lands in Review; empty runs nothing. */
+  reviewEnteredCommand: string
   /** The top bar's action buttons; an empty or missing entry uses the built-in prompt. */
   actionPrompts: Partial<Record<WorkspaceActionPromptId, string>>
   reviewInbox: WorkspaceStatusRuleReviewInbox
@@ -88,6 +90,7 @@ const SEED_LEDGER_VERSION = 1
 const MAX_HANDLED_PULL_REQUESTS = 500
 const MAX_CHECK_NAME_LENGTH = 120
 const MAX_TEAM_LENGTH = 120
+const MAX_COMMAND_LENGTH = 1000
 
 export function cloneDefaultWorkspaceStatusRuleConfig(): WorkspaceStatusRuleConfig {
   return {
@@ -101,6 +104,7 @@ export function cloneDefaultWorkspaceStatusRuleConfig(): WorkspaceStatusRuleConf
     onResolved: 'none',
     onReviewed: 'none',
     resolveConflictsWithAgent: false,
+    reviewEnteredCommand: '',
     actionPrompts: {},
     reviewInbox: {
       enabled: false,
@@ -238,6 +242,10 @@ export function normalizeWorkspaceStatusRuleConfig(value: unknown): WorkspaceSta
     onResolved: raw.onResolved === 'delete' ? 'delete' : 'none',
     onReviewed: raw.onReviewed === 'delete' ? 'delete' : 'none',
     resolveConflictsWithAgent: raw.resolveConflictsWithAgent === true,
+    reviewEnteredCommand:
+      typeof raw.reviewEnteredCommand === 'string'
+        ? raw.reviewEnteredCommand.trim().slice(0, MAX_COMMAND_LENGTH)
+        : '',
     actionPrompts: sanitizeActionPrompts(raw.actionPrompts),
     reviewInbox: sanitizeReviewInbox(raw.reviewInbox),
     handledPullRequests:

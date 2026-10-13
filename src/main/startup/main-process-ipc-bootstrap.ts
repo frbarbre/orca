@@ -25,6 +25,8 @@ import type {
 import type { ReviewStatusSnapshotRequest } from '../../shared/github/review-status-snapshot-types'
 import type { SyncReviewHeadRequest } from '../../shared/github/review-head-sync'
 import { syncReviewHead } from '../github/review-head-sync'
+import type { WorkspaceCommandRequest } from '../../shared/github/workspace-command'
+import { runWorkspaceCommand } from '../github/workspace-command'
 import { resolveGitHubAttachmentUrl, uploadReviewAsset } from '../github/review-asset-upload'
 import { registerSettingsTransferHandlers } from '../settings-transfer/settings-transfer'
 import type { UploadReviewAssetRequest } from '../../shared/github/review-asset'
@@ -97,6 +99,18 @@ export function registerMainProcessIpcHandlers(): void {
         { ...request, worktreePath },
         getLocalGitOptionsForRegisteredWorktree(store, request.worktreePath, worktreePath)
       )
+    }
+  )
+
+  ipcMain.handle(
+    'review-status-rules:run-workspace-command',
+    async (_event, request: WorkspaceCommandRequest) => {
+      const store = state.store
+      if (!store) {
+        throw new Error('The store is not ready.')
+      }
+      const worktreePath = await resolveRegisteredWorktreePath(request.worktreePath, store)
+      return runWorkspaceCommand(request.command, worktreePath)
     }
   )
 

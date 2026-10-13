@@ -3,5 +3,7 @@ import type { ReviewStatusRulesApi } from './review-status-rules-api'
 
 export const reviewStatusRulesApi: ReviewStatusRulesApi = {
   snapshot: (request) => ipcRenderer.invoke('review-status-rules:snapshot', request),
-  syncReviewHead: (request) => ipcRenderer.invoke('review-status-rules:sync-review-head', request)
+  syncReviewHead: (request) => ipcRenderer.invoke('review-status-rules:sync-review-head', request),
+  runWorkspaceCommand: (request) =>
+    ipcRenderer.invoke('review-status-rules:run-workspace-command', request)
 }

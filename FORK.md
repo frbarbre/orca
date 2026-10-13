@@ -550,6 +550,11 @@ Each PR-rules tick also does three smaller things, all in `workspace-status-rule
 - **Conflict agent.** With "Resolve conflicts with an agent" on, a workspace entering Conflicts
   gets an agent on `buildConflictAgentPrompt` — upstream's pull-request conflict prompt with its
   no-push rule swapped for "push, never force-push" (`launch-conflict-agents.ts`).
+- **Review command.** "Run a command when your pull request enters Review" runs `reviewEnteredCommand`
+  once in a local workspace entering the column mapped from `review` (`run-review-entered-commands.ts`).
+  It runs headless in main (`src/main/github/workspace-command.ts`, bash with the app's environment,
+  like setup hooks) behind IPC `review-status-rules:run-workspace-command`, which checks the path is a
+  registered worktree first; a failure toasts the command's last output lines.
 
 ### 9. Sidebar: hide temporary checkouts, and Run on a shortcut
 

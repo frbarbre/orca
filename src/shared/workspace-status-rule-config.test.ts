@@ -5,6 +5,24 @@ import {
 } from './workspace-status-rule-config'
 
 describe('normalizeWorkspaceStatusRuleConfig', () => {
+  it('keeps the command to run when a pull request enters Review, trimmed', () => {
+    const config = normalizeWorkspaceStatusRuleConfig({
+      ...cloneDefaultWorkspaceStatusRuleConfig(),
+      reviewEnteredCommand: '  mise run bd  '
+    })
+    expect(config.reviewEnteredCommand).toBe('mise run bd')
+  })
+
+  it('has no Review command by default or for a non-string value', () => {
+    expect(cloneDefaultWorkspaceStatusRuleConfig().reviewEnteredCommand).toBe('')
+    expect(
+      normalizeWorkspaceStatusRuleConfig({
+        ...cloneDefaultWorkspaceStatusRuleConfig(),
+        reviewEnteredCommand: 42
+      }).reviewEnteredCommand
+    ).toBe('')
+  })
+
   it('discards a ledger written before the seeding step was removed', () => {
     const config = normalizeWorkspaceStatusRuleConfig({
       ...cloneDefaultWorkspaceStatusRuleConfig(),

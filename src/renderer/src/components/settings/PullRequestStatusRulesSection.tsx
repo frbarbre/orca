@@ -142,6 +142,24 @@ export function PullRequestStatusRulesSection(): React.JSX.Element {
             checked={config.resolveConflictsWithAgent}
             onChange={() => patch({ resolveConflictsWithAgent: !config.resolveConflictsWithAgent })}
           />
+          <SettingsRow
+            label={translate(
+              'auto.components.settings.prRules.reviewCommand',
+              'Run a command when your pull request enters Review'
+            )}
+            description={translate(
+              'auto.components.settings.prRules.reviewCommandDescription',
+              "Runs once in the workspace's folder each time it moves into the Review column, for example to stop its dev stack. Leave empty to run nothing."
+            )}
+            control={
+              <Input
+                value={config.reviewEnteredCommand}
+                placeholder="mise run bd"
+                onChange={(event) => patch({ reviewEnteredCommand: event.target.value })}
+                className="h-7 w-[220px] font-mono"
+              />
+            }
+          />
           <SettingsSwitchRow
             label={translate(
               'auto.components.settings.prRules.reviewInbox',

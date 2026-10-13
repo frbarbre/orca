@@ -89,19 +89,26 @@ export function SourceControlFileCategoryFilter({
   const menu = (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        {compact ? (
+        {compact && isCategoryFilterActive ? (
+          <button
+            type="button"
+            title={triggerLabel}
+            aria-label={ariaLabel}
+            data-filter-active="true"
+            className="flex h-5 min-w-0 items-center gap-1 rounded-full border border-border bg-muted px-2 text-[11px] text-foreground hover:bg-accent"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <ListFilter className="size-3 shrink-0" aria-hidden="true" />
+            <span className="truncate">{triggerLabel}</span>
+          </button>
+        ) : compact ? (
           <Button
             type="button"
             variant="ghost"
             size="icon-xs"
             title={triggerLabel}
             aria-label={ariaLabel}
-            data-filter-active={isCategoryFilterActive ? 'true' : undefined}
-            className={
-              isCategoryFilterActive
-                ? 'text-foreground'
-                : 'text-muted-foreground hover:text-foreground'
-            }
+            className="text-muted-foreground hover:text-foreground"
             onClick={(event) => event.stopPropagation()}
           >
             <ListFilter className="size-3.5" aria-hidden="true" />

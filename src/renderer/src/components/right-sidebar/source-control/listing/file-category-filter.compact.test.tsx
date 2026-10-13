@@ -26,4 +26,8 @@ describe('compact file type filter', () => {
   it('marks itself while some file types are hidden', () => {
     expect(render(true)).toContain('data-filter-active="true"')
   })
+
+  it('names the shown file types in the header while filtering', () => {
+    expect(render(true)).toContain('>Implementation</span>')
+  })
 })

@@ -1,6 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ReviewSnapshotPullRequest } from '../../../../shared/github/review-status-snapshot-types'
-import { cloneDefaultWorkspaceStatusRuleConfig } from '../../../../shared/workspace-status-rule-config'
+import {
+  cloneDefaultWorkspaceStatusRuleConfig,
+  type ReviewAgentView
+} from '../../../../shared/workspace-status-rule-config'
 
 const mocks = vi.hoisted(() => ({
   createWorktree: vi.fn(),
@@ -10,7 +13,12 @@ const mocks = vi.hoisted(() => ({
   updateWorktreeMeta: vi.fn(),
   resolveBase: vi.fn(),
   openReviewWorkspaceLayout: vi.fn(),
-  setTabViewMode: vi.fn()
+  setTabViewMode: vi.fn(),
+  preferClaudeWebForTab: vi.fn()
+}))
+
+vi.mock('@/components/terminal-pane/claude-web-tab-preference', () => ({
+  preferClaudeWebForTab: mocks.preferClaudeWebForTab
 }))
 
 vi.mock('@/store', () => ({
@@ -99,15 +107,48 @@ describe('createReviewWorkspace', () => {
     expect(mocks.launchAgentBackgroundSession).toHaveBeenCalled()
   })
 
-  it('opens the review agent in Chat UI, whatever the default view is', async () => {
-    mocks.ensureHooksConfirmed.mockResolvedValue('skip')
-    mocks.createWorktree.mockResolvedValue({ worktree: { id: 'wt-1', path: '/work/review-3170' } })
-    mocks.launchAgentBackgroundSession.mockResolvedValue({ tabId: 'agent-tab' })
-    mocks.setTabViewMode.mockReset()
+  describe('the reviewing view', () => {
+    beforeEach(() => {
+      mocks.ensureHooksConfirmed.mockResolvedValue('skip')
+      mocks.createWorktree.mockResolvedValue({
+        worktree: { id: 'wt-1', path: '/work/review-3170' }
+      })
+      mocks.launchAgentBackgroundSession.mockResolvedValue({ tabId: 'agent-tab' })
+      mocks.setTabViewMode.mockReset()
+      mocks.preferClaudeWebForTab.mockReset()
+    })
 
-    await createReviewWorkspace(PR, config())
+    function withView(view: ReviewAgentView) {
+      const base = config()
+      return { ...base, reviewInbox: { ...base.reviewInbox, view } }
+    }
 
-    expect(mocks.setTabViewMode).toHaveBeenCalledWith('agent-tab', 'chat')
+    it('opens the agent in Chat UI by default', async () => {
+      await createReviewWorkspace(PR, config())
+
+      expect(mocks.setTabViewMode).toHaveBeenCalledWith('agent-tab', 'chat')
+      expect(mocks.preferClaudeWebForTab).not.toHaveBeenCalled()
+    })
+
+    it('keeps it in the terminal, out of the Claude web default', async () => {
+      await createReviewWorkspace(PR, withView('terminal'))
+
+      expect(mocks.setTabViewMode).toHaveBeenCalledWith('agent-tab', 'terminal')
+      expect(mocks.preferClaudeWebForTab).toHaveBeenCalledWith('agent-tab', false)
+    })
+
+    it('opens it in Claude web even when that is not the default', async () => {
+      await createReviewWorkspace(PR, withView('claude-web'))
+
+      expect(mocks.preferClaudeWebForTab).toHaveBeenCalledWith('agent-tab', true)
+    })
+
+    it('leaves it to the app default', async () => {
+      await createReviewWorkspace(PR, withView('default'))
+
+      expect(mocks.setTabViewMode).not.toHaveBeenCalled()
+      expect(mocks.preferClaudeWebForTab).not.toHaveBeenCalled()
+    })
   })
 
   it('lays the review out as the agent beside the first file of the PR', async () => {

@@ -3,6 +3,7 @@ import { useAppStore } from '@/store'
 import { claudeWebView, findClaudeWebLeafId } from './claude-web-view-state'
 import { ensureWokenPaneTracking, paneWakeCount, tabHasWokenPane } from './claude-web-woken-panes'
 import { isTabInChatView } from './claude-web-auto-open-eligibility'
+import { claudeWebPreferenceForTab } from './claude-web-tab-preference'
 
 const RENDERER_STARTED_AT = Date.now()
 const autoOpenedPaneKeys = new Set<string>()
@@ -22,8 +23,10 @@ export function useClaudeWebAutoOpen(tabId: string, shownLeafId: string | null):
         tabs.some((tab) => tab.id === tabId && tab.createdAt >= RENDERER_STARTED_AT)
       )
   )
+  // Why the tab's own preference first: a launcher (the review agent) can ask for or against it.
+  const wantsWebView = claudeWebPreferenceForTab(tabId) ?? (enabled && createdThisRun)
   const claudeLeafId = useAppStore((state) =>
-    enabled && createdThisRun && !isTabInChatView(state.tabsByWorktree, tabId)
+    wantsWebView && !isTabInChatView(state.tabsByWorktree, tabId)
       ? findClaudeWebLeafId(state, tabId)
       : null
   )

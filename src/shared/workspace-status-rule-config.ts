@@ -22,9 +22,20 @@ export const WORKSPACE_STATUS_RULE_CONDITIONS = [
 
 export type WorkspaceStatusRuleCondition = (typeof WORKSPACE_STATUS_RULE_CONDITIONS)[number]
 
+/** How the review agent's tab opens; 'default' follows the app's own default view. */
+export type ReviewAgentView = 'chat' | 'terminal' | 'claude-web' | 'default'
+
+export const REVIEW_AGENT_VIEWS: readonly ReviewAgentView[] = [
+  'chat',
+  'terminal',
+  'claude-web',
+  'default'
+]
+
 export type WorkspaceStatusRuleReviewInbox = {
   enabled: boolean
   agent: TuiAgent
+  view: ReviewAgentView
   promptTemplate: string
   /** Used instead when the pull request comes back after a review you already sent. */
   rereviewPromptTemplate: string
@@ -109,6 +120,7 @@ export function cloneDefaultWorkspaceStatusRuleConfig(): WorkspaceStatusRuleConf
     reviewInbox: {
       enabled: false,
       agent: 'claude',
+      view: 'chat',
       promptTemplate: DEFAULT_REVIEW_PROMPT_TEMPLATE,
       rereviewPromptTemplate: DEFAULT_REREVIEW_PROMPT_TEMPLATE
     },
@@ -178,6 +190,7 @@ function sanitizeReviewInbox(value: unknown): WorkspaceStatusRuleReviewInbox {
   return {
     enabled: raw.enabled === true,
     agent: isTuiAgent(raw.agent) ? raw.agent : defaults.agent,
+    view: REVIEW_AGENT_VIEWS.find((view) => view === raw.view) ?? defaults.view,
     promptTemplate:
       typeof raw.promptTemplate === 'string' && raw.promptTemplate.trim()
         ? raw.promptTemplate

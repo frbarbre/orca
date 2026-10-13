@@ -77,3 +77,21 @@ export function getPullRequestStatusRuleCopy(): Record<
     }
   }
 }
+
+/** Short names for the settings tabs, one per state. */
+export function getPullRequestStatusRuleTabLabels(): Record<WorkspaceStatusRuleCondition, string> {
+  return {
+    merged: translate('auto.components.settings.prRules.tabMerged', 'Merged'),
+    closed: translate('auto.components.settings.prRules.tabClosed', 'Closed'),
+    reviewing: translate('auto.components.settings.prRules.tabReviewing', 'Reviewing'),
+    conflicts: translate('auto.components.settings.prRules.tabConflicts', 'Conflicts'),
+    draft: translate('auto.components.settings.prRules.tabDraft', 'Draft'),
+    'changes-requested': translate(
+      'auto.components.settings.prRules.tabChangesRequested',
+      'Changes requested'
+    ),
+    merging: translate('auto.components.settings.prRules.tabMerging', 'Merge gate'),
+    'pm-approval': translate('auto.components.settings.prRules.tabPmApproval', 'PM approval'),
+    review: translate('auto.components.settings.prRules.tabReview', 'Review')
+  }
+}

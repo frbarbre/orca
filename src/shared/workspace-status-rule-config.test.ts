@@ -4,6 +4,30 @@ import {
   normalizeWorkspaceStatusRuleConfig
 } from './workspace-status-rule-config'
 
+describe('the reviewing view', () => {
+  it('opens a review in Chat UI unless chosen otherwise', () => {
+    expect(cloneDefaultWorkspaceStatusRuleConfig().reviewInbox.view).toBe('chat')
+  })
+
+  it.each(['chat', 'terminal', 'claude-web', 'default'] as const)('keeps %s', (view) => {
+    const defaults = cloneDefaultWorkspaceStatusRuleConfig()
+    const config = normalizeWorkspaceStatusRuleConfig({
+      ...defaults,
+      reviewInbox: { ...defaults.reviewInbox, view }
+    })
+    expect(config.reviewInbox.view).toBe(view)
+  })
+
+  it('falls back to Chat UI for an unknown value', () => {
+    const defaults = cloneDefaultWorkspaceStatusRuleConfig()
+    const config = normalizeWorkspaceStatusRuleConfig({
+      ...defaults,
+      reviewInbox: { ...defaults.reviewInbox, view: 'sideways' }
+    })
+    expect(config.reviewInbox.view).toBe('chat')
+  })
+})
+
 describe('normalizeWorkspaceStatusRuleConfig', () => {
   it('keeps the command to run when a pull request enters Review, trimmed', () => {
     const config = normalizeWorkspaceStatusRuleConfig({

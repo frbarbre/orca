@@ -210,7 +210,10 @@ Four upstream **test** files carry our additions. Take upstream's version, then 
 
 Watches each workspace's linked pull request and sets its board column, deletes the workspace once
 its pull request is merged or closed, and opens a review workspace when someone asks you to review.
-Configured per project under Settings → Automations.
+Configured per project under Settings → Automations, as a General tab plus one tab per state
+(`PullRequestStatusRuleTabs.tsx`): each state's tab holds its column and whatever that state does
+(`PullRequestStatusRuleStateSettings.tsx`; the review inbox in `ReviewingRuleSettings.tsx`, with
+`reviewInbox.view` choosing how the review agent opens: Chat UI, Terminal, Claude web or the default).
 
 Dev builds (`pnpm dev`) do not run the poller unless `localStorage['orca.devStatusRules'] = '1'`: they
 share the workspace folder and GitHub account with the installed app, and a dev build that ticked

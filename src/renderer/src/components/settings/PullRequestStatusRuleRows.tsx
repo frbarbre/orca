@@ -4,10 +4,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { translate } from '@/i18n/i18n'
 import type { Repo } from '../../../../shared/repo-types'
 import type { WorkspaceStatusDefinition } from '../../../../shared/worktree/types'
-import {
-  WORKSPACE_STATUS_RULE_CONDITIONS,
-  type WorkspaceStatusRuleCondition,
-  type WorkspaceStatusRuleConfig
+import type {
+  WorkspaceStatusRuleCondition,
+  WorkspaceStatusRuleConfig
 } from '../../../../shared/workspace-status-rule-config'
 import { SettingsRow } from './SettingsFormControls'
 import { getPullRequestStatusRuleCopy } from './pull-request-status-rule-copy'
@@ -49,46 +48,43 @@ export function ProjectScopeRow({
   )
 }
 
-export function ConditionRows({
+export function ConditionRow({
+  condition,
   config,
   statuses,
   onChange
 }: {
+  condition: WorkspaceStatusRuleCondition
   config: WorkspaceStatusRuleConfig
   statuses: readonly WorkspaceStatusDefinition[]
   onChange: (condition: WorkspaceStatusRuleCondition, status: string | undefined) => void
 }): React.JSX.Element {
-  const copy = getPullRequestStatusRuleCopy()
+  const copy = getPullRequestStatusRuleCopy()[condition]
   return (
-    <>
-      {WORKSPACE_STATUS_RULE_CONDITIONS.map((condition) => (
-        <SettingsRow
-          key={condition}
-          label={copy[condition].label}
-          description={copy[condition].description}
-          control={
-            <Select
-              value={config.statusByCondition[condition] ?? UNMAPPED}
-              onValueChange={(value) => onChange(condition, value === UNMAPPED ? undefined : value)}
-            >
-              <SelectTrigger size="sm" className="h-7 w-[180px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={UNMAPPED}>
-                  {translate('auto.components.settings.prRules.noColumn', 'Do nothing')}
-                </SelectItem>
-                {statuses.map((status) => (
-                  <SelectItem key={status.id} value={status.id}>
-                    {status.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          }
-        />
-      ))}
-    </>
+    <SettingsRow
+      label={copy.label}
+      description={copy.description}
+      control={
+        <Select
+          value={config.statusByCondition[condition] ?? UNMAPPED}
+          onValueChange={(value) => onChange(condition, value === UNMAPPED ? undefined : value)}
+        >
+          <SelectTrigger size="sm" className="h-7 w-[180px]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={UNMAPPED}>
+              {translate('auto.components.settings.prRules.noColumn', 'Do nothing')}
+            </SelectItem>
+            {statuses.map((status) => (
+              <SelectItem key={status.id} value={status.id}>
+                {status.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      }
+    />
   )
 }
 

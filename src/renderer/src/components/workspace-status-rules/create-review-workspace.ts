@@ -6,7 +6,11 @@ import { ensureHooksConfirmed } from '@/lib/ensure-hooks-confirmed'
 import { launchWorktreeBackgroundTerminals } from '@/lib/launch-worktree-background-terminals'
 import { markReviewedCommit } from '@/lib/reviewed-commit-bases'
 import type { ReviewSnapshotPullRequest } from '../../../../shared/github/review-status-snapshot-types'
-import type { WorkspaceStatusRuleConfig } from '../../../../shared/workspace-status-rule-config'
+import type {
+  ReviewAgentView,
+  WorkspaceStatusRuleConfig
+} from '../../../../shared/workspace-status-rule-config'
+import { preferClaudeWebForTab } from '@/components/terminal-pane/claude-web-tab-preference'
 import type { Worktree } from '../../../../shared/worktree/types'
 import {
   buildReviewPromptVariables,
@@ -14,6 +18,21 @@ import {
 } from '../../../../shared/workspace-status-rule-prompt'
 import { translate } from '@/i18n/i18n'
 import { openReviewWorkspaceLayout } from './open-review-workspace-layout'
+
+// Fork: the user picks how a review opens; anything but 'default' overrides the app's default view.
+function applyReviewAgentView(tabId: string, view: ReviewAgentView): void {
+  if (view === 'default') {
+    return
+  }
+  if (view === 'claude-web') {
+    preferClaudeWebForTab(tabId, true)
+    return
+  }
+  useAppStore.getState().setTabViewMode(tabId, view)
+  if (view === 'terminal') {
+    preferClaudeWebForTab(tabId, false)
+  }
+}
 
 function reviewWorkspaceName(pr: ReviewSnapshotPullRequest): string {
   const slug = pr.title
@@ -135,9 +154,8 @@ export async function createReviewWorkspace(
         }
       )
     })
-    // Fork: a review is read, not driven, so it always opens in Chat UI whatever the default view.
     if (launched?.tabId) {
-      useAppStore.getState().setTabViewMode(launched.tabId, 'chat')
+      applyReviewAgentView(launched.tabId, config.reviewInbox.view)
     }
     // Why the store first: a rebased re-review moved the worktree's base to the interdiff ref.
     const baseRef =

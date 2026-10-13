@@ -43,6 +43,23 @@ describe('PRCommentsList as a PR panel section', () => {
     expect(screen.getByRole('button', { name: /Comments/ })).toBeTruthy()
   })
 
+  it('lists open threads without a Needs review heading over them', () => {
+    render(
+      <TooltipProvider>
+        <PRCommentsList
+          sectionHeader
+          comments={[
+            { ...comment, threadId: 'T1', isResolved: false, path: 'src/app.ts', line: 3 }
+          ]}
+          commentsLoading={false}
+          selectionContextKey="review:42"
+        />
+      </TooltipProvider>
+    )
+    expect(screen.getByText('Please update this.')).toBeTruthy()
+    expect(screen.queryByText(/Needs review/)).toBeNull()
+  })
+
   it('leaves resolved threads to their own Resolved section', () => {
     render(
       <TooltipProvider>

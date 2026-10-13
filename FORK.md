@@ -1683,6 +1683,20 @@ the per-area counts it could not add up. Turns and commits already count their r
 | `source-control/listing/all-changes-section.tsx` | The header total. |
 | `src/renderer/src/i18n/locales/en.json` | `allChanges.lineTotal`. |
 
+### 56. Review summaries show their verdict
+
+A review summary in the PR panel carries the verdict it was submitted with (Approved, Changes
+requested, Commented, Dismissed) as a badge beside the author, so it reads apart from a plain
+comment. The Comments list no longer heads open threads with "Needs review · N".
+
+| File | What is ours |
+| --- | --- |
+| `src/shared/github/comment-types.ts` | `reviewState` on `PRComment`, `toPRReviewSummaryState`. |
+| `src/main/github/client/fetch/pr-review-threads-query.ts` | `state` on `reviews.nodes`. |
+| `src/main/github/client/fetch/get-pr-comments.ts` | `reviewState` on both the GraphQL and the REST review summaries. |
+| `checks-panel/comment-row.tsx` | `<ReviewStateBadge>` after the author name (badge in `review-state-badge.tsx`). |
+| `checks-panel/comments-list.tsx` | The "Needs review" label removed; open threads render first, unlabelled. |
+
 ## Verify
 
 Verify runs on GitHub, not locally: `fork-verify.yml` runs it on every pull request against `main`,

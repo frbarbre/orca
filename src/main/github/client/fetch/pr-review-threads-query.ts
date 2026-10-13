@@ -58,6 +58,7 @@ query($owner: String!, $repo: String!, $pr: Int!) {
         nodes {
           id
           databaseId
+          state
           author { __typename login avatarUrl(size: 48) }
           body
           createdAt

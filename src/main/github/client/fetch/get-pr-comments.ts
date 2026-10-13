@@ -1,4 +1,4 @@
-import type { PRComment } from '../../../../shared/github/comment-types'
+import { toPRReviewSummaryState, type PRComment } from '../../../../shared/github/comment-types'
 import { GITHUB_WORK_ITEMS_SSH_REMOTE_REQUIRED_MESSAGE } from '../../../../shared/work-items'
 import { ghExecFileAsync, acquire, release, type LocalGitExecOptions } from '../../gh-utils'
 import { resolveGitHubRepoExecution, type GitHubApiRepository } from '../../github-api-repository'
@@ -132,6 +132,8 @@ export async function getPRComments(
         viewerCanUpdate?: boolean
         url: string
         reactionGroups?: GitHubGraphQLReactionGroup[] | null
+        /** Reviews only. */
+        state?: string
       }
       let graphQLReviewSummaries: PRComment[] | undefined
       const reviewComments: PRComment[] = []
@@ -182,7 +184,8 @@ export async function getPRComments(
                 url: review.url,
                 isBot: review.author?.__typename === 'Bot',
                 reactionSubjectId: review.id,
-                reactions: mapGraphQLReactionGroups(review.reactionGroups)
+                reactions: mapGraphQLReactionGroups(review.reactionGroups),
+                reviewState: toPRReviewSummaryState(review.state)
               }))
           : undefined
 
@@ -239,7 +242,8 @@ export async function getPRComments(
             body: r.body,
             createdAt: r.submitted_at,
             url: r.html_url,
-            isBot: r.user?.type === 'Bot'
+            isBot: r.user?.type === 'Bot',
+            reviewState: toPRReviewSummaryState(r.state)
           }))
       } else {
         console.warn('Failed to fetch review summaries:', reviewsResult.reason)

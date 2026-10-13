@@ -11,6 +11,7 @@ import type { PRCommentPresentationClasses } from '../pr-comment-presentation'
 import { formatPrCommentRelativeTime } from '../../../../../shared/pr-comment-time'
 import { translate } from '@/i18n/i18n'
 import { usePRCommentReveal } from '@/lib/pr-comment-reveal'
+import { ReviewStateBadge } from './review-state-badge'
 import {
   buildCopyText,
   CommentMoreMenu,
@@ -193,9 +194,12 @@ export function CommentRow({
   )
 
   const authorName = (
-    <span className={cn(presentation.author, comment.isResolved && presentation.authorResolved)}>
-      {comment.author}
-    </span>
+    <>
+      <span className={cn(presentation.author, comment.isResolved && presentation.authorResolved)}>
+        {comment.author}
+      </span>
+      {isReply ? null : <ReviewStateBadge state={comment.reviewState} />}
+    </>
   )
   const queueButton =
     !isReply && onQueueForAgent ? <QueueForAgentButton onQueueForAgent={onQueueForAgent} /> : null

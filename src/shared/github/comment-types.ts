@@ -52,6 +52,21 @@ export type PRComment = {
    *  predictable naming convention. Absent when the data source can't report it
    *  (non-GitHub fallbacks via `gh pr view`). */
   isBot?: boolean
+  /** Fork: set only on a review summary, from the review it was submitted with. */
+  reviewState?: PRReviewSummaryState
+}
+
+export type PRReviewSummaryState = 'approved' | 'changes-requested' | 'commented' | 'dismissed'
+
+const REVIEW_SUMMARY_STATES: Record<string, PRReviewSummaryState> = {
+  APPROVED: 'approved',
+  CHANGES_REQUESTED: 'changes-requested',
+  COMMENTED: 'commented',
+  DISMISSED: 'dismissed'
+}
+
+export function toPRReviewSummaryState(state: unknown): PRReviewSummaryState | undefined {
+  return typeof state === 'string' ? REVIEW_SUMMARY_STATES[state] : undefined
 }
 
 export type GitHubIssueTimelineTarget = {

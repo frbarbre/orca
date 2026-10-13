@@ -317,18 +317,7 @@ export function PRCommentsList(props: PRCommentsListProps): React.JSX.Element {
             timelineGroups.map(renderCommentGroup)
           ) : (
             <>
-              {triageGroups.open.length > 0 ? (
-                <>
-                  <div className={presentation.sectionTriageLabel}>
-                    {translate(
-                      'auto.components.right.sidebar.checks.panel.content.c3a8e5d710',
-                      'Needs review · {{value0}}',
-                      { value0: triageGroups.open.length }
-                    )}
-                  </div>
-                  {triageGroups.open.map(renderCommentGroup)}
-                </>
-              ) : null}
+              {triageGroups.open.map(renderCommentGroup)}
               {triageGroups.conversation.map(renderCommentGroup)}
               {/* Fork: in the PR panel, resolved threads are a section of their own. */}
               <ResolvedCommentGroupsSection

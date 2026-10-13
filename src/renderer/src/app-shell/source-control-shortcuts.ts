@@ -32,6 +32,16 @@ function focusReviewSummaryInOpenPanel(): boolean {
   return true
 }
 
+// Why up front: the latest turn only lands after its turn list and diff load.
+function revealSourceControl(canRevealRightSidebar: boolean): void {
+  if (!canRevealRightSidebar) {
+    return
+  }
+  const store = useAppStore.getState()
+  store.setRightSidebarOpen(true)
+  store.setRightSidebarTab('source-control')
+}
+
 function startOpenLatestAgentTurn(): boolean {
   const store = useAppStore.getState()
   const worktreeId = store.activeWorktreeId
@@ -76,11 +86,13 @@ export function takeSourceControlShortcut(
   }
   // Fork: open the active workspace's newest agent turn.
   if (matchShortcut('sourceControl.openLatestAgentTurn') && startOpenLatestAgentTurn()) {
+    revealSourceControl(canRevealRightSidebar)
     return 'sourceControl.openLatestAgentTurn'
   }
   const activeWorktreeId = useAppStore.getState().activeWorktreeId
   if (matchShortcut('sourceControl.toggleUncommittedOnly') && activeWorktreeId) {
     toggleUncommittedOnly(activeWorktreeId)
+    revealSourceControl(canRevealRightSidebar)
     return 'sourceControl.toggleUncommittedOnly'
   }
   if (

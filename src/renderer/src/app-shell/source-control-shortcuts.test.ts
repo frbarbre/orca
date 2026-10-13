@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { getChangesFilter, isUncommittedOnly, setChangesFilter } from '@/lib/changes-filter'
 import { publishPRCommentQueueContext } from '@/components/right-sidebar/pr-comment-queue-context'
 import { setPRCommentsListGroupQueued } from '@/components/right-sidebar/pr-comments-list-selection'
@@ -53,6 +53,48 @@ describe('takeSourceControlShortcut', () => {
     )
     expect(getChangesFilter('wt-shortcut')).toBeNull()
     vi.unstubAllGlobals()
+  })
+
+  describe('revealing Source Control', () => {
+    beforeEach(() => {
+      store.setRightSidebarOpen.mockClear()
+      store.setRightSidebarTab.mockClear()
+    })
+
+    function expectSourceControlRevealed(): void {
+      expect(store.setRightSidebarOpen).toHaveBeenCalledWith(true)
+      expect(store.setRightSidebarTab).toHaveBeenCalledWith('source-control')
+    }
+
+    it('switches to Source Control when toggling uncommitted-only', () => {
+      const match = (id: string): boolean => id === 'sourceControl.toggleUncommittedOnly'
+      takeSourceControlShortcut(match, true, actions)
+      expectSourceControlRevealed()
+      takeSourceControlShortcut(match, true, actions)
+    })
+
+    it('switches to Source Control before the latest turn has loaded', () => {
+      vi.stubGlobal('window', {
+        api: {
+          agentTurns: { list: () => new Promise(() => {}) },
+          git: { commitCompare: vi.fn() }
+        }
+      })
+      const match = (id: string): boolean => id === 'sourceControl.openLatestAgentTurn'
+      expect(takeSourceControlShortcut(match, true, actions)).toBe(
+        'sourceControl.openLatestAgentTurn'
+      )
+      expectSourceControlRevealed()
+      vi.unstubAllGlobals()
+    })
+
+    it('leaves the sidebar alone where it cannot be shown', () => {
+      const match = (id: string): boolean => id === 'sourceControl.toggleUncommittedOnly'
+      takeSourceControlShortcut(match, false, actions)
+      takeSourceControlShortcut(match, false, actions)
+      expect(store.setRightSidebarOpen).not.toHaveBeenCalled()
+      expect(store.setRightSidebarTab).not.toHaveBeenCalled()
+    })
   })
 
   it('opens the PR panel to send the queued comments from any panel', () => {

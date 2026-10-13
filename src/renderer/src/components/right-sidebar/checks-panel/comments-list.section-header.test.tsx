@@ -117,6 +117,21 @@ describe('PRCommentsList as a PR panel section', () => {
     expect(screen.queryByText(/Needs review/)).toBeNull()
   })
 
+  it('draws no separator under the audience tabs', () => {
+    render(
+      <TooltipProvider>
+        <PRCommentsList
+          sectionHeader
+          comments={[comment]}
+          commentsLoading={false}
+          selectionContextKey="review:42"
+        />
+      </TooltipProvider>
+    )
+    const tabs = screen.getByRole('button', { name: /^All/ }).closest('div')?.parentElement
+    expect(tabs?.className).toContain('border-b-0')
+  })
+
   it('leaves resolved threads to their own Resolved section', () => {
     render(
       <TooltipProvider>

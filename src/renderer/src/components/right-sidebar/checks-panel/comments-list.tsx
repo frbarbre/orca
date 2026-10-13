@@ -240,7 +240,9 @@ export function PRCommentsList(listProps: PRCommentsListProps): React.JSX.Elemen
             presentation.sectionHeader,
             // Why: the checks sidebar scrolls as one column; pinning this header keeps
             // filter and add-comment actions reachable while reading long threads.
-            !sectionHeader && 'sticky top-0 z-10 bg-sidebar/95 backdrop-blur-sm'
+            !sectionHeader && 'sticky top-0 z-10 bg-sidebar/95 backdrop-blur-sm',
+            // Fork: under a section header the tabs lead straight into the cards, no rule between.
+            sectionHeader && 'border-b-0'
           )}
         >
           {!sectionHeader && (

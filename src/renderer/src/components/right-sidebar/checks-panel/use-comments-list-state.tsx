@@ -126,7 +126,8 @@ export function useCommentsListState({
 
   const presentation = React.useMemo(() => getPRCommentPresentationClasses(), [])
   const now = useNow(60_000, comments.length > 0)
-  const [commentFilter, setCommentFilter] = useState<PRCommentAudienceFilter>('all')
+  // Fork: humans first; bots are a click away.
+  const [commentFilter, setCommentFilter] = useState<PRCommentAudienceFilter>('human')
   const [displayMode, setDisplayMode] = useState<PRCommentsListDisplayMode>('triage')
   const [replyingCommentId, setReplyingCommentId] = useState<number | null>(null)
   const [isAddingComment, setIsAddingComment] = useState(false)

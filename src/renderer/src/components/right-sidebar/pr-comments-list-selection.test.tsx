@@ -340,6 +340,7 @@ describe('PRCommentsList comment resolution selection', () => {
       onResolveSelectedCommentsWithAI
     })
 
+    clickButton('Bots')
     clickButton('Queue for agent')
 
     expect(hasButton('Send 1 queued comments to AI')).toBe(true)
@@ -409,6 +410,7 @@ describe('PRCommentsList comment resolution selection', () => {
       })
     ]
     renderList({ comments })
+    clickButton('Bots')
     clickButton('Queue for agent')
 
     expect(hasButton('Send 1 queued comments to AI')).toBe(true)
@@ -444,6 +446,7 @@ describe('PRCommentsList comment resolution selection', () => {
       })
     ]
     renderList({ comments: queuedComments, contextKey: 'review:42' })
+    clickButton('Bots')
     clickButton('Queue for agent')
 
     expect(hasButton('Send 1 queued comments to AI')).toBe(true)

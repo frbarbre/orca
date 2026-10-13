@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useMemo, useState } from 'react'
 import { LoaderCircle, MessageSquare, Plus, SendHorizontal, Sparkles, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
@@ -13,8 +13,15 @@ import { PendingReviewPanelSection } from '@/components/pending-review/PendingRe
 import { SectionHeader } from '../source-control/listing/section-header'
 import { type PRCommentsListProps, useCommentsListState } from './use-comments-list-state'
 import { CommentDisplayModeMenu } from './comment-display-mode-menu'
+import { withoutResolvedThreads } from './listed-comments'
 
-export function PRCommentsList(props: PRCommentsListProps): React.JSX.Element {
+export function PRCommentsList(listProps: PRCommentsListProps): React.JSX.Element {
+  const listedComments = useMemo(
+    () =>
+      listProps.sectionHeader ? withoutResolvedThreads(listProps.comments) : listProps.comments,
+    [listProps.comments, listProps.sectionHeader]
+  )
+  const props = { ...listProps, comments: listedComments }
   const {
     comments,
     commentsError,

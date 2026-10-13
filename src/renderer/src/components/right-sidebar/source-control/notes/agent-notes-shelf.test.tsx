@@ -17,7 +17,7 @@ vi.mock('@/store', () => ({
   useAppStore: Object.assign(
     (selector: (state: { deleteDiffComment: typeof deleteDiffComment }) => unknown) =>
       selector({ deleteDiffComment }),
-    { getState: () => ({}) }
+    { getState: () => ({ deleteDiffComment }) }
   )
 }))
 
@@ -28,6 +28,7 @@ vi.mock('@/store/worktree-diff-comments-selector', () => ({
 
 vi.mock('@/lib/agent-notes', () => ({
   useWorktreeAgentNotes: () => harness.notes,
+  selectWorktreeAgentNotes: () => harness.notes,
   removeAgentNote: harness.removeAgentNote
 }))
 

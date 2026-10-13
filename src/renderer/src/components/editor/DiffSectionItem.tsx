@@ -5,7 +5,8 @@ import { detectLanguage } from '@/lib/language-detect'
 import { useAppStore } from '@/store'
 import { computeDiffEditorFontSize, resolveEditorFontFamily } from '@/lib/editor-font-zoom'
 import { selectWorktreeDiffComments } from '@/store/worktree-diff-comments-selector'
-import { isAgentNoteId, removeAgentNote, useFileAgentNotes } from '@/lib/agent-notes'
+import { useFileAgentNotes } from '@/lib/agent-notes'
+import { deleteNoteThread } from '@/lib/note-thread-delete'
 import { buildNoteThreads } from '@/lib/agent-note-replies'
 import { useDiffCommentDecorator } from '../diff-comments/useDiffCommentDecorator'
 import { applyDiffEditorLineNumberOptions } from './diff-editor-line-number-options'
@@ -51,7 +52,6 @@ export function DiffSectionItem({
 }: DiffSectionItemProps): React.JSX.Element {
   const editorFontZoomLevel = useAppStore((s) => s.editorFontZoomLevel)
   const addDiffComment = useAppStore((s) => s.addDiffComment)
-  const deleteDiffComment = useAppStore((s) => s.deleteDiffComment)
   const updateDiffComment = useAppStore((s) => s.updateDiffComment)
   const scrollToDiffCommentId = useAppStore((s) => s.scrollToDiffCommentId)
   const setScrollToDiffCommentId = useAppStore((s) => s.setScrollToDiffCommentId)
@@ -146,7 +146,7 @@ export function DiffSectionItem({
     canOpenDraft: !isLargeDiffLimited,
     onDeleteComment: (id) => {
       if (worktreeId) {
-        void (isAgentNoteId(agentNotes, id) ? removeAgentNote : deleteDiffComment)(worktreeId, id)
+        void deleteNoteThread(worktreeId, id)
       }
     },
     onUpdateComment: worktreeId ? (id, body) => updateDiffComment(worktreeId, id, body) : undefined,

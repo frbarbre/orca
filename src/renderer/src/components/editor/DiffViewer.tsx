@@ -6,7 +6,8 @@ import { diffViewStateCache, setWithLRU } from '@/lib/scroll-cache'
 import { computeDiffEditorFontSize, resolveEditorFontFamily } from '@/lib/editor-font-zoom'
 import { useContextualCopySetup } from './useContextualCopySetup'
 import { selectWorktreeDiffComments } from '@/store/worktree-diff-comments-selector'
-import { isAgentNoteId, removeAgentNote, useFileAgentNotes } from '@/lib/agent-notes'
+import { useFileAgentNotes } from '@/lib/agent-notes'
+import { deleteNoteThread } from '@/lib/note-thread-delete'
 import { buildNoteThreads } from '@/lib/agent-note-replies'
 import { useDiffCommentDecorator } from '../diff-comments/useDiffCommentDecorator'
 import { DiffLineCommentPopoverHost } from '../diff-comments/DiffLineCommentPopoverHost'
@@ -63,7 +64,6 @@ export default function DiffViewer({
   const settings = useAppStore((s) => s.settings)
   const isDark = useDocumentDarkTheme()
   const editorFontZoomLevel = useAppStore((s) => s.editorFontZoomLevel)
-  const deleteDiffComment = useAppStore((s) => s.deleteDiffComment)
   const updateDiffComment = useAppStore((s) => s.updateDiffComment)
   const scrollToDiffCommentId = useAppStore((s) => s.scrollToDiffCommentId)
   const setScrollToDiffCommentId = useAppStore((s) => s.setScrollToDiffCommentId)
@@ -171,7 +171,7 @@ export default function DiffViewer({
     onAddCommentClick: openPopover,
     onDeleteComment: (id) => {
       if (worktreeId) {
-        void (isAgentNoteId(agentNotes, id) ? removeAgentNote : deleteDiffComment)(worktreeId, id)
+        void deleteNoteThread(worktreeId, id)
       }
     },
     onUpdateComment: worktreeId ? (id, body) => updateDiffComment(worktreeId, id, body) : undefined,

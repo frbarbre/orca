@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { Trash2 } from 'lucide-react'
 import { SectionHeader } from '../listing/section-header'
 import { removeAgentNote, useWorktreeAgentNotes } from '@/lib/agent-notes'
+import { deleteNoteThread } from '@/lib/note-thread-delete'
 import { useAppStore } from '@/store'
 import { selectWorktreeDiffComments } from '@/store/worktree-diff-comments-selector'
 import { translate } from '@/i18n/i18n'
@@ -66,7 +67,7 @@ export function AgentNotesShelf({
           <DiffCommentsInlineList
             comments={[...notes]}
             stacked
-            onDelete={(id) => void removeAgentNote(worktreeId, id)}
+            onDelete={(id) => void deleteNoteThread(worktreeId, id)}
             onOpen={onOpenNote}
             onClearFile={(filePath) => {
               for (const note of notes) {

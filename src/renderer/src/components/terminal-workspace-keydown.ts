@@ -22,6 +22,7 @@ import { translate } from '@/i18n/i18n'
 import { getKeybindingContext } from './terminal-workspace-model'
 import { resolveTerminalAgentTabShortcut } from './terminal-agent-tab-shortcut'
 import { handleTerminalWorkspaceEditorShortcut } from './terminal-workspace-editor-shortcuts'
+import { requestCloseOtherTabs } from './tab-group/close-other-tabs-request'
 import type { TerminalActivationController } from './use-terminal-activation-actions'
 
 export function handleTerminalWorkspaceKeyDown(
@@ -189,6 +190,13 @@ export function handleTerminalWorkspaceKeyDown(
     event.preventDefault()
     notifyTerminalCapture('tab.closeAll')
     handleCloseAllFiles()
+    return
+  }
+  const closeOthersWorktreeId = useAppStore.getState().activeWorktreeId
+  if (!event.repeat && closeOthersWorktreeId && matchShortcut('tab.closeOthers')) {
+    event.preventDefault()
+    notifyTerminalCapture('tab.closeOthers')
+    requestCloseOtherTabs(closeOthersWorktreeId)
     return
   }
   if (

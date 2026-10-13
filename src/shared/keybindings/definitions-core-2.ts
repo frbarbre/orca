@@ -140,6 +140,14 @@ export const KEYBINDING_DEFINITION_CORE_2: readonly KeybindingDefinition[] = [
     defaultBindings: platformBindings(['Mod+Alt+W'])
   },
   {
+    id: 'tab.closeOthers',
+    title: 'Close other tabs',
+    group: 'Tabs',
+    scope: 'tabs',
+    searchKeywords: ['shortcut', 'close', 'other', 'others', 'tabs', 'keep active'],
+    defaultBindings: platformBindings(['Mod+Alt+Shift+W'])
+  },
+  {
     id: 'tab.rename',
     title: 'Rename active tab',
     group: 'Tabs',

@@ -71,6 +71,7 @@ export type KeybindingActionId =
   | 'tab.openMarkdown'
   | 'tab.close'
   | 'tab.closeAll'
+  | 'tab.closeOthers'
   | 'tab.rename'
   | 'tab.reopenClosed'
   | 'tab.nextSameType'

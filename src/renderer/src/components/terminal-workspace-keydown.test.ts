@@ -128,6 +128,34 @@ describe('handleTerminalWorkspaceKeyDown editor.save', () => {
   })
 })
 
+describe('tab.closeOthers', () => {
+  it('asks the active workspace to close every tab but the active one on ⌥⇧⌘W', () => {
+    mocks.state = { activeView: 'terminal', activeWorktreeId: controller.activeWorktreeId }
+    const requests: unknown[] = []
+    const listener = (event: Event): void => {
+      requests.push((event as CustomEvent).detail)
+    }
+    window.addEventListener('orca-close-other-tabs', listener)
+    const event = new KeyboardEvent('keydown', {
+      key: 'w',
+      code: 'KeyW',
+      metaKey: true,
+      altKey: true,
+      shiftKey: true,
+      cancelable: true
+    })
+    Object.defineProperty(event, 'target', { value: document.body })
+    try {
+      handleTerminalWorkspaceKeyDown(event, controller, 'darwin')
+    } finally {
+      window.removeEventListener('orca-close-other-tabs', listener)
+    }
+
+    expect(requests).toEqual([{ worktreeId: controller.activeWorktreeId }])
+    expect(event.defaultPrevented).toBe(true)
+  })
+})
+
 describe('tab.close uses the unified active tab', () => {
   const worktreeId = controller.activeWorktreeId!
   let tab: Tab

@@ -166,7 +166,8 @@ export function useSourceControlFileListing({
     visibleSelectionEntries: selectableEntries,
     branchSummary,
     sourceControlGrouping,
-    statusEntries: entries
+    statusEntries: entries,
+    allChanges
   })
 
   usePublishedSourceControlReviewOrder({

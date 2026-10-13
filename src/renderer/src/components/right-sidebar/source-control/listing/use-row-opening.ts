@@ -16,6 +16,12 @@ import {
 } from './split-open'
 import { buildAllChangesOpenRowKeys } from './all-changes'
 import { openChangesFilterEntry } from '@/store/slices/editor/actions/open-changes-filter-entry'
+import { getChangesFilter } from '@/lib/changes-filter'
+import {
+  pickUncommittedRowEntry,
+  useOpenDiffFollowsChangesFilter
+} from './open-diff-follows-filter'
+import type { useAllChangesProjection } from './use-all-changes-projection'
 
 export function useSourceControlRowOpening({
   isMac,
@@ -24,7 +30,8 @@ export function useSourceControlRowOpening({
   visibleSelectionEntries,
   branchSummary,
   sourceControlGrouping,
-  statusEntries
+  statusEntries,
+  allChanges
 }: {
   isMac: boolean
   activeWorktreeId: string | null
@@ -33,6 +40,7 @@ export function useSourceControlRowOpening({
   branchSummary: GitBranchCompareSummary | null
   sourceControlGrouping: 'all' | 'status'
   statusEntries: readonly GitStatusEntry[]
+  allChanges: Pick<ReturnType<typeof useAllChangesProjection>, 'changesFilter' | 'allChangeEntries'>
 }) {
   const openBranchWorktreeDiff = useAppStore((s) => s.openBranchWorktreeDiff)
   const activeGroupIdByWorktree = useAppStore((s) => s.activeGroupIdByWorktree)
@@ -198,9 +206,12 @@ export function useSourceControlRowOpening({
       }
       const local = statusEntries.filter((candidate) => candidate.path === entry.path)
       // Why: a conflicted file opens its resolver, and with no base to compare against the plain
-      // uncommitted diff is the closest view.
+      // uncommitted diff is the closest view. Showing only uncommitted work opens that work too.
       const fallback =
         local.find((candidate) => candidate.conflictKind && candidate.conflictStatus) ??
+        (getChangesFilter(activeWorktreeId)?.kind === 'uncommitted'
+          ? pickUncommittedRowEntry(local)
+          : undefined) ??
         (branchSummary?.status === 'ready' ? undefined : local[0])
       if (fallback) {
         handleOpenDiff(fallback, event)
@@ -229,6 +240,13 @@ export function useSourceControlRowOpening({
       worktreePath
     ]
   )
+
+  useOpenDiffFollowsChangesFilter({
+    activeWorktreeId,
+    changesFilter: allChanges.changesFilter,
+    allChangeEntries: allChanges.allChangeEntries,
+    openAllChangesEntry
+  })
 
   return {
     resolveSplitTargetGroupId,

@@ -26,7 +26,7 @@ export function useClaudeWebAutoOpen(tabId: string, shownLeafId: string | null):
   // Why the tab's own preference first: a launcher (the review agent) can ask for or against it.
   const wantsWebView = claudeWebPreferenceForTab(tabId) ?? (enabled && createdThisRun)
   const claudeLeafId = useAppStore((state) =>
-    wantsWebView && !isTabInChatView(state.tabsByWorktree, tabId)
+    wantsWebView && !isTabInChatView(state.tabsByWorktree, state.unifiedTabsByWorktree, tabId)
       ? findClaudeWebLeafId(state, tabId)
       : null
   )

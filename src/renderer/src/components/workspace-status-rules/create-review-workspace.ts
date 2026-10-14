@@ -11,6 +11,7 @@ import type {
   WorkspaceStatusRuleConfig
 } from '../../../../shared/workspace-status-rule-config'
 import { preferClaudeWebForTab } from '@/components/terminal-pane/claude-web-tab-preference'
+import { claudeWebView } from '@/components/terminal-pane/claude-web-view-state'
 import type { Worktree } from '../../../../shared/worktree/types'
 import {
   buildReviewPromptVariables,
@@ -29,9 +30,9 @@ function applyReviewAgentView(tabId: string, view: ReviewAgentView): void {
     return
   }
   useAppStore.getState().setTabViewMode(tabId, view)
-  if (view === 'terminal') {
-    preferClaudeWebForTab(tabId, false)
-  }
+  preferClaudeWebForTab(tabId, false)
+  // Why hide: the Claude web default can open the tab before the launch hands its id back.
+  claudeWebView.hide(tabId)
 }
 
 function reviewWorkspaceName(pr: ReviewSnapshotPullRequest): string {

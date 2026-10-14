@@ -14,11 +14,16 @@ const mocks = vi.hoisted(() => ({
   resolveBase: vi.fn(),
   openReviewWorkspaceLayout: vi.fn(),
   setTabViewMode: vi.fn(),
-  preferClaudeWebForTab: vi.fn()
+  preferClaudeWebForTab: vi.fn(),
+  hideClaudeWeb: vi.fn()
 }))
 
 vi.mock('@/components/terminal-pane/claude-web-tab-preference', () => ({
   preferClaudeWebForTab: mocks.preferClaudeWebForTab
+}))
+
+vi.mock('@/components/terminal-pane/claude-web-view-state', () => ({
+  claudeWebView: { hide: mocks.hideClaudeWeb }
 }))
 
 vi.mock('@/store', () => ({
@@ -116,6 +121,7 @@ describe('createReviewWorkspace', () => {
       mocks.launchAgentBackgroundSession.mockResolvedValue({ tabId: 'agent-tab' })
       mocks.setTabViewMode.mockReset()
       mocks.preferClaudeWebForTab.mockReset()
+      mocks.hideClaudeWeb.mockReset()
     })
 
     function withView(view: ReviewAgentView) {
@@ -123,11 +129,12 @@ describe('createReviewWorkspace', () => {
       return { ...base, reviewInbox: { ...base.reviewInbox, view } }
     }
 
-    it('opens the agent in Chat UI by default', async () => {
+    it('opens the agent in Chat UI by default, out of the Claude web default', async () => {
       await createReviewWorkspace(PR, config())
 
       expect(mocks.setTabViewMode).toHaveBeenCalledWith('agent-tab', 'chat')
-      expect(mocks.preferClaudeWebForTab).not.toHaveBeenCalled()
+      expect(mocks.preferClaudeWebForTab).toHaveBeenCalledWith('agent-tab', false)
+      expect(mocks.hideClaudeWeb).toHaveBeenCalledWith('agent-tab')
     })
 
     it('keeps it in the terminal, out of the Claude web default', async () => {
@@ -135,6 +142,7 @@ describe('createReviewWorkspace', () => {
 
       expect(mocks.setTabViewMode).toHaveBeenCalledWith('agent-tab', 'terminal')
       expect(mocks.preferClaudeWebForTab).toHaveBeenCalledWith('agent-tab', false)
+      expect(mocks.hideClaudeWeb).toHaveBeenCalledWith('agent-tab')
     })
 
     it('opens it in Claude web even when that is not the default', async () => {

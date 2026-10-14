@@ -2998,7 +2998,9 @@
           "addNamedReaction": "Add {{value0}} reaction"
         },
         "mentions": {
-          "member": "Member"
+          "member": "Member",
+          "app": "App",
+          "commenter": "Commenter"
         },
         "reviewAssets": {
           "noRepository": "This workspace has no GitHub repository to attach the file to.",

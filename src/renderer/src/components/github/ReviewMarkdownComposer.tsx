@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils'
 import { GitHubMarkdownComposer } from './GitHubMarkdownComposer'
 import { filterGitHubMentionOptions } from './github-mention-option-filter'
 import { GitHubMentionList, useActiveRepoMentionOptions } from './github-mention-autocomplete'
+import { withCommentAuthorMentionOptions } from './comment-author-mention-options'
 import { ReviewAssetUpload } from './review-asset-upload-extension'
 import { useAppStore } from '@/store'
 import { usePRCommentScope } from '@/components/pr-comments/use-pr-comment-scope'
@@ -48,13 +49,19 @@ export function ReviewMarkdownComposer({
   const editorRef = useRef<Editor | null>(null)
   const dropRootRef = useRef<HTMLDivElement | null>(null)
   useReviewAssetDropClaim(dropRootRef, uploads)
-  const options = useActiveRepoMentionOptions(mentions && query !== null)
+  const memberOptions = useActiveRepoMentionOptions(mentions && query !== null)
   const activeWorktreeId = useAppStore((state) => state.activeWorktreeId)
   const scope = usePRCommentScope(activeWorktreeId)
   const uploadTarget = useRef({ repo: scope.repo, prRepo: scope.pr?.prRepo })
   const suggestions = useMemo(
-    () => (mentions && query ? filterGitHubMentionOptions([...options], query.query) : []),
-    [mentions, options, query]
+    () =>
+      mentions && query
+        ? filterGitHubMentionOptions(
+            withCommentAuthorMentionOptions(memberOptions, scope.comments),
+            query.query
+          )
+        : [],
+    [mentions, memberOptions, query, scope.comments]
   )
   const open = suggestions.length > 0 && query !== null
   const [emojiQuery, setEmojiQuery] = useState<MentionQueryState | null>(null)

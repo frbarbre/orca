@@ -1,5 +1,6 @@
 import { useEffect, type RefObject } from 'react'
 import { hasOsFileDragTypes } from '@/lib/os-file-drop-cancellation-guard'
+import { OS_FILE_DROP_SELF_HANDLED_ATTRIBUTE } from '@/hooks/use-os-file-drop-owner'
 
 /**
  * Claims OS file drags over a comment box that uploads them. Without the claim the window's
@@ -25,9 +26,11 @@ export function useReviewAssetDropClaim(
         event.dataTransfer.dropEffect = 'copy'
       }
     }
+    root.setAttribute(OS_FILE_DROP_SELF_HANDLED_ATTRIBUTE, '')
     root.addEventListener('dragover', claim)
     root.addEventListener('drop', claim)
     return () => {
+      root.removeAttribute(OS_FILE_DROP_SELF_HANDLED_ATTRIBUTE)
       root.removeEventListener('dragover', claim)
       root.removeEventListener('drop', claim)
     }

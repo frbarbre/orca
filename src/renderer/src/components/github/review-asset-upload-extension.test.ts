@@ -90,4 +90,24 @@ describe('ReviewAssetUpload', () => {
     expect(target.getMarkdown()).toContain(VIDEO_URL)
     expect(target.view.dom.querySelector('.review-asset-pending-video')).toBeNull()
   })
+
+  it('uploads a dropped file even after the window guard has claimed the drop', async () => {
+    const uploading = vi.fn()
+    const target = mountEditor(uploading)
+    const guard = (event: Event): void => event.preventDefault()
+    document.addEventListener('drop', guard, true)
+
+    const event = new Event('drop', { bubbles: true, cancelable: true })
+    Object.defineProperty(event, 'dataTransfer', {
+      value: { files: [new File(['x'], 'Screen Recording.mov', { type: 'video/quicktime' })] }
+    })
+    target.view.dom.dispatchEvent(event)
+    document.removeEventListener('drop', guard, true)
+    await flush()
+
+    expect(uploading).toHaveBeenLastCalledWith(true)
+    finishUpload({ ok: true, url: VIDEO_URL, kind: 'video' })
+    await flush()
+    expect(target.getMarkdown()).toContain(VIDEO_URL)
+  })
 })

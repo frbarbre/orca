@@ -39,8 +39,14 @@ type OsFileDropOwnerOptions<Destination> = {
 
 const registeredRoots = new WeakMap<HTMLElement, true>()
 
+/** Marks a box that uploads dropped files itself, so the owner around it leaves those drops alone. */
+export const OS_FILE_DROP_SELF_HANDLED_ATTRIBUTE = 'data-os-file-drop-self-handled'
+
 function isNearestOwner(root: HTMLElement, event: DragEvent): boolean {
   for (const entry of event.composedPath()) {
+    if (entry instanceof HTMLElement && entry.hasAttribute(OS_FILE_DROP_SELF_HANDLED_ATTRIBUTE)) {
+      return false
+    }
     if (entry instanceof HTMLElement && registeredRoots.has(entry)) {
       return entry === root
     }

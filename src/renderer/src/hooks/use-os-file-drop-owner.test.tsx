@@ -11,6 +11,7 @@ import type { PreparedDroppedPaths } from '../../../shared/native-file-drop-prep
 import { withFallback } from '../web/preload-api/web-fallback-api'
 import {
   createOsFileDropSequence,
+  OS_FILE_DROP_SELF_HANDLED_ATTRIBUTE,
   useOsFileDropOwner,
   type OsFileDropSequence
 } from './use-os-file-drop-owner'
@@ -145,6 +146,21 @@ describe('useOsFileDropOwner', () => {
     expect(outerDrop).not.toHaveBeenCalled()
     view.unmount()
     expect(roots.every((root) => !root.hasAttribute('data-os-file-drop-owner'))).toBe(true)
+  })
+
+  it('leaves a drop on a box that uploads its own files to that box', () => {
+    const onDrop = vi.fn<DropHandler>()
+    const view = render(
+      <Owner onDrop={onDrop}>
+        <div {...{ [OS_FILE_DROP_SELF_HANDLED_ATTRIBUTE]: '' }}>
+          <p data-testid="composer-text" />
+        </div>
+      </Owner>
+    )
+    const { event } = drag(view.getByTestId('composer-text'), 'drop')
+    expect(event.defaultPrevented).toBe(false)
+    expect(getPathForFile).not.toHaveBeenCalled()
+    expect(onDrop).not.toHaveBeenCalled()
   })
 
   it('keeps a disabled nested owner as a refusal barrier', () => {

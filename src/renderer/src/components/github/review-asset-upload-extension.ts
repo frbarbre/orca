@@ -1,6 +1,6 @@
 import { Extension, type Editor } from '@tiptap/react'
 import { Plugin, PluginKey, type EditorState } from '@tiptap/pm/state'
-import { Decoration, DecorationSet } from '@tiptap/pm/view'
+import { Decoration, DecorationSet, type EditorView } from '@tiptap/pm/view'
 import { toast } from 'sonner'
 import { translate } from '@/i18n/i18n'
 import { createBrowserUuid } from '@/lib/browser-uuid'
@@ -186,6 +186,18 @@ export const ReviewAssetUpload = Extension.create<ReviewAssetUploadOptions>({
       }
     }
 
+    const handledDrops = new WeakSet<DragEvent>()
+    const dropFiles = (view: EditorView, event: DragEvent): boolean => {
+      const files = mediaFiles(event.dataTransfer?.files)
+      if (files.length === 0 || !options.isEnabled()) {
+        return false
+      }
+      handledDrops.add(event)
+      const target = view.posAtCoords({ left: event.clientX, top: event.clientY })
+      attach(files, target?.pos ?? null)
+      return true
+    }
+
     return [
       new Plugin<DecorationSet>({
         key: pendingVideoKey,
@@ -218,15 +230,18 @@ export const ReviewAssetUpload = Extension.create<ReviewAssetUploadOptions>({
             attach(files, null)
             return true
           },
-          handleDrop: (view, event) => {
-            const files = mediaFiles(event.dataTransfer?.files)
-            if (files.length === 0 || !options.isEnabled()) {
-              return false
+          handleDrop: (view, event) => dropFiles(view, event)
+        },
+        // Why a listener of its own: the window guard cancels every OS file drop in the capture
+        // phase, and the editor ignores a cancelled drop before handleDrop is ever asked.
+        view: (view) => {
+          const onDrop = (event: DragEvent): void => {
+            if (!handledDrops.has(event)) {
+              dropFiles(view, event)
             }
-            const target = view.posAtCoords({ left: event.clientX, top: event.clientY })
-            attach(files, target?.pos ?? null)
-            return true
           }
+          view.dom.addEventListener('drop', onDrop)
+          return { destroy: () => view.dom.removeEventListener('drop', onDrop) }
         }
       })
     ]

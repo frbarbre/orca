@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { CornerDownLeft, MessageSquareReply, Trash, User } from 'lucide-react'
 import { AgentNoteIcon } from './agent-note-icon'
+import CommentMarkdown from '@/components/sidebar/CommentMarkdown'
 import type { DiffComment } from '../../../../shared/diff-comment-types'
 import { ImeTextarea } from '@/lib/ime-text-field'
 import { useAppStore } from '@/store'
@@ -105,7 +106,15 @@ export function NoteThread({
               <Trash className="size-3" />
             </button>
           </div>
-          <div className="orca-diff-comment-body">{reply.body}</div>
+          {reply.agentAuthor ? (
+            <CommentMarkdown
+              content={reply.body}
+              variant="compact"
+              className="orca-diff-comment-body orca-diff-comment-body-markdown"
+            />
+          ) : (
+            <div className="orca-diff-comment-body">{reply.body}</div>
+          )}
         </div>
       ))}
       {composing ? (

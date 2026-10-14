@@ -372,6 +372,45 @@ describe('closing a workspace once you have reviewed', () => {
     expect(plan.removals).toStrictEqual([])
   })
 
+  it('keeps the workspace when your newest review only comments, even after an earlier approval', () => {
+    const plan = buildWorkspaceStatusRulePlan({
+      targets: [makeTarget()],
+      snapshot: makeSnapshot({
+        linkedPullRequests: [
+          {
+            ...reviewedPR,
+            latestReviews: [{ login: 'frbarbre', state: 'COMMENTED', commitOid: 'newer-sha' }],
+            latestOpinionatedReviews: [
+              { login: 'frbarbre', state: 'APPROVED', commitOid: 'reviewed-sha' }
+            ]
+          }
+        ]
+      }),
+      config,
+      existingBranches: new Set()
+    })
+    expect(plan.removals).toStrictEqual([])
+  })
+
+  it('removes the workspace once you request changes', () => {
+    const plan = buildWorkspaceStatusRulePlan({
+      targets: [makeTarget()],
+      snapshot: makeSnapshot({
+        linkedPullRequests: [
+          {
+            ...reviewedPR,
+            latestReviews: [
+              { login: 'frbarbre', state: 'CHANGES_REQUESTED', commitOid: 'reviewed-sha' }
+            ]
+          }
+        ]
+      }),
+      config,
+      existingBranches: new Set()
+    })
+    expect(plan.removals).toHaveLength(1)
+  })
+
   it('keeps a workspace holding unsent review comments', () => {
     const plan = buildWorkspaceStatusRulePlan({
       targets: [makeTarget({ hasPendingReviewComments: true })],

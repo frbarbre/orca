@@ -135,7 +135,8 @@ export function readViewerReviewStanding(
   }
   const byViewer = (entry: { login: string }): boolean => entry.login.toLowerCase() === viewer
   const review = pr.latestReviews.find(byViewer)
-  const verdict = pr.latestOpinionatedReviews?.find(byViewer)?.state ?? review?.state
+  // Why the newest review first: a comment-only review after an earlier verdict means the viewer is still at it.
+  const verdict = review?.state ?? pr.latestOpinionatedReviews?.find(byViewer)?.state
   const isOwed = pendingUserReviewerLogins(pr).includes(viewer)
   return {
     isFinished: !isOwed && (verdict === 'APPROVED' || verdict === 'CHANGES_REQUESTED'),

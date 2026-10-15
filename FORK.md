@@ -1782,6 +1782,50 @@ sync hit exactly that (#23062 landed two commits later) and was fixed by merging
 
 ### Sync log
 
+**1.4.214 → 1.4.214** (`9c1d5d2fb7..1b1d09cfb5`, 475 upstream commits, thirty-five conflicts)
+
+- `package.json` still says 1.4.214, so the branch name repeats a seventh time.
+- Generated files — `bundled-skill-guides.ts`, `en.json`: took upstream's and regenerated
+  (`generate:bundled-skill-guides`, `sync:localization-catalog`,
+  `sync:localization-runtime-catalog`). The fork's keys came back.
+- **Upstream shipped `orca file open --line/--column`** (#28240), the same feature as fork #57, and
+  moved the runtime file commands into domain owners (#27582: `runtime-file-command-host.ts` and
+  `runtime-file-command-access.ts` are gone, `construction/runtime-file-command-state.ts` and
+  `files/file-access.ts` replace them). Took upstream's side of every #57 file — CLI spec and handler,
+  `files-params.ts`, `rpc/methods/files.ts`, `runtime-notifier-contract.ts`,
+  `runtime-window-lifecycle.ts`, the two preload bridges, `mobile-terminal-close-ipc-bridge.ts` —
+  and deleted the fork-only `reveal-opened-file.ts` (+ test), `shared/runtime-file-reveal.ts` and
+  `files-open-navigation.test.ts`. #57 is marked retired.
+- **Upstream rebuilt Workspace options on one shared evaluator** (#28915, #28931, #28986):
+  `visible-worktree-kinds.ts` and `SidebarWorkspaceFilterSection.tsx` are gone, filtering lives in
+  `shared/workspace-view/workspace-row-filters.ts` and `compute-visible-worktrees.ts`, and the menu
+  renders from shared option lists. Took upstream's `visible-worktrees.ts`,
+  `sidebar-filter-actions.ts`, `use-filters.ts`, `SidebarFilter.tsx`,
+  `workspace-options-menu-items.tsx` and `sidebar-workspace-option-items.ts`, then re-applied fork #9
+  beside the shared evaluator rather than inside it (so the phone wire and upstream's filter types
+  stay as they are) — see #9 for where each piece now lives — and fork #7/#8's Linear title and PR
+  author through `withForkCardDisplayOptions`.
+- `register-app-menu.ts` — upstream added a native-browser-popup branch to the inline Paste item;
+  the fork extracted that item to `app-menu-paste-item.ts`, so the branch moved there.
+- `handler-group-manifest.ts` — upstream added Jira and reference groups; kept them and the fork's
+  `BROWSER_AND_FORK_HANDLER_GROUPS` in place of `BROWSER_HANDLER_GROUPS`.
+- `SortableTabContextMenu.tsx` — upstream's `nativeChat` replaces `structuredSessionId`; kept the
+  fork's `AgentViewSubmenu` and its always-on leading separator.
+- `MarkdownImageLightbox.tsx` — upstream added `onError` to the old dialog; the fork's
+  `MediaLightbox` version already had it. Kept the fork's.
+- `jira-issue-workspace-content.tsx` — took upstream's `JiraIssueMarkdown`.
+- `app-bridge.ts`, `use-app-shell-services.ts`, `ui-slice-preference-actions.ts` — both sides added
+  lines; kept both.
+- Tests: took upstream's deletion of `pr-comment-presentation.test.ts`, `section-header.test.tsx`
+  and `file-type-icons.test.ts` (#29135, "remove low-value coverage"); in
+  `section-action-buttons.test.tsx` and `CommentMarkdown.github-attachment-image.test.tsx` kept the
+  fork's cases with upstream's new mocks.
+- **Found after the merge, not by git:** upstream deleted `launch-worktree-background-terminals.ts`
+  (#28130, automations now provision setup in main), which the fork's review-workspace creation
+  imports. The fork keeps its own copy (see #8). `lib/worktree-git-identity-display.ts` moved to
+  `shared/worktree/git-identity-display.ts`. A missing-import scan over `src` caught both; run one
+  after every sync, since git merges a deleted dependency without conflict.
+
 **1.4.214 → 1.4.214** (`e72044a936..9c1d5d2fb7`, 532 upstream commits, twenty-three conflicts)
 
 - `package.json` still says 1.4.214, so the branch name repeats a sixth time.

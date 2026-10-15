@@ -1,4 +1,5 @@
 import { BrowserWindow, Menu, webContents } from 'electron'
+import { isNativeBrowserPopupWindow } from '../browser/native-browser-popup-windows'
 
 export function createAppMenuPasteItem({
   label,
@@ -15,6 +16,9 @@ export function createAppMenuPasteItem({
       // control, so raw Electron paste cannot know which Orca surface owns it.
       const focusedWindow = BrowserWindow.getFocusedWindow()
       if (focusedWindow) {
+        if (isNativeBrowserPopupWindow(focusedWindow)) {
+          return (webContents.getFocusedWebContents() ?? focusedWindow.webContents).paste()
+        }
         // Why: a focused <webview> page owns its own editing; the renderer's paste routing only
         // sees the host element, so its fallback paste never reaches the page.
         const focusedContents = webContents.getFocusedWebContents()

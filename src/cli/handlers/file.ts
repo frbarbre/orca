@@ -1,14 +1,11 @@
+import { getFileOpenPosition } from './file-open-position'
 import type { GitStatusEntry, GitStatusResult } from '../../shared/git-status-types'
 import type { RuntimeFileOpenResult, RuntimeWorktreeRecord } from '../../shared/runtime-types'
 import type { RuntimeNavigationTarget } from '../../shared/runtime-navigation'
 import { isRuntimePathAbsolute, relativePathInsideRoot } from '../../shared/cross-platform-path'
 import { isWslUncPath, parseWslUncPath, toWindowsWslPath } from '../../shared/wsl-paths'
 import type { CommandHandler, HandlerContext } from '../dispatch'
-import {
-  getOptionalPositiveIntegerFlag,
-  getOptionalStringFlag,
-  getRequiredStringFlag
-} from '../flags'
+import { getOptionalStringFlag, getRequiredStringFlag } from '../flags'
 import { printResult } from '../format'
 import { RuntimeClientError } from '../runtime-client'
 import { getOptionalWorktreeSelector, resolveCurrentWorktreeSelector } from '../selectors'
@@ -217,16 +214,14 @@ function formatFileDiff(result: RuntimeFileOpenResult): string {
 export const FILE_HANDLERS: Record<string, CommandHandler> = {
   'file open': async (ctx) => {
     const path = getRequiredStringFlag(ctx.flags, 'path')
-    const line = getOptionalPositiveIntegerFlag(ctx.flags, 'line')
-    const column = getOptionalPositiveIntegerFlag(ctx.flags, 'column')
+    const position = getFileOpenPosition(ctx.flags)
     const worktree = await getFileWorktreeSelector(ctx)
     const relativePath = await resolveFilePath(ctx, worktree, path)
     const result = await ctx.client.call<RuntimeFileOpenResult>('files.open', {
       worktree,
       relativePath,
       navigation: getFileOpenNavigation(ctx.flags),
-      // Why only with a line: a column alone has nothing to land on.
-      ...(line ? { line, ...(column ? { column } : {}) } : {})
+      ...position
     })
     requireOpened(result.result, relativePath)
     printResult(result, ctx.json, formatFileOpen)

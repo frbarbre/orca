@@ -93,6 +93,7 @@ export class RepoUpdatePersistenceOperations {
         | 'pythonVenvPath'
         | 'portLabelsCommand'
         | 'issueSourcePreference'
+        | 'defaultJiraProject'
         | 'forkSyncMode'
         | 'externalWorktreeVisibilityPromptDismissedAt'
         | 'externalWorktreeInboxBaselinePaths'

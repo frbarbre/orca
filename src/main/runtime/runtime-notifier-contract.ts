@@ -1,3 +1,4 @@
+import type { RuntimeFileOpenPosition } from '../../shared/runtime-file-contracts'
 import type { AgentLaunchPaneVerdictEvent } from '../../shared/agent-launch-pane-verdict'
 import type { SleepingAgentLaunchConfig } from '../../shared/agent-session-resume'
 import type {
@@ -9,7 +10,6 @@ import type { TerminalPaneSplitSource } from '../../shared/feature-education-tel
 import type { TerminalRevealIdentity } from '../../shared/terminal-reveal-identity'
 import type { TuiAgent } from '../../shared/tui-agent'
 import type { RuntimeNavigationTarget } from '../../shared/runtime-navigation'
-import type { RuntimeFileReveal } from '../../shared/runtime-file-reveal'
 import type { ClientHostedBrowserRowsEvent } from '../../shared/client-hosted-browser-rows'
 import type {
   WorktreeBaseStatusEvent,
@@ -47,7 +47,8 @@ export type RuntimeNotifier = {
     worktreeId: string,
     setup?: CreateWorktreeResult['setup'],
     startup?: WorktreeStartupLaunch,
-    defaultTabs?: CreateWorktreeResult['defaultTabs']
+    defaultTabs?: CreateWorktreeResult['defaultTabs'],
+    providesInitialSurface?: boolean
   ): void
   createTerminal(
     worktreeId: string,
@@ -128,7 +129,7 @@ export type RuntimeNotifier = {
     relativePath: string,
     runtimeEnvironmentId?: string | null,
     navigation?: RuntimeNavigationTarget,
-    reveal?: RuntimeFileReveal
+    position?: RuntimeFileOpenPosition
   ): void
   openDiff?(
     worktreeId: string,

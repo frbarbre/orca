@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { isTemporaryCheckoutWorkspace } from './visible-worktree-kinds'
+import { isTemporaryCheckoutWorkspace } from './temporary-checkout-workspace'
 
 function worktree(path: string, isMainWorktree = false) {
   return { path, isMainWorktree }

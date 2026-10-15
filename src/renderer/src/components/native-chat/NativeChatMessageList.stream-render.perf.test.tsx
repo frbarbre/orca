@@ -4,6 +4,26 @@ import '@testing-library/jest-dom/vitest'
 
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
+
+// Why: these fixtures have neither inline visual owners nor sender navigation.
+const unusedChatLeaves = vi.hoisted(() => ({
+  inlineVisual: vi.fn(() => {
+    throw new Error('Unexpected inline visual in transcript fixture')
+  }),
+  openSender: vi.fn(() => {
+    throw new Error('Unexpected sender navigation in transcript fixture')
+  })
+}))
+vi.mock('./NativeChatInlineVisual', () => ({
+  NativeChatInlineVisual: unusedChatLeaves.inlineVisual
+}))
+vi.mock('@/lib/open-agent-message-sender', () => ({
+  openAgentMessageSender: unusedChatLeaves.openSender
+}))
+afterEach(() => {
+  expect(unusedChatLeaves.inlineVisual).not.toHaveBeenCalled()
+  expect(unusedChatLeaves.openSender).not.toHaveBeenCalled()
+})
 import type * as NativeChatProseModule from '../../../../shared/native-chat-prose'
 import type { NativeChatMessage } from '../../../../shared/native-chat-types'
 import { projectStructuredAgentSessionMessages } from '../../../../shared/structured-agent-session-message-projection'
@@ -141,9 +161,7 @@ describe('native chat transcript re-render cost during a streaming turn', () => 
     }
     const view = (items: AgentJournalRenderItem[]) => (
       <NativeChatMessageList
-        session={sessionWith(
-          projectStructuredAgentSessionMessages(items, [], [], { rejectedInPlace: true })
-        )}
+        session={sessionWith(projectStructuredAgentSessionMessages(items, [], []))}
         journalItems={items}
         isWorking={false}
         expandSignal={false}

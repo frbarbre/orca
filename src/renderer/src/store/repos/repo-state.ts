@@ -45,6 +45,7 @@ export type RepoUpdate = Partial<
     | 'pythonVenvPath'
     | 'portLabelsCommand'
     | 'issueSourcePreference'
+    | 'defaultJiraProject'
     | 'forkSyncMode'
     | 'externalWorktreeVisibilityPromptDismissedAt'
     | 'externalWorktreeInboxBaselinePaths'

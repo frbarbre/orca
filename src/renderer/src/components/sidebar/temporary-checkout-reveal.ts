@@ -1,5 +1,5 @@
 import type { Worktree } from '../../../../shared/worktree/types'
-import { isTemporaryCheckoutWorkspace } from './visible-worktree-kinds'
+import { isTemporaryCheckoutWorkspace } from './temporary-checkout-workspace'
 
 /** Lifts "Hide temporary checkouts" when it is what hides the worktree being revealed. */
 export function revealTemporaryCheckout(

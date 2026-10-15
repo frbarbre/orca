@@ -37,7 +37,7 @@ export function useNativeChatStructuredComposerTransport(args: {
   )
   return useMemo((): NativeChatStructuredComposerTransport => {
     const threadGoal = controller.threadGoal
-    const setThreadGoalObjective = threadGoal
+    const setThreadGoalObjective = threadGoal?.hostChanges
       ? (objective: string) => threadGoal.change({ kind: 'set', objective })
       : null
     return {
@@ -57,7 +57,7 @@ export function useNativeChatStructuredComposerTransport(args: {
           agent: props.agent,
           snapshot: controller.optionSnapshot,
           invokeAction: async (id) => {
-            setOptionPickerRequest((current) => ({ id, sequence: (current?.sequence ?? 0) + 1 }))
+            setOptionPickerRequest({ id, consume: () => setOptionPickerRequest(null) })
             return true
           },
           setOption: controller.setStructuredOption,

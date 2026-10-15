@@ -1,3 +1,4 @@
+import type { RuntimeFileOpenPosition } from '../../shared/runtime-file-contracts'
 import { ipcRenderer } from 'electron'
 import type { TerminalPaneSplitSource } from '../../shared/feature-education-telemetry'
 import type { TerminalTabCreateReply } from '../../shared/terminal-reveal-identity'
@@ -13,7 +14,6 @@ import type {
 } from '../../shared/agent-session-resume'
 import type { TuiAgent } from '../../shared/tui-agent'
 import type { RuntimeNavigationTarget } from '../../shared/runtime-navigation'
-import type { RuntimeFileReveal } from '../../shared/runtime-file-reveal'
 import type {
   RuntimeMobileSessionTabMove,
   RuntimeTerminalCreateRequestPayload,
@@ -233,7 +233,7 @@ export const uiTerminalAndSessionTabsApi = {
       relativePath: string
       runtimeEnvironmentId?: string | null
       navigation?: RuntimeNavigationTarget
-      reveal?: RuntimeFileReveal
+      position?: RuntimeFileOpenPosition
     }) => void
   ): (() => void) => {
     const listener = (
@@ -244,7 +244,7 @@ export const uiTerminalAndSessionTabsApi = {
         relativePath: string
         runtimeEnvironmentId?: string | null
         navigation?: RuntimeNavigationTarget
-        reveal?: RuntimeFileReveal
+        position?: RuntimeFileOpenPosition
       }
     ) => callback(data)
     ipcRenderer.on('ui:openFileFromMobile', listener)

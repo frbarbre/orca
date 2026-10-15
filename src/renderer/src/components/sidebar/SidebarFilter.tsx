@@ -4,7 +4,6 @@ import {
   Check,
   FolderPlus,
   GitBranch,
-  FolderClock,
   GitCommitHorizontal,
   ListFilter,
   Moon,
@@ -29,10 +28,11 @@ import {
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
 import RepoBadgeLabel from '@/components/repo/RepoBadgeLabel'
 import { FilterToggleRow } from './FilterToggleRow'
+import { TemporaryCheckoutFilterRow } from './temporary-checkout-filter-row'
 import { useShortcutLabel } from '@/hooks/useShortcutLabel'
 import { searchRepos } from '@/lib/repo-search'
-import { DEFAULT_SHOW_SLEEPING_WORKSPACES } from '../../../../shared/constants'
-import { isSleepingSweepExemptionNarrowingList } from './visible-worktrees'
+import { clearSidebarFilters, selectSidebarFilterState } from './sidebar-filter-actions'
+import { useWorkspaceOptionsFilterBadge } from './workspace-options-menu-items'
 import { translate } from '@/i18n/i18n'
 
 type SidebarFilterProps = {
@@ -62,11 +62,7 @@ const SidebarFilter = React.memo(function SidebarFilter({
   const hideCliCreatedWorkspaces = useAppStore((s) => s.hideCliCreatedWorkspaces)
   const setHideCliCreatedWorkspaces = useAppStore((s) => s.setHideCliCreatedWorkspaces)
   const hideDetachedHeadWorkspaces = useAppStore((s) => s.hideDetachedHeadWorkspaces)
-  const hideTemporaryCheckoutWorkspaces = useAppStore((s) => s.hideTemporaryCheckoutWorkspaces)
   const setHideDetachedHeadWorkspaces = useAppStore((s) => s.setHideDetachedHeadWorkspaces)
-  const setHideTemporaryCheckoutWorkspaces = useAppStore(
-    (s) => s.setHideTemporaryCheckoutWorkspaces
-  )
   const alwaysShowDefaultBranchWorkspace = useAppStore((s) => s.alwaysShowDefaultBranchWorkspace)
   const setAlwaysShowDefaultBranchWorkspace = useAppStore(
     (s) => s.setAlwaysShowDefaultBranchWorkspace
@@ -116,31 +112,8 @@ const SidebarFilter = React.memo(function SidebarFilter({
   }, [repos, filterRepoIds])
   const selectedCount = selectedRepoIdSet.size
   const hasRepoFilter = selectedCount > 0
-  const hasSleepingFilter = showSleepingWorkspaces !== DEFAULT_SHOW_SLEEPING_WORKSPACES
-  // Why counted: turning the exemption off is the only way that row narrows the
-  // list — but only while its parent row is on, which is also when it renders.
-  const hasSleepingExemptionFilter = isSleepingSweepExemptionNarrowingList(
-    showSleepingWorkspaces,
-    alwaysShowDefaultBranchWorkspace
-  )
-  const hasAnyFilter =
-    hasSleepingFilter ||
-    hideDefaultBranchWorkspace ||
-    hideAutomationGeneratedWorkspaces ||
-    hideCliCreatedWorkspaces ||
-    hideDetachedHeadWorkspaces ||
-    hideTemporaryCheckoutWorkspaces ||
-    hasSleepingExemptionFilter ||
-    hasRepoFilter
-  const activeFilterCount =
-    (hasSleepingFilter ? 1 : 0) +
-    (hideDefaultBranchWorkspace ? 1 : 0) +
-    (hideAutomationGeneratedWorkspaces ? 1 : 0) +
-    (hideCliCreatedWorkspaces ? 1 : 0) +
-    (hideDetachedHeadWorkspaces ? 1 : 0) +
-    (hideTemporaryCheckoutWorkspaces ? 1 : 0) +
-    (hasSleepingExemptionFilter ? 1 : 0) +
-    selectedCount
+  // The sidebar's own badge, so this menu counts every filter the Workspace options do.
+  const { hasAnyFilter, activeFilterCount } = useWorkspaceOptionsFilterBadge()
 
   const filteredRepos = useMemo(() => searchRepos(repos, query), [repos, query])
   const commandValue =
@@ -150,24 +123,9 @@ const SidebarFilter = React.memo(function SidebarFilter({
   const allSelected = canFilterRepos && selectedCount === repos.length
 
   const clearAll = useCallback(() => {
-    setShowSleepingWorkspaces(DEFAULT_SHOW_SLEEPING_WORKSPACES)
-    setHideDefaultBranchWorkspace(false)
-    setHideAutomationGeneratedWorkspaces(false)
-    setHideCliCreatedWorkspaces(false)
-    setHideDetachedHeadWorkspaces(false)
-    setHideTemporaryCheckoutWorkspaces(false)
-    setAlwaysShowDefaultBranchWorkspace(true)
-    setFilterRepoIds([])
-  }, [
-    setShowSleepingWorkspaces,
-    setHideDefaultBranchWorkspace,
-    setHideAutomationGeneratedWorkspaces,
-    setHideCliCreatedWorkspaces,
-    setHideDetachedHeadWorkspaces,
-    setHideTemporaryCheckoutWorkspaces,
-    setAlwaysShowDefaultBranchWorkspace,
-    setFilterRepoIds
-  ])
+    const store = useAppStore.getState()
+    clearSidebarFilters(selectSidebarFilterState(store), store)
+  }, [])
 
   // Why: derive ids from the live repos list at click time so a repo added
   // while the popover is open is included immediately.
@@ -286,15 +244,7 @@ const SidebarFilter = React.memo(function SidebarFilter({
           checked={hideDetachedHeadWorkspaces}
           onChange={setHideDetachedHeadWorkspaces}
         />
-        <FilterToggleRow
-          icon={<FolderClock className="size-3.5" />}
-          label={translate(
-            'auto.components.sidebar.SidebarFilter.temporaryCheckouts',
-            'Hide temporary checkouts'
-          )}
-          checked={hideTemporaryCheckoutWorkspaces}
-          onChange={setHideTemporaryCheckoutWorkspaces}
-        />
+        <TemporaryCheckoutFilterRow />
 
         {canFilterRepos && (
           <>

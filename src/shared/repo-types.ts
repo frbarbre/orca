@@ -114,6 +114,8 @@ export type Repo = {
   symlinkPaths?: string[]
   /** Python venv for go-to-definition, absolute or relative to the worktree; unset finds a .venv. */
   pythonVenvPath?: string
+  /** Fork: a command printing `Label  URL` lines, which names a workspace's live ports. */
+  portLabelsCommand?: string
   /** Durable sidebar-only repo organization. Execution remains repo-scoped. */
   projectGroupId?: string | null
   /** User-authored ordering inside the project group or ungrouped bucket. */

@@ -6000,6 +6000,7 @@
           "29df45afa2": "MR"
         },
         "WorktreeCardPorts": {
+          "openNamed": "Open {{label}}",
           "34f733dda2": "Go to Worktree",
           "3240f320d7": "Live Ports",
           "3e5f66564e": "Workspace unavailable",
@@ -12863,6 +12864,12 @@
         "PythonEnvironmentSection": {
           "placeholder": ".venv",
           "hint": "Relative to the worktree, or absolute. Empty finds the nearest .venv. Cmd+click in a Python file runs pyrefly from this venv, or from PATH."
+        },
+        "PortLabelsCommandSection": {
+          "title": "Port Names",
+          "description": "A command that prints the URLs a workspace serves, to name its live ports.",
+          "placeholder": "mise run print-urls",
+          "hint": "Runs in the workspace. Each line of the form \"Label  http://host:port\" names that port, and the Frontend entry gets a quick open button while it is running."
         },
         "transfer": {
           "summarySettings": "{{count}} settings",

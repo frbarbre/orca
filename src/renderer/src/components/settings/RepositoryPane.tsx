@@ -16,6 +16,7 @@ import { RepositoryHooksSection } from './RepositoryHooksSection'
 import { McpConfigSection } from './McpConfigSection'
 import { WorktreeSymlinksSection } from './WorktreeSymlinksSection'
 import { PythonEnvironmentSection } from './PythonEnvironmentSection'
+import { PortLabelsCommandSection, getPortLabelsSearchEntry } from './PortLabelsCommandSection'
 import { SparsePresetSettingsSection } from './SparsePresetSettingsSection'
 import { RepositorySourceControlAiSection } from './RepositorySourceControlAiSection'
 import { SearchableSetting } from './SearchableSetting'
@@ -386,6 +387,16 @@ export function RepositoryPane({
     (forceFullPaneForRepoMatch || matchesSettingsSearch(searchQuery, pythonEnvironmentEntries)) ? (
       <PythonEnvironmentSection
         key="python-environment"
+        repo={repo}
+        updateRepo={updateSelectedRepo}
+        forceVisible={forceFullPaneForRepoMatch}
+      />
+    ) : null,
+    !isFolder &&
+    (forceFullPaneForRepoMatch ||
+      matchesSettingsSearch(searchQuery, [getPortLabelsSearchEntry(repo)])) ? (
+      <PortLabelsCommandSection
+        key="port-labels"
         repo={repo}
         updateRepo={updateSelectedRepo}
         forceVisible={forceFullPaneForRepoMatch}

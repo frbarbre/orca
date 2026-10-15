@@ -905,6 +905,13 @@
               }
             }
           }
+        },
+        "worktree": {
+          "background": {
+            "terminals": {
+              "setupTitle": "Setup"
+            }
+          }
         }
       },
       "local": {

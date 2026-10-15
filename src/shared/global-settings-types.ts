@@ -1,6 +1,5 @@
 import type { ForkBaseSettings } from './fork-source-control-settings'
 import type { ExecutionHostId } from './execution-host'
-import type { LanguageServerSettingsMap } from './language-server'
 import type { OrcaWorkspaceLayout } from './orca-workspace-layout'
 import type { GitHubProjectSettings } from './github/project-types'
 import type { VoiceSettings } from './speech-types'
@@ -92,10 +91,6 @@ export type GlobalSettings = ForkBaseSettings & {
   editorWordWrap?: boolean
   /** Persisted opt-out for browser spellcheck noise in rich Markdown editing surfaces. */
   richMarkdownSpellcheckEnabled?: boolean
-  /** Fork: per-language server, read through `languageServerSettings`; a missing language means on. */
-  languageServers?: LanguageServerSettingsMap
-  /** Fork: the cursor line's blame annotation; an unset switch means on. */
-  gitBlame?: { enabled?: boolean; youForMyCommits?: boolean }
   /** Whether local markdown review note controls and the review panel are shown. */
   markdownReviewToolsEnabled: boolean
   /** Why: mirrors terminal selection-paste muscle memory without mutating the
@@ -226,8 +221,6 @@ export type GlobalSettings = ForkBaseSettings & {
   terminalLinkClickBehavior?: 'actions' | 'open' | 'none'
   /** Middle mouse URL behavior; defaults to opening the primary routed destination. */
   terminalUrlMiddleClickBehavior?: 'open' | 'actions' | 'none'
-  /** Fork: open new Claude Code tabs in the claude.ai Remote Control web view. */
-  openClaudeTabsInWebView?: boolean
   /** New supported agent launches use structured Chat UI; off defaults to terminal UI. */
   experimentalNativeChat?: boolean
   /** Opt-in: resume working structured chats automatically on the next launch. Off still offers

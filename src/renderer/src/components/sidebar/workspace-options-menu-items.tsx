@@ -45,13 +45,14 @@ export function useWorkspaceOptionsFilterBadge(): {
 } {
   const filterState = useAppStore(useShallow(selectSidebarFilterState))
   const repos = useAppStore((s) => s.repos)
+  const hideTemporaryCheckoutWorkspaces = useAppStore((s) => s.hideTemporaryCheckoutWorkspaces)
   const activeFilterCount = useMemo(
     () =>
       countActiveWorkspaceFilters(
         sidebarWorkspaceRowFilters(filterState),
         repos.map((repo) => repo.id)
-      ) + (filterState.hideTemporaryCheckoutWorkspaces ? 1 : 0),
-    [filterState, repos]
+      ) + (hideTemporaryCheckoutWorkspaces ? 1 : 0),
+    [filterState, repos, hideTemporaryCheckoutWorkspaces]
   )
   return {
     hasAnyFilter: activeFilterCount > 0,

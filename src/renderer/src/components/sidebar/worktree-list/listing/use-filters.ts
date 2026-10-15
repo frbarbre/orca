@@ -148,6 +148,7 @@ function getRevealTargetHostId(state: AppState, worktree: Worktree, repo: Repo |
 // Every sidebar filter, plus the single escape hatch that resets all of them.
 export function useSidebarWorktreeFilters() {
   const filterState = useAppStore(useShallow(selectSidebarFilterState))
+  const hideTemporaryCheckoutWorkspaces = useAppStore((s) => s.hideTemporaryCheckoutWorkspaces)
 
   const revealWorkspaceFilters = useCallback((worktree: Worktree) => {
     const state = useAppStore.getState()
@@ -171,7 +172,7 @@ export function useSidebarWorktreeFilters() {
 
   return {
     filterState,
-    hasFilters: sidebarHasActiveFilters(filterState),
+    hasFilters: sidebarHasActiveFilters(filterState) || hideTemporaryCheckoutWorkspaces,
     clearFilters,
     revealWorkspaceFilters
   }

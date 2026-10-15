@@ -43,10 +43,13 @@ export function subscribeCloseOtherTabs(
 export function useCloseOtherTabsRequest(
   worktreeId: string,
   groupId: string,
-  activeItemId: string | null | undefined,
-  closeOthers: (itemId: string) => void,
-  closeAllUnpinned: () => void
+  model: {
+    activeTab?: { id: string } | null
+    commands: { closeOthers: (itemId: string) => void; closeAllUnpinned: () => void }
+  }
 ): void {
+  const activeItemId = model.activeTab?.id
+  const { closeOthers, closeAllUnpinned } = model.commands
   useEffect(
     () =>
       subscribeCloseOtherTabs(worktreeId, groupId, {

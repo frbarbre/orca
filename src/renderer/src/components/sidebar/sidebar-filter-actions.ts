@@ -22,8 +22,6 @@ export type SidebarFilterState = {
   hideAutomationGeneratedWorkspaces: boolean
   hideCliCreatedWorkspaces: boolean
   hideDetachedHeadWorkspaces: boolean
-  // Fork: outside the shared row filters, so upstream's filter types and phone wire stay as they are.
-  hideTemporaryCheckoutWorkspaces?: boolean
   hideWorkspacesFromOtherDevices: boolean
   /** Keeps each project's main workspace out of the "Hide sleeping" sweep; absent means on. */
   alwaysShowDefaultBranchWorkspace?: boolean
@@ -60,7 +58,6 @@ export function selectSidebarFilterState(
     hideAutomationGeneratedWorkspaces: state.hideAutomationGeneratedWorkspaces,
     hideCliCreatedWorkspaces: state.hideCliCreatedWorkspaces,
     hideDetachedHeadWorkspaces: state.hideDetachedHeadWorkspaces,
-    hideTemporaryCheckoutWorkspaces: state.hideTemporaryCheckoutWorkspaces,
     hideWorkspacesFromOtherDevices: state.hideWorkspacesFromOtherDevices,
     alwaysShowDefaultBranchWorkspace: state.alwaysShowDefaultBranchWorkspace,
     visibleWorkspaceHostIds: state.visibleWorkspaceHostIds,
@@ -69,10 +66,7 @@ export function selectSidebarFilterState(
 }
 
 export function sidebarHasActiveFilters(state: SidebarFilterState): boolean {
-  return (
-    state.hideTemporaryCheckoutWorkspaces === true ||
-    activeWorkspaceRowFilterKeys(sidebarWorkspaceRowFilters(state)).length > 0
-  )
+  return activeWorkspaceRowFilterKeys(sidebarWorkspaceRowFilters(state)).length > 0
 }
 
 export type SidebarFilterSetters = Pick<
@@ -87,7 +81,8 @@ export type SidebarFilterSetters = Pick<
   | 'setFilterRepoIds'
   | 'setVisibleWorkspaceHostIds'
 > &
-  Partial<Pick<AppState, 'setHideTemporaryCheckoutWorkspaces'>>
+  // Fork: "Hide temporary checkouts" sits outside the shared filters, so it rides on the store.
+  Partial<Pick<AppState, 'hideTemporaryCheckoutWorkspaces' | 'setHideTemporaryCheckoutWorkspaces'>>
 
 /** How each shared filter returns to its default; a new filter fails to compile until listed. */
 const RESET_SIDEBAR_FILTER: Record<
@@ -126,7 +121,7 @@ export function clearSidebarFilters(state: SidebarFilterState, store: SidebarFil
   for (const key of activeWorkspaceRowFilterKeys(sidebarWorkspaceRowFilters(state))) {
     RESET_SIDEBAR_FILTER[key](store)
   }
-  if (state.hideTemporaryCheckoutWorkspaces) {
+  if (store.hideTemporaryCheckoutWorkspaces) {
     store.setHideTemporaryCheckoutWorkspaces?.(false)
   }
 }

@@ -35,7 +35,6 @@ function toCyclableTab(tab: Tab): TypeCyclableTab {
     case 'diff':
     case 'conflict-review':
     case 'check-details':
-    case 'chat-visual':
       return { type: 'editor', id: tab.entityId, tabId: tab.id }
   }
 }

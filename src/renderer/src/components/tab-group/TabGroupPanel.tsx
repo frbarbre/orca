@@ -77,13 +77,7 @@ export default function TabGroupPanel({
   const rightSidebarOpen = useAppStore((state) => state.rightSidebarOpen)
   const sidebarOpen = useAppStore((state) => state.sidebarOpen)
   const model = useTabGroupWorkspaceModel({ groupId, worktreeId })
-  useCloseOtherTabsRequest(
-    worktreeId,
-    groupId,
-    model.activeTab?.id,
-    model.commands.closeOthers,
-    model.commands.closeAllUnpinned
-  )
+  useCloseOtherTabsRequest(worktreeId, groupId, model)
   const {
     activeTab,
     agentSessionItems,

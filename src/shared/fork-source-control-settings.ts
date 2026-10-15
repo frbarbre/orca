@@ -1,4 +1,5 @@
 import type { NativeChatGlobalSettings } from './native-chat-appearance-settings'
+import type { LanguageServerSettingsMap } from './language-server'
 
 // Fork: kept out of global-settings-types.ts, which sits at the max-lines ceiling.
 export type SectionLayout = { order?: string[]; hidden?: string[] }
@@ -10,5 +11,16 @@ export type ForkSourceControlSettings = {
   sourceControlSectionLayout?: SectionLayout & { pr?: SectionLayout }
 }
 
+type ForkEditorSettings = {
+  /** Per-language server, read through `languageServerSettings`; a missing language means on. */
+  languageServers?: LanguageServerSettingsMap
+  /** The cursor line's blame annotation; an unset switch means on. */
+  gitBlame?: { enabled?: boolean; youForMyCommits?: boolean }
+  /** Open new Claude Code tabs in the claude.ai Remote Control web view. */
+  openClaudeTabsInWebView?: boolean
+}
+
 /** What GlobalSettings extends: upstream's native-chat settings plus the fork's. */
-export type ForkBaseSettings = NativeChatGlobalSettings & ForkSourceControlSettings
+export type ForkBaseSettings = NativeChatGlobalSettings &
+  ForkSourceControlSettings &
+  ForkEditorSettings

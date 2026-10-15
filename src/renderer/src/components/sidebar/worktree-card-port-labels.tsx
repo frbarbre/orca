@@ -4,7 +4,6 @@ import { useAppStore } from '@/store'
 import { useWorktreePortLabels, type PortLabel } from '@/lib/workspace-port-labels'
 import type { WorkspacePort } from '../../../../shared/workspace-ports'
 import { translate } from '@/i18n/i18n'
-import { useOpenWorkspacePort } from './use-open-workspace-port'
 
 /** Fork: the names the workspace's repo gives its live ports, from the repo's URLs command. */
 export function useWorkspacePortLabels(ports: readonly WorkspacePort[]): PortLabel[] {
@@ -19,14 +18,18 @@ export function useWorkspacePortLabels(ports: readonly WorkspacePort[]): PortLab
   return useWorktreePortLabels(owner?.worktreeId ?? null, owner?.path ?? null, command, livePorts)
 }
 
+/** Each live port row's own open action, by port number. */
+export type PortOpeners = Map<number, (event: React.MouseEvent<HTMLButtonElement>) => void>
+
 export function OpenFrontendButton({
   port,
-  label
+  label,
+  openers
 }: {
-  port: WorkspacePort
+  port: number
   label: string
+  openers: PortOpeners
 }): React.JSX.Element {
-  const open = useOpenWorkspacePort(port)
   return (
     <button
       type="button"
@@ -34,7 +37,7 @@ export function OpenFrontendButton({
       title={translate('auto.components.sidebar.WorktreeCardPorts.openNamed', 'Open {{label}}', {
         label
       })}
-      onClick={open}
+      onClick={(event) => openers.get(port)?.(event)}
     >
       <ExternalLink className="size-3" />
       {label}

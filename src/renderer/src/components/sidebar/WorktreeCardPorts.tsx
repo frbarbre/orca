@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { Plug, Copy, ExternalLink, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useAppStore } from '@/store'
@@ -9,12 +9,18 @@ import {
   canStopWorkspacePort,
   getPortOpenBrowserTooltipLabel,
   killWorkspacePortForTarget,
-  refreshWorkspacePortScanAfterStop
+  openWorkspacePortInBrowser,
+  refreshWorkspacePortScanAfterStop,
+  resolvePortOpenInOrcaBrowser
 } from '@/lib/workspace-port-actions'
+import { useLocalhostLabelRouteForPort } from '@/lib/workspace-port-localhost-label-selector'
 import { addressForPort } from '@/lib/workspace-port-urls'
 import { pickFrontendPortLabel } from '@/lib/workspace-port-labels'
-import { useOpenWorkspacePort } from './use-open-workspace-port'
-import { OpenFrontendButton, useWorkspacePortLabels } from './worktree-card-port-labels'
+import {
+  OpenFrontendButton,
+  useWorkspacePortLabels,
+  type PortOpeners
+} from './worktree-card-port-labels'
 import type { WorkspacePort } from '../../../../shared/workspace-ports'
 import {
   WorktreeCardDetailSection,
@@ -99,11 +105,18 @@ function PortAction({
 /** One port row on a sidebar worktree card, with open/copy/stop actions on its owner host. */
 function WorktreePortRow({
   port,
-  label
+  label,
+  openers
 }: {
   port: WorkspacePort
   label?: string
+  openers?: PortOpeners
 }): React.JSX.Element {
+  const settings = useAppStore((s) => s.settings)
+  const localhostLabelRoute = useLocalhostLabelRouteForPort(port)
+
+  const createBrowserTab = useAppStore((s) => s.createBrowserTab)
+  const setRemoteBrowserPageHandle = useAppStore((s) => s.setRemoteBrowserPageHandle)
   const replaceWorkspacePortScans = useAppStore((s) => s.replaceWorkspacePortScans)
   const setWorkspacePortScanRefreshing = useAppStore((s) => s.setWorkspacePortScanRefreshing)
   const recordFeatureInteraction = useAppStore((s) => s.recordFeatureInteraction)
@@ -118,7 +131,58 @@ function WorktreePortRow({
     'Open in Browser'
   )
 
-  const handleOpen = useOpenWorkspacePort(port)
+  const handleOpen = useCallback(
+    (event: React.MouseEvent<HTMLButtonElement>) => {
+      event.stopPropagation()
+      recordFeatureInteraction('ports')
+      const openInOrcaBrowser = resolvePortOpenInOrcaBrowser({
+        settings,
+        // Why: keyboard activations have detail=0; only pointer clicks carry
+        // the modifier intent for the system-browser escape hatch.
+        event: event.detail > 0 ? event : null,
+        isMac: navigator.userAgent.includes('Mac')
+      })
+      void openWorkspacePortInBrowser({
+        port,
+        runtimeTarget,
+        createBrowserTab,
+        setRemoteBrowserPageHandle,
+        openInOrcaBrowser,
+        localhostLabelRoute
+      }).then((result) => {
+        if (!result.ok) {
+          toast.error(
+            translate(
+              'auto.components.sidebar.WorktreeCardPorts.d1113f4660',
+              'Failed to open browser'
+            ),
+            { description: result.reason }
+          )
+        }
+      })
+    },
+    [
+      createBrowserTab,
+      port,
+      localhostLabelRoute,
+      recordFeatureInteraction,
+      runtimeTarget,
+      setRemoteBrowserPageHandle,
+      settings
+    ]
+  )
+  // Why a registry: the header's quick open reuses this row's open rather than routing on its own.
+  useEffect(() => {
+    if (!openers) {
+      return
+    }
+    openers.set(port.port, handleOpen)
+    return () => {
+      if (openers.get(port.port) === handleOpen) {
+        openers.delete(port.port)
+      }
+    }
+  }, [handleOpen, openers, port.port])
 
   const handleCopy = useCallback(
     (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -256,6 +320,7 @@ export function WorktreeCardPortsDetails({
   ports
 }: WorktreeCardPortsProps): React.JSX.Element | null {
   const labels = useWorkspacePortLabels(ports)
+  const [openers] = useState<PortOpeners>(() => new Map())
   if (ports.length === 0) {
     return null
   }
@@ -264,7 +329,6 @@ export function WorktreeCardPortsDetails({
     labels,
     ports.map((port) => port.port)
   )
-  const frontendPort = frontend ? ports.find((port) => port.port === frontend.port) : undefined
 
   return (
     <WorktreeCardDetailSection>
@@ -278,13 +342,18 @@ export function WorktreeCardPortsDetails({
             ({ports.length})
           </span>
         </span>
-        {frontend && frontendPort ? (
-          <OpenFrontendButton port={frontendPort} label={frontend.label} />
+        {frontend ? (
+          <OpenFrontendButton port={frontend.port} label={frontend.label} openers={openers} />
         ) : null}
       </div>
       <WorktreeCardDetailSectionContent className="space-y-0.5">
         {ports.map((port) => (
-          <WorktreePortRow key={port.id} port={port} label={labelByPort.get(port.port)} />
+          <WorktreePortRow
+            key={port.id}
+            port={port}
+            label={labelByPort.get(port.port)}
+            openers={openers}
+          />
         ))}
       </WorktreeCardDetailSectionContent>
     </WorktreeCardDetailSection>

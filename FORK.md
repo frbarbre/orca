@@ -532,7 +532,7 @@ only the title is shown.
 | File | What is ours |
 | --- | --- |
 | `src/shared/ui-chrome-types.ts`, `src/shared/worktree/card-properties.ts` | `'linear-title'` in the union and in `WORKTREE_CARD_PROPERTIES`. |
-| `sidebar/sidebar-workspace-option-items.ts` | The menu option. |
+| `sidebar/fork-card-property-options.ts`, one call in `sidebar-workspace-option-items.ts` | The menu option, slotted after upstream's shared Card display choices (`withForkCardDisplayOptions`). PR author rides the same list. |
 | `sidebar/use-worktree-card-controller.ts` | `showLinearTitle`, and fetching for it. |
 | `sidebar/worktree-card-parent-content.tsx`, `worktree-card-linear-title.tsx` (+ test) | The row. |
 
@@ -559,14 +559,25 @@ Each PR-rules tick also does three smaller things, all in `workspace-status-rule
   like setup hooks) behind IPC `review-status-rules:run-workspace-command`, which checks the path is a
   registered worktree first; a failure toasts the command's last output lines.
 
+A review workspace is created in the background, so its setup and default tabs start through
+`lib/launch-worktree-background-terminals.ts` (+ `background-pane-exit-output.ts`). Upstream deleted
+both in #28130 when automations moved that work into main; the fork keeps its own copy for
+`create-review-workspace.ts`.
+
 ### 9. Sidebar: hide temporary checkouts, and Run on a shortcut
 
 "Hide temporary checkouts" hides worktrees under `/tmp`, `/private/tmp`, `/var/folders` or
 `AppData\Local\Temp` (agents' scratch `git worktree add`s). It is threaded beside
 `hideDetachedHeadWorkspaces` everywhere that flag goes, except the jump palette, whose file sits at
 its line cap. The listing reads it from the store rather than `filterState`, so upstream's
-filter-state types and tests stay as they are. `persisted-ui-write-baseline.test.ts` gains the
-field in its census fixture — re-apply after taking upstream's version.
+filter-state types and tests stay as they are. Upstream's shared Workspace options evaluator
+(`shared/workspace-view/workspace-row-filters.ts`) does not know the flag either: the predicate lives
+in `sidebar/temporary-checkout-workspace.ts`, `compute-visible-worktrees.ts` filters after
+`filterWorkspaceRows`, `sidebar-filter-actions.ts` counts and clears it beside the shared keys,
+`use-filters.ts` reveals through `temporary-checkout-reveal.ts`, and both menus render
+`temporary-checkout-filter-row.tsx` after the shared filter rows. The phone does not apply it.
+`persisted-ui-write-baseline.test.ts` gains the field in its census fixture — re-apply after taking
+upstream's version.
 
 `tab.runQuickCommand` runs the tab group's Run-button command (`use-run-quick-command-shortcut.ts`).
 It ships unbound because Cmd+R is upstream's `tab.rename`; bind it in keybindings.json.
@@ -1705,20 +1716,10 @@ comment. The Comments list no longer heads open threads with "Needs review · N"
 | `checks-panel/comment-row.tsx` | `<ReviewStateBadge>` after the author name (badge in `review-state-badge.tsx`). |
 | `checks-panel/comments-list.tsx` | The "Needs review" label removed; open threads render first, unlabelled. |
 
-### 57. `orca file open --line/--column`
+### 57. `orca file open --line/--column` — retired
 
-`orca file open <path> --line <n> [--column <n>]` opens the file with the cursor on that spot, so a
-"go to source" link (a framework devtools inspector, say) can target Orca like any editor. The line
-rides the existing open path as an optional `RuntimeFileReveal` and ends in the renderer's
-`setPendingEditorReveal`, the same reveal terminal file links use (`reveal-opened-file.ts`).
-
-| File | What is ours |
-| --- | --- |
-| `src/cli/specs/file.ts`, `src/cli/handlers/file.ts` | The two flags, sent only with a line. |
-| `src/shared/rpc-contract/files-params.ts` | Optional `line`/`column` on `FileOpenTab` (so the generated catalog is unchanged). |
-| `src/main/runtime/rpc/methods/files.ts`, `runtime-file-command-access.ts`, `runtime-file-command-host.ts`, `orca-runtime-file-commands.ts`, `runtime-notifier-contract.ts`, `src/main/window/runtime-window-lifecycle.ts` | A trailing optional `reveal`, passed only when set. |
-| `src/preload/api/ui-command-event-api.ts`, `ui-bridge-terminal-and-session-tabs.ts` | `reveal` on the open-file payload. |
-| `src/renderer/src/hooks/ipc-events/mobile-terminal-close-ipc-bridge.ts` | Calls `revealOpenedFile` after the open. |
+Upstream shipped the same flags (#28240), so the fork's copy was dropped in the 1.4.214 sync of
+October 2026. The number is kept so later entries keep theirs.
 
 ## Verify
 

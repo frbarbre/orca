@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { useAppStore } from '@/store'
 import { useRepoById } from '@/store/selectors'
-import { getWorktreeGitIdentityDisplay } from '@/lib/worktree-git-identity-display'
+import { getWorktreeGitIdentityDisplay } from '../../../../shared/worktree/git-identity-display'
 import { getGitHubPRCacheKey } from '@/store/slices/github-cache-key'
 import { selectReviewCacheEntry } from '@/components/right-sidebar/review-cache-entry-selection'
 import { groupPRComments, type PRCommentGroup } from '../../../../shared/pr-comment-groups'

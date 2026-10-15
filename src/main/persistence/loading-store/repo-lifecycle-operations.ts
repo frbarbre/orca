@@ -149,6 +149,7 @@ export class RepoLifecycleOperations {
         | 'executionHostId'
         | 'symlinkPaths'
         | 'pythonVenvPath'
+        | 'portLabelsCommand'
         | 'issueSourcePreference'
         | 'forkSyncMode'
         | 'externalWorktreeVisibilityPromptDismissedAt'

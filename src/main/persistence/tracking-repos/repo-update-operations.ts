@@ -91,6 +91,7 @@ export class RepoUpdatePersistenceOperations {
         | 'executionHostId'
         | 'symlinkPaths'
         | 'pythonVenvPath'
+        | 'portLabelsCommand'
         | 'issueSourcePreference'
         | 'forkSyncMode'
         | 'externalWorktreeVisibilityPromptDismissedAt'

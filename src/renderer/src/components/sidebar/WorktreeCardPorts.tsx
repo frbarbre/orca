@@ -9,12 +9,12 @@ import {
   canStopWorkspacePort,
   getPortOpenBrowserTooltipLabel,
   killWorkspacePortForTarget,
-  openWorkspacePortInBrowser,
-  refreshWorkspacePortScanAfterStop,
-  resolvePortOpenInOrcaBrowser
+  refreshWorkspacePortScanAfterStop
 } from '@/lib/workspace-port-actions'
-import { useLocalhostLabelRouteForPort } from '@/lib/workspace-port-localhost-label-selector'
 import { addressForPort } from '@/lib/workspace-port-urls'
+import { pickFrontendPortLabel } from '@/lib/workspace-port-labels'
+import { useOpenWorkspacePort } from './use-open-workspace-port'
+import { OpenFrontendButton, useWorkspacePortLabels } from './worktree-card-port-labels'
 import type { WorkspacePort } from '../../../../shared/workspace-ports'
 import {
   WorktreeCardDetailSection,
@@ -97,12 +97,13 @@ function PortAction({
 }
 
 /** One port row on a sidebar worktree card, with open/copy/stop actions on its owner host. */
-function WorktreePortRow({ port }: { port: WorkspacePort }): React.JSX.Element {
-  const settings = useAppStore((s) => s.settings)
-  const localhostLabelRoute = useLocalhostLabelRouteForPort(port)
-
-  const createBrowserTab = useAppStore((s) => s.createBrowserTab)
-  const setRemoteBrowserPageHandle = useAppStore((s) => s.setRemoteBrowserPageHandle)
+function WorktreePortRow({
+  port,
+  label
+}: {
+  port: WorkspacePort
+  label?: string
+}): React.JSX.Element {
   const replaceWorkspacePortScans = useAppStore((s) => s.replaceWorkspacePortScans)
   const setWorkspacePortScanRefreshing = useAppStore((s) => s.setWorkspacePortScanRefreshing)
   const recordFeatureInteraction = useAppStore((s) => s.recordFeatureInteraction)
@@ -117,46 +118,7 @@ function WorktreePortRow({ port }: { port: WorkspacePort }): React.JSX.Element {
     'Open in Browser'
   )
 
-  const handleOpen = useCallback(
-    (event: React.MouseEvent<HTMLButtonElement>) => {
-      event.stopPropagation()
-      recordFeatureInteraction('ports')
-      const openInOrcaBrowser = resolvePortOpenInOrcaBrowser({
-        settings,
-        // Why: keyboard activations have detail=0; only pointer clicks carry
-        // the modifier intent for the system-browser escape hatch.
-        event: event.detail > 0 ? event : null,
-        isMac: navigator.userAgent.includes('Mac')
-      })
-      void openWorkspacePortInBrowser({
-        port,
-        runtimeTarget,
-        createBrowserTab,
-        setRemoteBrowserPageHandle,
-        openInOrcaBrowser,
-        localhostLabelRoute
-      }).then((result) => {
-        if (!result.ok) {
-          toast.error(
-            translate(
-              'auto.components.sidebar.WorktreeCardPorts.d1113f4660',
-              'Failed to open browser'
-            ),
-            { description: result.reason }
-          )
-        }
-      })
-    },
-    [
-      createBrowserTab,
-      port,
-      localhostLabelRoute,
-      recordFeatureInteraction,
-      runtimeTarget,
-      setRemoteBrowserPageHandle,
-      settings
-    ]
-  )
+  const handleOpen = useOpenWorkspacePort(port)
 
   const handleCopy = useCallback(
     (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -235,6 +197,11 @@ function WorktreePortRow({ port }: { port: WorkspacePort }): React.JSX.Element {
         <Tooltip>
           <TooltipTrigger asChild>
             <span className="flex min-w-0 select-text items-baseline gap-1 overflow-hidden pr-[3.75rem] text-[11px] text-muted-foreground">
+              {label ? (
+                <span className="min-w-0 shrink-0 truncate font-medium text-foreground">
+                  {label}
+                </span>
+              ) : null}
               <span className="min-w-0 flex-1 truncate">{processLabel}</span>
               <span className="shrink-0 text-muted-foreground/45">-</span>
               <span className="min-w-0 flex-[1.1] truncate text-muted-foreground/70">
@@ -244,6 +211,7 @@ function WorktreePortRow({ port }: { port: WorkspacePort }): React.JSX.Element {
           </TooltipTrigger>
           <TooltipContent side="top" sideOffset={4}>
             <span className="flex items-center gap-1.5">
+              {label ? <span className="font-medium">{label}</span> : null}
               <span>{processLabel}</span>
               <span className="text-muted-foreground/60">-</span>
               <span>{address}</span>
@@ -287,9 +255,16 @@ function WorktreePortRow({ port }: { port: WorkspacePort }): React.JSX.Element {
 export function WorktreeCardPortsDetails({
   ports
 }: WorktreeCardPortsProps): React.JSX.Element | null {
+  const labels = useWorkspacePortLabels(ports)
   if (ports.length === 0) {
     return null
   }
+  const labelByPort = new Map(labels.map((entry) => [entry.port, entry.label]))
+  const frontend = pickFrontendPortLabel(
+    labels,
+    ports.map((port) => port.port)
+  )
+  const frontendPort = frontend ? ports.find((port) => port.port === frontend.port) : undefined
 
   return (
     <WorktreeCardDetailSection>
@@ -303,10 +278,13 @@ export function WorktreeCardPortsDetails({
             ({ports.length})
           </span>
         </span>
+        {frontend && frontendPort ? (
+          <OpenFrontendButton port={frontendPort} label={frontend.label} />
+        ) : null}
       </div>
       <WorktreeCardDetailSectionContent className="space-y-0.5">
         {ports.map((port) => (
-          <WorktreePortRow key={port.id} port={port} />
+          <WorktreePortRow key={port.id} port={port} label={labelByPort.get(port.port)} />
         ))}
       </WorktreeCardDetailSectionContent>
     </WorktreeCardDetailSection>

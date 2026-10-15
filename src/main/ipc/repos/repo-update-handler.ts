@@ -38,6 +38,7 @@ export function registerRepoUpdateHandler(mainWindow: BrowserWindow, store: Stor
             | 'kind'
             | 'symlinkPaths'
             | 'pythonVenvPath'
+            | 'portLabelsCommand'
             | 'issueSourcePreference'
             | 'forkSyncMode'
             | 'externalWorktreeVisibilityPromptDismissedAt'
@@ -105,6 +106,14 @@ export function registerRepoUpdateHandler(mainWindow: BrowserWindow, store: Stor
           delete updates.pythonVenvPath
         } else {
           updates.pythonVenvPath = v.trim() || undefined
+        }
+      }
+      if ('portLabelsCommand' in updates && updates.portLabelsCommand !== undefined) {
+        const v = updates.portLabelsCommand as unknown
+        if (typeof v !== 'string') {
+          delete updates.portLabelsCommand
+        } else {
+          updates.portLabelsCommand = v.trim() || undefined
         }
       }
       if ('worktreeBasePath' in updates && updates.worktreeBasePath !== undefined) {

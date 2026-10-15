@@ -403,6 +403,31 @@ describe('repos:add + repos:clone', () => {
     expect(mockStore.updateRepo).toHaveBeenLastCalledWith(updated.id, {})
   })
 
+  it('persists a trimmed port labels command and drops a non-string one', () => {
+    const updated = {
+      id: 'repo-port-labels',
+      path: '/tmp/repo-port-labels',
+      displayName: 'repo-port-labels',
+      kind: 'git',
+      badgeColor: '#22c55e'
+    }
+    mockStore.updateRepo.mockReturnValue(updated)
+
+    handlers.get('repos:update')!(null, {
+      repoId: updated.id,
+      updates: { portLabelsCommand: ' mise run print-urls ' }
+    })
+    expect(mockStore.updateRepo).toHaveBeenLastCalledWith(updated.id, {
+      portLabelsCommand: 'mise run print-urls'
+    })
+
+    handlers.get('repos:update')!(null, {
+      repoId: updated.id,
+      updates: { portLabelsCommand: 7 }
+    })
+    expect(mockStore.updateRepo).toHaveBeenLastCalledWith(updated.id, {})
+  })
+
   it('persists agent worktree visibility through local repos:update', () => {
     const updated = {
       id: 'repo-agent-visibility',

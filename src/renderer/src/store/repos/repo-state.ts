@@ -43,6 +43,7 @@ export type RepoUpdate = Partial<
     | 'kind'
     | 'symlinkPaths'
     | 'pythonVenvPath'
+    | 'portLabelsCommand'
     | 'issueSourcePreference'
     | 'forkSyncMode'
     | 'externalWorktreeVisibilityPromptDismissedAt'

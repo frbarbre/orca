@@ -21,7 +21,10 @@ const FORK_CARD_DISPLAY_OPTIONS: { after: WorktreeCardProperty; option: CardDisp
     option: {
       id: 'pr-author',
       get label() {
-        return translate('auto.components.sidebar.SidebarWorkspaceOptionsMenu.prAuthor', 'PR author')
+        return translate(
+          'auto.components.sidebar.SidebarWorkspaceOptionsMenu.prAuthor',
+          'PR author'
+        )
       }
     }
   }
@@ -31,6 +34,8 @@ const FORK_CARD_DISPLAY_OPTIONS: { after: WorktreeCardProperty; option: CardDisp
 export function withForkCardDisplayOptions(options: CardDisplayOption[]): CardDisplayOption[] {
   return options.flatMap((option) => [
     option,
-    ...FORK_CARD_DISPLAY_OPTIONS.filter((fork) => fork.after === option.id).map((fork) => fork.option)
+    ...FORK_CARD_DISPLAY_OPTIONS.filter((fork) => fork.after === option.id).map(
+      (fork) => fork.option
+    )
   ])
 }

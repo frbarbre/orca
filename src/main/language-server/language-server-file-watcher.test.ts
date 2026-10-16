@@ -1,14 +1,23 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createProjectFileWatcher } from './language-server-file-watcher'
-import type { WatcherProcessCallback } from '../ipc/parcel-watcher-process'
+import type {
+  WatcherProcessCallback,
+  WatcherProcessSubscribeOptions
+} from '../ipc/parcel-watcher-process'
 
 describe('createProjectFileWatcher', () => {
   let deliver: WatcherProcessCallback = () => undefined
   const unsubscribe = vi.fn(async () => undefined)
-  const subscribe = vi.fn(async (_dir: string, callback: WatcherProcessCallback) => {
-    deliver = callback
-    return { unsubscribe }
-  })
+  const subscribe = vi.fn(
+    async (
+      _dir: string,
+      callback: WatcherProcessCallback,
+      _opts: WatcherProcessSubscribeOptions
+    ) => {
+      deliver = callback
+      return { unsubscribe }
+    }
+  )
 
   beforeEach(() => {
     vi.useFakeTimers()

@@ -3,6 +3,7 @@ import { app, ipcMain } from 'electron'
 import { isLanguageServerLanguage, type LanguageServerRequest } from '../../shared/language-server'
 import { createLanguageServerService } from '../language-server/language-server-service'
 import { startLanguageServerSession } from '../language-server/language-server-process'
+import { createProjectFileWatcher } from '../language-server/language-server-file-watcher'
 
 function readRequest(value: unknown): LanguageServerRequest | null {
   if (typeof value !== 'object' || value === null) {
@@ -70,7 +71,8 @@ export function registerLanguageServerHandlers(): void {
     exists: existsSync,
     readPreview,
     readFile,
-    startSession: startLanguageServerSession
+    startSession: startLanguageServerSession,
+    watchFiles: createProjectFileWatcher()
   })
   ipcMain.handle('languageServer:definition', async (_event, args: unknown) => {
     const request = readRequest(args)

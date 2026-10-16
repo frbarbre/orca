@@ -21,7 +21,7 @@ const tsRequest = {
   filePath: '/repo/apps/frontend/src/a.tsx'
 }
 
-function setup() {
+function setup(watchFiles?: Parameters<typeof createLanguageServerService>[0]['watchFiles']) {
   const definition = vi.fn(async () => [
     { filePath: '/repo/apps/backend/b.py', line: 0, character: 0 }
   ])
@@ -31,9 +31,17 @@ function setup() {
     { filePath: '/repo/apps/backend/c.py', line: 4, character: 10 },
     { filePath: '/repo/apps/backend/c.py', line: 9, character: 10 }
   ])
-  const sessions: { dispose: ReturnType<typeof vi.fn> }[] = []
+  const sessions: { dispose: ReturnType<typeof vi.fn>; filesChanged: ReturnType<typeof vi.fn> }[] =
+    []
   const startSession = vi.fn(() => {
-    const session = { closed: false, dispose: vi.fn(), definition, hover, references }
+    const session = {
+      closed: false,
+      dispose: vi.fn(),
+      filesChanged: vi.fn(),
+      definition,
+      hover,
+      references
+    }
     sessions.push(session)
     return session
   })
@@ -49,7 +57,8 @@ function setup() {
       path === '/repo/apps/backend/.venv/bin/pyrefly' ||
       path === '/repo/apps/frontend/tsconfig.json' ||
       path === '/repo/apps/frontend/node_modules/.bin/tsgo',
-    startSession
+    startSession,
+    ...(watchFiles ? { watchFiles } : {})
   })
   return { service, startSession, definition, hover, references, sessions, readPreview, readFile }
 }
@@ -192,6 +201,27 @@ describe('language server service', () => {
     service.stopLanguage('typescript')
     expect(sessions[1]?.dispose).toHaveBeenCalled()
     expect(sessions[0]?.dispose).not.toHaveBeenCalled()
+  })
+
+  it("watches each server's project and passes its disk changes on until the server stops", async () => {
+    const stopWatching = vi.fn()
+    let onChanges: (changes: { filePath: string; type: 'update' }[]) => void = () => undefined
+    const watchFiles = vi.fn((_root: string, listener: typeof onChanges) => {
+      onChanges = listener
+      return stopWatching
+    })
+    const { service, sessions } = setup(watchFiles)
+    await service.definition(request)
+
+    expect(watchFiles).toHaveBeenCalledWith('/repo/apps/backend', expect.any(Function))
+    onChanges([{ filePath: '/repo/apps/backend/b.py', type: 'update' }])
+    expect(sessions[0]?.filesChanged).toHaveBeenCalledWith([
+      { filePath: '/repo/apps/backend/b.py', type: 'update' }
+    ])
+
+    service.stopLanguage('python')
+    expect(sessions[0]?.dispose).toHaveBeenCalled()
+    expect(stopWatching).toHaveBeenCalled()
   })
 
   it('refuses files at a relative path or of the wrong language', async () => {

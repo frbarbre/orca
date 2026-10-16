@@ -11,12 +11,23 @@ export type LspTransport = {
 
 export type DefinitionRequest = { filePath: string; text: string; line: number; character: number }
 
+export type WatchedFileChange = { filePath: string; type: 'create' | 'update' | 'delete' }
+
 export type LspSession = {
   readonly closed: boolean
   definition: (request: DefinitionRequest) => Promise<LanguageServerLocation[]>
   hover: (request: DefinitionRequest) => Promise<string | null>
   references: (request: DefinitionRequest) => Promise<LanguageServerLocation[]>
+  /** Fork: what changed on disk, so the server's view of the project stays current. */
+  filesChanged: (changes: readonly WatchedFileChange[]) => void
   dispose: () => void
+}
+
+// LSP FileChangeType: Created = 1, Changed = 2, Deleted = 3.
+const FILE_CHANGE_TYPE: Record<WatchedFileChange['type'], number> = {
+  create: 1,
+  update: 2,
+  delete: 3
 }
 
 type Position = { line: number; character: number }
@@ -102,6 +113,7 @@ export function createLspSession({
   const documents = new Map<string, { version: number; text: string }>()
   let nextId = 1
   let closed = false
+  let ready = false
   let initialized: Promise<void> | null = null
 
   const send = (message: LspMessage): void => {
@@ -176,6 +188,9 @@ export function createLspSession({
         rootUri,
         workspaceFolders: [{ uri: rootUri, name: rootPath }],
         capabilities: {
+          // Why: the servers rely on the client to watch the disk; without this an agent's new
+          // module or export stayed unknown until the server was restarted.
+          workspace: { didChangeWatchedFiles: { dynamicRegistration: false } },
           textDocument: {
             definition: { linkSupport: true },
             hover: { contentFormat: ['markdown', 'plaintext'] },
@@ -184,6 +199,7 @@ export function createLspSession({
         }
       })
       send({ method: 'initialized', params: {} })
+      ready = true
     })()
     return initialized
   }
@@ -246,6 +262,29 @@ export function createLspSession({
         context: { includeDeclaration: true }
       })
       return Array.isArray(result) ? readDefinitionLocations(result) : []
+    },
+    filesChanged: (changes) => {
+      // Why drop early changes: a server that is still starting reads the disk as it comes up.
+      if (!ready || changes.length === 0) {
+        return
+      }
+      for (const { filePath } of changes) {
+        const uri = pathToFileURL(filePath).href
+        // Why close: an open document is the server's copy of the file, so it would never see
+        // the new disk content; the next request reopens it with the editor's text.
+        if (documents.delete(uri)) {
+          send({ method: 'textDocument/didClose', params: { textDocument: { uri } } })
+        }
+      }
+      send({
+        method: 'workspace/didChangeWatchedFiles',
+        params: {
+          changes: changes.map(({ filePath, type }) => ({
+            uri: pathToFileURL(filePath).href,
+            type: FILE_CHANGE_TYPE[type]
+          }))
+        }
+      })
     },
     dispose: () => {
       if (closed) {

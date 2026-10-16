@@ -179,4 +179,46 @@ describe('LSP session', () => {
     await expect(pending).rejects.toThrow('tsgo exited')
     expect(session.closed).toBe(true)
   })
+
+  it('tells the server about files changed on disk and lets it reread an opened one', async () => {
+    const server = fakeServer(null)
+    const session = createLspSession({ transport: server.transport, rootPath: '/repo' })
+    await session.definition(request('old text'))
+
+    session.filesChanged([
+      { filePath: '/repo/apps/backend/a.py', type: 'update' },
+      { filePath: '/repo/apps/backend/new.py', type: 'create' },
+      { filePath: '/repo/apps/backend/gone.py', type: 'delete' }
+    ])
+    await session.definition(request('new text'))
+
+    const initialize = server.received.find((message) => message.method === 'initialize')
+    expect(initialize?.params).toMatchObject({
+      capabilities: { workspace: { didChangeWatchedFiles: { dynamicRegistration: false } } }
+    })
+    const methods = server.received.map((message) => message.method)
+    expect(methods.slice(-4)).toEqual([
+      'textDocument/didClose',
+      'workspace/didChangeWatchedFiles',
+      'textDocument/didOpen',
+      'textDocument/definition'
+    ])
+    const watched = server.received.find(
+      (message) => message.method === 'workspace/didChangeWatchedFiles'
+    )
+    expect(watched?.params).toEqual({
+      changes: [
+        { uri: 'file:///repo/apps/backend/a.py', type: 2 },
+        { uri: 'file:///repo/apps/backend/new.py', type: 1 },
+        { uri: 'file:///repo/apps/backend/gone.py', type: 3 }
+      ]
+    })
+  })
+
+  it('sends nothing before the server is up', () => {
+    const server = fakeServer(null)
+    const session = createLspSession({ transport: server.transport, rootPath: '/repo' })
+    session.filesChanged([{ filePath: '/repo/a.py', type: 'update' }])
+    expect(server.received).toEqual([])
+  })
 })

@@ -47,7 +47,10 @@ describe('deriveCardCheckStatusFromRollup', () => {
     expect(deriveCardCheckStatusFromRollup(null)).toBe('neutral')
   })
 
-  it('counts a pending commit status as running', () => {
-    expect(deriveCardCheckStatusFromRollup([failed, { state: 'PENDING' }])).toBe('running')
+  it('counts a pending commit status as queued, as the checks panel does', () => {
+    const cancelled = { status: 'COMPLETED', conclusion: 'CANCELLED' }
+    const reviewsSatisfied = { __typename: 'StatusContext', state: 'PENDING' }
+    expect(deriveCardCheckStatusFromRollup([cancelled, reviewsSatisfied, passed])).toBe('failure')
+    expect(deriveCardCheckStatusFromRollup([passed, reviewsSatisfied])).toBe('success')
   })
 })

@@ -71,7 +71,8 @@ export function deriveCardCheckStatus(checks: readonly PRCheckDetail[]): CardChe
 /**
  * Fork: the sidebar card's read — a running check shows as running even beside a failed one,
  * and a queued check counts for nothing, so a failure only shows once nothing is still running.
- * Why a pending commit status counts as running: statuses carry no queued state to tell apart.
+ * Why a pending commit status counts as queued: it has no running state, and a status such as
+ * "Reviews satisfied" stays pending for hours, as the checks panel shows it.
  */
 export function deriveCardCheckStatusFromRollup(rollup: unknown): CardCheckStatus {
   if (!Array.isArray(rollup)) {
@@ -82,7 +83,7 @@ export function deriveCardCheckStatusFromRollup(rollup: unknown): CardCheckStatu
   for (const [index, entry] of rollup.entries()) {
     const raw: RawCheckRollup = entry && typeof entry === 'object' ? entry : {}
     const status = String(raw.status ?? '').toLowerCase()
-    if (status === 'in_progress' || String(raw.state ?? '').toLowerCase() === 'pending') {
+    if (status === 'in_progress') {
       return 'running'
     }
     const check = normalizeRollupCheck(raw, index)

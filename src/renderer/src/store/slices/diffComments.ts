@@ -27,6 +27,12 @@ export type DiffCommentsSlice = {
     commentIds: readonly string[],
     sentAt?: number
   ) => Promise<boolean>
+  /** Fork: the first time the agent asked finished a turn after this note was sent. */
+  markDiffCommentAnswered: (
+    worktreeId: string,
+    commentId: string,
+    answeredAt: number
+  ) => Promise<void>
   deleteDiffComment: (worktreeId: string, commentId: string) => Promise<void>
   clearDiffComments: (worktreeId: string, options?: DiffCommentsClearOptions) => Promise<boolean>
   clearDiffCommentsForFile: (
@@ -225,6 +231,26 @@ export const createDiffCommentsSlice: StateCreator<AppState, [], [], DiffComment
     }
     recordReviewNoteInteraction(get)
     return true
+  },
+
+  markDiffCommentAnswered: async (worktreeId, commentId, answeredAt) => {
+    const result = mutateDiffComments(set, worktreeId, (existing) => {
+      const target = existing.find((comment) => comment.id === commentId)
+      if (!target || target.answeredAt !== undefined) {
+        return null
+      }
+      return existing.map((comment) =>
+        comment.id === commentId ? { ...comment, answeredAt } : comment
+      )
+    })
+    if (!result) {
+      return
+    }
+    try {
+      await enqueueDiffCommentPersist(set, worktreeId, get, result)
+    } catch (err) {
+      console.error('Failed to persist diff comments:', err)
+    }
   },
 
   deleteDiffComment: async (worktreeId, commentId) => {

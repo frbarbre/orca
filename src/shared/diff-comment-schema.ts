@@ -36,6 +36,7 @@ export const DiffCommentSchema = z.object({
   updatedAt: z.number().finite().optional(),
   sentAt: z.number().finite().optional(),
   sentToPaneKey: z.string().optional(),
+  answeredAt: z.number().finite().optional(),
   scope: z.enum(['unstaged', 'staged', 'branch']).optional(),
   oldPath: z.string().optional(),
   diffIdentity: z.string().optional(),

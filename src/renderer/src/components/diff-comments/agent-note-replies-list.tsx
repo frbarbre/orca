@@ -1,6 +1,7 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { CornerDownLeft, LoaderCircle, MessageSquareReply, Trash, User } from 'lucide-react'
-import { noteThreadThinkingAgent } from './note-thread-thinking'
+import { noteThreadAnsweredAt, noteThreadThinkingAgent } from './note-thread-thinking'
+import type { AppState } from '@/store/types'
 import { AgentNoteIcon } from './agent-note-icon'
 import CommentMarkdown from '@/components/sidebar/CommentMarkdown'
 import type { DiffComment } from '../../../../shared/diff-comment-types'
@@ -24,13 +25,25 @@ function NoteThreadThinking({
   thread: readonly DiffComment[]
   worktreeId: string
 }): React.JSX.Element | null {
+  const tabIds = (state: AppState): string[] =>
+    (state.tabsByWorktree[worktreeId] ?? []).map((tab) => tab.id)
   const agent = useAppStore((state) =>
-    noteThreadThinkingAgent(
-      thread,
-      (state.tabsByWorktree[worktreeId] ?? []).map((tab) => tab.id),
-      state.agentStatusByPaneKey
-    )
+    noteThreadThinkingAgent(thread, tabIds(state), state.agentStatusByPaneKey)
   )
+  const answeredAt = useAppStore((state) =>
+    noteThreadAnsweredAt(thread, tabIds(state), state.agentStatusByPaneKey)
+  )
+  const questionId = thread.at(-1)?.id
+  const questionWorktreeId = thread.at(-1)?.worktreeId
+  // Why store it: the agent's state history is not kept across restarts, so an answered
+  // question would otherwise look unanswered again the next time its tab gets busy.
+  useEffect(() => {
+    if (answeredAt !== null && questionId && questionWorktreeId) {
+      void useAppStore
+        .getState()
+        .markDiffCommentAnswered(questionWorktreeId, questionId, answeredAt)
+    }
+  }, [answeredAt, questionId, questionWorktreeId])
   if (!agent) {
     return null
   }

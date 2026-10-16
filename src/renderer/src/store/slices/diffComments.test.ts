@@ -499,6 +499,16 @@ describe('clearDeliveredDiffComments', () => {
     expect(store.getState().getDiffComments(WT)[0]?.sentToPaneKey).toBe('tab-1:leaf-1')
   })
 
+  it('marks a sent note answered once, and keeps the first time', async () => {
+    const store = createTestStore()
+    seed(store, [makeComment({ id: 'c1', sentAt: 2 })])
+
+    await store.getState().markDiffCommentAnswered(WT, 'c1', 5)
+    await store.getState().markDiffCommentAnswered(WT, 'c1', 9)
+
+    expect(store.getState().getDiffComments(WT)[0]?.answeredAt).toBe(5)
+  })
+
   it('leaves unsent a note that changed while delivery was pending', async () => {
     const store = createTestStore()
     const sentSnapshot = makeComment({ id: 'c1', body: 'old body' })

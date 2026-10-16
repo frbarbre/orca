@@ -50,6 +50,8 @@ export type DiffComment = {
   sentAt?: number
   /** Fork: the agent pane it was handed to, when known, to show that agent working on a reply. */
   sentToPaneKey?: string
+  /** Fork: when the agent it was sent to finished a turn after it; stops the thinking row. */
+  answeredAt?: number
   scope?: DiffReviewScope
   oldPath?: string
   diffIdentity?: string

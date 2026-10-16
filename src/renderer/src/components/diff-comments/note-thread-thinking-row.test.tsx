@@ -8,7 +8,8 @@ const state = vi.hoisted(() => ({
   tabsByWorktree: { 'wt-1': [{ id: 'tab-1' }] },
   agentStatusByPaneKey: {
     'tab-1:leaf-1': { state: 'working', agentType: 'claude', prompt: '', updatedAt: 1 }
-  }
+  } as Record<string, unknown>,
+  markDiffCommentAnswered: vi.fn()
 }))
 
 vi.mock('@/store', () => {
@@ -47,5 +48,26 @@ describe('NoteThread while a question waits for its answer', () => {
   it('shows nothing once the agent has answered', () => {
     render(<NoteThread root={root} replies={[]} worktreeId="wt-1" onDelete={vi.fn()} />)
     expect(screen.queryByRole('status')).toBeNull()
+  })
+
+  it('marks an old question answered when its tab has since moved on to other work', () => {
+    state.agentStatusByPaneKey['tab-1:leaf-1'] = {
+      state: 'working',
+      agentType: 'claude',
+      prompt: '',
+      updatedAt: 1,
+      stateHistory: [{ state: 'done', prompt: '', startedAt: 7 }]
+    } as never
+    const question = {
+      ...root,
+      id: 'q1',
+      agentAuthor: undefined,
+      sentAt: 2,
+      sentToPaneKey: 'tab-1:leaf-1'
+    }
+    render(<NoteThread root={root} replies={[question]} worktreeId="wt-1" onDelete={vi.fn()} />)
+
+    expect(screen.queryByRole('status')).toBeNull()
+    expect(state.markDiffCommentAnswered).toHaveBeenCalledWith('wt-1', 'q1', 7)
   })
 })

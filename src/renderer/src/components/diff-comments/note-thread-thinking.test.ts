@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { DiffComment } from '../../../../shared/diff-comment-types'
 import type { AgentStatusEntry } from '../../../../shared/agent-status-types'
-import { noteThreadThinkingAgent } from './note-thread-thinking'
+import { noteThreadAnsweredAt, noteThreadThinkingAgent } from './note-thread-thinking'
 
 const note: DiffComment = {
   id: 'n1',
@@ -39,6 +39,36 @@ describe('noteThreadThinkingAgent', () => {
     expect(
       noteThreadThinkingAgent([note], ['tab-1', 'tab-2'], { 'tab-2:leaf-1': status('working') })
     ).toBeNull()
+  })
+
+  it('is answered once the agent finished a turn after the question, even if it works again', () => {
+    const busyAgain = {
+      'tab-1:leaf-1': {
+        ...status('working'),
+        stateHistory: [
+          { state: 'working', prompt: '', startedAt: 3 },
+          { state: 'done', prompt: '', startedAt: 5 }
+        ]
+      } as AgentStatusEntry
+    }
+    expect(noteThreadThinkingAgent([note], ['tab-1'], busyAgain)).toBeNull()
+    expect(noteThreadAnsweredAt([note], ['tab-1'], busyAgain)).toBe(5)
+  })
+
+  it('stays thinking while the turn that took the question is still going', () => {
+    const answering = {
+      'tab-1:leaf-1': {
+        ...status('working'),
+        stateHistory: [{ state: 'done', prompt: '', startedAt: 1 }]
+      } as AgentStatusEntry
+    }
+    expect(noteThreadThinkingAgent([note], ['tab-1'], answering)).toBe('Claude')
+    expect(noteThreadAnsweredAt([note], ['tab-1'], answering)).toBeNull()
+  })
+
+  it('never thinks about a question already marked answered', () => {
+    const working = { 'tab-1:leaf-1': status('working') }
+    expect(noteThreadThinkingAgent([{ ...note, answeredAt: 4 }], ['tab-1'], working)).toBeNull()
   })
 
   it("falls back to a working agent in the workspace when it doesn't know", () => {

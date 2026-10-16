@@ -1,5 +1,5 @@
 import { createElement } from 'react'
-import { GitMerge } from 'lucide-react'
+import { GitMerge, LoaderCircle } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { getReviewStateIcon } from '@/components/github/review-state-presentation'
 import { PullRequestIcon } from './WorktreeCardHelpers'
@@ -43,11 +43,25 @@ export function getReviewChecksTone(status: WorktreeCardPrDisplay['status']): st
   return null
 }
 
+// Fork: the card reads its own check status when the provider gives one, so a running check
+// spins instead of the PR going red, and queued checks change nothing.
+function cardCheckStatus(review: WorktreeCardPrDisplay): WorktreeCardPrDisplay['status'] {
+  if (!review.cardStatus) {
+    return review.status
+  }
+  return review.cardStatus === 'running' ? 'pending' : review.cardStatus
+}
+
+function isRunningOpenReview(review: WorktreeCardPrDisplay): boolean {
+  return review.cardStatus === 'running' && (!review.state || review.state === 'open')
+}
+
 function getCheckTone(review: WorktreeCardPrDisplay): string | null {
-  if ((review.state && review.state !== 'open') || (!review.state && review.status === 'success')) {
+  const status = cardCheckStatus(review)
+  if ((review.state && review.state !== 'open') || (!review.state && status === 'success')) {
     return null
   }
-  return getReviewChecksTone(review.status)
+  return getReviewChecksTone(status)
 }
 
 function getStateTone(state: WorktreeCardPrDisplay['state']): string {
@@ -77,8 +91,14 @@ export function ReviewIcon({
 }): React.JSX.Element {
   const providerIcon =
     variant === 'provider' && review.provider === 'gitlab' ? GitMerge : PullRequestIcon
-  const Icon = getReviewStateIcon(review.state) ?? providerIcon
+  const Icon = isRunningOpenReview(review)
+    ? LoaderCircle
+    : (getReviewStateIcon(review.state) ?? providerIcon)
   return createElement(Icon, {
-    className: cn(className, getCheckTone(review) ?? getStateTone(review.state))
+    className: cn(
+      className,
+      isRunningOpenReview(review) && 'animate-spin',
+      getCheckTone(review) ?? getStateTone(review.state)
+    )
   })
 }

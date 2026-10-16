@@ -1,6 +1,6 @@
-import { summarizeProviderChecks } from './provider-check-summary'
+import { classifyCheckOutcome, summarizeProviderChecks } from './provider-check-summary'
 import type { PRCheckDetail } from './github/check-types'
-import type { CheckStatus } from './github/pull-request-types'
+import type { CardCheckStatus, CheckStatus } from './github/pull-request-types'
 
 /** Derives the review status from the normalized check contract. */
 export function derivePRCheckStatus(checks: readonly PRCheckDetail[]): CheckStatus {
@@ -51,4 +51,47 @@ export function derivePRCheckStatusFromRollup(rollup: unknown): CheckStatus {
       normalizeRollupCheck(raw && typeof raw === 'object' ? (raw as RawCheckRollup) : {}, index)
     )
   )
+}
+
+/** Fork: {@link deriveCardCheckStatusFromRollup} for a fetched check list. */
+export function deriveCardCheckStatus(checks: readonly PRCheckDetail[]): CardCheckStatus {
+  if (checks.some((check) => check.status === 'in_progress')) {
+    return 'running'
+  }
+  const outcomes = checks
+    .filter((check) => check.status === 'completed')
+    .map((check) => classifyCheckOutcome(check))
+  return outcomes.includes('failed')
+    ? 'failure'
+    : outcomes.includes('passed')
+      ? 'success'
+      : 'neutral'
+}
+
+/**
+ * Fork: the sidebar card's read — a running check shows as running even beside a failed one,
+ * and a queued check counts for nothing, so a failure only shows once nothing is still running.
+ * Why a pending commit status counts as running: statuses carry no queued state to tell apart.
+ */
+export function deriveCardCheckStatusFromRollup(rollup: unknown): CardCheckStatus {
+  if (!Array.isArray(rollup)) {
+    return 'neutral'
+  }
+  let failed = false
+  let passed = false
+  for (const [index, entry] of rollup.entries()) {
+    const raw: RawCheckRollup = entry && typeof entry === 'object' ? entry : {}
+    const status = String(raw.status ?? '').toLowerCase()
+    if (status === 'in_progress' || String(raw.state ?? '').toLowerCase() === 'pending') {
+      return 'running'
+    }
+    const check = normalizeRollupCheck(raw, index)
+    if (check.status !== 'completed') {
+      continue
+    }
+    const outcome = classifyCheckOutcome(check)
+    failed ||= outcome === 'failed'
+    passed ||= outcome === 'passed'
+  }
+  return failed ? 'failure' : passed ? 'success' : 'neutral'
 }

@@ -1,6 +1,8 @@
 export type PRState = 'open' | 'closed' | 'merged' | 'draft'
 export type IssueState = 'open' | 'closed'
 export type CheckStatus = 'pending' | 'success' | 'failure' | 'neutral'
+/** Fork: the sidebar card's read of the checks — running wins, and queued checks count for nothing. */
+export type CardCheckStatus = 'running' | 'success' | 'failure' | 'neutral'
 
 export type PRMergeableState = 'MERGEABLE' | 'CONFLICTING' | 'UNKNOWN'
 export type PRReviewDecision = 'APPROVED' | 'CHANGES_REQUESTED' | 'REVIEW_REQUIRED'
@@ -54,6 +56,7 @@ export type PRInfo = {
   state: PRState
   url: string
   checksStatus: CheckStatus
+  cardChecksStatus?: CardCheckStatus
   updatedAt: string
   mergeable: PRMergeableState
   reviewDecision?: PRReviewDecision | null

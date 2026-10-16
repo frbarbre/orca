@@ -1,4 +1,5 @@
 import type {
+  CardCheckStatus,
   CheckStatus,
   GitHubRepositoryIdentity,
   PRConflictSummary,
@@ -34,6 +35,8 @@ export type HostedReviewInfo = {
   state: HostedReviewState
   url: string
   status: CheckStatus
+  /** Fork: the sidebar card's read of the checks; absent from providers that do not report it. */
+  cardStatus?: CardCheckStatus
   updatedAt: string
   mergeable: PRMergeableState
   reviewDecision?: PRReviewDecision | null

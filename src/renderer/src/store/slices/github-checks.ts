@@ -3,7 +3,7 @@ import type { PRCheckDetail } from '../../../../shared/github/check-types'
 import type { GitHubOwnerRepo } from '../../../../shared/github/pull-request-types'
 import { getGitHubPRCacheKey } from './github-cache-key'
 import { githubRepoIdentityKey } from '../../../../shared/github/repository-identity-key'
-import { derivePRCheckStatus } from '../../../../shared/pr-check-status'
+import { deriveCardCheckStatus, derivePRCheckStatus } from '../../../../shared/pr-check-status'
 
 export function normalizeBranchName(branch: string): string {
   return branch.replace(/^refs\/heads\//, '')
@@ -52,7 +52,11 @@ export function syncPRChecksStatus(
   }
 
   const nextStatus = deriveCheckStatusFromChecks(checks)
-  if (prEntry.data.checksStatus === nextStatus) {
+  const nextCardStatus = deriveCardCheckStatus(checks)
+  if (
+    prEntry.data.checksStatus === nextStatus &&
+    prEntry.data.cardChecksStatus === nextCardStatus
+  ) {
     return null
   }
 
@@ -63,7 +67,8 @@ export function syncPRChecksStatus(
         ...prEntry,
         data: {
           ...prEntry.data,
-          checksStatus: nextStatus
+          checksStatus: nextStatus,
+          cardChecksStatus: nextCardStatus
         }
       }
     }

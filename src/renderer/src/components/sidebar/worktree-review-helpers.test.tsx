@@ -87,6 +87,38 @@ describe('ReviewIcon', () => {
     expect(failing).toContain('text-rose-500/85')
   })
 
+  it('spins while checks run, and is red only once nothing runs and a check failed', () => {
+    const base = { provider: 'github' as const, number: 1, title: 'Open', state: 'open' as const }
+    const running = renderToStaticMarkup(
+      <ReviewIcon
+        review={{ ...base, status: 'failure', cardStatus: 'running' }}
+        className="size-3"
+        variant="generic"
+      />
+    )
+    expect(running).toContain('animate-spin')
+    expect(running).not.toContain('text-rose-500/85')
+
+    const failedWithQueued = renderToStaticMarkup(
+      <ReviewIcon
+        review={{ ...base, status: 'failure', cardStatus: 'failure' }}
+        className="size-3"
+        variant="generic"
+      />
+    )
+    expect(failedWithQueued).toContain('text-rose-500/85')
+    expect(failedWithQueued).not.toContain('animate-spin')
+
+    const passingWithQueued = renderToStaticMarkup(
+      <ReviewIcon
+        review={{ ...base, status: 'pending', cardStatus: 'success' }}
+        className="size-3"
+        variant="generic"
+      />
+    )
+    expect(passingWithQueued).toContain('text-emerald-500/80')
+  })
+
   it('renders merged reviews with the merge glyph', () => {
     const merged = renderToStaticMarkup(
       <ReviewIcon

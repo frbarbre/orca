@@ -5,6 +5,7 @@ import type {
   GitHubPRStack
 } from '../../../../shared/github/pull-request-types'
 import { deriveCheckStatus, mapPRState } from '../../mappers'
+import { deriveCardCheckStatusFromRollup } from '../../../../shared/pr-check-status'
 import type { OwnerRepo } from '../../gh-utils'
 import type { PullRequestLookupData } from './pull-request-lookup-data'
 
@@ -39,6 +40,7 @@ export function assemblePRRefreshFoundOutcome(args: {
       state: mapPRState(data.state, data.isDraft),
       url: data.url,
       checksStatus: deriveCheckStatus(data.statusCheckRollup),
+      cardChecksStatus: deriveCardCheckStatusFromRollup(data.statusCheckRollup),
       updatedAt: data.updatedAt,
       mergeable,
       ...(data.reviewDecision !== undefined ? { reviewDecision: data.reviewDecision } : {}),

@@ -29,4 +29,11 @@ describe('hostedReviewInfoFromGitHubPRInfo', () => {
       githubRepository
     })
   })
+
+  it("carries the card's check status, which ignores queued checks", () => {
+    expect(hostedReviewInfoFromGitHubPRInfo({ ...pr, cardChecksStatus: 'running' })).toMatchObject({
+      cardStatus: 'running'
+    })
+    expect(hostedReviewInfoFromGitHubPRInfo(pr)).not.toHaveProperty('cardStatus')
+  })
 })

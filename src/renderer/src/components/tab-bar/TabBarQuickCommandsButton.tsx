@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Play } from 'lucide-react'
 import { useAppStore } from '@/store'
+import { getTerminalQuickCommandHostPromptMaxLength } from '@/lib/terminal-quick-command-host-prompt-limit'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import {
   createTerminalQuickCommandDraft,
@@ -30,11 +31,13 @@ import { terminalQuickCommandMatchesWorkspaceProject } from '@/lib/terminal-quic
 type TabBarQuickCommandsButtonProps = {
   worktreeId: string
   groupId: string
+  isFocused: boolean
 }
 
 export function TabBarQuickCommandsButton({
   worktreeId,
-  groupId
+  groupId,
+  isFocused
 }: TabBarQuickCommandsButtonProps): React.JSX.Element | null {
   const recentByGroup = useAppStore((s) => s.recentQuickCommandIdByGroup)
   const repos = useAppStore((s) => s.repos)
@@ -119,11 +122,8 @@ export function TabBarQuickCommandsButton({
     })
   }
 
-  const handleSaveCommand = (next: TerminalQuickCommand): void => {
-    if (editor) {
-      void useAppStore.getState().upsertTerminalQuickCommand(editor.hostId, next)
-    }
-  }
+  const handleSaveCommand = async (next: TerminalQuickCommand): Promise<boolean> =>
+    editor ? await useAppStore.getState().upsertTerminalQuickCommand(editor.hostId, next) : false
 
   const handleDeleteCommand = async (entry: HostedTerminalQuickCommand): Promise<void> => {
     const { command } = entry
@@ -162,6 +162,9 @@ export function TabBarQuickCommandsButton({
     groupId,
     onRun: repoId && mostRecent ? () => handleRun(mostRecent) : null
   })
+  const editorPromptMaxLength = useAppStore((state) =>
+    editor ? getTerminalQuickCommandHostPromptMaxLength(state, editor.hostId) : undefined
+  )
   const editorRepos = editor?.hostId.startsWith('runtime:')
     ? repos.filter((repo) => getRepoExecutionHostId(repo) === editor.hostId)
     : repos
@@ -190,7 +193,7 @@ export function TabBarQuickCommandsButton({
               )}
             >
               <Play className="size-3.5" />
-              <span className="text-[12px] font-medium">
+              <span className="text-[12px] font-medium @max-[480px]/tab-strip:hidden">
                 {translate(
                   'auto.components.tab.bar.TabBarQuickCommandsButton.a2c7a33831',
                   'Command'
@@ -210,6 +213,7 @@ export function TabBarQuickCommandsButton({
           mode={editor?.mode ?? 'add'}
           command={editor?.command ?? createTerminalQuickCommandDraft({ type: 'repo', repoId })}
           repos={editorRepos}
+          agentPromptMaxLength={editorPromptMaxLength}
           onOpenChange={(open) => !open && setEditor(null)}
           onSave={handleSaveCommand}
         />
@@ -220,6 +224,7 @@ export function TabBarQuickCommandsButton({
   return (
     <>
       <TabBarQuickCommandsMenu
+        isFocused={isFocused}
         repoCommands={repoCommands}
         globalCommands={globalCommands}
         mostRecent={mostRecent}
@@ -239,6 +244,7 @@ export function TabBarQuickCommandsButton({
         mode={editor?.mode ?? 'add'}
         command={editor?.command ?? createTerminalQuickCommandDraft({ type: 'repo', repoId })}
         repos={editorRepos}
+        agentPromptMaxLength={editorPromptMaxLength}
         onOpenChange={(open) => !open && setEditor(null)}
         onSave={handleSaveCommand}
       />

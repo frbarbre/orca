@@ -23,26 +23,13 @@ import { usePendingReviewQueue } from '@/components/pending-review/use-pending-r
 import { PrPanelSections, type PrPanelSection } from './pr-panel-sections'
 import { usePRCommentQueuePanel } from './use-pr-comment-queue-panel'
 import { translate } from '@/i18n/i18n'
-import type { ChecksPanelReview } from '../checks-panel-review'
-import type { ChecksPanelHostedReviewModifierDestination } from '../checks-panel-hosted-review-click-routing'
 import type { ChecksPanelActiveContentModel } from './active-content-props'
-type ReviewHeaderComponentProps = {
-  review: ChecksPanelReview
-  isRefreshing: boolean
-  canUnlinkReview: boolean
-  modifierHintDestination: ChecksPanelHostedReviewModifierDestination
-  onRefresh: () => void
-  onOpenReview: (event: React.MouseEvent<HTMLButtonElement>) => void
-  onUnlinkReview: () => void
-  onLinkAnotherReview: () => void
-}
+import { ChecksPanelReviewHeader } from './review-header'
 
 export function ChecksPanelActiveContent({
-  model,
-  ReviewHeaderComponent
+  model
 }: {
   model: ChecksPanelActiveContentModel
-  ReviewHeaderComponent: React.ComponentType<ReviewHeaderComponentProps>
 }): React.JSX.Element | null {
   const {
     activeConnectionId,
@@ -191,7 +178,7 @@ export function ChecksPanelActiveContent({
       {/* Hosted review header */}
       <div className="px-3 py-3 border-b border-border space-y-2.5">
         {/* Review number + state badge + refresh + open link */}
-        <ReviewHeaderComponent
+        <ChecksPanelReviewHeader
           review={activeReview}
           isRefreshing={isRefreshing}
           canUnlinkReview={activeReview.provider === 'github' ? true : linkedGitLabMR !== null}

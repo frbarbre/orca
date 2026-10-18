@@ -2,7 +2,6 @@ import type { GlobalSettings } from '../../../../shared/global-settings-types'
 import { translate } from '@/i18n/i18n'
 import { Label } from '../ui/label'
 import { ClaudeWebDefaultViewSetting } from './ClaudeWebDefaultViewSetting'
-import { NativeChatSupportedAgents } from './NativeChatSupportedAgents'
 import { SearchableSetting } from './SearchableSetting'
 import { SettingsSwitch } from './SettingsFormControls'
 import { getExperimentalSearchEntry } from './experimental-search'
@@ -40,7 +39,6 @@ export function NativeChatExperimentalSetting({
               'Supported new agents open in structured chat. Other agents open in the terminal; existing chats stay available.'
             )}
           </p>
-          <NativeChatSupportedAgents />
         </div>
         <SettingsSwitch
           checked={nativeChatEnabled}

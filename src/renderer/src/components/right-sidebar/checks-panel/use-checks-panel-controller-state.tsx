@@ -8,8 +8,7 @@ import { readDetectedAgentsForWorktree } from '@/lib/agent-detection-target-inve
 import { useMountedRef } from '@/hooks/useMountedRef'
 import { useConfirmationDialog } from '@/components/confirmation-dialog-context'
 import { getWorktreeGitIdentityDisplay } from '../../../../../shared/worktree/git-identity-display'
-import { resolveSourceControlLaunchPlatform } from '@/lib/source-control-launch-platform'
-import { getLocalProjectExecutionRuntimeContext } from '@/lib/local-preflight-context'
+import { resolveRepoWorktreeLaunchPlatform } from '@/lib/execution-host-facts'
 import { getRuntimeEnvironmentIdForWorktree } from '@/lib/worktree-runtime-owner'
 import { normalizeGlobalWindowsRuntimeDefault } from '../../../../../shared/project-execution-runtime'
 import {
@@ -234,13 +233,11 @@ export function useChecksPanelControllerState() {
   } = useChecksPanelCommentsState(prCommentScopeKey)
   const activeWorktreePath = activeWorktree?.path ?? null
   const activeWorktreePushTarget = activeWorktree?.pushTarget ?? null
-  const activeSourceControlLaunchPlatform = resolveSourceControlLaunchPlatform({
-    connectionId: activeConnectionId,
-    worktreePath: activeWorktreePath,
-    projectRuntime: activeConnectionId
-      ? undefined
-      : getLocalProjectExecutionRuntimeContext(useAppStore.getState(), activeWorktreeId)
-  })
+  // Why: agents run on the workspace's execution host, so its OS decides quoting (#27971).
+  const activeSourceControlLaunchPlatform =
+    activeWorktree && repo
+      ? resolveRepoWorktreeLaunchPlatform(useAppStore.getState(), repo, activeWorktree)
+      : undefined
   const runtimeEnvironmentId = useAppStore((s) =>
     getRuntimeEnvironmentIdForWorktree(s, activeWorktreeId)
   )

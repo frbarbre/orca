@@ -8,6 +8,7 @@ import {
 import { zoomDashboardPopoutIfFocused } from '../window/dashboard-popout-window'
 import { toggleSourceControlSectionHidden } from '../../shared/source-control-sections'
 import { buildPanelSectionsSubmenus } from '../menu/source-control-sections-menu'
+import { zoomWorkspaceSpaceWindowIfFocused } from '../window/workspace-space-window'
 import { recordCrashBreadcrumb } from '../crash-reporting/crash-breadcrumb-store'
 import { mainProcessState as state } from './main-process-state'
 import {
@@ -59,17 +60,17 @@ export async function initializeMainProcessI18nAndMenu(): Promise<void> {
     // Why: menu zoom must act on the window the user is looking at — routing to
     // the main window while the dashboard pop-out is focused zooms behind it.
     onZoomIn: () => {
-      if (!zoomDashboardPopoutIfFocused('in')) {
+      if (!zoomDashboardPopoutIfFocused('in') && !zoomWorkspaceSpaceWindowIfFocused('in')) {
         state.mainWindow?.webContents.send('terminal:zoom', 'in')
       }
     },
     onZoomOut: () => {
-      if (!zoomDashboardPopoutIfFocused('out')) {
+      if (!zoomDashboardPopoutIfFocused('out') && !zoomWorkspaceSpaceWindowIfFocused('out')) {
         state.mainWindow?.webContents.send('terminal:zoom', 'out')
       }
     },
     onZoomReset: () => {
-      if (!zoomDashboardPopoutIfFocused('reset')) {
+      if (!zoomDashboardPopoutIfFocused('reset') && !zoomWorkspaceSpaceWindowIfFocused('reset')) {
         state.mainWindow?.webContents.send('terminal:zoom', 'reset')
       }
     },

@@ -1821,6 +1821,11 @@ sync hit exactly that (#23062 landed two commits later) and was fixed by merging
   upstream's own test fixtures bury the result.
 - The port-name work (`workspace-port-labels.ts`, `PortLabelsCommandSection.tsx`,
   `portLabelsCommand` on repos) is fork work not yet listed in [What this fork owns](#what-this-fork-owns).
+- Verify round 1: typecheck failed on two upstream removals that merged without conflict.
+  `parcel-watcher-process.ts` no longer re-exports its types (#30369), so the language-server
+  watcher imports them from `parcel-watcher-process-protocol.ts` / `-subscription.ts`; and
+  `setupScriptLaunchMode` is gone (#29819, setup always runs in its own Setup tab), so the fork's
+  `launch-worktree-background-terminals.ts` copy dropped its split-pane setup path to match.
 
 **1.4.214 → 1.4.214** (`9c1d5d2fb7..1b1d09cfb5`, 475 upstream commits, thirty-five conflicts)
 

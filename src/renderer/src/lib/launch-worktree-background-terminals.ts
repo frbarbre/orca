@@ -11,10 +11,6 @@ import {
   buildSetupRunnerCommand,
   getSetupRunnerCommandPlatformForPath
 } from '../../../shared/setup-runner-command'
-import type {
-  TerminalLayoutSnapshot,
-  TerminalPaneLayoutNode
-} from '../../../shared/terminal-tab-types'
 import type { TerminalPanePlacement } from '../../../shared/terminal-pane-placement'
 import type {
   WorktreeDefaultTabsLaunch,
@@ -60,39 +56,6 @@ function buildPaneEnv(
     ORCA_PANE_KEY: makePaneKey(tabId, leafId),
     ORCA_TAB_ID: tabId,
     ORCA_WORKTREE_ID: worktreeId
-  }
-}
-
-function buildSplitRoot(
-  firstLeafId: string,
-  secondLeafId: string,
-  direction: 'horizontal' | 'vertical'
-): TerminalPaneLayoutNode {
-  return {
-    type: 'split',
-    direction,
-    first: { type: 'leaf', leafId: firstLeafId },
-    second: { type: 'leaf', leafId: secondLeafId }
-  }
-}
-
-function buildSplitLayout(
-  first: BackgroundPane,
-  second: BackgroundPane,
-  direction: 'horizontal' | 'vertical',
-  secondTitle: string
-): TerminalLayoutSnapshot {
-  return {
-    root: buildSplitRoot(first.leafId, second.leafId, direction),
-    activeLeafId: first.leafId,
-    expandedLeafId: null,
-    ptyIdsByLeafId: {
-      [first.leafId]: first.ptyId,
-      [second.leafId]: second.ptyId
-    },
-    titlesByLeafId: {
-      [second.leafId]: secondTitle
-    }
   }
 }
 
@@ -186,51 +149,6 @@ async function createBackgroundTab(args: {
   return { tabId: tab.id, primary: { leafId, ptyId: pane.ptyId } }
 }
 
-async function addSetupSplit(args: {
-  worktree: Worktree
-  connectionId: string | null
-  tab: BackgroundTab
-  setup: WorktreeSetupLaunch
-  direction: 'horizontal' | 'vertical'
-}): Promise<void> {
-  const store = useAppStore.getState()
-  const setupLeafId = createBrowserUuid()
-  const setupPane = await spawnPane({
-    worktree: args.worktree,
-    connectionId: args.connectionId,
-    tabId: args.tab.tabId,
-    leafId: setupLeafId,
-    placement: {
-      kind: 'split',
-      parentLeafId: args.tab.primary.leafId,
-      direction: args.direction,
-      proposedRoot: buildSplitRoot(args.tab.primary.leafId, setupLeafId, args.direction)
-    },
-    command: buildSetupCommand(args.setup),
-    env: args.setup.envVars
-  })
-  if (
-    await retireUnownedTerminal({
-      owner: { tabId: args.tab.tabId },
-      ptyId: setupPane.ptyId,
-      runtimeTarget: { kind: 'local' }
-    })
-  ) {
-    return
-  }
-  store.updateTabPtyId(args.tab.tabId, setupPane.ptyId)
-  store.setTabLayout(
-    args.tab.tabId,
-    buildSplitLayout(
-      args.tab.primary,
-      { leafId: setupLeafId, ptyId: setupPane.ptyId },
-      args.direction,
-      getSetupTabTitle()
-    )
-  )
-  registerBackgroundPaneBuffer(args.tab.tabId, setupLeafId, setupPane)
-}
-
 function getDefaultTabLaunches(
   defaultTabs: WorktreeDefaultTabsLaunch | undefined
 ): BackgroundTerminalLaunch[] {
@@ -273,22 +191,6 @@ export async function launchWorktreeBackgroundTerminals(
     } catch (error) {
       console.warn('[automations] Failed to launch workspace default tab:', error)
     }
-  }
-
-  const setupMode = store.settings?.setupScriptLaunchMode ?? 'new-tab'
-  const shouldSplitSetup =
-    args.setup && (setupMode === 'split-horizontal' || setupMode === 'split-vertical')
-  if (shouldSplitSetup) {
-    const primaryTab =
-      launchedTabs[0] ?? (await createBackgroundTab({ worktree, connectionId, launch: {} }))
-    await addSetupSplit({
-      worktree,
-      connectionId,
-      tab: primaryTab,
-      setup: args.setup!,
-      direction: setupMode === 'split-horizontal' ? 'horizontal' : 'vertical'
-    })
-    return
   }
 
   if (args.setup) {

@@ -1,9 +1,9 @@
-import {
-  subscribeViaWatcherProcess,
-  type WatcherProcessCallback,
-  type WatcherProcessSubscribeOptions,
-  type WatcherProcessSubscription
-} from '../ipc/parcel-watcher-process'
+import { subscribeViaWatcherProcess } from '../ipc/parcel-watcher-process'
+import type { WatcherProcessSubscribeOptions } from '../ipc/parcel-watcher-process-protocol'
+import type {
+  WatcherProcessCallback,
+  WatcherProcessSubscription
+} from '../ipc/parcel-watcher-process-subscription'
 import {
   buildParcelWatcherIgnoreOptions,
   WATCHER_IGNORE_DIRS

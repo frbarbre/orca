@@ -1782,6 +1782,46 @@ sync hit exactly that (#23062 landed two commits later) and was fixed by merging
 
 ### Sync log
 
+**1.4.214 → 1.4.214** (`1b1d09cfb5..4298ba998d`, 695 upstream commits, nineteen conflicts)
+
+- `package.json` still says 1.4.214, so the branch name repeats an eighth time. The earlier sync's
+  pull request for this branch is merged, so a new one is opened on the same branch name.
+- Generated files — `bundled-skill-guides.ts`, `en.json`: took upstream's and regenerated
+  (`generate:bundled-skill-guides`, `sync:localization-catalog`,
+  `sync:localization-runtime-catalog`). The RPC catalog was already current.
+- `compute-visible-worktrees.ts` — upstream moved the sidebar's filter, lineage and sort into the
+  shared `selectVisibleSidebarWorktrees` (`shared/sidebar-list/visible-worktrees.ts`). Took it and
+  apply fork #9's temporary-checkout filter to the rows before they go in, so the shared selector
+  stays upstream's.
+- `use-worktree-card-controller.ts` — upstream reads card properties from
+  `foundation.cardDetails` (`getWorktreeCardDetails`). Took it; fork #7/#8's `showLinearTitle` and
+  `showPrAuthor` still read `foundation.cardProps`, so the shared details type stays upstream's.
+- `global-settings-types.ts` — upstream composes `GlobalSettings` from a new `GlobalSettingsBase`.
+  The fork's `ForkBaseSettings` (`fork-source-control-settings.ts`) now extends that instead of
+  `NativeChatGlobalSettings` (fork fix commit), so the only fork line left there is the import.
+- `main-window-agent-status.ts` — upstream moved the first-work branch rename out of the hook
+  listener (#29429). Took the removal; fork #31's `observeAgentTurn` call stays.
+- `MarkdownImageLightbox.tsx` — upstream's single-image dialog became a pan-and-zoom
+  `PanZoomImageDialog` (#30154). Kept the fork's `MediaLightbox` gallery whole (#15), as last sync.
+- `TerminalContextMenu.tsx` — upstream's Copy Context item became `AgentSessionContextCopyMenuItem`;
+  took it and kept fork #18's `AgentViewSubmenu`.
+- `NativeChatExperimentalSetting.tsx` — upstream dropped `NativeChatSupportedAgents`; kept only the
+  fork's `ClaudeWebDefaultViewSetting` import.
+- `register-core-handlers.test.ts` — kept the fork's `keybindings` argument to the dashboard popout
+  beside upstream's new `registerWorkspaceSpaceWindowHandlers` expectation.
+- `repos-local-add-and-project-setup.test.ts` — kept the fork's Python venv and port labels cases;
+  took upstream's now-async visibility case.
+- Import-only conflicts, kept both sides: `main-process-i18n-menu.ts`, `app-api.ts`,
+  `EditorPanelHeader.tsx` (`AgentNotesPill` beside upstream's renamed `EditorPanelActionsMenu`),
+  `main.tsx` (fork's release-repo override beside upstream's sidebar shadow comparison),
+  `git-status-actions.ts`, `meta-types.ts`, `types.ts`, `TabBarQuickCommandsButton.tsx`.
+- **Found after the merge, not by git:** upstream moved `store/slices/github-cache-key.ts` to
+  `shared/github/github-cache-key.ts` (#30026); five fork files imported the old path (fork fix
+  commit). The missing-import scan caught it; limit it to files that differ from `upstream/main`, or
+  upstream's own test fixtures bury the result.
+- The port-name work (`workspace-port-labels.ts`, `PortLabelsCommandSection.tsx`,
+  `portLabelsCommand` on repos) is fork work not yet listed in [What this fork owns](#what-this-fork-owns).
+
 **1.4.214 → 1.4.214** (`9c1d5d2fb7..1b1d09cfb5`, 475 upstream commits, thirty-five conflicts)
 
 - `package.json` still says 1.4.214, so the branch name repeats a seventh time.

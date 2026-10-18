@@ -1,5 +1,5 @@
 import type { AppState } from '@/store/types'
-import { getGitHubPRCacheKey } from '@/store/slices/github-cache-key'
+import { getGitHubPRCacheKey } from '../../../../shared/github/github-cache-key'
 import { getIndexedAllWorktrees, getIndexedRepoMap } from '@/store/worktree-repo-index'
 import { resolveWorktreeBranchLabel } from '@/lib/worktree-default-display-name'
 import type { GitHubRepositoryIdentity } from '../../../../shared/github/pull-request-types'

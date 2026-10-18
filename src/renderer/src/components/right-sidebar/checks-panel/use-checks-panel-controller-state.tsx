@@ -23,7 +23,7 @@ import type { PRCheckDetail } from '../../../../../shared/github/check-types'
 import type { PRRefreshErrorType } from '../../../../../shared/github/pull-request-refresh-types'
 import type { GitLabProjectRef } from '../../../../../shared/gitlab-types'
 import type { PRCommentsListSelectionClearRequest } from '../pr-comments-list-selection'
-import { getGitHubPRCacheKey } from '@/store/slices/github-cache-key'
+import { getGitHubPRCacheKey } from '../../../../../shared/github/github-cache-key'
 import { useChecksPanelCommentsState } from './use-checks-panel-comments-state'
 import {
   buildChecksPanelGitStatusContextKey,

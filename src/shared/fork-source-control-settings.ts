@@ -1,4 +1,4 @@
-import type { NativeChatGlobalSettings } from './native-chat-appearance-settings'
+import type { GlobalSettingsBase } from './global-settings-base'
 import type { LanguageServerSettingsMap } from './language-server'
 
 // Fork: kept out of global-settings-types.ts, which sits at the max-lines ceiling.
@@ -20,7 +20,5 @@ type ForkEditorSettings = {
   openClaudeTabsInWebView?: boolean
 }
 
-/** What GlobalSettings extends: upstream's native-chat settings plus the fork's. */
-export type ForkBaseSettings = NativeChatGlobalSettings &
-  ForkSourceControlSettings &
-  ForkEditorSettings
+/** What GlobalSettings extends: upstream's settings base plus the fork's. */
+export type ForkBaseSettings = GlobalSettingsBase & ForkSourceControlSettings & ForkEditorSettings

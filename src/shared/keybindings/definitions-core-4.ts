@@ -170,5 +170,25 @@ export const KEYBINDING_DEFINITION_CORE_4: readonly KeybindingDefinition[] = [
     searchKeywords: ['shortcut', 'source control', 'review', 'summary', 'focus', 'pull request'],
     // Why macOS only: Ctrl+Alt+letter is AltGr text input on Windows and Linux.
     defaultBindings: { darwin: ['Mod+Alt+Shift+R'], linux: [], win32: [] }
+  },
+  {
+    id: 'sourceControl.openPullRequest',
+    title: 'Open Pull Request on GitHub',
+    group: 'Global',
+    scope: 'global',
+    conflictGroup: 'editor',
+    searchKeywords: ['shortcut', 'pull request', 'github', 'open', 'browser', 'review'],
+    // Why macOS only: Ctrl+Alt+letter is AltGr text input on Windows and Linux.
+    defaultBindings: { darwin: ['Mod+Alt+G'], linux: [], win32: [] }
+  },
+  {
+    id: 'sourceControl.copyPullRequestUrl',
+    title: 'Copy Pull Request URL',
+    group: 'Global',
+    scope: 'global',
+    conflictGroup: 'editor',
+    searchKeywords: ['shortcut', 'pull request', 'github', 'copy', 'url', 'link'],
+    // Why macOS only: Ctrl+Alt+letter is AltGr text input on Windows and Linux.
+    defaultBindings: { darwin: ['Mod+Alt+Shift+G'], linux: [], win32: [] }
   }
 ]

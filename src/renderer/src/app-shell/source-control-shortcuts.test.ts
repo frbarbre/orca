@@ -22,9 +22,50 @@ vi.mock('../store', () => ({
   useAppStore: { getState: () => store }
 }))
 
-vi.mock('sonner', () => ({ toast: { info: vi.fn(), error: vi.fn() } }))
+const toast = vi.hoisted(() => ({ info: vi.fn(), error: vi.fn(), success: vi.fn() }))
+vi.mock('sonner', () => ({ toast }))
+
+const pullRequestUrl = vi.hoisted(() => ({ current: null as string | null }))
+vi.mock('@/lib/worktree-pull-request-url', () => ({
+  activeWorktreePullRequestUrl: () => pullRequestUrl.current
+}))
 
 const actions = { openDiffNotesSendMenuForActiveWorktree: () => false }
+
+describe('pull request shortcuts', () => {
+  const openUrl = vi.fn(async () => {})
+  const writeClipboardText = vi.fn(async () => {})
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.stubGlobal('window', { api: { shell: { openUrl }, ui: { writeClipboardText } } })
+  })
+
+  it("opens the active workspace's pull request on GitHub", () => {
+    pullRequestUrl.current = 'https://github.com/acme/app/pull/7'
+    const match = (id: string): boolean => id === 'sourceControl.openPullRequest'
+
+    expect(takeSourceControlShortcut(match, true, actions)).toBe('sourceControl.openPullRequest')
+    expect(openUrl).toHaveBeenCalledWith('https://github.com/acme/app/pull/7')
+  })
+
+  it("copies the active workspace's pull request URL", async () => {
+    pullRequestUrl.current = 'https://github.com/acme/app/pull/7'
+    const match = (id: string): boolean => id === 'sourceControl.copyPullRequestUrl'
+
+    expect(takeSourceControlShortcut(match, true, actions)).toBe('sourceControl.copyPullRequestUrl')
+    expect(writeClipboardText).toHaveBeenCalledWith('https://github.com/acme/app/pull/7')
+    await vi.waitFor(() => expect(toast.success).toHaveBeenCalled())
+  })
+
+  it('says so when the workspace has no pull request', () => {
+    pullRequestUrl.current = null
+    const match = (id: string): boolean => id === 'sourceControl.copyPullRequestUrl'
+
+    expect(takeSourceControlShortcut(match, true, actions)).toBe('sourceControl.copyPullRequestUrl')
+    expect(writeClipboardText).not.toHaveBeenCalled()
+    expect(toast.info).toHaveBeenCalled()
+  })
+})
 
 describe('takeSourceControlShortcut', () => {
   it('toggles the uncommitted-only Changes filter for the active workspace', () => {

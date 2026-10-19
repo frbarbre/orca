@@ -8,6 +8,7 @@ import {
   hasReviewSummary,
   requestReviewSummaryFocus
 } from '@/components/pending-review/review-summary-focus'
+import { activeWorktreePullRequestUrl } from '@/lib/worktree-pull-request-url'
 import { useAppStore } from '../store'
 import type { KeybindingActionId } from '../../../shared/keybindings/types'
 
@@ -17,6 +18,8 @@ type SourceControlShortcutId =
   | 'sourceControl.toggleUncommittedOnly'
   | 'sourceControl.sendQueuedComments'
   | 'sourceControl.focusReviewSummary'
+  | 'sourceControl.openPullRequest'
+  | 'sourceControl.copyPullRequestUrl'
 
 function focusReviewSummaryInOpenPanel(): boolean {
   const { activeWorktreeId, rightSidebarOpen, rightSidebarTab } = useAppStore.getState()
@@ -104,5 +107,28 @@ export function takeSourceControlShortcut(
   if (matchShortcut('sourceControl.focusReviewSummary') && focusReviewSummaryInOpenPanel()) {
     return 'sourceControl.focusReviewSummary'
   }
+  if (matchShortcut('sourceControl.openPullRequest')) {
+    withActivePullRequestUrl((url) => void window.api.shell.openUrl(url))
+    return 'sourceControl.openPullRequest'
+  }
+  if (matchShortcut('sourceControl.copyPullRequestUrl')) {
+    withActivePullRequestUrl((url) => {
+      void window.api.ui
+        .writeClipboardText(url)
+        .then(() =>
+          toast.success(translate('sourceControl.pullRequestUrlCopied', 'Copied pull request URL'))
+        )
+    })
+    return 'sourceControl.copyPullRequestUrl'
+  }
   return null
+}
+
+function withActivePullRequestUrl(act: (url: string) => void): void {
+  const url = activeWorktreePullRequestUrl(useAppStore.getState())
+  if (url) {
+    act(url)
+  } else {
+    toast.info(translate('sourceControl.noPullRequest', 'This workspace has no pull request yet.'))
+  }
 }

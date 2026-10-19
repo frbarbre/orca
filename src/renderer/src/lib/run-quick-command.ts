@@ -20,7 +20,7 @@ type TerminalTarget = { tabId: string; ptyId: string }
 
 type TargetState = Pick<
   AppState,
-  'activeTabIdByGroup' | 'unifiedTabsByWorktree' | 'terminalLayoutsByTabId'
+  'groupsByWorktree' | 'unifiedTabsByWorktree' | 'terminalLayoutsByTabId'
 >
 
 /** The process behind the terminal pane a group is showing, if it is showing a terminal. */
@@ -29,7 +29,9 @@ export function findActiveTerminalPty(
   worktreeId: string,
   groupId: string | null | undefined
 ): TerminalTarget | null {
-  const activeId = groupId ? state.activeTabIdByGroup[groupId] : null
+  const activeId = groupId
+    ? state.groupsByWorktree[worktreeId]?.find((group) => group.id === groupId)?.activeTabId
+    : null
   const tab = state.unifiedTabsByWorktree[worktreeId]?.find((entry) => entry.id === activeId)
   if (!tab || tab.contentType !== 'terminal') {
     return null

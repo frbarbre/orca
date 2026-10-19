@@ -6,7 +6,12 @@ import {
 } from './run-quick-command'
 
 const state = {
-  activeTabIdByGroup: { 'group-1': 'unified-1', 'group-2': 'unified-2' },
+  groupsByWorktree: {
+    'wt-1': [
+      { id: 'group-1', activeTabId: 'unified-1' },
+      { id: 'group-2', activeTabId: 'unified-2' }
+    ]
+  },
   unifiedTabsByWorktree: {
     'wt-1': [
       { id: 'unified-1', entityId: 'term-1', contentType: 'terminal', groupId: 'group-1' },

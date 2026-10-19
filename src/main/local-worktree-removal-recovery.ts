@@ -157,8 +157,9 @@ async function isRecoverableWindowsFilesystemRemovalFailure(
   }
 }
 
-function isDirectoryRefilledDuringRemoval(error: object): boolean {
-  const { stderr, message } = error as { stderr?: unknown; message?: unknown }
+type GitRemovalFailure = { stderr?: unknown; message?: unknown }
+
+function isDirectoryRefilledDuringRemoval({ stderr, message }: GitRemovalFailure): boolean {
   const text = `${typeof stderr === 'string' ? stderr : ''}\n${typeof message === 'string' ? message : ''}`
   return /failed to delete '.*': Directory not empty/.test(text)
 }

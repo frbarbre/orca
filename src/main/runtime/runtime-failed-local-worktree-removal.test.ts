@@ -267,29 +267,40 @@ describe.skipIf(process.platform !== 'darwin')('a worktree delete Git fails part
     expect(await listedRows()).toHaveLength(1)
   })
 
-  it('Delete refuses while the leftover is there, and finishes metadata and record once the user removed it', async () => {
+  it('Delete deletes what Git left of the checkout itself, after its terminals stop, and finishes metadata and record', async () => {
     await failInSession()
     await setImmutable(false)
+    expect(await readFile(join(worktreePath, '.git'), 'utf8')).toMatch(/\.git\/worktrees\/feature/)
+    const purged: string[] = []
+    const stopPtys = vi.fn(async () => {
+      expect(existsSync(worktreePath)).toBe(true)
+    })
+
+    expect(await deleteRow(purged, stopPtys)).toBeUndefined()
+
+    expect(stopPtys).toHaveBeenCalledTimes(1)
+    expect(existsSync(worktreePath)).toBe(false)
+    expect(await git(['branch', '--list', 'feature'])).toBe('')
+    expect(purged).toEqual([worktreeId])
+    expect(await readWorktreeRemovalRecords(recordsDir)).toEqual([])
+    expect(await listedRows()).toEqual([])
+  })
+
+  it('Delete refuses a leftover Git took the .git link of, and finishes once the user removed it', async () => {
+    await failInSession()
+    await setImmutable(false)
+    await rm(join(worktreePath, '.git'))
     const purged: string[] = []
     const stopPtys = vi.fn(async () => {})
 
     expect(String(await deleteRow(purged, stopPtys))).toBe(`Error: ${refusal()}`)
     expect(existsSync(lockedFile)).toBe(true)
     expect(stopPtys).not.toHaveBeenCalled()
-    expect(purged).toEqual([])
-    expect(await listedRows()).toEqual([
-      { path: worktreePath, removalError: expect.stringMatching(/Operation not permitted/) }
-    ])
 
     await rm(worktreePath, { recursive: true })
     expect(await deleteRow(purged, stopPtys)).toBeUndefined()
-
-    expect(stopPtys).toHaveBeenCalledTimes(1)
     expect(removeHostTree).not.toHaveBeenCalled()
-    expect(await git(['branch', '--list', 'feature'])).toBe('')
     expect(purged).toEqual([worktreeId])
-    expect(await readWorktreeRemovalRecords(recordsDir)).toEqual([])
-    expect(await listedRows()).toEqual([])
   })
 
   it('Delete deletes nothing in an ordinary folder the user put in place of the leftover', async () => {

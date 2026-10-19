@@ -4,6 +4,8 @@ import { isLanguageServerLanguage, type LanguageServerRequest } from '../../shar
 import { createLanguageServerService } from '../language-server/language-server-service'
 import { startLanguageServerSession } from '../language-server/language-server-process'
 import { createProjectFileWatcher } from '../language-server/language-server-file-watcher'
+import { setLanguageServerRemovalStop } from '../language-server/language-server-removal'
+import { beginWatcherInstall } from './watcher-removal-gate'
 
 function readRequest(value: unknown): LanguageServerRequest | null {
   if (typeof value !== 'object' || value === null) {
@@ -72,8 +74,10 @@ export function registerLanguageServerHandlers(): void {
     readPreview,
     readFile,
     startSession: startLanguageServerSession,
-    watchFiles: createProjectFileWatcher()
+    watchFiles: createProjectFileWatcher(),
+    admit: (projectRoot) => beginWatcherInstall(projectRoot)
   })
+  setLanguageServerRemovalStop(service.stopUnder)
   ipcMain.handle('languageServer:definition', async (_event, args: unknown) => {
     const request = readRequest(args)
     return request

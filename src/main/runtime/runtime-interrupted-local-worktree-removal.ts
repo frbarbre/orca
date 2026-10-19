@@ -14,15 +14,20 @@ import { finishUnregisteredWorktreeRemoval } from '../git/worktree-removal'
 import { getErrorCode, normalizeLocalBranchRef } from '../git/worktree-operation-options'
 import { areWorktreePathsEqual } from '../git/worktree-path-comparison'
 import { getLocalProjectWorktreeGitOptions } from '../project-runtime-git-options'
-import { findRegisteredDeletableWorktree } from '../worktree-removal-safety'
+import {
+  assertWorktreeDoesNotContainRegisteredWorktree,
+  findRegisteredDeletableWorktree
+} from '../worktree-removal-safety'
 import {
   assertUnregisteredCheckoutGone,
-  differentCheckoutAtPathError
+  differentCheckoutAtPathError,
+  provesFailedRemovalLeftover
 } from '../worktree-removal-leftover'
 import { CLIENT_REMOVAL_HOME, getPathOps } from '../worktree-removal-home-guard'
 import { removeStaleLocalWorktreeRegistration } from '../local-worktree-removal-recovery'
 import {
   getLocalWorktreePathAccess,
+  removeLocalWorktreePath,
   toLocalWorktreeRuntimePath,
   type LocalWorktreeFilesystemOptions
 } from '../local-worktree-filesystem'
@@ -177,8 +182,11 @@ async function finishInterruptedLocalWorktreeRemoval(
     })
     deletable = undefined
   }
+  const leftover = !deletable && (await provesFailedRemovalLeftover(record))
   // Before the teardown, so a refused folder keeps its terminals and watchers.
-  if (!deletable) {
+  if (leftover) {
+    assertWorktreeDoesNotContainRegisteredWorktree(record.worktreePath, worktrees)
+  } else if (!deletable) {
     await assertUnregisteredCheckoutGone(record.worktreePath, worktrees)
   }
   const gate = await args.acquireWatcherRemoval(record.worktreePath)
@@ -196,6 +204,10 @@ async function finishInterruptedLocalWorktreeRemoval(
   let result: RemoveWorktreeResult
   let removed = false
   try {
+    // Again after the teardown's waits, so only the proven leftover is deleted.
+    if (leftover && (await provesFailedRemovalLeftover(record))) {
+      await removeLocalWorktreePath(record.worktreePath, localOptions)
+    }
     result = await finishUnregisteredWorktreeRemoval(
       repo.path,
       record.worktreePath,

@@ -1,5 +1,6 @@
 import { getWorktreeWatcherRemoval } from '../ipc/worktree-watcher-removal'
 import { acquireWatcherRemovalGate } from '../ipc/watcher-removal-gate'
+import { stopLanguageServersForRemoval } from '../language-server/language-server-removal'
 import {
   createWatcherRemovalDeadline,
   drainBeforeWatcherRemoval,
@@ -21,6 +22,9 @@ export function createRuntimeFileWatcherRemoval(fileCommands: FileExplorerWatche
     connectionId?: string,
     deadline: WatcherRemovalDeadline = createWatcherRemovalDeadline()
   ): Promise<void> => {
+    if (!connectionId) {
+      stopLanguageServersForRemoval(worktreePath)
+    }
     const results = await Promise.allSettled([
       connectionId
         ? drainBeforeWatcherRemoval(

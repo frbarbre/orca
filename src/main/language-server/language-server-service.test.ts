@@ -21,7 +21,9 @@ const tsRequest = {
   filePath: '/repo/apps/frontend/src/a.tsx'
 }
 
-function setup(watchFiles?: Parameters<typeof createLanguageServerService>[0]['watchFiles']) {
+type ServiceOptions = Parameters<typeof createLanguageServerService>[0]
+
+function setup(watchFiles?: ServiceOptions['watchFiles'], admit?: ServiceOptions['admit']) {
   const definition = vi.fn(async () => [
     { filePath: '/repo/apps/backend/b.py', line: 0, character: 0 }
   ])
@@ -58,7 +60,8 @@ function setup(watchFiles?: Parameters<typeof createLanguageServerService>[0]['w
       path === '/repo/apps/frontend/tsconfig.json' ||
       path === '/repo/apps/frontend/node_modules/.bin/tsgo',
     startSession,
-    ...(watchFiles ? { watchFiles } : {})
+    ...(watchFiles ? { watchFiles } : {}),
+    ...(admit ? { admit } : {})
   })
   return { service, startSession, definition, hover, references, sessions, readPreview, readFile }
 }
@@ -222,6 +225,42 @@ describe('language server service', () => {
     service.stopLanguage('python')
     expect(sessions[0]?.dispose).toHaveBeenCalled()
     expect(stopWatching).toHaveBeenCalled()
+  })
+
+  it('stops the servers inside a worktree being removed, and only those', async () => {
+    const { service, sessions } = setup()
+    await service.definition(request)
+    await service.definition({
+      ...request,
+      filePath: '/wt/e-5139/apps/backend/a.py',
+      worktreeRoot: '/wt/e-5139'
+    })
+
+    service.stopUnder('/wt/e-5139')
+
+    expect(sessions[1]?.dispose).toHaveBeenCalled()
+    expect(sessions[0]?.dispose).not.toHaveBeenCalled()
+  })
+
+  it('holds a removal fence on its project while it runs, and starts none while it is removed', async () => {
+    const release = vi.fn()
+    const admit = vi.fn((_root: string) => release)
+    const { service, sessions, startSession } = setup(undefined, admit)
+
+    await service.definition(request)
+    expect(admit).toHaveBeenCalledWith('/repo/apps/backend')
+    service.stopUnder('/repo')
+    expect(sessions[0]?.dispose).toHaveBeenCalled()
+    expect(release).toHaveBeenCalled()
+
+    admit.mockImplementation(() => {
+      throw new Error('This workspace is being removed.')
+    })
+    await expect(service.definition(request)).resolves.toEqual({
+      ok: false,
+      error: 'This workspace is being removed.'
+    })
+    expect(startSession).toHaveBeenCalledTimes(1)
   })
 
   it('refuses files at a relative path or of the wrong language', async () => {

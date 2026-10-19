@@ -40,18 +40,23 @@ export function createLanguageServerService({
   readPreview,
   readFile,
   startSession,
-  watchFiles
+  watchFiles,
+  admit
 }: {
   exists: (path: string) => boolean
   readPreview: (filePath: string, line: number) => string | null
   readFile: (filePath: string) => string | null
   startSession: (launch: LanguageServerLaunch) => Session
   watchFiles?: WatchProjectFiles
+  /** Admits a server into its project, throwing while the project is being removed; the returned
+   *  call releases it when the server stops. */
+  admit?: (projectRoot: string) => () => void
 }): {
   definition: (request: LanguageServerRequest) => Promise<LanguageServerDefinitionResult>
   hover: (request: LanguageServerRequest) => Promise<LanguageServerHoverResult>
   references: (request: LanguageServerRequest) => Promise<LanguageServerReferencesResult>
   stopLanguage: (language: LanguageServerLanguage) => void
+  stopUnder: (root: string) => void
   disposeAll: () => void
 } {
   const launches = new Map<string, LanguageServerLaunch>()
@@ -62,15 +67,22 @@ export function createLanguageServerService({
       if (!launch) {
         throw new Error('Unknown language server project')
       }
-      const session = startSession(launch)
+      const release = admit?.(launch.projectRoot)
+      let session: Session
+      try {
+        session = startSession(launch)
+      } catch (error) {
+        release?.()
+        throw error
+      }
       const stopWatching = watchFiles?.(launch.projectRoot, (changes) =>
         session.filesChanged(changes)
       )
-      if (!stopWatching) {
+      if (!stopWatching && !release) {
         return session
       }
       // Why wrap dispose: the pool ends a session through it (idle, eviction, stop), and the
-      // watcher must go with the server it feeds.
+      // watcher and removal fence must go with the server they belong to.
       return {
         get closed() {
           return session.closed
@@ -80,8 +92,9 @@ export function createLanguageServerService({
         references: (request) => session.references(request),
         filesChanged: (changes) => session.filesChanged(changes),
         dispose: () => {
-          stopWatching()
+          stopWatching?.()
           session.dispose()
+          release?.()
         }
       }
     },
@@ -167,6 +180,18 @@ export function createLanguageServerService({
       return { ok: true, locations: result.value, files }
     },
     stopLanguage: (language) => pool.disposeMatching((key) => key.startsWith(`${language}\0`)),
+    stopUnder: (root) => {
+      const within = (path: string): boolean => path === root || isInside(root, path)
+      pool.disposeMatching((key) => {
+        const projectRoot = launches.get(key)?.projectRoot
+        return projectRoot !== undefined && within(projectRoot)
+      })
+      for (const [key, launch] of lastLaunchByWorktree) {
+        if (within(launch.projectRoot)) {
+          lastLaunchByWorktree.delete(key)
+        }
+      }
+    },
     disposeAll: () => pool.disposeAll()
   }
 }

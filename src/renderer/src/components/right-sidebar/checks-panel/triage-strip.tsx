@@ -13,6 +13,7 @@ import type { PRCheckDetail } from '../../../../../shared/github/check-types'
 import type { ConflictReview } from './conflict-summary'
 import { summarizeProviderChecks } from '../../../../../shared/provider-check-summary'
 import { translate } from '@/i18n/i18n'
+import { RerunChecksMenu } from './rerun-checks-menu'
 
 export function PRTriageStrip({
   review,
@@ -26,7 +27,9 @@ export function PRTriageStrip({
   isFixingChecksWithAI,
   onFixChecksWithAI,
   fixChecksDisabled,
-  fixChecksDisabledReason
+  fixChecksDisabledReason,
+  onRerunChecks,
+  isRerunningChecks = false
 }: {
   review?: ConflictReview
   pr?: ConflictReview
@@ -37,9 +40,11 @@ export function PRTriageStrip({
   resolveConflictsDisabled?: boolean
   resolveConflictsDisabledReason?: string
   isFixingChecksWithAI: boolean
-  onFixChecksWithAI: () => void
+  onFixChecksWithAI?: () => void
   fixChecksDisabled?: boolean
   fixChecksDisabledReason?: string
+  onRerunChecks?: (failedOnly: boolean) => void
+  isRerunningChecks?: boolean
 }): React.JSX.Element {
   const resolvedReview = review ?? pr
   // Why: the whole strip reads one shared summary so it cannot contradict the checks pill — a
@@ -82,21 +87,26 @@ export function PRTriageStrip({
               )}
             </div>
           </div>
-          <Button
-            type="button"
-            variant="outline"
-            size="xs"
-            disabled={isFixingChecksWithAI || fixChecksDisabled}
-            title={fixChecksDisabled ? fixChecksDisabledReason : undefined}
-            onClick={onFixChecksWithAI}
-          >
-            {isFixingChecksWithAI ? (
-              <RefreshCw className="size-3 animate-spin" />
-            ) : (
-              <Sparkles className="size-3" />
-            )}
-            {translate('auto.components.right.sidebar.checks.panel.content.b45db92d0e', 'Fix')}
-          </Button>
+          {onRerunChecks && (
+            <RerunChecksMenu rerunning={isRerunningChecks} onRerun={onRerunChecks} />
+          )}
+          {onFixChecksWithAI && (
+            <Button
+              type="button"
+              variant="outline"
+              size="xs"
+              disabled={isFixingChecksWithAI || fixChecksDisabled}
+              title={fixChecksDisabled ? fixChecksDisabledReason : undefined}
+              onClick={onFixChecksWithAI}
+            >
+              {isFixingChecksWithAI ? (
+                <RefreshCw className="size-3 animate-spin" />
+              ) : (
+                <Sparkles className="size-3" />
+              )}
+              {translate('auto.components.right.sidebar.checks.panel.content.b45db92d0e', 'Fix')}
+            </Button>
+          )}
         </div>
       </div>
     )

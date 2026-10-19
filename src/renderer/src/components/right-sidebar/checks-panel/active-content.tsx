@@ -22,6 +22,7 @@ import { PendingReviewPanelSection } from '@/components/pending-review/PendingRe
 import { usePendingReviewQueue } from '@/components/pending-review/use-pending-review-queue'
 import { PrPanelSections, type PrPanelSection } from './pr-panel-sections'
 import { usePRCommentQueuePanel } from './use-pr-comment-queue-panel'
+import { useChecksPanelRerun } from './use-checks-panel-rerun'
 import { translate } from '@/i18n/i18n'
 import type { ChecksPanelActiveContentModel } from './active-content-props'
 import { ChecksPanelReviewHeader } from './review-header'
@@ -95,6 +96,12 @@ export function ChecksPanelActiveContent({
     onSend: sourceControlAiActionsVisible ? handleResolveCommentsWithAI : undefined
   })
   const pendingReviewCount = usePendingReviewQueue(activeWorktreeId).comments.length
+  const { rerunChecks, isRerunningChecks } = useChecksPanelRerun({
+    provider: activeReview?.provider,
+    repo,
+    pr,
+    refresh: handleRefresh
+  })
   if (!activeReview) {
     return null
   }
@@ -105,7 +112,9 @@ export function ChecksPanelActiveContent({
     settings,
     Boolean(activeWorktreeId)
   )
-  const showTriageStrip = shouldShowReviewTriageStrip && sourceControlAiActionsVisible
+  const showTriageStrip =
+    shouldShowReviewTriageStrip &&
+    (sourceControlAiActionsVisible || (Boolean(rerunChecks) && !activeConflictReview))
   // Fork: the sections under the review header, laid out in the user's order (`PrPanelSections`).
   const prSections: PrPanelSection[] = []
   if (showTriageStrip || activeConflictReview) {
@@ -123,9 +132,13 @@ export function ChecksPanelActiveContent({
               resolveConflictsDisabled={Boolean(aiActionDisabledReason)}
               resolveConflictsDisabledReason={aiActionDisabledReason}
               isFixingChecksWithAI={isFixingChecksWithAI}
-              onFixChecksWithAI={() => void handleFixChecksWithAI()}
+              onFixChecksWithAI={
+                sourceControlAiActionsVisible ? () => void handleFixChecksWithAI() : undefined
+              }
               fixChecksDisabled={Boolean(aiActionDisabledReason)}
               fixChecksDisabledReason={aiActionDisabledReason}
+              onRerunChecks={rerunChecks}
+              isRerunningChecks={isRerunningChecks}
             />
           )}
           {activeConflictReview && (

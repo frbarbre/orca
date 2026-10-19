@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils'
 import { CHECK_COLOR, CHECK_ICON } from '@/components/right-sidebar/checks-panel/check-presentation'
 import { getCheckConclusion } from '@/components/pr-check-counts'
 import { getCheckDetailsKey, getCheckStatusLabel } from '@/components/github/pr-check-presentation'
+import { CheckRowDuration } from '@/components/github/check-row-duration'
 import type { CheckDetailsLoadState } from '@/components/github-checks-tab-state'
 import type { PRCheckDetail } from '../../../../../shared/github/check-types'
 import { CheckDetailsPanel } from './details'
@@ -49,6 +50,7 @@ export function CheckRow({
           className={cn('size-3.5 shrink-0', color, conclusion === 'pending' && 'animate-spin')}
         />
         <span className="min-w-0 flex-1 truncate text-[12px] text-foreground">{check.name}</span>
+        <CheckRowDuration check={check} />
         <span className="shrink-0 text-[11px] text-muted-foreground">{statusLabel}</span>
       </button>
       {expanded && (

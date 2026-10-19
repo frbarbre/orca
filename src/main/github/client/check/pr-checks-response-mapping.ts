@@ -43,7 +43,20 @@ export function mapGraphQLCheckRunContext(context: GraphQLCheckRunContext): PRCh
     conclusion: mapCheckRunRESTConclusion(context.status ?? '', context.conclusion ?? null),
     url,
     ...(checkRunId !== null ? { checkRunId } : {}),
-    ...(typeof workflowRunId === 'number' ? { workflowRunId } : {})
+    ...(typeof workflowRunId === 'number' ? { workflowRunId } : {}),
+    ...checkRunTimes(context.startedAt, context.completedAt)
+  }
+}
+
+function checkRunTimes(
+  startedAt: string | null | undefined,
+  completedAt: string | null | undefined
+): Pick<PRCheckDetail, 'startedAt' | 'completedAt'> {
+  const started = nullableString(startedAt)
+  const completed = nullableString(completedAt)
+  return {
+    ...(started ? { startedAt: started } : {}),
+    ...(completed ? { completedAt: completed } : {})
   }
 }
 
@@ -70,7 +83,8 @@ export function mapRestCheckRun(checkRun: RestCheckRun): PRCheckDetail {
     conclusion: mapCheckRunRESTConclusion(checkRun.status, checkRun.conclusion),
     url: checkRun.details_url || checkRun.html_url || null,
     ...(typeof checkRun.id === 'number' ? { checkRunId: checkRun.id } : {}),
-    workflowRunId: parseActionsRunId(checkRun.details_url || checkRun.html_url || null)
+    workflowRunId: parseActionsRunId(checkRun.details_url || checkRun.html_url || null),
+    ...checkRunTimes(checkRun.started_at, checkRun.completed_at)
   }
 }
 

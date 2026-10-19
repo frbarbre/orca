@@ -17,6 +17,8 @@ query($owner: String!, $repo: String!, $pr: Int!) {
                     conclusion
                     detailsUrl
                     url
+                    startedAt
+                    completedAt
                     checkSuite {
                       databaseId
                       workflowRun {
@@ -84,6 +86,8 @@ export type GraphQLCheckRunContext = {
   conclusion?: string | null
   detailsUrl?: string | null
   url?: string | null
+  startedAt?: string | null
+  completedAt?: string | null
   checkSuite?: {
     databaseId?: number | null
     workflowRun?: { databaseId?: number | null } | null
@@ -117,6 +121,8 @@ export type RestCheckRun = {
   conclusion: string | null
   html_url: string
   details_url: string | null
+  started_at?: string | null
+  completed_at?: string | null
 }
 
 export type RestCommitStatus = {

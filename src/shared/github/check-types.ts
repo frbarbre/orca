@@ -17,6 +17,9 @@ export type PRCheckDetail = {
   url: string | null
   checkRunId?: number
   workflowRunId?: number
+  /** ISO times a check run started and finished; commit statuses have neither. */
+  startedAt?: string
+  completedAt?: string
   // Why: the GitLab job trace API is addressed by numeric job id only, so the
   // Checks panel cannot load a job log without carrying it on the row.
   gitlabJobId?: number

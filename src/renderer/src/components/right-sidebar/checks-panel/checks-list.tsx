@@ -14,6 +14,7 @@ import { cn } from '@/lib/utils'
 import { translate } from '@/i18n/i18n'
 import { CHECK_COLOR, CHECK_ICON } from './check-presentation'
 import { CheckRunDetails } from './check-run-details'
+import { CheckRowDuration } from '@/components/github/check-row-duration'
 import { getCheckStatusLabel } from './check-details-model'
 import { type ChecksListProps, useChecksListState } from './use-checks-list-state'
 import { SectionHeader } from '../source-control/listing/section-header'
@@ -178,6 +179,7 @@ export function ChecksList(props: ChecksListProps): React.JSX.Element {
                       {check.name}
                     </span>
                     <span className="flex shrink-0 items-center gap-1">
+                      <CheckRowDuration check={check} />
                       <span className="text-[11px] text-muted-foreground">
                         {getCheckStatusLabel(check)}
                       </span>

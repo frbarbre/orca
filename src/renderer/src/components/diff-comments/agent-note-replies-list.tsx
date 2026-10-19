@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
+import { useTextareaFileMentions } from './note-reply-file-mentions'
 import { CornerDownLeft, LoaderCircle, MessageSquareReply, Trash, User } from 'lucide-react'
 import { noteThreadAnsweredAt, noteThreadThinkingAgent } from './note-thread-thinking'
 import type { AppState } from '@/store/types'
@@ -73,6 +74,13 @@ export function NoteThread({
   onDelete: (noteId: string) => void
 }): React.JSX.Element {
   const [draft, setDraft] = useSavedDraft(`note-reply:${root.id}`)
+  const replyRef = useRef<HTMLTextAreaElement>(null)
+  const fileMentions = useTextareaFileMentions({
+    value: draft,
+    onChange: setDraft,
+    textareaRef: replyRef,
+    worktreeId
+  })
   const [composing, setComposing] = useState(() => draft !== '')
   const [saving, setSaving] = useState(false)
   const deleteLabel = translate(
@@ -163,6 +171,7 @@ export function NoteThread({
       {composing ? (
         <div className="orca-diff-comment-thread-composer">
           <ImeTextarea
+            ref={replyRef}
             data-note-thread-reply=""
             autoFocus
             rows={2}
@@ -175,8 +184,12 @@ export function NoteThread({
             onChange={(event) => {
               setDraft(event.target.value)
               fitToContent(event.currentTarget)
+              fileMentions.onInput(event.currentTarget)
             }}
             onKeyDown={(event) => {
+              if (fileMentions.onKeyDown(event)) {
+                return
+              }
               if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) {
                 event.preventDefault()
                 void submit()
@@ -196,6 +209,7 @@ export function NoteThread({
           >
             <CornerDownLeft className="size-3" />
           </button>
+          {fileMentions.list}
         </div>
       ) : (
         <button

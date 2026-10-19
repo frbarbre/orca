@@ -103,10 +103,11 @@ describe('agent note zone card', () => {
     expect(onDelete).toHaveBeenCalledWith('agent-1')
   })
 
-  it('draws no divider when delete is the only action', () => {
+  it('draws one divider between copy and delete, its only actions', () => {
     act(() => renderDiffCommentZoneCard(root, agentNote, context()))
 
-    expect(container.querySelector('.orca-diff-comment-pill-divider')).toBeNull()
+    expect(container.querySelectorAll('.orca-diff-comment-pill-divider')).toHaveLength(1)
+    expect(container.querySelector('[aria-label="Copy message"]')).not.toBeNull()
   })
 
   it('links to the GitHub comment it answers, inside Orca', () => {

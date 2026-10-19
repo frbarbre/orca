@@ -1,5 +1,6 @@
 import { CornerDownLeft, Pencil, Trash } from 'lucide-react'
 import { Composer } from '@/components/composer/Composer'
+import { CopyMessageButton } from './copy-message-button'
 import { AgentNoteIcon } from './agent-note-icon'
 import { useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import { Button } from '@/components/ui/button'
@@ -207,7 +208,9 @@ export function DiffCommentCard({
               onMouseDown={(ev) => ev.stopPropagation()}
             >
               {headerActions}
-              {headerActions && (url || onSubmitEdit || onDelete) && (
+              {headerActions && <span className="orca-diff-comment-pill-divider" />}
+              <CopyMessageButton text={body} />
+              {(url || onSubmitEdit || onDelete) && (
                 <span className="orca-diff-comment-pill-divider" />
               )}
               {url && (

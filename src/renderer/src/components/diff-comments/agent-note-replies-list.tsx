@@ -4,6 +4,7 @@ import { CornerDownLeft, LoaderCircle, MessageSquareReply, Trash, User } from 'l
 import { noteThreadAnsweredAt, noteThreadThinkingAgent } from './note-thread-thinking'
 import type { AppState } from '@/store/types'
 import { AgentNoteIcon } from './agent-note-icon'
+import { CopyMessageButton } from './copy-message-button'
 import CommentMarkdown from '@/components/sidebar/CommentMarkdown'
 import type { DiffComment } from '../../../../shared/diff-comment-types'
 import { useAppStore } from '@/store'
@@ -127,9 +128,11 @@ export function NoteThread({
                 ) : null}
               </>
             )}
+            <span className="ml-auto" />
+            <CopyMessageButton text={reply.body} />
             <button
               type="button"
-              className="orca-diff-comment-pill-btn orca-diff-comment-pill-btn-danger ml-auto"
+              className="orca-diff-comment-pill-btn orca-diff-comment-pill-btn-danger"
               title={deleteLabel}
               aria-label={deleteLabel}
               onClick={(event) => {

@@ -1,23 +1,15 @@
-import React, { useEffect, useRef, useState } from 'react'
-import { useTextareaFileMentions } from './note-reply-file-mentions'
+import React, { useEffect, useState } from 'react'
+import { Composer } from '@/components/composer/Composer'
 import { CornerDownLeft, LoaderCircle, MessageSquareReply, Trash, User } from 'lucide-react'
 import { noteThreadAnsweredAt, noteThreadThinkingAgent } from './note-thread-thinking'
 import type { AppState } from '@/store/types'
 import { AgentNoteIcon } from './agent-note-icon'
 import CommentMarkdown from '@/components/sidebar/CommentMarkdown'
 import type { DiffComment } from '../../../../shared/diff-comment-types'
-import { ImeTextarea } from '@/lib/ime-text-field'
 import { useAppStore } from '@/store'
 import { translate } from '@/i18n/i18n'
 import { sendNotesToBestAgent } from '@/lib/send-notes-to-best-agent'
 import { useSavedDraft } from '@/lib/saved-drafts'
-
-const MAX_REPLY_HEIGHT_PX = 240
-
-function fitToContent(textarea: HTMLTextAreaElement): void {
-  textarea.style.height = 'auto'
-  textarea.style.height = `${Math.min(textarea.scrollHeight, MAX_REPLY_HEIGHT_PX)}px`
-}
 
 function NoteThreadThinking({
   thread,
@@ -74,13 +66,6 @@ export function NoteThread({
   onDelete: (noteId: string) => void
 }): React.JSX.Element {
   const [draft, setDraft] = useSavedDraft(`note-reply:${root.id}`)
-  const replyRef = useRef<HTMLTextAreaElement>(null)
-  const fileMentions = useTextareaFileMentions({
-    value: draft,
-    onChange: setDraft,
-    textareaRef: replyRef,
-    worktreeId
-  })
   const [composing, setComposing] = useState(() => draft !== '')
   const [saving, setSaving] = useState(false)
   const deleteLabel = translate(
@@ -170,35 +155,21 @@ export function NoteThread({
       <NoteThreadThinking thread={[root, ...replies]} worktreeId={worktreeId} />
       {composing ? (
         <div className="orca-diff-comment-thread-composer">
-          <ImeTextarea
-            ref={replyRef}
-            data-note-thread-reply=""
-            autoFocus
-            rows={2}
-            value={draft}
-            placeholder={translate(
-              'auto.components.diff.comments.NoteThread.placeholder',
-              'Ask a follow-up…'
-            )}
-            className="orca-diff-comment-popover-textarea"
-            onChange={(event) => {
-              setDraft(event.target.value)
-              fitToContent(event.currentTarget)
-              fileMentions.onInput(event.currentTarget)
-            }}
-            onKeyDown={(event) => {
-              if (fileMentions.onKeyDown(event)) {
-                return
-              }
-              if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) {
-                event.preventDefault()
-                void submit()
-              } else if (event.key === 'Escape') {
-                event.preventDefault()
-                setComposing(false)
-              }
-            }}
-          />
+          <div className="min-w-0 flex-1" data-note-thread-reply="">
+            <Composer
+              context="agent"
+              worktreeId={worktreeId}
+              autoFocus
+              value={draft}
+              placeholder={translate(
+                'auto.components.diff.comments.NoteThread.placeholder',
+                'Ask a follow-up…'
+              )}
+              onChange={setDraft}
+              onSubmit={() => void submit()}
+              onCancel={() => setComposing(false)}
+            />
+          </div>
           <button
             type="button"
             className="orca-diff-comment-pill-btn"
@@ -209,7 +180,6 @@ export function NoteThread({
           >
             <CornerDownLeft className="size-3" />
           </button>
-          {fileMentions.list}
         </div>
       ) : (
         <button

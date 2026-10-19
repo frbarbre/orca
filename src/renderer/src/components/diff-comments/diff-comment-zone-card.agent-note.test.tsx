@@ -31,6 +31,9 @@ vi.mock('@/store', () => {
 vi.mock('@/lib/send-notes-to-best-agent', () => ({
   sendNotesToBestAgent: vi.fn(async () => 'sent')
 }))
+vi.mock('@/components/composer/Composer', async () => ({
+  Composer: (await import('@/components/composer/composer-test-double')).ComposerTestDouble
+}))
 
 const agentNote: DiffComment = {
   id: 'agent-1',
@@ -153,7 +156,7 @@ describe('agent note zone card', () => {
     expect(container.querySelector('[data-agent-reply="u1"]')?.textContent).toContain('You')
 
     act(() => container.querySelector<HTMLButtonElement>('[aria-label="Reply"]')?.click())
-    const input = container.querySelector<HTMLTextAreaElement>('textarea[data-note-thread-reply]')
+    const input = container.querySelector<HTMLTextAreaElement>('[data-note-thread-reply] textarea')
     expect(input).not.toBeNull()
     await act(async () => {
       const setter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')?.set

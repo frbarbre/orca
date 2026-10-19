@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { DiffComment } from '../../../../shared/diff-comment-types'
 import { NoteThread } from './agent-note-replies-list'
 import { reloadSavedDraftsForTests } from '@/lib/saved-drafts'
@@ -22,6 +22,9 @@ vi.mock('@/store', () => {
 vi.mock('@/lib/send-notes-to-best-agent', () => ({
   sendNotesToBestAgent: mocks.sendNotesToBestAgent
 }))
+vi.mock('@/components/composer/Composer', async () => ({
+  Composer: (await import('@/components/composer/composer-test-double')).ComposerTestDouble
+}))
 
 const root: DiffComment = {
   id: 'a1',
@@ -35,15 +38,6 @@ const root: DiffComment = {
 }
 
 describe('NoteThread reply box', () => {
-  let scrollHeight = 40
-
-  beforeEach(() => {
-    scrollHeight = 40
-    vi.spyOn(HTMLTextAreaElement.prototype, 'scrollHeight', 'get').mockImplementation(
-      () => scrollHeight
-    )
-  })
-
   afterEach(() => {
     cleanup()
     vi.restoreAllMocks()
@@ -69,18 +63,12 @@ describe('NoteThread reply box', () => {
     )
   })
 
-  it('grows with what is typed, up to a cap', () => {
+  it('asks the follow-up in the shared agent composer, scoped to the thread’s workspace', () => {
     render(<NoteThread root={root} replies={[]} worktreeId="wt-1" onDelete={vi.fn()} />)
     fireEvent.click(screen.getByRole('button', { name: 'Reply' }))
-    const textarea = screen.getByPlaceholderText('Ask a follow-up…')
-
-    scrollHeight = 120
-    fireEvent.change(textarea, { target: { value: 'line 1\nline 2\nline 3\nline 4' } })
-    expect(textarea.style.height).toBe('120px')
-
-    scrollHeight = 900
-    fireEvent.change(textarea, { target: { value: 'a very long follow-up' } })
-    expect(textarea.style.height).toBe('240px')
+    expect(screen.getByPlaceholderText('Ask a follow-up…').getAttribute('data-composer')).toBe(
+      'agent'
+    )
   })
 
   it('sends a submitted follow-up straight to an agent, with the unsent ones before it', async () => {

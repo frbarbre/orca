@@ -13,6 +13,9 @@ vi.mock('@/store', () => {
   }
 })
 vi.mock('@/lib/send-notes-to-best-agent', () => ({ sendNotesToBestAgent: vi.fn() }))
+vi.mock('@/components/composer/Composer', async () => ({
+  Composer: (await import('@/components/composer/composer-test-double')).ComposerTestDouble
+}))
 
 afterEach(cleanup)
 

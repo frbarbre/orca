@@ -15,6 +15,9 @@ const notesMenuFixture = vi.hoisted(() => ({
 
 // Saved-note delivery is outside the selection and inline-draft paths exercised here.
 vi.mock('../editor/NotesSendMenu', () => ({ NotesSendMenu: notesMenuFixture.NotesSendMenu }))
+vi.mock('@/components/composer/Composer', async () => ({
+  Composer: (await import('@/components/composer/composer-test-double')).ComposerTestDouble
+}))
 
 const storeFixture = vi.hoisted(() => ({
   activeGroupIdByWorktree: {},

@@ -1,5 +1,5 @@
-import { ImeTextarea } from '@/lib/ime-text-field'
 import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
+import { Composer } from '@/components/composer/Composer'
 import { CornerDownLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useMountedRef } from '@/hooks/useMountedRef'
@@ -25,13 +25,6 @@ export type DiffCommentDraftCardProps = {
   onContentResize?: () => void
 }
 
-function resizeDraftTextarea(textarea: HTMLTextAreaElement): boolean {
-  const previousHeight = textarea.style.height
-  textarea.style.height = 'auto'
-  textarea.style.height = `${Math.min(Math.max(textarea.scrollHeight, 60), 240)}px`
-  return textarea.style.height !== previousHeight
-}
-
 export function DiffCommentDraftCard({
   lineNumber,
   startLine,
@@ -48,7 +41,6 @@ export function DiffCommentDraftCard({
   const bodyRef = useRef(body)
   const [submitting, setSubmitting] = useState(false)
   const mountedRef = useMountedRef()
-  const textareaRef = useRef<HTMLTextAreaElement | null>(null)
   const cardRef = useRef<HTMLDivElement | null>(null)
   const onContentResizeRef = useRef(onContentResize)
 
@@ -74,29 +66,25 @@ export function DiffCommentDraftCard({
           { value0: lineNumber }
         )
 
-  const focusTextareaRef = useCallback((textarea: HTMLTextAreaElement | null): void => {
-    textareaRef.current = textarea
-    textarea?.focus()
+  // Why the editable element by query: the composer owns its editor, and the card only needs to
+  // put the caret back in it.
+  const focusEditor = useCallback((): void => {
+    cardRef.current?.querySelector<HTMLElement>('[contenteditable="true"], textarea')?.focus()
   }, [])
 
   useEffect(() => {
-    const focusTextarea = (): void => textareaRef.current?.focus()
-    focusTextarea()
+    focusEditor()
     if (typeof requestAnimationFrame !== 'function') {
       return
     }
-    const frame = requestAnimationFrame(focusTextarea)
+    const frame = requestAnimationFrame(focusEditor)
     return () => cancelAnimationFrame(frame)
-  }, [])
+  }, [focusEditor])
 
   useLayoutEffect(() => {
     const card = cardRef.current
     if (!card || !onContentResizeRef.current) {
       return
-    }
-    const textarea = textareaRef.current
-    if (textarea) {
-      resizeDraftTextarea(textarea)
     }
     onContentResizeRef.current()
     if (typeof ResizeObserver === 'undefined') {
@@ -152,8 +140,8 @@ export function DiffCommentDraftCard({
       return
     }
     // Chromium drops focus to <body> when the pressed button turns disabled, and the zone only
-    // hands focus back to Monaco while the card still holds it. Park it on the textarea first.
-    textareaRef.current?.focus()
+    // hands focus back to Monaco while the card still holds it. Park it in the editor first.
+    focusEditor()
     setSubmitting(true)
     try {
       const result = await onSubmit(bodyState.body)
@@ -169,33 +157,6 @@ export function DiffCommentDraftCard({
       if (mountedRef.current) {
         setSubmitting(false)
       }
-    }
-  }
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>): void => {
-    e.stopPropagation()
-
-    if (e.key === 'Escape') {
-      e.preventDefault()
-      if (submitting) {
-        return
-      }
-      onCancel()
-      return
-    }
-
-    const isEnter = e.key === 'Enter' && !e.nativeEvent.isComposing
-    const isCmdOrCtrl = e.metaKey || e.ctrlKey
-    // Plain Shift+Enter inserts a newline; Cmd/Ctrl+Enter submits even with Shift.
-    if (isEnter && (isCmdOrCtrl || !e.shiftKey)) {
-      e.preventDefault()
-      if (submitting) {
-        return
-      }
-      if (isCmdOrCtrl) {
-        armNoteSendFocus()
-      }
-      void handleSubmit()
     }
   }
 
@@ -215,28 +176,38 @@ export function DiffCommentDraftCard({
           {headerLabel}
         </div>
 
-        {/* Textarea */}
-        <ImeTextarea
-          ref={focusTextareaRef}
-          className="orca-diff-comment-popover-textarea"
-          placeholder={
-            placeholder ??
-            translate(
-              'auto.components.diff.comments.DiffCommentPopover.f6c449191e',
-              'Add note for the AI'
-            )
-          }
-          value={body}
-          rows={3}
-          onChange={(e) => {
-            setBody(e.target.value)
-            onBodyChange?.(e.target.value)
-            if (resizeDraftTextarea(e.currentTarget)) {
-              onContentResizeRef.current?.()
+        {/* Why stop keys here: the card sits in a Monaco view zone, and the editor must not act
+            on what is typed into the note. */}
+        <div onKeyDown={(event) => event.stopPropagation()}>
+          <Composer
+            context="agent"
+            placeholder={
+              placeholder ??
+              translate(
+                'auto.components.diff.comments.DiffCommentPopover.f6c449191e',
+                'Add note for the AI'
+              )
             }
-          }}
-          onKeyDown={handleKeyDown}
-        />
+            value={body}
+            autoFocus
+            onChange={(next) => {
+              setBody(next)
+              onBodyChange?.(next)
+            }}
+            onSubmit={() => {
+              if (submitting) {
+                return
+              }
+              armNoteSendFocus()
+              void handleSubmit()
+            }}
+            onCancel={() => {
+              if (!submitting) {
+                onCancel()
+              }
+            }}
+          />
+        </div>
 
         {/* Footer */}
         <div className="orca-diff-comment-popover-footer">

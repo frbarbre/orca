@@ -10,6 +10,10 @@ import {
   type FakeDiffCommentEditor
 } from './diff-comment-editor-test-fixture'
 
+vi.mock('@/components/composer/Composer', async () => ({
+  Composer: (await import('@/components/composer/composer-test-double')).ComposerTestDouble
+}))
+
 const DRAFT_LINE = 5
 const OTHER_LINE = 9
 const BODY = 'Needs revision'

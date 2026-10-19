@@ -33,8 +33,10 @@ export function ReviewMarkdownComposer({
   autoFocus,
   disabled,
   mentions = true,
+  userMentions = true,
   uploads = true,
   fileMentionWorktreeId = null,
+  ariaLabel,
   className
 }: {
   value: string
@@ -46,9 +48,12 @@ export function ReviewMarkdownComposer({
   autoFocus?: boolean
   disabled?: boolean
   mentions?: boolean
+  /** Fork: `@` suggests GitHub people; off keeps emoji and file mentions without them. */
+  userMentions?: boolean
   uploads?: boolean
   /** Fork: `@` names this workspace's files, for an agent to read, in place of GitHub users. */
   fileMentionWorktreeId?: string | null
+  ariaLabel?: string
   className?: string
 }): React.JSX.Element {
   const [query, setQuery] = useState<MentionQueryState | null>(null)
@@ -60,7 +65,8 @@ export function ReviewMarkdownComposer({
   const fileMode = fileMentionWorktreeId !== null
   const mentionMode = useRef<MentionMode>('user')
   mentionMode.current = fileMode ? 'file' : 'user'
-  const memberOptions = useActiveRepoMentionOptions(mentions && !fileMode && query !== null)
+  const peopleMode = mentions && userMentions && !fileMode
+  const memberOptions = useActiveRepoMentionOptions(peopleMode && query !== null)
   const mentionFiles = useWorktreeMentionFiles(
     mentions && fileMode ? (query?.query ?? null) : null,
     fileMentionWorktreeId
@@ -73,13 +79,16 @@ export function ReviewMarkdownComposer({
       return []
     }
     // Why no second filter for files: the file search already ranked them fuzzily.
-    return fileMode
-      ? fileMentionOptions(mentionFiles.files)
-      : filterGitHubMentionOptions(
+    if (fileMode) {
+      return fileMentionOptions(mentionFiles.files)
+    }
+    return peopleMode
+      ? filterGitHubMentionOptions(
           withCommentAuthorMentionOptions(memberOptions, scope.comments),
           query.query
         )
-  }, [fileMode, mentionFiles.files, mentions, memberOptions, query, scope.comments])
+      : []
+  }, [fileMode, mentionFiles.files, mentions, memberOptions, peopleMode, query, scope.comments])
   const open = suggestions.length > 0 && query !== null
   const [emojiQuery, setEmojiQuery] = useState<MentionQueryState | null>(null)
   const emojiQueryRef = useRef<MentionQueryState | null>(null)
@@ -250,6 +259,7 @@ export function ReviewMarkdownComposer({
         value={value}
         onChange={onChange}
         placeholder={placeholder}
+        ariaLabel={ariaLabel}
         autoFocus={autoFocus}
         disabled={disabled}
         onSubmitShortcut={onSubmitShortcut}

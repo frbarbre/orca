@@ -1,11 +1,11 @@
-import { ImeTextarea } from '@/lib/ime-text-field'
 import { useEffect, useState } from 'react'
+import { Composer } from '@/components/composer/Composer'
 import { CornerDownLeft, MessageSquarePlus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { Label } from '@/components/ui/label'
 import { Popover, PopoverAnchor, PopoverContent } from '@/components/ui/popover'
-import { getScreenSubmitModifierLabel, isScreenSubmitShortcut } from '@/lib/screen-submit-shortcut'
+import { getScreenSubmitModifierLabel } from '@/lib/screen-submit-shortcut'
 import {
   GRAB_BUDGET,
   type BrowserAnnotationIntent,
@@ -95,33 +95,26 @@ export function PendingBrowserAnnotationCard({
         <Label htmlFor="browser-annotation-comment" className="sr-only">
           {translate('auto.components.browser.pane.BrowserPane.d2a7092e6e', 'Annotation comment')}
         </Label>
-        <ImeTextarea
-          id="browser-annotation-comment"
-          value={comment}
-          onChange={(event) => setComment(event.target.value)}
-          placeholder={translate(
-            'auto.components.browser.pane.BrowserPane.532bac48c5',
-            'Describe what the agent should change here...'
-          )}
-          maxLength={GRAB_BUDGET.annotationCommentMaxLength}
-          className="h-24 w-full resize-none rounded-md border border-input bg-background px-3 py-2 text-sm outline-none ring-offset-background placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring"
-          autoFocus
-          onKeyDown={(event) => {
-            if (event.key === 'Escape') {
-              event.preventDefault()
-              event.stopPropagation()
-              onCancel()
-              return
-            }
-            if (isScreenSubmitShortcut(event)) {
-              event.preventDefault()
-              event.stopPropagation()
+        <div id="browser-annotation-comment" onKeyDown={(event) => event.stopPropagation()}>
+          <Composer
+            context="agent"
+            value={comment}
+            onChange={setComment}
+            placeholder={translate(
+              'auto.components.browser.pane.BrowserPane.532bac48c5',
+              'Describe what the agent should change here...'
+            )}
+            maxLength={GRAB_BUDGET.annotationCommentMaxLength}
+            className="min-h-24 rounded-md border border-input bg-background text-sm"
+            autoFocus
+            onCancel={onCancel}
+            onSubmit={() => {
               if (trimmed) {
                 onAdd(trimmed, intent)
               }
-            }
-          }}
-        />
+            }}
+          />
+        </div>
         <ToggleGroup
           type="single"
           size="sm"

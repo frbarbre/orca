@@ -49,12 +49,15 @@ type GitHubMarkdownComposerProps = {
   editorExtensions?: readonly AnyExtension[]
   growWithContent?: boolean
   showToolbar?: boolean
+  /** The editor's accessible name; the placeholder when left out. */
+  ariaLabel?: string
 }
 
 export function GitHubMarkdownComposer({
   value,
   onChange,
   placeholder,
+  ariaLabel,
   minHeightClassName = 'min-h-32',
   className,
   disabled = false,
@@ -134,7 +137,10 @@ export function GitHubMarkdownComposer({
     editorProps: {
       attributes: {
         class: cn('rich-markdown-editor github-markdown-composer-editor', minHeightClassName),
-        spellcheck: getRichMarkdownSpellcheckAttribute(richMarkdownSpellcheckEnabled)
+        spellcheck: getRichMarkdownSpellcheckAttribute(richMarkdownSpellcheckEnabled),
+        role: 'textbox',
+        'aria-multiline': 'true',
+        'aria-label': ariaLabel ?? placeholder
       },
       handleKeyDown: (_view, event) => {
         if (isScreenSubmitShortcut(event)) {

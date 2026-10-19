@@ -1,22 +1,16 @@
 // @vitest-environment happy-dom
 import { act, cleanup, fireEvent, render } from '@testing-library/react'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { toast } from 'sonner'
 import { DiffCommentDraftCard } from './DiffCommentDraftCard'
 import { noteCreatedForSendFocus, takeNoteSendFocus } from './note-send-focus'
 
 vi.mock('sonner', () => ({ toast: { error: vi.fn(), success: vi.fn(), info: vi.fn() } }))
+vi.mock('@/components/composer/Composer', async () => ({
+  Composer: (await import('@/components/composer/composer-test-double')).ComposerTestDouble
+}))
 
 describe('DiffCommentDraftCard', () => {
-  let scrollHeight = 60
-
-  beforeEach(() => {
-    scrollHeight = 60
-    vi.spyOn(HTMLTextAreaElement.prototype, 'scrollHeight', 'get').mockImplementation(
-      () => scrollHeight
-    )
-  })
-
   afterEach(() => {
     cleanup()
     vi.restoreAllMocks()
@@ -120,7 +114,7 @@ describe('DiffCommentDraftCard', () => {
     expect(onSubmit).toHaveBeenCalledWith('Needs revision')
   })
 
-  it('calls onSubmit on Enter without Shift, but allows Shift+Enter for newlines', async () => {
+  it('writes the note in the shared agent composer, which submits on Cmd+Enter only', async () => {
     const onCancel = vi.fn()
     const onSubmit = vi.fn().mockResolvedValue(true)
 
@@ -129,15 +123,14 @@ describe('DiffCommentDraftCard', () => {
     )
 
     const textarea = view.getByRole('textbox')
+    expect(textarea.getAttribute('data-composer')).toBe('agent')
     fireEvent.change(textarea, { target: { value: 'First line' } })
 
-    // Shift+Enter should NOT submit
-    fireEvent.keyDown(textarea, { key: 'Enter', shiftKey: true })
+    fireEvent.keyDown(textarea, { key: 'Enter' })
     expect(onSubmit).not.toHaveBeenCalled()
 
-    // Plain Enter SHOULD submit
     await act(async () => {
-      fireEvent.keyDown(textarea, { key: 'Enter', shiftKey: false })
+      fireEvent.keyDown(textarea, { key: 'Enter', metaKey: true })
     })
     expect(onSubmit).toHaveBeenCalledWith('First line')
   })
@@ -240,54 +233,57 @@ describe('DiffCommentDraftCard', () => {
     expect(onCancel).toHaveBeenCalledTimes(2)
   })
 
-  it('notifies onContentResize when textarea height changes', () => {
+  it('notifies onContentResize on mount and whenever the card resizes', () => {
     const onContentResize = vi.fn()
-    const onCancel = vi.fn()
-    const onSubmit = vi.fn().mockResolvedValue(true)
+    let resize: () => void = () => undefined
+    vi.stubGlobal(
+      'ResizeObserver',
+      class {
+        constructor(callback: () => void) {
+          resize = callback
+        }
+        observe(): void {}
+        disconnect(): void {}
+      }
+    )
 
-    const view = render(
+    render(
       <DiffCommentDraftCard
         lineNumber={10}
-        onCancel={onCancel}
-        onSubmit={onSubmit}
+        onCancel={vi.fn()}
+        onSubmit={vi.fn().mockResolvedValue(true)}
         onContentResize={onContentResize}
       />
     )
-
-    const textarea = view.getByRole('textbox')
-    // Called once on initial layout to settle view zone height
     expect(onContentResize).toHaveBeenCalledTimes(1)
 
-    // Same height (60)
-    fireEvent.change(textarea, { target: { value: 'line 1' } })
-    expect(onContentResize).toHaveBeenCalledTimes(1)
-
-    // Height increases
-    scrollHeight = 120
-    fireEvent.change(textarea, { target: { value: 'line 1\nline 2\nline 3' } })
+    resize()
     expect(onContentResize).toHaveBeenCalledTimes(2)
-    expect(textarea.style.height).toBe('120px')
+    vi.unstubAllGlobals()
   })
 
   it.each([
-    ['Cmd+Enter', { metaKey: true }, true],
-    ['plain Enter', {}, false]
-  ])(
-    '%s decides whether the saved note hands focus to its send button',
-    (_label, keys, focuses) => {
-      const { container } = render(
-        <DiffCommentDraftCard
-          lineNumber={3}
-          onCancel={vi.fn()}
-          onSubmit={vi.fn().mockResolvedValue(true)}
-        />
-      )
-      const textarea = container.querySelector('textarea')!
-      fireEvent.change(textarea, { target: { value: 'Send me' } })
-      fireEvent.keyDown(textarea, { key: 'Enter', ...keys })
+    ['Cmd+Enter', true],
+    ['the Add note button', false]
+  ])('saving with %s decides whether focus moves to the send button', async (_label, viaKeys) => {
+    const view = render(
+      <DiffCommentDraftCard
+        lineNumber={3}
+        onCancel={vi.fn()}
+        onSubmit={vi.fn().mockResolvedValue(true)}
+      />
+    )
+    const textarea = view.getByRole('textbox')
+    fireEvent.change(textarea, { target: { value: 'Send me' } })
+    await act(async () => {
+      if (viaKeys) {
+        fireEvent.keyDown(textarea, { key: 'Enter', metaKey: true })
+      } else {
+        fireEvent.click(view.getByRole('button', { name: 'Add note' }))
+      }
+    })
 
-      noteCreatedForSendFocus('draft-note')
-      expect(takeNoteSendFocus('draft-note')).toBe(focuses)
-    }
-  )
+    noteCreatedForSendFocus('draft-note')
+    expect(takeNoteSendFocus('draft-note')).toBe(viaKeys)
+  })
 })

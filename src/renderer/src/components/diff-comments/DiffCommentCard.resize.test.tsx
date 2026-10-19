@@ -2,6 +2,15 @@
 import { act, cleanup, fireEvent, render } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { DiffCommentCard } from './DiffCommentCard'
+import type { ComposerProps } from '@/components/composer/Composer'
+
+const composer = vi.hoisted(() => ({}) as Partial<ComposerProps>)
+vi.mock('@/components/composer/Composer', () => ({
+  Composer: (props: ComposerProps) => {
+    Object.assign(composer, props)
+    return <textarea aria-label="note" value={props.value} readOnly />
+  }
+}))
 
 describe('DiffCommentCard content resize', () => {
   let notifyObservedResize: ResizeObserverCallback
@@ -103,12 +112,8 @@ describe('DiffCommentCard content resize', () => {
     expect(onContentResize).not.toHaveBeenCalled()
   })
 
-  it('requests rail reflow only when the editing textarea height changes', () => {
+  it('requests rail reflow only when the editing box height changes', () => {
     const onContentResize = vi.fn()
-    let scrollHeight = 60
-    vi.spyOn(HTMLTextAreaElement.prototype, 'scrollHeight', 'get').mockImplementation(
-      () => scrollHeight
-    )
     const view = render(
       <DiffCommentCard
         lineNumber={26}
@@ -120,34 +125,21 @@ describe('DiffCommentCard content resize', () => {
 
     fireEvent.click(view.getByRole('button', { name: 'Edit note' }))
     expect(onContentResize).toHaveBeenCalledOnce()
+    expect(composer.context).toBe('agent')
 
-    const textarea = view.getByRole('textbox')
-    expect(textarea.style.height).toBe('60px')
-    fireEvent.change(textarea, { target: { value: 'A saved note!' } })
-    expect(onContentResize).toHaveBeenCalledOnce()
-
+    act(() => composer.onHeightChange?.(60))
+    expect(onContentResize).toHaveBeenCalledTimes(2)
     for (let index = 0; index < 50; index++) {
-      fireEvent.change(textarea, { target: { value: `A saved note! ${index}` } })
+      act(() => composer.onHeightChange?.(60))
     }
-    expect(textarea.style.height).toBe('60px')
-    expect(onContentResize).toHaveBeenCalledOnce()
-
-    scrollHeight = 400
-    fireEvent.change(textarea, { target: { value: 'A much taller saved note' } })
-    expect(textarea.style.height).toBe('240px')
     expect(onContentResize).toHaveBeenCalledTimes(2)
 
-    scrollHeight = 480
-    fireEvent.change(textarea, { target: { value: 'A still taller saved note' } })
-    expect(textarea.style.height).toBe('240px')
-    expect(onContentResize).toHaveBeenCalledTimes(2)
-
-    scrollHeight = 80
-    fireEvent.change(textarea, { target: { value: 'A shorter saved note' } })
-    expect(textarea.style.height).toBe('80px')
+    act(() => composer.onHeightChange?.(240))
     expect(onContentResize).toHaveBeenCalledTimes(3)
+    act(() => composer.onHeightChange?.(80))
+    expect(onContentResize).toHaveBeenCalledTimes(4)
 
     fireEvent.click(view.getByRole('button', { name: 'Cancel' }))
-    expect(onContentResize).toHaveBeenCalledTimes(4)
+    expect(onContentResize).toHaveBeenCalledTimes(5)
   })
 })

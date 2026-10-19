@@ -1,5 +1,5 @@
-import { ImeTextarea } from '@/lib/ime-text-field'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { Composer } from '@/components/composer/Composer'
 import { CornerDownLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useMountedRef } from '@/hooks/useMountedRef'
@@ -67,10 +67,6 @@ export function MarkdownPreviewAnnotationComposer({
     return installOpenDraftAddReviewNoteGuard(composer)
   }, [])
 
-  const focusTextareaRef = useCallback((textarea: HTMLTextAreaElement | null): void => {
-    textarea?.focus()
-  }, [])
-
   const trimmed = body.trim()
 
   const submit = async (): Promise<void> => {
@@ -102,32 +98,17 @@ export function MarkdownPreviewAnnotationComposer({
       <div className="orca-diff-comment-popover-label">
         {translate('auto.components.editor.MarkdownPreview.b1bfc04034', 'Selected text')}
       </div>
-      <ImeTextarea
-        ref={focusTextareaRef}
-        className="orca-diff-comment-popover-textarea"
+      <Composer
+        context="agent"
         placeholder={translate(
           'auto.components.editor.MarkdownPreview.d737791433',
           'Add note for the AI'
         )}
         value={body}
-        onChange={(event) => {
-          setBody(event.target.value)
-          const el = event.currentTarget
-          el.style.height = 'auto'
-          el.style.height = `${Math.min(el.scrollHeight, 240)}px`
-        }}
-        onKeyDown={(event) => {
-          if (event.key === 'Escape') {
-            event.preventDefault()
-            onCancel()
-            return
-          }
-          if (event.key === 'Enter' && !event.nativeEvent.isComposing && !event.shiftKey) {
-            event.preventDefault()
-            void submit()
-          }
-        }}
-        rows={3}
+        onChange={setBody}
+        autoFocus
+        onCancel={onCancel}
+        onSubmit={() => void submit()}
       />
       <div className="orca-diff-comment-popover-footer">
         <Button variant="ghost" size="sm" onClick={onCancel} disabled={submitting}>

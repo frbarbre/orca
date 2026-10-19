@@ -1,5 +1,5 @@
-import { ImeTextarea } from '@/lib/ime-text-field'
 import { useEffect, useState } from 'react'
+import { Composer } from '@/components/composer/Composer'
 import { ChevronDown, ChevronRight, CircleCheck, Copy, Pencil, Send, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
@@ -10,7 +10,6 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
-import { isScreenSubmitShortcut } from '@/lib/screen-submit-shortcut'
 import { translate } from '@/i18n/i18n'
 import {
   GRAB_BUDGET,
@@ -238,23 +237,23 @@ export function BrowserPageAnnotationTray({
                         }
                       }}
                     >
-                      <ImeTextarea
+                      <Composer
+                        context="agent"
+                        worktreeId={worktreeId}
                         value={editComment}
-                        onChange={(event) => setEditComment(event.target.value)}
+                        onChange={setEditComment}
                         maxLength={GRAB_BUDGET.annotationCommentMaxLength}
-                        className="h-16 w-full resize-none rounded-md border border-input bg-background px-2 py-1.5 text-xs outline-none ring-offset-background focus-visible:ring-2 focus-visible:ring-ring"
+                        className="min-h-16 rounded-md border border-input bg-background text-xs"
                         autoFocus
-                        aria-label={translate(
+                        placeholder={translate(
                           'auto.components.browser.pane.BrowserPane.d2a7092e6e',
                           'Annotation comment'
                         )}
-                        onKeyDown={(event) => {
-                          if (isScreenSubmitShortcut(event)) {
-                            event.preventDefault()
-                            event.stopPropagation()
-                            handleSaveEdit()
-                          }
-                        }}
+                        ariaLabel={translate(
+                          'auto.components.browser.pane.BrowserPane.d2a7092e6e',
+                          'Annotation comment'
+                        )}
+                        onSubmit={handleSaveEdit}
                       />
                       <ToggleGroup
                         type="single"

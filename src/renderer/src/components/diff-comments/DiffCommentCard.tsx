@@ -1,5 +1,5 @@
-import { ImeTextarea } from '@/lib/ime-text-field'
 import { CornerDownLeft, Pencil, Trash } from 'lucide-react'
+import { Composer } from '@/components/composer/Composer'
 import { AgentNoteIcon } from './agent-note-icon'
 import { useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import { Button } from '@/components/ui/button'
@@ -41,13 +41,6 @@ type Props = {
   footer?: ReactNode
 }
 
-function resizeDiffCommentTextarea(textarea: HTMLTextAreaElement): boolean {
-  const previousHeight = textarea.style.height
-  textarea.style.height = 'auto'
-  textarea.style.height = `${Math.min(textarea.scrollHeight, 240)}px`
-  return textarea.style.height !== previousHeight
-}
-
 export function DiffCommentCard({
   lineNumber,
   startLine,
@@ -71,7 +64,7 @@ export function DiffCommentCard({
   const [submitting, setSubmitting] = useState(false)
   const mountedRef = useMountedRef()
   const cardRef = useRef<HTMLDivElement | null>(null)
-  const textareaRef = useRef<HTMLTextAreaElement | null>(null)
+  const editHeightRef = useRef<number | null>(null)
   const resizeAfterCloseRef = useRef(false)
   const observesRenderedSize = observeRenderedSize === true && onContentResize !== undefined
 
@@ -116,24 +109,15 @@ export function DiffCommentCard({
     }
   }, [observesRenderedSize])
 
-  // Why: focus + auto-grow the textarea on entering edit mode. Layout effect
-  // so the height is set before the browser paints — a measurement pass on
-  // the next animation frame would visibly jump from 0 to N px.
   useLayoutEffect(() => {
     if (!editing) {
+      editHeightRef.current = null
       if (resizeAfterCloseRef.current) {
         resizeAfterCloseRef.current = false
         onContentResizeRef.current?.()
       }
       return
     }
-    const el = textareaRef.current
-    if (!el) {
-      return
-    }
-    resizeDiffCommentTextarea(el)
-    el.focus()
-    el.setSelectionRange(el.value.length, el.value.length)
     onContentResizeRef.current?.()
   }, [editing])
 
@@ -311,32 +295,28 @@ export function DiffCommentCard({
         {/* Body or Edit Mode */}
         {editing ? (
           <div className="flex flex-col gap-2 mt-1">
-            <ImeTextarea
-              ref={textareaRef}
-              className="orca-diff-comment-popover-textarea"
+            <Composer
+              context="agent"
               value={draft}
-              onChange={(e) => {
-                setDraft(e.target.value)
-                // Why: rich-review layout measures every note; skip it when this card stayed put.
-                if (resizeDiffCommentTextarea(e.currentTarget)) {
-                  onContentResizeRef.current?.()
-                }
-              }}
-              onKeyDown={(e) => {
-                if (e.key === 'Escape') {
-                  e.preventDefault()
-                  handleCancel()
-                  return
-                }
-                if (e.key === 'Enter' && !e.nativeEvent.isComposing && !e.shiftKey) {
-                  e.preventDefault()
-                  if (!canSubmit) {
-                    return
-                  }
+              onChange={setDraft}
+              placeholder={translate(
+                'auto.components.diff.comments.DiffCommentPopover.f6c449191e',
+                'Add note for the AI'
+              )}
+              autoFocus
+              onCancel={handleCancel}
+              onSubmit={() => {
+                if (canSubmit) {
                   void handleSubmit()
                 }
               }}
-              rows={3}
+              onHeightChange={(height) => {
+                // Why: rich-review layout measures every note; skip it when this card stayed put.
+                if (height !== editHeightRef.current) {
+                  editHeightRef.current = height
+                  onContentResizeRef.current?.()
+                }
+              }}
             />
             <div className="orca-diff-comment-popover-footer">
               <Button variant="ghost" size="sm" onClick={handleCancel} disabled={submitting}>

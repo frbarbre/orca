@@ -6,6 +6,10 @@ import { TooltipProvider } from '@/components/ui/tooltip'
 import type { BrowserPageAnnotation } from '../../../../../shared/browser-grab-types'
 import { BrowserPageAnnotationTray } from './browser-page-annotation-tray'
 
+vi.mock('@/components/composer/Composer', async () => ({
+  Composer: (await import('@/components/composer/composer-test-double')).ComposerTestDouble
+}))
+
 afterEach(() => {
   cleanup()
 })

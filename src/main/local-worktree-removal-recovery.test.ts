@@ -188,6 +188,52 @@ describe('recoverLocalWindowsWorktreeRemoval', () => {
     })
   })
 
+  it('finishes a macOS delete that Finder wrote into while Git deleted the folder', async () => {
+    await withPlatform('darwin', async () => {
+      const error = Object.assign(new Error('git worktree remove failed'), {
+        stderr: "error: failed to delete '/ws/e-5948': Directory not empty"
+      })
+
+      const result = await recoverLocalWindowsWorktreeRemoval({
+        error,
+        force: false,
+        canonicalWorktreePath: '/ws/e-5948',
+        repoPath: '/repo',
+        localWorktreeGitOptions: {},
+        registeredWorktree: { branch: 'refs/heads/e-5948', head: 'abc123' },
+        deleteBranch: true,
+        closeWatcher: vi.fn().mockResolvedValue(undefined)
+      })
+
+      expect(removeLocalWorktreePathMock).toHaveBeenCalledWith('/ws/e-5948', {})
+      expect(gitExecFileAsyncMock).toHaveBeenCalledWith(['worktree', 'prune'], { cwd: '/repo' })
+      expect(result).toEqual({ preservedBranch: { branchName: 'e-5948', head: 'abc123' } })
+    })
+  })
+
+  it('leaves a macOS folder Git still registers, whatever the error says', async () => {
+    await withPlatform('darwin', async () => {
+      listWorktreesStrictMock.mockResolvedValue([{ path: '/ws/e-5948' }])
+      const error = Object.assign(new Error('git worktree remove failed'), {
+        stderr: "error: failed to delete '/ws/e-5948': Directory not empty"
+      })
+
+      await expect(
+        recoverLocalWindowsWorktreeRemoval({
+          error,
+          force: false,
+          canonicalWorktreePath: '/ws/e-5948',
+          repoPath: '/repo',
+          localWorktreeGitOptions: {},
+          registeredWorktree: { branch: 'refs/heads/e-5948', head: 'abc123' },
+          deleteBranch: true,
+          closeWatcher: vi.fn().mockResolvedValue(undefined)
+        })
+      ).resolves.toBeUndefined()
+      expect(removeLocalWorktreePathMock).not.toHaveBeenCalled()
+    })
+  })
+
   it('does not recover partial filesystem deletion wording off Windows', async () => {
     await withPlatform('linux', async () => {
       const error = Object.assign(new Error('git worktree remove failed'), {

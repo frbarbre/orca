@@ -136,7 +136,12 @@ export async function recoverLocalWindowsWorktreeRemoval(
 async function isRecoverableWindowsFilesystemRemovalFailure(
   args: LocalWindowsRemovalRecoveryArgs
 ): Promise<boolean> {
-  if (process.platform !== 'win32' || typeof args.error !== 'object' || args.error === null) {
+  if (typeof args.error !== 'object' || args.error === null) {
+    return false
+  }
+  // Fork: off Windows only a folder that filled up while Git emptied it (Finder writing
+  // `.DS_Store` into a shown folder) is finished here; other failures keep the leftover listed.
+  if (process.platform !== 'win32' && !isDirectoryRefilledDuringRemoval(args.error)) {
     return false
   }
 
@@ -150,6 +155,12 @@ async function isRecoverableWindowsFilesystemRemovalFailure(
   } catch {
     return false
   }
+}
+
+function isDirectoryRefilledDuringRemoval(error: object): boolean {
+  const { stderr, message } = error as { stderr?: unknown; message?: unknown }
+  const text = `${typeof stderr === 'string' ? stderr : ''}\n${typeof message === 'string' ? message : ''}`
+  return /failed to delete '.*': Directory not empty/.test(text)
 }
 
 export async function removeStaleLocalWorktreeRegistration(

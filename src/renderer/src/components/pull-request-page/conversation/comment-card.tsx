@@ -3,6 +3,7 @@ import { ExternalLink, MessageSquarePlus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import CommentMarkdown from '@/components/sidebar/CommentMarkdown'
+import { githubMentionMarkdownExtension } from '@/components/github/github-mention-hover-card'
 import { cn } from '@/lib/utils'
 import {
   PR_COMMENT_OPEN_AUTHOR_CLASS,
@@ -157,6 +158,7 @@ export function ConversationCommentCard({
           content={comment.body}
           variant="document"
           githubRepo={markdownGitHubRepo}
+          extension={githubMentionMarkdownExtension}
           className="min-w-0 max-w-full overflow-hidden break-words text-[13px] leading-relaxed [&_a]:break-all [&_code]:break-words [&_pre]:max-w-full"
         />
         <CommentReactions reactions={comment.reactions} />

@@ -28,6 +28,7 @@ import { syncReviewHead } from '../github/review-head-sync'
 import type { WorkspaceCommandRequest } from '../../shared/github/workspace-command'
 import { runWorkspaceCommand } from '../github/workspace-command'
 import { resolveGitHubAttachmentUrl, uploadReviewAsset } from '../github/review-asset-upload'
+import { getGitHubUserProfile } from '../github/github-user-profile'
 import { registerSettingsTransferHandlers } from '../settings-transfer/settings-transfer'
 import type { UploadReviewAssetRequest } from '../../shared/github/review-asset'
 import { resolveOsOpenedDocuments } from './os-opened-documents'
@@ -124,6 +125,9 @@ export function registerMainProcessIpcHandlers(): void {
   )
   ipcMain.handle('pending-review:asset-resolve', (_event, href: string) =>
     resolveGitHubAttachmentUrl(href)
+  )
+  ipcMain.handle('pending-review:user-profile', (_event, login: string) =>
+    getGitHubUserProfile(login)
   )
 
   ipcMain.handle(

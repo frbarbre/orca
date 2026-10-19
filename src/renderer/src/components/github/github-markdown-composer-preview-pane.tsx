@@ -1,4 +1,5 @@
 import CommentMarkdown from '@/components/sidebar/CommentMarkdown'
+import { githubMentionMarkdownExtension } from './github-mention-hover-card'
 import type { GitHubOwnerRepo } from '../../../../shared/github/pull-request-types'
 import { translate } from '@/i18n/i18n'
 
@@ -20,6 +21,7 @@ export function GitHubMarkdownComposerPreviewPane({
           content={value}
           variant="document"
           githubRepo={previewGithubRepo}
+          extension={githubMentionMarkdownExtension}
           className="min-w-0 max-w-full overflow-hidden break-words text-[13px] leading-relaxed [&_a]:break-all [&_code]:break-words [&_pre]:max-w-full"
         />
       ) : (

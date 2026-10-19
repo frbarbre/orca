@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import { cn } from '@/lib/utils'
 import CommentMarkdown from '@/components/sidebar/CommentMarkdown'
+import { githubMentionMarkdownExtension } from '@/components/github/github-mention-hover-card'
 import { CommentReactions } from '@/components/github/CommentReactions'
 import { CommentEditor } from './comment-editor'
 import { isBotPRComment } from '../../../../../shared/pr-comment-audience'
@@ -396,7 +397,11 @@ export function CommentRow({
           </div>
         ) : (
           <div className={isReply ? presentation.commentBodyReply : presentation.commentBody}>
-            <CommentMarkdown content={comment.body} className={presentation.commentBodyMarkdown} />
+            <CommentMarkdown
+              content={comment.body}
+              className={presentation.commentBodyMarkdown}
+              extension={githubMentionMarkdownExtension}
+            />
             <CommentReactions
               reactions={comment.reactions}
               onReactionChange={

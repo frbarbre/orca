@@ -6,6 +6,7 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import CommentMarkdown from '@/components/sidebar/CommentMarkdown'
+import { githubMentionMarkdownExtension } from '@/components/github/github-mention-hover-card'
 import { useAppStore } from '@/store'
 import { callRuntimeRpc } from '@/runtime/runtime-rpc-client'
 import type { GitHubWorkItemDetails } from '../../../../../shared/github/work-item-types'
@@ -310,7 +311,11 @@ export function SlugDialogBody({
                     setEditingBody(true)
                   }}
                 >
-                  <CommentMarkdown content={body} variant="document" />
+                  <CommentMarkdown
+                    content={body}
+                    variant="document"
+                    extension={githubMentionMarkdownExtension}
+                  />
                 </button>
               ) : (
                 <button

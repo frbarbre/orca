@@ -3094,6 +3094,12 @@
           "removeNamedReaction": "Remove {{value0}} reaction",
           "addNamedReaction": "Add {{value0}} reaction"
         },
+        "mentionCard": {
+          "loading": "Loading…",
+          "unavailable": "Couldn't load this profile",
+          "bot": "Bot",
+          "openProfile": "Open profile on GitHub"
+        },
         "mentions": {
           "app": "App",
           "commenter": "Commenter",

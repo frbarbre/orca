@@ -13,5 +13,6 @@ export const pendingReviewApi: PendingReviewApi = {
   resolveBase: (request) => ipcRenderer.invoke('pending-review:resolve-base', request),
   context: (request) => ipcRenderer.invoke('pending-review:context', request),
   uploadAsset: (request) => ipcRenderer.invoke('pending-review:asset-upload', request),
-  resolveAssetUrl: (href) => ipcRenderer.invoke('pending-review:asset-resolve', href)
+  resolveAssetUrl: (href) => ipcRenderer.invoke('pending-review:asset-resolve', href),
+  userProfile: (login) => ipcRenderer.invoke('pending-review:user-profile', login)
 }

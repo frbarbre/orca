@@ -3,6 +3,7 @@ import { Check, LoaderCircle, Pencil, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import CommentMarkdown from '@/components/sidebar/CommentMarkdown'
+import { githubMentionMarkdownExtension } from '@/components/github/github-mention-hover-card'
 import { isScreenSubmitShortcut } from '@/lib/screen-submit-shortcut'
 import { formatRelativeTime } from '@/components/github/work-item-state-presentation'
 import { translate } from '@/i18n/i18n'
@@ -139,6 +140,7 @@ export function ConversationDescription({
             content={body}
             variant="document"
             githubRepo={markdownGitHubRepo}
+            extension={githubMentionMarkdownExtension}
             className="min-w-0 max-w-full overflow-hidden break-words text-[14px] leading-relaxed [&_a]:break-all [&_code]:break-words [&_pre]:max-w-full"
           />
         ) : (

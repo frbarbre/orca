@@ -4,6 +4,7 @@ import { Send } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import CommentMarkdown from '@/components/sidebar/CommentMarkdown'
+import { githubMentionMarkdownExtension } from '@/components/github/github-mention-hover-card'
 import { callRuntimeRpc } from '@/runtime/runtime-rpc-client'
 import {
   getCommentBodySubmitState,
@@ -163,7 +164,7 @@ function CommentRow({
           </div>
         </div>
       ) : (
-        <CommentMarkdown content={comment.body} />
+        <CommentMarkdown content={comment.body} extension={githubMentionMarkdownExtension} />
       )}
     </div>
   )

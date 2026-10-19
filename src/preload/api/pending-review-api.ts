@@ -6,6 +6,7 @@ import type {
   UpdatePublishedCommentRequest,
   UpdatePublishedCommentResult
 } from '../../shared/github/pending-review-comment'
+import type { GitHubUserProfile } from '../../shared/github/github-user-profile'
 import type { PullRequestReviewer } from '../../shared/github/pull-request-reviewers'
 import type {
   ResolveReviewBaseRequest,
@@ -53,4 +54,6 @@ export type PendingReviewApi = {
   /** Uploads a pasted or dropped image or video as a GitHub attachment on the repository. */
   uploadAsset: (request: UploadReviewAssetRequest) => Promise<UploadReviewAssetResult>
   resolveAssetUrl: (href: string) => Promise<string | null>
+  /** Who a mentioned login is, or null when GitHub has no such user or can't be reached. */
+  userProfile: (login: string) => Promise<GitHubUserProfile | null>
 }

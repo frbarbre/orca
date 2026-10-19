@@ -16638,6 +16638,10 @@
       },
       "diff": {
         "comments": {
+          "CopyMessageButton": {
+            "copy": "Copy message",
+            "copied": "Copied"
+          },
           "DiffCommentCard": {
             "109a791e7b": "Save",
             "bb0a55f856": "Saving…",

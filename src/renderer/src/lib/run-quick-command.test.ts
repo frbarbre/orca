@@ -14,6 +14,17 @@ function layout(ptyId: string) {
   }
 }
 
+function target(n: number, groupId: string, quickCommandLabel: string | null = null) {
+  return {
+    tabId: `unified-${n}`,
+    terminalId: `term-${n}`,
+    paneKey: `term-${n}:leaf`,
+    ptyId: `pty-${n}`,
+    groupId,
+    quickCommandLabel
+  }
+}
+
 const state = {
   groupsByWorktree: {
     'wt-1': [
@@ -23,12 +34,21 @@ const state = {
   },
   unifiedTabsByWorktree: {
     'wt-1': [
-      { id: 'unified-3', entityId: 'term-3', contentType: 'terminal', groupId: 'group-2' },
+      {
+        id: 'unified-3',
+        entityId: 'term-3',
+        contentType: 'terminal',
+        groupId: 'group-2',
+        quickCommandLabel: 'Dev'
+      },
       { id: 'unified-1', entityId: 'term-1', contentType: 'terminal', groupId: 'group-1' },
       { id: 'unified-2', entityId: 'editor-1', contentType: 'editor', groupId: 'group-2' },
       { id: 'unified-4', entityId: 'term-4', contentType: 'terminal', groupId: 'group-1' },
       { id: 'unified-5', entityId: 'term-5', contentType: 'terminal', groupId: 'group-1' }
     ]
+  },
+  tabsByWorktree: {
+    'wt-1': [{ id: 'term-4', quickCommandLabel: 'Tests' }]
   },
   terminalLayoutsByTabId: {
     'term-1': layout('pty-1'),
@@ -40,37 +60,38 @@ const state = {
 describe('findTerminalCandidates', () => {
   it("lists the group's shown terminal, then its hidden ones, then the worktree's other terminals", () => {
     expect(findTerminalCandidates(state, 'wt-1', 'group-1')).toEqual([
-      { tabId: 'unified-1', ptyId: 'pty-1', groupId: 'group-1' },
-      { tabId: 'unified-4', ptyId: 'pty-4', groupId: 'group-1' },
-      { tabId: 'unified-3', ptyId: 'pty-3', groupId: 'group-2' }
+      target(1, 'group-1'),
+      target(4, 'group-1', 'Tests'),
+      target(3, 'group-2', 'Dev')
     ])
   })
 
   it('lists hidden terminals when the group shows something else', () => {
     expect(findTerminalCandidates(state, 'wt-1', 'group-2')).toEqual([
-      { tabId: 'unified-3', ptyId: 'pty-3', groupId: 'group-2' },
-      { tabId: 'unified-1', ptyId: 'pty-1', groupId: 'group-1' },
-      { tabId: 'unified-4', ptyId: 'pty-4', groupId: 'group-1' }
+      target(3, 'group-2', 'Dev'),
+      target(1, 'group-1'),
+      target(4, 'group-1', 'Tests')
     ])
   })
 })
 
-const candidates = [
-  { tabId: 'unified-1', ptyId: 'pty-1', groupId: 'group-1' },
-  { tabId: 'unified-4', ptyId: 'pty-4', groupId: 'group-1' },
-  { tabId: 'unified-3', ptyId: 'pty-3', groupId: 'group-2' }
-]
-
 type Verdict = 'live' | 'exited' | 'unverifiable'
 
-function deps(verdicts: Verdict[]): RunQuickCommandDeps {
+function deps(
+  verdicts: Verdict[],
+  candidates = [target(1, 'group-1'), target(4, 'group-1'), target(3, 'group-2')],
+  running: Record<string, string> = {}
+): RunQuickCommandDeps {
   return {
     findTargets: () => candidates,
     probe: vi.fn(async (ptyIds: readonly string[]) => ptyIds.map((_, i) => verdicts[i] ?? 'live')),
     write: vi.fn(() => true),
-    showTab: vi.fn(),
+    nameTab: vi.fn(),
+    ringBell: vi.fn(),
     rememberRun: vi.fn(),
-    runInNewTab: vi.fn()
+    runningIn: (terminalId) => running[terminalId] ?? null,
+    track: vi.fn(),
+    runInNewTab: vi.fn(() => 'term-9')
   }
 }
 
@@ -83,23 +104,67 @@ const command = {
 const args = { command, worktreeId: 'wt-1', groupId: 'group-1', historyId: 'h1' }
 
 describe('runQuickCommand', () => {
-  it('runs in the shown terminal when nothing runs there', async () => {
+  it('runs in the shown terminal when nothing runs there, naming it after the command', async () => {
     const d = deps(['exited', 'exited', 'exited'])
     await runQuickCommand(args, d)
     expect(d.write).toHaveBeenCalledWith('pty-1', 'pnpm dev\r')
-    expect(d.showTab).toHaveBeenCalledWith('unified-1')
+    expect(d.nameTab).toHaveBeenCalledWith('unified-1', 'Dev')
     expect(d.rememberRun).toHaveBeenCalledWith('group-1', 'h1')
     expect(d.runInNewTab).not.toHaveBeenCalled()
   })
 
-  it('runs in an idle terminal tab that is not shown, and shows it', async () => {
+  it('runs in an idle terminal tab that is not shown, and rings its bell without switching to it', async () => {
     const d = deps(['live', 'unverifiable', 'exited'])
     await runQuickCommand(args, d)
     expect(d.probe).toHaveBeenCalledWith(['pty-1', 'pty-4', 'pty-3'])
     expect(d.write).toHaveBeenCalledTimes(1)
     expect(d.write).toHaveBeenCalledWith('pty-3', 'pnpm dev\r')
-    expect(d.showTab).toHaveBeenCalledWith('unified-3')
+    expect(d.nameTab).toHaveBeenCalledWith('unified-3', 'Dev')
+    expect(d.ringBell).toHaveBeenCalledWith({
+      worktreeId: 'wt-1',
+      tabId: 'term-3',
+      paneKey: 'term-3:leaf'
+    })
     expect(d.rememberRun).toHaveBeenCalledWith('group-2', 'h1')
+    expect(d.track).toHaveBeenCalledWith('wt-1', 'term-3', 'Dev')
+  })
+
+  it('watches a command it opened a new terminal for', async () => {
+    const d = deps(['live', 'live', 'live'])
+    await runQuickCommand(args, d)
+    expect(d.track).toHaveBeenCalledWith('wt-1', 'term-9', 'Dev')
+  })
+
+  it('reruns in the terminal it ran in before, when that one is idle', async () => {
+    const d = deps(
+      ['exited', 'exited', 'exited'],
+      [target(1, 'group-1'), target(4, 'group-1'), target(3, 'group-2', 'Dev')]
+    )
+    await runQuickCommand(args, d)
+    expect(d.write).toHaveBeenCalledWith('pty-3', 'pnpm dev\r')
+  })
+
+  it('stops the command instead of starting it twice while it still runs', async () => {
+    const d = deps(
+      ['exited', 'exited', 'live'],
+      [target(1, 'group-1'), target(4, 'group-1'), target(3, 'group-2', 'Dev')],
+      { 'term-3': 'Dev' }
+    )
+    await runQuickCommand(args, d)
+    expect(d.write).toHaveBeenCalledTimes(1)
+    expect(d.write).toHaveBeenCalledWith('pty-3', '\x03')
+    expect(d.runInNewTab).not.toHaveBeenCalled()
+  })
+
+  it('leaves alone what runs in its old terminal once the command itself is done', async () => {
+    const d = deps(
+      ['exited', 'exited', 'live'],
+      [target(1, 'group-1'), target(4, 'group-1'), target(3, 'group-2', 'Dev')],
+      { 'term-3': 'Other' }
+    )
+    await runQuickCommand(args, d)
+    expect(d.write).not.toHaveBeenCalledWith('pty-3', '\x03')
+    expect(d.write).toHaveBeenCalledWith('pty-1', 'pnpm dev\r')
   })
 
   it('opens a new terminal when every terminal is busy, or cannot be told', async () => {

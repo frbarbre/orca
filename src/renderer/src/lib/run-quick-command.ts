@@ -9,7 +9,6 @@ import {
   type PtyRunningWorkVerdict
 } from '@/components/terminal/pty-running-work-probe'
 import { sendRuntimePtyInput } from '@/runtime/runtime-terminal-inspection'
-import { withTabQuickCommandLabel } from '@/store/slices/tabs/tab-quick-command-label'
 import type { TerminalPaneAttentionTarget } from '@/store/slices/workspace-attention/workspace-attention-contract'
 import {
   quickCommandRunningIn,
@@ -65,6 +64,7 @@ export function findTerminalCandidates(
       continue
     }
     const label =
+      tab.customLabel?.trim() ||
       tab.quickCommandLabel?.trim() ||
       rows.find((row) => row.id === tab.entityId)?.quickCommandLabel?.trim() ||
       null
@@ -124,7 +124,7 @@ const defaultDeps: RunQuickCommandDeps = {
   },
   write: (ptyId, data) => sendRuntimePtyInput(ptyId, data, 'driving'),
   nameTab: (tabId, label) =>
-    useAppStore.setState((state) => withTabQuickCommandLabel(state, tabId, label)),
+    useAppStore.getState().setTabCustomLabel(tabId, label, { recordInteraction: false }),
   ringBell: (target) => useAppStore.getState().markTerminalBell(target),
   rememberRun: (groupId, historyId) =>
     useAppStore.getState().setRecentQuickCommandForGroup(groupId, historyId),

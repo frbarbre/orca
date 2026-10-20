@@ -7,6 +7,7 @@ import { withGitHubCheckDetailsTimeout } from '@/runtime/github-check-details-ti
 import { createRuntimeRpcAbortError } from '@/runtime/abortable-runtime-environment-call'
 import { normalizeCheckRunDetailsLogTails } from '@/lib/check-run-details-log-normalization'
 import { translate } from '@/i18n/i18n'
+import { maybeRerunKnownFlakyE2e } from '@/lib/flaky-e2e-rerun-trigger'
 import {
   GITHUB_CHECK_DETAILS_TIMEOUT_MESSAGE,
   isGitHubCheckDetailsTimeout
@@ -163,6 +164,9 @@ export const createCheckActions = (
       // let only the key's current owner write checksCache and the PR status it derives.
       if (!ownsInflightRequest(inflightChecksRequests, inflightKey, requestId)) {
         return checks
+      }
+      if (requestContext.target.kind !== 'environment') {
+        maybeRerunKnownFlakyE2e(repo, prNumber, headSha, prRepo, checks)
       }
       set((s) => {
         const nextState: Partial<AppState> = {

@@ -48,7 +48,11 @@ export function createWebPendingReviewApi(): Pick<PreloadApi, 'pendingReview'> {
           )
         }),
       resolveAssetUrl: () => Promise.resolve(null),
-      userProfile: () => Promise.resolve(null)
+      userProfile: () => Promise.resolve(null),
+      flakyE2eRerun: () => Promise.resolve([]),
+      sentryTokenConfigured: () => Promise.resolve(false),
+      saveSentryToken: () => Promise.resolve(),
+      clearSentryToken: () => Promise.resolve()
     }
   }
 }

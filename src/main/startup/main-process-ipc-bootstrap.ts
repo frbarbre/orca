@@ -30,6 +30,7 @@ import { runWorkspaceCommand } from '../github/workspace-command'
 import { resolveGitHubAttachmentUrl, uploadReviewAsset } from '../github/review-asset-upload'
 import { getGitHubUserProfile } from '../github/github-user-profile'
 import { registerSettingsTransferHandlers } from '../settings-transfer/settings-transfer'
+import { registerFlakyE2eRerunHandlers } from '../github/flaky-e2e-rerun-ipc'
 import type { UploadReviewAssetRequest } from '../../shared/github/review-asset'
 import { resolveOsOpenedDocuments } from './os-opened-documents'
 import {
@@ -47,6 +48,7 @@ export function registerMainProcessIpcHandlers(): void {
   )
 
   registerSettingsTransferHandlers()
+  registerFlakyE2eRerunHandlers(state)
 
   ipcMain.handle('pending-review:submit', (_event, request: SubmitReviewVerdictRequest) =>
     submitReviewVerdict(request)

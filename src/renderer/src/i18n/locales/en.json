@@ -13034,6 +13034,26 @@
           "youForMyCommits": "Show \"You\" for my commits",
           "youForMyCommitsDescription": "Uses \"You\" instead of your name when the line's author email is your git user.email."
         },
+        "FlakyE2eRerunSection": {
+          "title": "Flaky E2E Reruns",
+          "description": "Rerun a pull request's failed CI once when every failed e2e test already fails on main, as Sentry reports it.",
+          "keywordSentry": "sentry",
+          "keywordFlaky": "flaky",
+          "keywordRerun": "rerun",
+          "keywordCi": "ci",
+          "sentryUrl": "Sentry URL",
+          "sentryOrg": "Sentry organization",
+          "sentryProjectIds": "Sentry project ids",
+          "reportArtifact": "Report artifact",
+          "reportFile": "Report file",
+          "queryTemplate": "Issue search",
+          "save": "Save",
+          "turnOff": "Turn off",
+          "token": "Sentry token",
+          "tokenSaved": "Saved — enter a new one to replace it",
+          "tokenPlaceholder": "A token with event:read",
+          "saveToken": "Save token"
+        },
         "PortLabelsCommandSection": {
           "title": "Port Names",
           "description": "A command that prints the URLs a workspace serves, to name its live ports.",
@@ -20768,6 +20788,9 @@
       "errorTitle": "Space hit an error.",
       "errorDescription": "Close and reopen Space to try again."
     }
+  },
+  "flakyE2eRerun": {
+    "rerun": "Reran CI on #{{value0}}: the failed e2e tests already fail on main."
   },
   "agentTurns": {
     "none": "No agent turns in this workspace yet.",

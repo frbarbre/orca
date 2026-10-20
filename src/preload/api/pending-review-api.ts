@@ -7,6 +7,10 @@ import type {
   UpdatePublishedCommentResult
 } from '../../shared/github/pending-review-comment'
 import type { GitHubUserProfile } from '../../shared/github/github-user-profile'
+import type {
+  FlakyE2eRerunRequest,
+  FlakyE2eRerunResult
+} from '../../shared/github/flaky-e2e-rerun-request'
 import type { PullRequestReviewer } from '../../shared/github/pull-request-reviewers'
 import type {
   ResolveReviewBaseRequest,
@@ -56,4 +60,9 @@ export type PendingReviewApi = {
   resolveAssetUrl: (href: string) => Promise<string | null>
   /** Who a mentioned login is, or null when GitHub has no such user or can't be reached. */
   userProfile: (login: string) => Promise<GitHubUserProfile | null>
+  /** Reruns the PR's failed CI runs once when every failed e2e test is a known flake on main. */
+  flakyE2eRerun: (request: FlakyE2eRerunRequest) => Promise<FlakyE2eRerunResult>
+  sentryTokenConfigured: () => Promise<boolean>
+  saveSentryToken: (token: string) => Promise<void>
+  clearSentryToken: () => Promise<void>
 }

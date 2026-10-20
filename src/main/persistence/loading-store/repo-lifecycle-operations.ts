@@ -170,6 +170,7 @@ export class RepoLifecycleOperations {
         | 'symlinkPaths'
         | 'pythonVenvPath'
         | 'portLabelsCommand'
+        | 'flakyE2eRerun'
         | 'issueSourcePreference'
         | 'forkSyncMode'
         | 'externalWorktreeVisibilityPromptDismissedAt'

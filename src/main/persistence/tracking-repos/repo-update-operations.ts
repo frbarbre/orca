@@ -115,6 +115,7 @@ export class RepoUpdatePersistenceOperations {
         | 'symlinkPaths'
         | 'pythonVenvPath'
         | 'portLabelsCommand'
+        | 'flakyE2eRerun'
         | 'issueSourcePreference'
         | 'defaultJiraProject'
         | 'forkSyncMode'

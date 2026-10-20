@@ -14,5 +14,9 @@ export const pendingReviewApi: PendingReviewApi = {
   context: (request) => ipcRenderer.invoke('pending-review:context', request),
   uploadAsset: (request) => ipcRenderer.invoke('pending-review:asset-upload', request),
   resolveAssetUrl: (href) => ipcRenderer.invoke('pending-review:asset-resolve', href),
-  userProfile: (login) => ipcRenderer.invoke('pending-review:user-profile', login)
+  userProfile: (login) => ipcRenderer.invoke('pending-review:user-profile', login),
+  flakyE2eRerun: (request) => ipcRenderer.invoke('pending-review:flaky-e2e-rerun', request),
+  sentryTokenConfigured: () => ipcRenderer.invoke('pending-review:sentry-token-configured'),
+  saveSentryToken: (token) => ipcRenderer.invoke('pending-review:sentry-token-save', token),
+  clearSentryToken: () => ipcRenderer.invoke('pending-review:sentry-token-clear')
 }

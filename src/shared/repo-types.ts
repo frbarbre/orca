@@ -7,6 +7,7 @@ import type { GitRemoteIdentity } from './git-remote-identity'
 import type { RepoSourceControlAiOverrides } from './source-control-ai-types'
 import type { RepoProjectHostSetupMethod } from './project-types'
 import type { JiraProjectReference } from './jira-project-reference'
+import type { FlakyE2eRerunConfig } from './flaky-e2e-rerun'
 
 // ─── Repo ────────────────────────────────────────────────────────────
 export type RepoKind = 'git' | 'folder'
@@ -119,6 +120,8 @@ export type Repo = {
   pythonVenvPath?: string
   /** Fork: a command printing `Label  URL` lines, which names a workspace's live ports. */
   portLabelsCommand?: string
+  /** Fork: how to tell a failed e2e test is a known flake on main, to rerun CI once for it. */
+  flakyE2eRerun?: FlakyE2eRerunConfig
   /** Durable sidebar-only repo organization. Execution remains repo-scoped. */
   projectGroupId?: string | null
   /** User-authored ordering inside the project group or ungrouped bucket. */

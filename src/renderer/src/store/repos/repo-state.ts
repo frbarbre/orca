@@ -44,6 +44,7 @@ export type RepoUpdate = Partial<
     | 'symlinkPaths'
     | 'pythonVenvPath'
     | 'portLabelsCommand'
+    | 'flakyE2eRerun'
     | 'issueSourcePreference'
     | 'defaultJiraProject'
     | 'forkSyncMode'

@@ -18,6 +18,7 @@ import { prepareLocalWorktreeRootForRepo } from '../../worktree-root-preparation
 import { commitProvenRepoKindChange } from '../../folder-repo-git-conversion'
 import { invalidateAuthorizedRootsCache } from '../registered-worktree-roots-cache'
 import { notifyReposChanged } from './repos-changed-notification'
+import { parseFlakyE2eRerunConfig } from '../../../shared/flaky-e2e-rerun'
 import {
   assertWslMoveProjectWritable,
   isWslMoveSourceHost
@@ -45,6 +46,7 @@ export function registerRepoUpdateHandler(mainWindow: BrowserWindow, store: Stor
             | 'symlinkPaths'
             | 'pythonVenvPath'
             | 'portLabelsCommand'
+            | 'flakyE2eRerun'
             | 'issueSourcePreference'
             | 'forkSyncMode'
             | 'externalWorktreeVisibilityPromptDismissedAt'
@@ -124,6 +126,9 @@ export function registerRepoUpdateHandler(mainWindow: BrowserWindow, store: Stor
         } else {
           updates.portLabelsCommand = v.trim() || undefined
         }
+      }
+      if ('flakyE2eRerun' in updates && updates.flakyE2eRerun !== undefined) {
+        updates.flakyE2eRerun = parseFlakyE2eRerunConfig(updates.flakyE2eRerun) ?? undefined
       }
       if ('worktreeBasePath' in updates && updates.worktreeBasePath !== undefined) {
         const v = updates.worktreeBasePath as unknown

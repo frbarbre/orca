@@ -147,8 +147,11 @@ describe('keybindings', () => {
     )
   })
 
-  it('keeps the quick commands menu toggle unassigned until users customize it', () => {
-    const platforms: readonly KeybindingPlatform[] = ['darwin', 'linux', 'win32']
+  it('binds the quick commands menu toggle on macOS only, leaving AltGr platforms to the user', () => {
+    expect(getEffectiveKeybindingsForAction('tab.openQuickCommandsMenu', 'darwin')).toEqual([
+      'Mod+Alt+P'
+    ])
+    const platforms: readonly KeybindingPlatform[] = ['linux', 'win32']
 
     for (const platform of platforms) {
       expect(getEffectiveKeybindingsForAction('tab.openQuickCommandsMenu', platform)).toEqual([])

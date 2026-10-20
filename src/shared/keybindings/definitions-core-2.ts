@@ -251,7 +251,8 @@ export const KEYBINDING_DEFINITION_CORE_2: readonly KeybindingDefinition[] = [
     // Why: this tab-scoped action is also routed through the main-window allowlist, so Settings must warn when it shadows global chords.
     conflictGroup: 'global',
     searchKeywords: ['shortcut', 'quick', 'command', 'menu', 'tab', 'group', 'toggle'],
-    defaultBindings: platformBindings([])
+    // Why macOS only: Ctrl+Alt+letter is AltGr text input on Windows and Linux.
+    defaultBindings: { darwin: ['Mod+Alt+P'], linux: [], win32: [] }
   },
   {
     id: 'browser.find',

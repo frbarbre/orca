@@ -38,6 +38,8 @@ type StartFixChecksAgentArgs = {
   launchSource: LaunchSource
   telemetrySource?: WorkspaceCreateTelemetrySource
   openModalFallback?: () => void
+  /** Fork: open the agent's tab without revealing its workspace or focusing it. */
+  background?: boolean
 }
 
 type SavedAgentOverrideResult =
@@ -194,14 +196,18 @@ export async function startFixChecksAgent(args: StartFixChecksAgentArgs): Promis
       promptDelivery: 'submit-after-ready',
       launchPlatform,
       launchSource: args.launchSource,
-      beforeSurfaceOpen: () => {
-        // Why: the launcher owns the initial surface, so revealing must not seed a sibling shell.
-        const revealed = activateAndRevealWorktree(targetWorktreeId, {
-          providesInitialSurface: true
-        })
-        revealFailed = revealed === false
-        return !revealFailed
-      }
+      ...(args.background
+        ? { activate: false }
+        : {
+            beforeSurfaceOpen: () => {
+              // Why: the launcher owns the initial surface, so revealing must not seed a sibling shell.
+              const revealed = activateAndRevealWorktree(targetWorktreeId, {
+                providesInitialSurface: true
+              })
+              revealFailed = revealed === false
+              return !revealFailed
+            }
+          })
     })
     if (!result) {
       toast.error(
@@ -217,7 +223,7 @@ export async function startFixChecksAgent(args: StartFixChecksAgentArgs): Promis
       )
       return false
     }
-    if (result.surface.kind === 'local-terminal') {
+    if (result.surface.kind === 'local-terminal' && !args.background) {
       focusTerminalTabSurface(result.surface.tabId)
     }
     return true

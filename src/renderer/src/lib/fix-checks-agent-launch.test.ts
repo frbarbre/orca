@@ -187,6 +187,26 @@ describe('startFixChecksAgent', () => {
     })
   })
 
+  it('launches in the background without revealing the workspace or focusing the tab', async () => {
+    const { startFixChecksAgent } = await import('./fix-checks-agent-launch')
+
+    await expect(
+      startFixChecksAgent({
+        repoId: 'repo-1',
+        worktreeId: 'wt-1',
+        basePrompt: 'Triage CI',
+        launchSource: 'source_control_recovery',
+        background: true
+      })
+    ).resolves.toBe(true)
+
+    expect(mocks.launchAgentInNewTab).toHaveBeenCalledWith(
+      expect.objectContaining({ activate: false, prompt: 'Triage CI' })
+    )
+    expect(mocks.activateAndRevealWorktree).not.toHaveBeenCalled()
+    expect(mocks.focusTerminalTabSurface).not.toHaveBeenCalled()
+  })
+
   it('fails without launching when the requested worktree is missing', async () => {
     const { startFixChecksAgent } = await import('./fix-checks-agent-launch')
 

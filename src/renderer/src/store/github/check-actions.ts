@@ -164,6 +164,11 @@ export const createCheckActions = (
       if (!ownsInflightRequest(inflightChecksRequests, inflightKey, requestId)) {
         return checks
       }
+      if (repo?.ciTriage && branch) {
+        void import('@/lib/ci-triage-trigger').then(({ maybeStartCiTriage }) =>
+          maybeStartCiTriage(repo, prNumber, branch, headSha, checks)
+        )
+      }
       set((s) => {
         const nextState: Partial<AppState> = {
           checksCache: withBoundedCacheEntry(s.checksCache, cacheKey, {

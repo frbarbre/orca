@@ -13034,6 +13034,17 @@
           "youForMyCommits": "Show \"You\" for my commits",
           "youForMyCommitsDescription": "Uses \"You\" instead of your name when the line's author email is your git user.email."
         },
+        "CiTriageSection": {
+          "title": "CI Triage",
+          "description": "When a workspace PR's CI fails, an agent checks whether it is noise, such as a test that already fails on main or a broken runner, and reruns it once if so.",
+          "keywordCi": "ci",
+          "keywordRerun": "rerun",
+          "keywordFlaky": "flaky",
+          "keywordSentry": "sentry",
+          "toggle": "Triage failed CI with an agent",
+          "hints": "What the agent should know",
+          "hintsPlaceholder": "Our Sentry is flowbasedk.sentry.io; main reports e2e failures with source:trunk."
+        },
         "PortLabelsCommandSection": {
           "title": "Port Names",
           "description": "A command that prints the URLs a workspace serves, to name its live ports.",

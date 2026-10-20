@@ -170,6 +170,7 @@ export class RepoLifecycleOperations {
         | 'symlinkPaths'
         | 'pythonVenvPath'
         | 'portLabelsCommand'
+        | 'ciTriage'
         | 'issueSourcePreference'
         | 'forkSyncMode'
         | 'externalWorktreeVisibilityPromptDismissedAt'

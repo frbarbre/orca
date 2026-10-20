@@ -44,6 +44,7 @@ export type RepoUpdate = Partial<
     | 'symlinkPaths'
     | 'pythonVenvPath'
     | 'portLabelsCommand'
+    | 'ciTriage'
     | 'issueSourcePreference'
     | 'defaultJiraProject'
     | 'forkSyncMode'

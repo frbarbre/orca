@@ -16,7 +16,7 @@ import { RepositoryHooksSection } from './RepositoryHooksSection'
 import { McpConfigSection } from './McpConfigSection'
 import { WorktreeSymlinksSection } from './WorktreeSymlinksSection'
 import { PythonEnvironmentSection } from './PythonEnvironmentSection'
-import { PortLabelsCommandSection, getPortLabelsSearchEntry } from './PortLabelsCommandSection'
+import { forkRepositorySections } from './fork-repository-sections'
 import { SparsePresetSettingsSection } from './SparsePresetSettingsSection'
 import { RepositorySourceControlAiSection } from './RepositorySourceControlAiSection'
 import { SearchableSetting } from './SearchableSetting'
@@ -401,16 +401,14 @@ export function RepositoryPane({
         forceVisible={forceFullPaneForRepoMatch}
       />
     ) : null,
-    !isFolder &&
-    (forceFullPaneForRepoMatch ||
-      matchesSettingsSearch(searchQuery, [getPortLabelsSearchEntry(repo)])) ? (
-      <PortLabelsCommandSection
-        key="port-labels"
-        repo={repo}
-        updateRepo={updateSelectedRepo}
-        forceVisible={forceFullPaneForRepoMatch}
-      />
-    ) : null,
+    ...(isFolder
+      ? []
+      : forkRepositorySections({
+          repo,
+          searchQuery,
+          forceVisible: forceFullPaneForRepoMatch,
+          updateRepo: updateSelectedRepo
+        })),
     !isFolder &&
     (forceFullPaneForRepoMatch || matchesSettingsSearch(searchQuery, sparsePresetEntries)) ? (
       <SparsePresetSettingsSection key={`sparse-presets:${repo.id}`} repoId={repo.id} />

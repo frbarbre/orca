@@ -43,14 +43,16 @@ export function buildCiTriagePrompt({
     `CI failed on pull request #${prNumber}${headSha ? ` at ${headSha}` : ''}. Failed checks:`,
     checks,
     '',
-    'Decide whether this failure was caused by the change, or is noise worth one rerun: a test that already fails or flakes on main, or an infrastructure problem such as a lost runner, a network error, a registry or rate-limit timeout.',
+    'Read the failed jobs and their logs (`gh run view <run id> --log-failed`), then for each error decide which case it is:',
     '',
-    '1. Read the failed jobs and their logs (`gh run view <run id> --log-failed`).',
-    '2. For each failing test, check whether main already fails or flakes on it, using the Sentry MCP and the hints below when there are any.',
-    '3. If every failure is noise, and the run is on its first attempt (`gh api repos/{owner}/{repo}/actions/runs/<run id> --jq .run_attempt` prints 1), rerun its failed jobs once with `gh run rerun <run id> --failed`. Never rerun a run past its first attempt.',
-    '4. Otherwise leave it red.',
+    '1. Noise a rerun would pass: a test that already fails or flakes on main (check with the Sentry MCP and the hints below), or an infrastructure problem such as a lost runner, a network error, a registry or rate-limit timeout. If the run is on its first attempt (`gh api repos/{owner}/{repo}/actions/runs/<run id> --jq .run_attempt` prints 1), rerun its failed jobs once with `gh run rerun <run id> --failed`. Never rerun a run past its first attempt.',
+    '2. The branch is behind main: it breaks on something main has already changed or fixed. Run `git fetch origin && git merge origin/main`, resolve any conflicts, and fix what the merge breaks.',
+    '3. A clear fix: lint, format, type errors, or another failure whose cause and fix are plain from the error. Fix it.',
+    '4. Anything else, such as a failing assertion whose right behaviour is unclear: leave it red.',
     '',
-    'Do not change any code, commit, or push. Finish with one line: "Reran: <why>" or "Left red: <why>".'
+    'For cases 2 and 3, change only what the errors need, run the failing check locally when it is quick, then commit and `git push`. Never force-push or rewrite history.',
+    '',
+    'Finish with one line: "Reran: <why>", "Fixed: <what>", or "Left red: <why>".'
   ]
   if (hints) {
     lines.push('', 'About this repository:', hints)

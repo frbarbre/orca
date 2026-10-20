@@ -29,6 +29,21 @@ describe('failedChecksToTriage', () => {
 })
 
 describe('buildCiTriagePrompt', () => {
+  it('lets the agent fix failures with a clear fix, including a branch behind main, and push', () => {
+    const prompt = buildCiTriagePrompt({
+      prNumber: 12,
+      headSha: 'abc1234',
+      failedChecks: [{ name: 'lint', url: null }],
+      hints: ''
+    })
+
+    expect(prompt).toContain('git merge origin/main')
+    expect(prompt).toContain('git push')
+    expect(prompt).toContain('Fixed: <what>')
+    expect(prompt).not.toContain('Do not change any code')
+    expect(prompt).toContain('Never force-push')
+  })
+
   it('asks the agent to judge each failure, rerun only flakes once, and use the repo hints', () => {
     const prompt = buildCiTriagePrompt({
       prNumber: 12,
@@ -44,7 +59,6 @@ describe('buildCiTriagePrompt', () => {
     expect(prompt).toContain('--failed')
     expect(prompt).toContain('run_attempt')
     expect(prompt).toContain('Our Sentry is flowbasedk.sentry.io')
-    expect(prompt).toContain('Do not change any code')
   })
 
   it('leaves out the hints section when the repo has none', () => {

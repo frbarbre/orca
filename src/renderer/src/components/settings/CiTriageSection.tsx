@@ -13,7 +13,7 @@ export function getCiTriageSearchEntry(repo: Repo): SettingsSearchEntry {
     title: translate('auto.components.settings.CiTriageSection.title', 'CI Triage'),
     description: translate(
       'auto.components.settings.CiTriageSection.description',
-      "When a workspace PR's CI fails, an agent checks whether it is noise, such as a test that already fails on main or a broken runner, and reruns it once if so."
+      "When a workspace PR's CI fails, an agent reads the errors: it reruns noise once, pushes a fix for clear failures like lint, type errors or a branch behind main, and leaves the rest red."
     ),
     keywords: [
       repo.displayName,

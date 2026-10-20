@@ -36,6 +36,14 @@ describe('maybeStartCiTriage', () => {
     )
   })
 
+  it('stops after three triage agents on one PR, so pushed fixes cannot loop', () => {
+    for (const sha of ['fix-1', 'fix-2', 'fix-3', 'fix-4', 'fix-5']) {
+      maybeStartCiTriage(repo, 21, 'feature', sha, failing)
+    }
+
+    expect(startFixChecksAgent).toHaveBeenCalledTimes(3)
+  })
+
   it('stays out of repos without it, passing checks, and PRs with no workspace here', () => {
     maybeStartCiTriage({ id: 'repo-1' } as never, 12, 'feature', 'sha-b', failing)
     maybeStartCiTriage(repo, 12, 'feature', 'sha-c', [

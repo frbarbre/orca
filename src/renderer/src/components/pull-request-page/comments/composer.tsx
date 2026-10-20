@@ -1,11 +1,10 @@
-import React, { useCallback, useRef, useState } from 'react'
+import React, { useCallback, useState } from 'react'
 import { LoaderCircle, Send } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { useMountedRef } from '@/hooks/useMountedRef'
 import { cn } from '@/lib/utils'
-import { isScreenSubmitShortcut } from '@/lib/screen-submit-shortcut'
 import {
   getCommentBodySubmitState,
   hasBoundedCommentBodyText
@@ -16,7 +15,7 @@ import type { GitHubOwnerRepo } from '../../../../../shared/github/pull-request-
 import type { PRComment } from '../../../../../shared/github/comment-types'
 import type { TaskSourceContext } from '../../../../../shared/task-source-context'
 import type { MentionOption } from '../page-types'
-import { MentionTextarea } from '../mentions/textarea'
+import { Composer } from '@/components/composer/Composer'
 import { issueCommentDraftKey, useSavedDraft } from '@/lib/saved-drafts'
 
 export function GHCommentComposer({
@@ -42,21 +41,12 @@ export function GHCommentComposer({
 }): React.JSX.Element {
   const [body, setBody] = useSavedDraft(issueCommentDraftKey(repoPath, prRepo, issueNumber))
   const [submitting, setSubmitting] = useState(false)
-  const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const [uploading, setUploading] = useState(false)
   const mountedRef = useMountedRef()
-
-  const autoGrow = useCallback(() => {
-    const el = textareaRef.current
-    if (!el) {
-      return
-    }
-    el.style.height = 'auto'
-    el.style.height = `${Math.max(80, Math.min(el.scrollHeight, 240))}px`
-  }, [])
 
   const handleSubmit = useCallback(async () => {
     const bodyState = getCommentBodySubmitState(body)
-    if (bodyState.status === 'empty') {
+    if (bodyState.status === 'empty' || uploading) {
       return
     }
     if (bodyState.status === 'too-large-leading-whitespace') {
@@ -86,7 +76,6 @@ export function GHCommentComposer({
         return
       }
       if (result.ok) {
-        requestAnimationFrame(autoGrow)
         // Why: use GitHub's returned comment so the optimistic row shows the real login/avatar without a reopen.
         onCommentAdded(result.comment)
       } else {
@@ -109,8 +98,8 @@ export function GHCommentComposer({
       }
     }
   }, [
-    autoGrow,
     body,
+    uploading,
     mountedRef,
     repoPath,
     repoId,
@@ -123,39 +112,25 @@ export function GHCommentComposer({
   ])
   const canSubmitComment = hasBoundedCommentBodyText(body)
 
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      if (isScreenSubmitShortcut(e)) {
-        e.preventDefault()
-        handleSubmit()
-      }
-    },
-    [handleSubmit]
-  )
-
   return (
     <div className={cn('relative', className)}>
-      <MentionTextarea
-        textareaRef={textareaRef}
+      <Composer
+        context="github"
         value={body}
-        onValueChange={(nextValue) => {
-          setBody(nextValue)
-          requestAnimationFrame(autoGrow)
-        }}
-        onKeyDown={handleKeyDown}
+        onChange={setBody}
+        onSubmit={() => void handleSubmit()}
+        onUploadingChange={setUploading}
         placeholder={translate('auto.components.PullRequestPage.d2030fc8cd', 'Add a comment…')}
-        rows={4}
-        mentionOptions={mentionOptions}
-        wrapperClassName="flex min-h-20 w-full items-stretch"
-        className="scrollbar-sleek block h-20 max-h-[240px] min-h-20 w-full resize-none overflow-y-auto rounded-md border border-input bg-card px-3 py-2 pb-12 pr-12 text-[13px] leading-5 placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+        people={mentionOptions}
+        minHeightClassName="min-h-20 pb-12 pr-12"
       />
       <Tooltip>
         <TooltipTrigger asChild>
           <Button
             type="button"
             size="icon-sm"
-            onClick={handleSubmit}
-            disabled={!canSubmitComment || submitting}
+            onClick={() => void handleSubmit()}
+            disabled={!canSubmitComment || submitting || uploading}
             className="absolute bottom-3 right-3 shadow-sm"
             aria-label={translate('auto.components.PullRequestPage.161d91ef02', 'Send comment')}
           >

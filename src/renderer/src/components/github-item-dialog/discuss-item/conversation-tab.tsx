@@ -53,6 +53,9 @@ import { GHCommentComposer } from './gh-comment-composer'
 import { ConversationTabDescription } from './conversation-tab-description'
 import { ConversationTabActivity } from './conversation-tab-activity'
 import { ConversationTabPRSidebar } from './conversation-tab-pr-sidebar'
+import { ComposerSurfaceContext } from '@/components/composer/composer-surface'
+import { buildMentionOptions } from '@/components/pull-request-page/mentions/options'
+import { useGitHubWorkItemWorkspaceId } from '@/lib/use-github-work-item-workspace-id'
 
 export function ConversationTab({
   item,
@@ -120,6 +123,14 @@ export function ConversationTab({
   const issueConversationEntries = useMemo(
     () => getIssueConversationEntries(comments, resolvedTimelineItems),
     [comments, resolvedTimelineItems]
+  )
+  const workspaceId = useGitHubWorkItemWorkspaceId(item, repoId)
+  const composerSurface = useMemo(
+    () => ({
+      worktreeId: workspaceId,
+      people: buildMentionOptions({ item, comments, participants: [], assignableUsers: [] })
+    }),
+    [comments, item, workspaceId]
   )
   const replyTargetComments = getCommentReplyTargetCandidates(item.type, comments, visibleComments)
   const resolvedReplyingTo = resolveCommentReplyTarget(replyingTo, replyTargetComments)
@@ -283,54 +294,56 @@ export function ConversationTab({
         item.type === 'pr' && 'grid-cols-[minmax(0,1fr)_300px]'
       )}
     >
-      <div className="flex min-w-0 flex-col gap-4">
-        <ConversationTabDescription
-          item={item}
-          authorLabel={authorLabel}
-          canEditBody={canEditBody}
-          loading={loading}
-          detailsLoaded={detailsLoaded}
-          bodyEditing={bodyEditing}
-          bodySaving={bodySaving}
-          bodyChanged={bodyChanged}
-          body={body}
-          resolvedBodyDraft={resolvedBodyDraft}
-          markdownGitHubRepo={markdownGitHubRepo}
-          setBodyDraft={setBodyDraft}
-          setBodyEditing={setBodyEditing}
-          onSaveBody={() => {
-            void handleSaveBody()
-          }}
-        />
-
-        {detailsLoaded ? (
-          <ConversationTabActivity
+      <ComposerSurfaceContext.Provider value={composerSurface}>
+        <div className="flex min-w-0 flex-col gap-4">
+          <ConversationTabDescription
             item={item}
-            comments={comments}
-            commentFilter={commentFilter}
-            commentCounts={commentCounts}
-            visibleComments={visibleComments}
-            visibleCommentGroups={visibleCommentGroups}
-            resolvedTimelineItemsLength={resolvedTimelineItems.length}
-            issueConversationEntries={issueConversationEntries}
-            commentCardProps={commentCardProps}
-            onCommentFilterChange={setCommentFilter}
+            authorLabel={authorLabel}
+            canEditBody={canEditBody}
+            loading={loading}
+            detailsLoaded={detailsLoaded}
+            bodyEditing={bodyEditing}
+            bodySaving={bodySaving}
+            bodyChanged={bodyChanged}
+            body={body}
+            resolvedBodyDraft={resolvedBodyDraft}
+            markdownGitHubRepo={markdownGitHubRepo}
+            setBodyDraft={setBodyDraft}
+            setBodyEditing={setBodyEditing}
+            onSaveBody={() => {
+              void handleSaveBody()
+            }}
           />
-        ) : null}
 
-        {detailsLoaded && canUseRepoMutationContext && (
-          <GHCommentComposer
-            className="mt-1"
-            repoPath={repoPath ?? ''}
-            repoId={repoId ?? item.repoId}
-            sourceContext={sourceContext}
-            issueNumber={item.number}
-            itemType={item.type}
-            prRepo={prRepo}
-            onCommentAdded={onCommentAdded}
-          />
-        )}
-      </div>
+          {detailsLoaded ? (
+            <ConversationTabActivity
+              item={item}
+              comments={comments}
+              commentFilter={commentFilter}
+              commentCounts={commentCounts}
+              visibleComments={visibleComments}
+              visibleCommentGroups={visibleCommentGroups}
+              resolvedTimelineItemsLength={resolvedTimelineItems.length}
+              issueConversationEntries={issueConversationEntries}
+              commentCardProps={commentCardProps}
+              onCommentFilterChange={setCommentFilter}
+            />
+          ) : null}
+
+          {detailsLoaded && canUseRepoMutationContext && (
+            <GHCommentComposer
+              className="mt-1"
+              repoPath={repoPath ?? ''}
+              repoId={repoId ?? item.repoId}
+              sourceContext={sourceContext}
+              issueNumber={item.number}
+              itemType={item.type}
+              prRepo={prRepo}
+              onCommentAdded={onCommentAdded}
+            />
+          )}
+        </div>
+      </ComposerSurfaceContext.Provider>
 
       {item.type === 'pr' ? (
         <ConversationTabPRSidebar

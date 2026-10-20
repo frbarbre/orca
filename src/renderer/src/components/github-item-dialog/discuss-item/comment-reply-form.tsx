@@ -3,7 +3,7 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { useMountedRef } from '@/hooks/useMountedRef'
 import { cn } from '@/lib/utils'
-import { GitHubMarkdownComposer } from '@/components/github/GitHubMarkdownComposer'
+import { Composer } from '@/components/composer/Composer'
 import {
   getCommentBodySubmitState,
   hasBoundedCommentBodyText
@@ -26,11 +26,12 @@ export function CommentReplyForm({
 }): React.JSX.Element {
   const [body, setBody] = useSavedDraft(draftKey)
   const [submitting, setSubmitting] = useState(false)
+  const [uploading, setUploading] = useState(false)
   const mountedRef = useMountedRef()
 
   const submit = useCallback(async () => {
     const bodyState = getCommentBodySubmitState(body)
-    if (bodyState.status === 'empty' || submitting) {
+    if (bodyState.status === 'empty' || submitting || uploading) {
       return
     }
     if (bodyState.status === 'too-large-leading-whitespace') {
@@ -53,25 +54,33 @@ export function CommentReplyForm({
         setSubmitting(false)
       }
     }
-  }, [body, mountedRef, onSubmit, setBody, submitting])
+  }, [body, mountedRef, onSubmit, setBody, submitting, uploading])
   const canSubmitReply = hasBoundedCommentBodyText(body)
 
   return (
     <div className={cn('rounded-md border border-border/50 bg-background/60 p-2', className)}>
-      <GitHubMarkdownComposer
+      <Composer
+        context="github"
         value={body}
         onChange={setBody}
         placeholder={placeholder}
         disabled={submitting}
         autoFocus
+        onUploadingChange={setUploading}
+        toolbar
         minHeightClassName="min-h-24"
-        onSubmitShortcut={() => void submit()}
+        onSubmit={() => void submit()}
+        onCancel={onCancel}
       />
       <div className="mt-2 flex justify-end gap-2">
         <Button variant="ghost" size="sm" onClick={onCancel}>
           {translate('auto.components.GitHubItemDialog.675bc0d638', 'Cancel')}
         </Button>
-        <Button size="sm" disabled={!canSubmitReply || submitting} onClick={() => void submit()}>
+        <Button
+          size="sm"
+          disabled={!canSubmitReply || submitting || uploading}
+          onClick={() => void submit()}
+        >
           {submitting
             ? translate('auto.components.GitHubItemDialog.5752c25aff', 'Posting…')
             : translate('auto.components.GitHubItemDialog.f64dd90102', 'Reply')}

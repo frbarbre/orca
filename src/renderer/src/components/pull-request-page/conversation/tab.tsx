@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useMemo, useState } from 'react'
 import { useShallow } from 'zustand/react/shallow'
 import { toast } from 'sonner'
 
@@ -48,6 +48,8 @@ import { GHCommentComposer } from '../comments/composer'
 import { ConversationDescription } from './description'
 import { ConversationCommentsList } from './comments-list'
 import { postConversationReply } from './reply'
+import { ComposerSurfaceContext } from '@/components/composer/composer-surface'
+import { useGitHubWorkItemWorkspaceId } from '@/lib/use-github-work-item-workspace-id'
 
 export function ConversationTab({
   item,
@@ -100,8 +102,7 @@ export function ConversationTab({
   const [bodyDraft, setBodyDraft] = useState(body)
   const [bodyEditing, setBodyEditing] = useState(false)
   const [bodySaving, setBodySaving] = useState(false)
-  const bodyTextareaRef = useRef<HTMLTextAreaElement>(null)
-  const bodyTextareaFocusFrameRef = useRef<number | null>(null)
+  const workspaceId = useGitHubWorkItemWorkspaceId(item, repoId)
   const canUseRepoMutationContext = canUseGitHubRepoContext(repoPath, sourceContext)
   const ownerTarget = useAppStore(
     useShallow((s) => getGitHubRepoRoutingTarget(s, item.repoId ?? repoId ?? null, sourceContext))
@@ -128,13 +129,7 @@ export function ConversationTab({
       }),
     [comments, detailsParticipants, item, repoAssignees.data]
   )
-
-  const cancelBodyTextareaFocusFrame = useCallback((): void => {
-    if (bodyTextareaFocusFrameRef.current !== null) {
-      cancelAnimationFrame(bodyTextareaFocusFrameRef.current)
-      bodyTextareaFocusFrameRef.current = null
-    }
-  }, [])
+  const composerSurface = useMemo(() => ({ worktreeId: workspaceId }), [workspaceId])
 
   if (resolvedReplyingTo !== replyingTo) {
     // Why: clear before paint when filters/refetches hide the reply target, so a stale composer doesn't flash for the wrong comment set.
@@ -146,19 +141,6 @@ export function ConversationTab({
     // Why: reconcile before paint so a background body refresh while the editor is closed doesn't show a stale draft on reopen.
     setBodyDraft(resolvedBodyDraft)
   }
-
-  useEffect(() => {
-    if (!bodyEditing) {
-      cancelBodyTextareaFocusFrame()
-      return cancelBodyTextareaFocusFrame
-    }
-    cancelBodyTextareaFocusFrame()
-    bodyTextareaFocusFrameRef.current = requestAnimationFrame(() => {
-      bodyTextareaFocusFrameRef.current = null
-      bodyTextareaRef.current?.focus()
-    })
-    return cancelBodyTextareaFocusFrame
-  }, [bodyEditing, cancelBodyTextareaFocusFrame])
 
   const bodySlug = useMemo(() => parseOwnerRepoFromItemUrl(item.url), [item.url])
   const prRepo = useMemo(() => resolvePullRequestRepo(item, projectOrigin), [item, projectOrigin])
@@ -281,76 +263,77 @@ export function ConversationTab({
         item.type === 'pr' && 'grid-cols-[minmax(0,1fr)_300px]'
       )}
     >
-      <div className="flex min-w-0 flex-col gap-4">
-        <ConversationDescription
-          authorLabel={authorLabel}
-          updatedAt={item.updatedAt}
-          canEditBody={canEditBody}
-          loading={loading}
-          detailsLoaded={detailsLoaded}
-          bodyEditing={bodyEditing}
-          bodySaving={bodySaving}
-          bodyChanged={bodyChanged}
-          body={body}
-          resolvedBodyDraft={resolvedBodyDraft}
-          bodyTextareaRef={bodyTextareaRef}
-          mentionOptions={mentionOptions}
-          markdownGitHubRepo={markdownGitHubRepo}
-          onCancelEdit={() => {
-            setBodyDraft(body)
-            setBodyEditing(false)
-          }}
-          onStartEdit={() => {
-            setBodyDraft(body)
-            setBodyEditing(true)
-          }}
-          onSave={() => {
-            void handleSaveBody()
-          }}
-          onDraftChange={setBodyDraft}
-        />
-
-        {detailsLoaded ? (
-          <ConversationCommentsList
-            itemType={item.type}
-            comments={comments}
-            visibleComments={visibleComments}
-            visibleCommentGroups={visibleCommentGroups}
-            commentFilter={commentFilter}
-            commentCounts={commentCounts}
-            repoPath={repoPath}
-            repoId={item.repoId}
-            sourceContext={sourceContext}
-            prNumber={item.number}
-            prRepo={prRepo}
-            files={files}
-            headSha={headSha}
-            baseSha={baseSha}
+      <ComposerSurfaceContext.Provider value={composerSurface}>
+        <div className="flex min-w-0 flex-col gap-4">
+          <ConversationDescription
+            authorLabel={authorLabel}
+            updatedAt={item.updatedAt}
+            canEditBody={canEditBody}
+            loading={loading}
+            detailsLoaded={detailsLoaded}
+            bodyEditing={bodyEditing}
+            bodySaving={bodySaving}
+            bodyChanged={bodyChanged}
+            body={body}
+            resolvedBodyDraft={resolvedBodyDraft}
+            mentionOptions={mentionOptions}
             markdownGitHubRepo={markdownGitHubRepo}
-            mentionOptions={mentionOptions}
-            resolvedReplyingTo={resolvedReplyingTo}
-            onFilterChange={setCommentFilter}
-            onToggleReply={(commentId) =>
-              setReplyingTo((current) => (current === commentId ? null : commentId))
-            }
-            onSubmitReply={handleReply}
+            onCancelEdit={() => {
+              setBodyDraft(body)
+              setBodyEditing(false)
+            }}
+            onStartEdit={() => {
+              setBodyDraft(body)
+              setBodyEditing(true)
+            }}
+            onSave={() => {
+              void handleSaveBody()
+            }}
+            onDraftChange={setBodyDraft}
           />
-        ) : null}
 
-        {detailsLoaded && canUseRepoMutationContext && (
-          <GHCommentComposer
-            className="mt-1"
-            repoPath={repoPath ?? ''}
-            repoId={item.repoId}
-            sourceContext={sourceContext}
-            issueNumber={item.number}
-            itemType={item.type}
-            prRepo={prRepo}
-            mentionOptions={mentionOptions}
-            onCommentAdded={onCommentAdded}
-          />
-        )}
-      </div>
+          {detailsLoaded ? (
+            <ConversationCommentsList
+              itemType={item.type}
+              comments={comments}
+              visibleComments={visibleComments}
+              visibleCommentGroups={visibleCommentGroups}
+              commentFilter={commentFilter}
+              commentCounts={commentCounts}
+              repoPath={repoPath}
+              repoId={item.repoId}
+              sourceContext={sourceContext}
+              prNumber={item.number}
+              prRepo={prRepo}
+              files={files}
+              headSha={headSha}
+              baseSha={baseSha}
+              markdownGitHubRepo={markdownGitHubRepo}
+              mentionOptions={mentionOptions}
+              resolvedReplyingTo={resolvedReplyingTo}
+              onFilterChange={setCommentFilter}
+              onToggleReply={(commentId) =>
+                setReplyingTo((current) => (current === commentId ? null : commentId))
+              }
+              onSubmitReply={handleReply}
+            />
+          ) : null}
+
+          {detailsLoaded && canUseRepoMutationContext && (
+            <GHCommentComposer
+              className="mt-1"
+              repoPath={repoPath ?? ''}
+              repoId={item.repoId}
+              sourceContext={sourceContext}
+              issueNumber={item.number}
+              itemType={item.type}
+              prRepo={prRepo}
+              mentionOptions={mentionOptions}
+              onCommentAdded={onCommentAdded}
+            />
+          )}
+        </div>
+      </ComposerSurfaceContext.Provider>
 
       {rightPanel}
     </div>

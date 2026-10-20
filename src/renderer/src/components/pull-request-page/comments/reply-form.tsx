@@ -1,16 +1,15 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react'
+import React, { useCallback, useState } from 'react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { useMountedRef } from '@/hooks/useMountedRef'
 import { cn } from '@/lib/utils'
-import { isScreenSubmitShortcut } from '@/lib/screen-submit-shortcut'
 import {
   getCommentBodySubmitState,
   hasBoundedCommentBodyText
 } from '@/lib/comment-body-submit-state'
 import { translate } from '@/i18n/i18n'
 import type { MentionOption } from '../page-types'
-import { MentionTextarea } from '../mentions/textarea'
+import { Composer } from '@/components/composer/Composer'
 import { useSavedDraft } from '@/lib/saved-drafts'
 
 export function CommentReplyForm({
@@ -30,16 +29,12 @@ export function CommentReplyForm({
 }): React.JSX.Element {
   const [body, setBody] = useSavedDraft(draftKey)
   const [submitting, setSubmitting] = useState(false)
-  const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const [uploading, setUploading] = useState(false)
   const mountedRef = useMountedRef()
-
-  useEffect(() => {
-    textareaRef.current?.focus()
-  }, [])
 
   const submit = useCallback(async () => {
     const bodyState = getCommentBodySubmitState(body)
-    if (bodyState.status === 'empty' || submitting) {
+    if (bodyState.status === 'empty' || submitting || uploading) {
       return
     }
     if (bodyState.status === 'too-large-leading-whitespace') {
@@ -70,36 +65,32 @@ export function CommentReplyForm({
         setSubmitting(false)
       }
     }
-  }, [body, mountedRef, onSubmit, setBody, submitting])
+  }, [body, mountedRef, onSubmit, setBody, submitting, uploading])
   const canSubmitReply = hasBoundedCommentBodyText(body)
 
   return (
     <div className={cn('rounded-md border border-border/50 bg-background/60 p-2', className)}>
-      <MentionTextarea
-        textareaRef={textareaRef}
+      <Composer
+        context="github"
         value={body}
-        onValueChange={setBody}
-        onKeyDown={(e) => {
-          if (e.key === 'Escape') {
-            e.preventDefault()
-            onCancel()
-            return
-          }
-          if (isScreenSubmitShortcut(e)) {
-            e.preventDefault()
-            void submit()
-          }
-        }}
+        onChange={setBody}
+        onSubmit={() => void submit()}
+        onCancel={onCancel}
+        onUploadingChange={setUploading}
         placeholder={placeholder}
-        rows={3}
-        mentionOptions={mentionOptions}
-        className="scrollbar-sleek min-h-20 w-full resize-y rounded-md border border-input bg-transparent px-3 py-2 text-[13px] placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+        people={mentionOptions}
+        minHeightClassName="min-h-20"
+        autoFocus
       />
       <div className="mt-2 flex justify-end gap-2">
         <Button variant="ghost" size="sm" onClick={onCancel}>
           {translate('auto.components.PullRequestPage.6591b1fa82', 'Cancel')}
         </Button>
-        <Button size="sm" disabled={!canSubmitReply || submitting} onClick={() => void submit()}>
+        <Button
+          size="sm"
+          disabled={!canSubmitReply || submitting || uploading}
+          onClick={() => void submit()}
+        >
           {submitting
             ? translate('auto.components.PullRequestPage.894cfd884b', 'Posting…')
             : translate('auto.components.PullRequestPage.f119e5f5ef', 'Reply')}

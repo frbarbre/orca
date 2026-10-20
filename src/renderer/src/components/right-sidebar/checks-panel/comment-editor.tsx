@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { ReviewMarkdownComposer } from '@/components/github/ReviewMarkdownComposer'
+import { Composer } from '@/components/composer/Composer'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { translate } from '@/i18n/i18n'
@@ -29,7 +29,8 @@ export function CommentEditor({
   return (
     <>
       <div onClick={(event) => event.stopPropagation()}>
-        <ReviewMarkdownComposer
+        <Composer
+          context="github"
           value={draft}
           onChange={onDraftChange}
           placeholder={translate(
@@ -38,7 +39,7 @@ export function CommentEditor({
           )}
           autoFocus
           onUploadingChange={setUploading}
-          onSubmitShortcut={() => {
+          onSubmit={() => {
             if (canSaveNow) {
               onSubmit()
             }

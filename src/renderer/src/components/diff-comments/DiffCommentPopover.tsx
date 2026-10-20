@@ -9,7 +9,7 @@ import {
   hasBoundedCommentBodyText
 } from '@/lib/comment-body-submit-state'
 import { translate } from '@/i18n/i18n'
-import { ReviewMarkdownComposer } from '@/components/github/ReviewMarkdownComposer'
+import { Composer } from '@/components/composer/Composer'
 import { installOpenDraftAddReviewNoteGuard } from '../editor/editor-shortcuts'
 import { resolveDiffCommentPopoverTop } from './diff-comment-popover-position'
 import { armNoteSendFocus } from './note-send-focus'
@@ -256,22 +256,19 @@ export function DiffCommentPopover({
             onChange={onModeChange}
           />
         ) : null}
-        <ReviewMarkdownComposer
+        <Composer
+          context={isNote ? 'agent' : 'github'}
+          worktreeId={fileMentionWorktreeId}
           value={body}
           onChange={setBody}
           placeholder={placeholder}
           autoFocus
-          // Why: in a note for the agent an @ names a workspace file for it to read; uploads are
-          // public, so they stay with GitHub modes.
-          mentions={isNote ? Boolean(fileMentionWorktreeId) : true}
-          fileMentionWorktreeId={isNote ? (fileMentionWorktreeId ?? null) : null}
-          uploads={!isNote}
           onUploadingChange={setUploading}
-          onSubmitShortcut={() => {
+          onSubmit={() => {
             armNoteSendFocus()
             void handleSubmit()
           }}
-          onEscape={onCancel}
+          onCancel={onCancel}
           className="orca-diff-comment-popover-composer"
         />
         <div className="orca-diff-comment-popover-footer">

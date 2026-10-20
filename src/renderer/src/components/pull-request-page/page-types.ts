@@ -17,11 +17,6 @@ export type MentionOption = {
   isFile?: boolean
 }
 
-export type MentionQuery = {
-  atIndex: number
-  query: string
-}
-
 export type PullRequestPageProps = {
   workItem: GitHubWorkItem | null
   repoPath: string | null

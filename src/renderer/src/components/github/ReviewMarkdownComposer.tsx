@@ -18,6 +18,9 @@ import { ReviewEmojiShortcode } from './review-emoji-shortcode-extension'
 import { searchCommentEmoji } from './emoji-shortcode-query'
 import { EmojiShortcodeList } from './emoji-shortcode-list'
 import { useReviewAssetDropClaim } from './review-asset-drop-claim'
+import { composerMentionSuggestions } from './composer-mention-suggestions'
+import { githubFileMentionMarkdown, githubFileMentionTarget } from './github-file-mention'
+import type { MentionOption } from '@/components/pull-request-page/page-types'
 
 function sameQuery(a: MentionQueryState | null, b: MentionQueryState | null): boolean {
   return a === b || (!!a && !!b && a.query === b.query && a.from === b.from && a.left === b.left)
@@ -36,6 +39,10 @@ export function ReviewMarkdownComposer({
   userMentions = true,
   uploads = true,
   fileMentionWorktreeId = null,
+  fileMentionLinks = false,
+  toolbar = false,
+  minHeightClassName = '',
+  people,
   ariaLabel,
   className
 }: {
@@ -51,8 +58,15 @@ export function ReviewMarkdownComposer({
   /** Fork: `@` suggests GitHub people; off keeps emoji and file mentions without them. */
   userMentions?: boolean
   uploads?: boolean
-  /** Fork: `@` names this workspace's files, for an agent to read, in place of GitHub users. */
+  /** Fork: `@` names this workspace's files too, after any GitHub people. */
   fileMentionWorktreeId?: string | null
+  /** Fork: a named file becomes a link to it on the pull request's branch instead of `@path`. */
+  fileMentionLinks?: boolean
+  /** The formatting toolbar and Write/Preview tabs, for long-form boxes. */
+  toolbar?: boolean
+  minHeightClassName?: string
+  /** Fork: who `@` suggests, in place of the active repository's and pull request's people. */
+  people?: readonly MentionOption[]
   ariaLabel?: string
   className?: string
 }): React.JSX.Element {
@@ -65,30 +79,50 @@ export function ReviewMarkdownComposer({
   const fileMode = fileMentionWorktreeId !== null
   const mentionMode = useRef<MentionMode>('user')
   mentionMode.current = fileMode ? 'file' : 'user'
-  const peopleMode = mentions && userMentions && !fileMode
-  const memberOptions = useActiveRepoMentionOptions(peopleMode && query !== null)
+  const peopleMode = mentions && userMentions
+  const memberOptions = useActiveRepoMentionOptions(
+    peopleMode && people === undefined && query !== null
+  )
   const mentionFiles = useWorktreeMentionFiles(
     mentions && fileMode ? (query?.query ?? null) : null,
     fileMentionWorktreeId
   )
   const activeWorktreeId = useAppStore((state) => state.activeWorktreeId)
-  const scope = usePRCommentScope(activeWorktreeId)
+  const scope = usePRCommentScope(fileMentionWorktreeId ?? activeWorktreeId)
+  const worktreeBranch = useAppStore((state) =>
+    (fileMentionWorktreeId
+      ? state.getKnownWorktreeById(fileMentionWorktreeId)?.branch
+      : ''
+    )?.replace(/^refs\/heads\//, '')
+  )
   const uploadTarget = useRef({ repo: scope.repo, prRepo: scope.pr?.prRepo })
   const suggestions = useMemo(() => {
     if (!mentions || !query) {
       return []
     }
-    // Why no second filter for files: the file search already ranked them fuzzily.
-    if (fileMode) {
-      return fileMentionOptions(mentionFiles.files)
-    }
-    return peopleMode
-      ? filterGitHubMentionOptions(
-          withCommentAuthorMentionOptions(memberOptions, scope.comments),
-          query.query
-        )
+    const candidates = peopleMode
+      ? (people ?? withCommentAuthorMentionOptions(memberOptions, scope.comments))
       : []
-  }, [fileMode, mentionFiles.files, mentions, memberOptions, peopleMode, query, scope.comments])
+    if (fileMode) {
+      return peopleMode
+        ? composerMentionSuggestions({
+            query: query.query,
+            people: candidates,
+            files: mentionFiles.files
+          })
+        : fileMentionOptions(mentionFiles.files)
+    }
+    return peopleMode ? filterGitHubMentionOptions(candidates, query.query) : []
+  }, [
+    fileMode,
+    mentionFiles.files,
+    mentions,
+    memberOptions,
+    people,
+    peopleMode,
+    query,
+    scope.comments
+  ])
   const open = suggestions.length > 0 && query !== null
   const [emojiQuery, setEmojiQuery] = useState<MentionQueryState | null>(null)
   const emojiQueryRef = useRef<MentionQueryState | null>(null)
@@ -98,10 +132,17 @@ export function ReviewMarkdownComposer({
   )
   const emojiOpen = emojiSuggestions.length > 0 && emojiQuery !== null
 
-  const insert = (login: string): void => {
+  const insert = (option: MentionOption): void => {
     const editor = editorRef.current
     if (editor && query) {
-      editor.chain().focus().insertContentAt({ from: query.from, to: query.to }, `@${login} `).run()
+      const text =
+        option.isFile && fileMentionLinks
+          ? githubFileMentionMarkdown(
+              option.login,
+              githubFileMentionTarget(scope.pr, worktreeBranch ?? '')
+            )
+          : `@${option.login}`
+      editor.chain().focus().insertContentAt({ from: query.from, to: query.to }, `${text} `).run()
     }
     setQuery(null)
   }
@@ -171,7 +212,7 @@ export function ReviewMarkdownComposer({
       if (event.key === 'Enter' || event.key === 'Tab') {
         const choice = suggestions[active] ?? suggestions[0]
         if (choice) {
-          insert(choice.login)
+          insert(choice)
         }
         return true
       }
@@ -237,7 +278,7 @@ export function ReviewMarkdownComposer({
         options={suggestions}
         activeIndex={active}
         anchor={query}
-        onPick={(option) => insert(option.login)}
+        onPick={insert}
       />
     ) : emojiOpen && emojiQuery ? (
       <EmojiShortcodeList
@@ -263,10 +304,10 @@ export function ReviewMarkdownComposer({
         autoFocus={autoFocus}
         disabled={disabled}
         onSubmitShortcut={onSubmitShortcut}
-        minHeightClassName=""
+        minHeightClassName={minHeightClassName}
         editorExtensions={extensions}
-        growWithContent
-        showToolbar={false}
+        growWithContent={!toolbar}
+        showToolbar={toolbar}
       />
       {list}
     </div>

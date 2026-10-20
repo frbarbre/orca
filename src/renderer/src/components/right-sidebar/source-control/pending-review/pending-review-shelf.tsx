@@ -15,7 +15,7 @@ import { PendingReviewReviewers } from './pending-review-reviewers'
 import { useReviewDiffBase } from '@/components/pending-review/use-review-diff-base'
 import { usePendingReviewSummary } from '@/components/pending-review/pending-review-summary-store'
 import { useReviewSummaryFocus } from '@/components/pending-review/review-summary-focus'
-import { ReviewMarkdownComposer } from '@/components/github/ReviewMarkdownComposer'
+import { Composer } from '@/components/composer/Composer'
 import { PendingReviewDiffBaseSelect } from './pending-review-diff-base-select'
 
 const VERDICTS: {
@@ -200,7 +200,8 @@ export function SourceControlPendingReviewShelf({
           ref={composerRef}
           className="relative rounded-md border border-input bg-background shadow-xs dark:bg-input/30"
         >
-          <ReviewMarkdownComposer
+          <Composer
+            context="github"
             value={body}
             onChange={(next) => setBody(next)}
             placeholder={translate(
@@ -208,7 +209,7 @@ export function SourceControlPendingReviewShelf({
               'Add review summary…'
             )}
             onUploadingChange={setUploading}
-            onEscape={() => {
+            onCancel={() => {
               const active = document.activeElement
               if (active instanceof HTMLElement && composerRef.current?.contains(active)) {
                 active.blur()

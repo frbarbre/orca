@@ -8,7 +8,7 @@ import {
   hasBoundedCommentBodyText
 } from '@/lib/comment-body-submit-state'
 import { translate } from '@/i18n/i18n'
-import { ReviewMarkdownComposer } from '@/components/github/ReviewMarkdownComposer'
+import { Composer } from '@/components/composer/Composer'
 import { useSavedDraft } from '@/lib/saved-drafts'
 
 export type RightPanelCommentSubmitResult = { ok: true } | { ok: false; error: string }
@@ -92,14 +92,15 @@ export function RightPanelCommentComposer({
       onMouseDown={stopPropagation}
     >
       <div title={disabled ? disabledReason : undefined} aria-invalid={Boolean(error)}>
-        <ReviewMarkdownComposer
+        <Composer
+          context="github"
           value={body}
           onChange={setBody}
           placeholder={placeholder}
           autoFocus={autoFocus}
           disabled={disabled || submitting}
           onUploadingChange={setUploading}
-          onSubmitShortcut={() => void submit()}
+          onSubmit={() => void submit()}
           className="[&_.github-markdown-composer]:rounded-none [&_.github-markdown-composer]:border-0 [&_.github-markdown-composer]:bg-transparent [&_.github-markdown-composer]:shadow-none"
         />
       </div>

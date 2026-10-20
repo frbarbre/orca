@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { useMountedRef } from '@/hooks/useMountedRef'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
-import { GitHubMarkdownComposer } from '@/components/github/GitHubMarkdownComposer'
+import { Composer } from '@/components/composer/Composer'
 import {
   getCommentBodySubmitState,
   hasBoundedCommentBodyText
@@ -38,11 +38,12 @@ export function GHCommentComposer({
 }): React.JSX.Element {
   const [body, setBody] = useSavedDraft(issueCommentDraftKey(repoPath, prRepo, issueNumber))
   const [submitting, setSubmitting] = useState(false)
+  const [uploading, setUploading] = useState(false)
   const mountedRef = useMountedRef()
 
   const handleSubmit = useCallback(async () => {
     const bodyState = getCommentBodySubmitState(body)
-    if (bodyState.status === 'empty') {
+    if (bodyState.status === 'empty' || uploading) {
       return
     }
     if (bodyState.status === 'too-large-leading-whitespace') {
@@ -95,6 +96,7 @@ export function GHCommentComposer({
     }
   }, [
     body,
+    uploading,
     mountedRef,
     repoPath,
     repoId,
@@ -109,22 +111,25 @@ export function GHCommentComposer({
 
   return (
     <div className={cn('relative', className)}>
-      <GitHubMarkdownComposer
+      <Composer
+        context="github"
         value={body}
         onChange={setBody}
         placeholder={translate('auto.components.GitHubItemDialog.c5c117270e', 'Add a comment…')}
         disabled={submitting}
+        onUploadingChange={setUploading}
+        toolbar
         minHeightClassName="min-h-28 pb-14 pr-14"
         className="w-full"
-        onSubmitShortcut={() => void handleSubmit()}
+        onSubmit={() => void handleSubmit()}
       />
       <Tooltip>
         <TooltipTrigger asChild>
           <Button
             type="button"
             size="icon-sm"
-            onClick={handleSubmit}
-            disabled={!canSubmitComment || submitting}
+            onClick={() => void handleSubmit()}
+            disabled={!canSubmitComment || submitting || uploading}
             className="absolute bottom-3 right-3 shadow-sm"
             aria-label={translate('auto.components.GitHubItemDialog.0a73f59e85', 'Send comment')}
           >

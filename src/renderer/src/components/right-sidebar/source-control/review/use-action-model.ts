@@ -7,6 +7,8 @@ import { resolveCommitAreaPrimaryAction } from '../../source-control-primary-act
 import { resolveCreatePrHeaderAction } from './primary-create-pr-intent-action'
 import { resolveVisibleCreatePrHeaderAction } from './create-pr-intent-state'
 import type { SourceControlEntryGroups } from '../listing/section-order'
+import type { HostedReviewPrimaryMerge } from '../../use-hosted-review-merge-controls'
+import { resolveReviewMergePrimaryAction } from './review-merge-primary-action'
 
 type PrimaryInput = Parameters<typeof resolveCommitAreaPrimaryAction>[0]
 type HeaderInput = Parameters<typeof resolveCreatePrHeaderAction>[0]
@@ -21,6 +23,7 @@ export function useSourceControlActionModel({
   isAbortingOperation,
   remoteStatusForActions,
   hostedReviewStateForActions,
+  reviewMerge,
   isHostedReviewStateLoading,
   inFlightRemoteOpKind,
   hostedReviewCreation,
@@ -47,6 +50,7 @@ export function useSourceControlActionModel({
   isAbortingOperation: boolean
   remoteStatusForActions: PrimaryInput['upstreamStatus']
   hostedReviewStateForActions: PrimaryInput['prState']
+  reviewMerge: HostedReviewPrimaryMerge | null
   isHostedReviewStateLoading: boolean
   inFlightRemoteOpKind: PrimaryInput['inFlightRemoteOpKind']
   hostedReviewCreation: PrimaryInput['hostedReviewCreation']
@@ -84,7 +88,7 @@ export function useSourceControlActionModel({
     return grouped.staged.some((entry) => unstagedPaths.has(entry.path))
   }, [grouped.staged, grouped.unstaged])
 
-  const primaryAction = useMemo(
+  const basePrimaryAction = useMemo(
     () =>
       resolveCommitAreaPrimaryAction({
         stagedCount: grouped.staged.length,
@@ -125,6 +129,31 @@ export function useSourceControlActionModel({
       branchSummary?.status,
       branchName,
       remoteStatusForActions,
+      unresolvedConflictCount
+    ]
+  )
+  const primaryAction = useMemo(
+    () =>
+      resolveReviewMergePrimaryAction(basePrimaryAction, {
+        stagedCount: grouped.staged.length,
+        hasUnstagedChanges,
+        hasUnresolvedConflicts: unresolvedConflictCount > 0,
+        isCommitting,
+        isRemoteOperationActive: isRemoteOperationActive || isAbortingOperation,
+        upstreamStatus: remoteStatusForActions,
+        prState: hostedReviewStateForActions,
+        reviewMerge
+      }),
+    [
+      basePrimaryAction,
+      grouped.staged.length,
+      hasUnstagedChanges,
+      hostedReviewStateForActions,
+      isAbortingOperation,
+      isCommitting,
+      isRemoteOperationActive,
+      remoteStatusForActions,
+      reviewMerge,
       unresolvedConflictCount
     ]
   )

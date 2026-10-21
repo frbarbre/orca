@@ -13,7 +13,7 @@ import type {
 // `handlePrimaryClick` switch exhaustively over only the kinds the
 // primary can actually emit, and it kills the compound-commit branch in
 // the isRemoteOperationActive tooltip below at compile time.
-export type PrimaryActionKind = SourceControlPrimaryActionKind
+export type PrimaryActionKind = SourceControlPrimaryActionKind | 'merge' | 'auto_merge'
 
 // Why: the in-flight remote op tracker stores which action the user actually
 // triggered, so the primary button can mirror that label/spinner instead of

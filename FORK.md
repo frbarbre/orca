@@ -1782,6 +1782,54 @@ sync hit exactly that (#23062 landed two commits later) and was fixed by merging
 
 ### Sync log
 
+**1.4.214 → 1.4.214** (`4298ba998d..88aa3f27ce`, 615 upstream commits, thirty-two conflicts)
+
+- `package.json` still says 1.4.214, so the branch name repeats a ninth time; the earlier pull
+  request for it is merged, so a new one is opened on the same name.
+- Generated files — `pnpm-lock.yaml`, `bundled-skill-guides.ts`, `en.json`: took upstream's and
+  regenerated. Upstream's lockfile drops fork #28's `material-icon-theme`, so this needed
+  `pnpm install`, then `generate:bundled-skill-guides`, `sync:localization-catalog` and
+  `sync:localization-runtime-catalog`.
+- Imports both sides added — `main-process-ipc-bootstrap.ts`, `main-window-agent-status.ts`,
+  `DiffSectionItem.tsx`, `use-filters.ts`, `git-status-actions.ts`: kept both. `app-api.ts` and
+  `use-worktree-card-review-details.ts` keep only the imports still used.
+- `main.tsx` — upstream retired the sidebar shadow comparison. Dropped it; kept the fork's Material
+  icon sync, right-sidebar-follows-file and `VITE_ORCA_RELEASES_REPO` override.
+- `lib/language-detect.ts` — upstream moved the table to `shared/editor-language/editor-language-detect.ts`
+  and re-exports it. Took that and re-added fork #26's `.pyi` → `python` there.
+- `FileExplorerRow.tsx`, `branch-entry-row.tsx`, `uncommitted-entry-row.tsx` — upstream renders file
+  icons through `<FileTypeIcon>`, which still calls the fork's Material `getFileTypeIcon`. Took it;
+  the explorer keeps its 16px icons and the fork's `MaterialFolderIcon`, the branch row its
+  open-file highlight next to upstream's new `data-source-control-*` attributes.
+- `use-row-opening.ts`, `use-file-listing.ts`, `panel-content.tsx` — upstream renamed the row openers
+  (`handleOpenDiff` → `openUncommittedFile`, `openCommittedDiff` → `openBranchFile`) and routes them
+  through `openWorkspaceFile`, and the selection hook's `onOpenDiff` became `onOpenFile`. Took the
+  new names and re-applied fork #35/#46's `activeOpenRowKey`, `openAllChangesEntry` (now calling
+  `openUncommittedFile`) and filter follower; `detectLanguage` is imported again for them.
+- `git-branch-line-total.ts` (+ both tests) — upstream now returns null when an untracked path is
+  also in the tracked range, instead of adding both halves. Took that; fork #55's per-file `files`
+  map is now a plain union of the two disjoint maps, and its test for adding up a recreated file
+  is gone. The real-git test takes upstream's `toBeUndefined()`.
+- `useTabGroupCloseScopeCommands.ts`, `useTabGroupWorkspaceModel.ts` — upstream reads tabs from the
+  store and confirms bulk closes with a dialog. Took it; the fork's `closeOthers(itemId, keep)` and
+  `closeAllUnpinned(keep)` (the ⌥⇧⌘W chord) read the store too and close without the dialog,
+  since the chord closes the other groups unprompted anyway.
+- `SortableTabContextMenu.tsx` (+ test) — kept the fork's `AgentViewSubmenu` and leading separator,
+  added upstream's `onComplete`. The test keeps both module mocks.
+- `diffComments.ts` — upstream passes the comment ids to `mutateDiffComments`. Added that argument to
+  the fork's mark-as-sent mutation.
+- `compute-visible-worktrees.ts`, `use-visible-worktrees.ts` — upstream ranks by host identity
+  (`rankOf`, `ancestorByIdentity`) and reads `selectWorktreesByRepo`. Took both; fork #9's
+  temporary-checkout filter still runs on the rows first.
+- `settings-page-renderer.tsx` — upstream wrapped the sections in a scroll provider. Took it and
+  re-added the Language Servers section after Git. `WorktreeOpenInMenu.tsx`: upstream's item wrapper
+  plus the fork's Mod+O label. `button.tsx`: both `ghost-destructive` and upstream's
+  `destructive-chip`.
+- `SourceControl.preview-open.test.tsx` — kept the commit-box tests removed and took upstream's new
+  HTML preview tests. Upstream's two "HTML review note" tests click its notes shelf's Expand notes,
+  which the fork's Agent notes section replaces, so they are dropped, as is a duplicated
+  `getKnownWorktreeById` mock key.
+
 **1.4.214 → 1.4.214** (`1b1d09cfb5..4298ba998d`, 695 upstream commits, nineteen conflicts)
 
 - `package.json` still says 1.4.214, so the branch name repeats an eighth time. The earlier sync's

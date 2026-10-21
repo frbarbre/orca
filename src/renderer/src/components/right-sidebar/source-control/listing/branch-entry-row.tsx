@@ -1,7 +1,7 @@
 import { cn } from '@/lib/utils'
 import React from 'react'
 import { MessageSquare, MessagesSquare, PencilLine } from 'lucide-react'
-import { getFileTypeIcon } from '@/lib/file-type-icons'
+import { FileTypeIcon } from '@/components/FileTypeIcon'
 import { basename, dirname, joinPath } from '@/lib/path'
 import { WORKSPACE_FILE_PATH_MIME } from '@/lib/workspace-file-drag'
 import { writeWorkspaceFileDragSourceForWorkspace } from '@/lib/workspace-file-drag-source'
@@ -41,7 +41,6 @@ export function BranchEntryRow({
   isOpenFile?: boolean
   showPathHint?: boolean
 }): React.JSX.Element {
-  const FileIcon = getFileTypeIcon(entry.path)
   const fileName = basename(entry.path)
   const parentDir = dirname(entry.path)
   const dirPath = parentDir === '.' ? '' : parentDir
@@ -60,6 +59,8 @@ export function BranchEntryRow({
         // Why: mirrors the uncommitted row so the open file reads the same whether it came from the
         // working tree or the branch comparison.
         data-current={isOpenFile ? 'true' : undefined}
+        data-source-control-path={entry.path}
+        data-source-control-area="branch"
         className={cn(
           'group flex cursor-pointer items-center gap-1 pr-3 py-1 transition-colors',
           isOpenFile ? 'bg-accent hover:bg-accent' : 'hover:bg-accent/40'
@@ -77,7 +78,8 @@ export function BranchEntryRow({
         onClick={(e) => onOpen(e)}
         onDoubleClick={(e) => onOpen(toPermanentSourceControlRowOpenEvent(e))}
       >
-        {React.createElement(FileIcon, {
+        {React.createElement(FileTypeIcon, {
+          filePath: entry.path,
           className: 'size-3.5 shrink-0',
           style: { color: STATUS_COLORS[entry.status] }
         })}

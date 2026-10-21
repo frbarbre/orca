@@ -7,7 +7,10 @@ import {
   WORKSPACE_FILE_DRAG_SOURCE_MIME,
   WORKSPACE_FILE_PATHS_MIME
 } from '../lib/workspace-file-drag'
-import type { PreparedDroppedPaths } from '../../../shared/native-file-drop-preparation'
+import type {
+  PrepareDroppedPathsRequest,
+  PreparedDroppedPaths
+} from '../../../shared/native-file-drop-preparation'
 import { withFallback } from '../web/preload-api/web-fallback-api'
 import {
   createOsFileDropSequence,
@@ -23,7 +26,7 @@ type DropHandler<Destination = undefined> = (
 
 const getPathForFile = vi.fn((file: File) => `/dropped/${file.name}`)
 const prepareDroppedPaths = vi.fn(
-  async ({ paths }: { paths: string[] }): Promise<PreparedDroppedPaths> => ({
+  async ({ paths }: PrepareDroppedPathsRequest): Promise<PreparedDroppedPaths> => ({
     paths,
     failures: []
   })
@@ -34,10 +37,12 @@ function Owner<Destination = undefined>({
   canAccept,
   sequence,
   captureDestination,
+  consumer = 'agent',
   isDestinationLive,
   children
 }: {
   onDrop: DropHandler<Destination>
+  consumer?: 'agent' | ((destination: Destination | undefined) => 'local-chat' | 'agent')
   canAccept?: boolean
   sequence?: OsFileDropSequence
   captureDestination?: (event: DragEvent) => Destination
@@ -47,7 +52,7 @@ function Owner<Destination = undefined>({
   const ownerElementRef = useRef<HTMLElement | null>(null)
   const [ownSequence] = useState(createOsFileDropSequence)
   const options = {
-    consumer: 'agent' as const,
+    consumer,
     onDrop,
     canAccept,
     sequence: sequence ?? ownSequence,
@@ -517,7 +522,11 @@ describe('useOsFileDropOwner', () => {
     )
     const onDrop = vi.fn<DropHandler<string | null>>()
     const view = render(
-      <Owner onDrop={onDrop} captureDestination={captureDestination}>
+      <Owner
+        onDrop={onDrop}
+        captureDestination={captureDestination}
+        consumer={(destination) => (destination === 'original-folder' ? 'local-chat' : 'agent')}
+      >
         <span data-testid="row" data-folder="original-folder" />
       </Owner>
     )
@@ -525,6 +534,7 @@ describe('useOsFileDropOwner', () => {
     drag(row, 'drop')
     expect(captureDestination).toHaveBeenCalledOnce()
     expect(prepareDroppedPaths).toHaveBeenCalledOnce()
+    expect(prepareDroppedPaths.mock.calls[0][0].consumer).toBe('local-chat')
     expect(onDrop).not.toHaveBeenCalled()
     row.dataset.folder = 'recycled-folder'
     await act(async () => {

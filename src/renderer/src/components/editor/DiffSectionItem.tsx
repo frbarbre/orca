@@ -22,6 +22,8 @@ import { submitDiffSectionComment } from './diff-section-comment-submit'
 import type { DiffSectionItemProps } from './diff-section-item-props'
 import { useDiffSectionModelLifecycle } from './use-diff-section-model-lifecycle'
 import { trackDiffEditorFile } from '@/lib/editor-model-files'
+import { hasLayoutBox } from '@/hooks/virtualized-hidden-row-measurement'
+import { DiffSectionSaveConflictBar } from './DiffSectionSaveConflictBar'
 
 export function DiffSectionItem({
   section,
@@ -188,6 +190,10 @@ export function DiffSectionItem({
     let diffLayoutReady = false
     let pendingHeightFrame: number | null = null
     const updateHeight = (): void => {
+      // Why: a hidden (0-width) side-by-side editor falls back to inline and reports that taller height.
+      if (!hasLayoutBox(editor.getContainerDomNode())) {
+        return
+      }
       const contentHeight = editor.getModifiedEditor().getContentHeight()
       setSectionHeights((prev) => {
         if (prev[index] === contentHeight) {
@@ -323,6 +329,12 @@ export function DiffSectionItem({
         trailingContent={renderHeaderTrailingContent?.(section, index)}
       />
 
+      {section.saveConflict && (
+        <DiffSectionSaveConflictBar
+          onReload={() => retrySection(index)}
+          onOverwrite={() => void handleSectionSaveRef.current(index, 'overwrite')}
+        />
+      )}
       {!section.collapsed && (
         <DiffSectionBody
           section={section}

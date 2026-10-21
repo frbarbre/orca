@@ -156,8 +156,8 @@ export function useSourceControlFileListing({
     resolveSplitTargetGroupId,
     activeOpenRowKeys,
     activeOpenRowKey,
-    handleOpenDiff,
-    openCommittedDiff,
+    openUncommittedFile,
+    openBranchFile,
     openAllChangesEntry
   } = useSourceControlRowOpening({
     isMac,
@@ -185,7 +185,7 @@ export function useSourceControlFileListing({
   const { selectedKeys, handleSelect, handleContextMenu, clearSelection } =
     useSourceControlSelection({
       flatEntries: selectableEntries,
-      onOpenDiff: handleOpenDiff,
+      onOpenFile: openUncommittedFile,
       shouldOpenAsSplit,
       containerRef: sourceControlRef
     })
@@ -287,7 +287,7 @@ export function useSourceControlFileListing({
     handleBulkStage,
     handleBulkUnstage,
     handleContextMenu,
-    handleOpenDiff,
+    openUncommittedFile,
     handleSelect,
     handleStageAllPaths,
     handleStageAllPrimary,
@@ -298,7 +298,7 @@ export function useSourceControlFileListing({
     isCategoryFilterActive,
     isGitHistoryVisible,
     normalizedFilter,
-    openCommittedDiff,
+    openBranchFile,
     presentFileCategories,
     pushRecovery,
     refreshGitHistory,

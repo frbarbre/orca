@@ -1,4 +1,5 @@
 import { app } from 'electron'
+import { ORCA_LAYOUT_OWNER_IS_MAIN } from '../../../shared/layout-owner-switch'
 import { registerAppHandlers } from '../app'
 import { registerCliHandlers } from '../cli'
 import { registerPreflightHandlers } from '../preflight'
@@ -106,6 +107,7 @@ import {
 } from '../../ai-vault/runtime-session-scanner'
 import { callRuntimeSessionSearch } from '../../ai-vault/runtime-session-search-call'
 import { ensureStructuredAgentSessionHostUnlessRefused } from '../../runtime/structured-agent-session-host-refusal'
+import { getAgentSessionAttachmentStore } from '../../native-chat/agent-session-attachments/agent-session-attachment-store-registry'
 import type { PluginService } from '../../plugins/plugin-service'
 import { registerClaudeRemoteSessionHandlers } from '../claude-remote-session'
 import type { PluginMarketplaceHandlerServices } from '../plugin-marketplaces'
@@ -172,6 +174,14 @@ export function registerCoreHandlers(
   registered = true
 
   registerAppHandlers(store, {
+    quitResumeRecordsFor: (session) => runtime.quitResumeRecordsFor(session),
+    // Switch point: main derives what the next startup reconnects instead of taking the window's.
+    ...(ORCA_LAYOUT_OWNER_IS_MAIN
+      ? {
+          reconnectFactsFor: (session, partition) =>
+            runtime.shutdownReconnectFactsFor(session, partition)
+        }
+      : {}),
     onBeforeRelaunch: lifecycleOptions.onBeforeRelaunch,
     // Why here, not onBeforeRelaunch: restart and profile switches quit through will-quit, which closes it.
     onBeforeRelaunchExit: () => closeNotificationDismissalsBeforeRelaunch(runtime)
@@ -289,7 +299,14 @@ export function registerCoreHandlers(
       prepareRuntimeAiVaultSessionResume(app.getPath('userData'), environmentId, args)
   })
   registerNativeChatHandlers()
-  registerClipboardHandlers(store)
+  registerClipboardHandlers(store, {
+    localChatAttachmentStore: async () => {
+      await ensureStructuredAgentSessionHostUnlessRefused(() =>
+        runtime.ensureStructuredAgentSessionHost()
+      )
+      return getAgentSessionAttachmentStore()
+    }
+  })
   registerUpdaterHandlers(store)
   registerSpeechHandlers(store)
 }

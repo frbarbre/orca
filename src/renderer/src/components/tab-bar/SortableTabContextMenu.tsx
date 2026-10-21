@@ -1,4 +1,4 @@
-import { PanelLeftClose, PanelRightClose, Pin, PinOff, Pencil, X, ListX } from 'lucide-react'
+import { Pin, PinOff, Pencil, X, ListX } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -127,8 +127,6 @@ export function SortableTabContextMenu({
   open,
   point,
   tabCount,
-  hasTabsToRight,
-  hasTabsToLeft,
   isPinned,
   onOpenChange,
   onSessionSwitchComplete,
@@ -136,8 +134,6 @@ export function SortableTabContextMenu({
   onActivate,
   onClose,
   onCloseOthers,
-  onCloseToRight,
-  onCloseToLeft,
   onCloseSplitPane,
   onRenameOpen,
   onSetTabColor,
@@ -186,10 +182,10 @@ export function SortableTabContextMenu({
         />
         <TabSessionSurfaceSwitchMenuItems
           key={sessionSwitchOpening}
-          onComplete={onSessionSwitchComplete}
           tab={tab}
           nativeChat={nativeChat}
           leadingSeparator
+          onComplete={onSessionSwitchComplete}
         />
         <DropdownMenuSeparator />
         <DropdownMenuItem onSelect={onTogglePin}>
@@ -212,20 +208,6 @@ export function SortableTabContextMenu({
         <DropdownMenuItem onSelect={() => onCloseOthers(tab.id)} disabled={tabCount <= 1}>
           <ListX className="size-3.5" />
           {translate('auto.components.tab.bar.SortableTabContextMenu.8d16f9cd30', 'Close Others')}
-        </DropdownMenuItem>
-        <DropdownMenuItem onSelect={() => onCloseToRight(tab.id)} disabled={!hasTabsToRight}>
-          <PanelRightClose className="size-3.5" />
-          {translate(
-            'auto.components.tab.bar.SortableTabContextMenu.c1ee099c7e',
-            'Close Tabs To The Right'
-          )}
-        </DropdownMenuItem>
-        <DropdownMenuItem onSelect={() => onCloseToLeft(tab.id)} disabled={!hasTabsToLeft}>
-          <PanelLeftClose className="size-3.5" />
-          {translate(
-            'components.tab.bar.SortableTabContextMenu.closeTabsToLeft',
-            'Close Tabs To The Left'
-          )}
         </DropdownMenuItem>
         <CloseSplitPaneMenuItem onCloseSplitPane={onCloseSplitPane} />
         <DropdownMenuSeparator />

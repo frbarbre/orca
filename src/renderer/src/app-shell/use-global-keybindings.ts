@@ -194,11 +194,10 @@ export function useGlobalKeybindings(args: {
         creationLayoutActive || isFloatingWorkspacePanelFocused()
           ? null
           : handleDirectionalGroupFocusChord(input, shortcutPlatform, keybindings)
-      if (groupFocus === 'handled') {
-        return
-      }
-      if (groupFocus && matchShortcut(groupFocus)) {
-        createAppCommandHandlers(state, input, context).get(groupFocus)?.()
+      if (groupFocus && (groupFocus === 'handled' || matchShortcut(groupFocus))) {
+        if (groupFocus !== 'handled') {
+          createAppCommandHandlers(state, input, context).get(groupFocus)?.()
+        }
         return
       }
 

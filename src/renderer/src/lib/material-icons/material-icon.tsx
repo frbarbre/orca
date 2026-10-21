@@ -20,6 +20,8 @@ export type MaterialIconProps = {
   className?: string
   style?: CSSProperties
   size?: number | string
+  // Accepted for Lucide parity (upstream's `FileTypeIcon` passes it); the image is always hidden.
+  'aria-hidden'?: boolean
 }
 
 function MaterialIconImage({

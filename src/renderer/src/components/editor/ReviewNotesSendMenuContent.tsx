@@ -287,7 +287,7 @@ function AutoPickedMenuItem({
       className="min-w-[240px] gap-2 rounded-[7px] px-2 py-1.5 text-[12px] leading-5 font-medium"
     >
       <Sparkles className="size-3.5 shrink-0" />
-      <AgentIcon agent={agentTypeToIconAgent(target.agentType)} size={14} />
+      <AgentTypeIcon agentType={target.agentType} size={14} />
       <span className="grid min-w-0 flex-1 text-left">
         <span className="truncate">
           {translate('auto.components.editor.ReviewNotesSendMenuContent.autoPicked', 'Auto-picked')}

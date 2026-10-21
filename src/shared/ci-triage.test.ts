@@ -40,6 +40,8 @@ describe('buildCiTriagePrompt', () => {
     expect(prompt).toContain('git merge origin/main')
     expect(prompt).toContain('git push')
     expect(prompt).toContain('Fixed: <what>')
+    expect(prompt).toContain('a test the change broke')
+    expect(prompt).toContain('the PR description')
     expect(prompt).not.toContain('Do not change any code')
     expect(prompt).toContain('Never force-push')
   })

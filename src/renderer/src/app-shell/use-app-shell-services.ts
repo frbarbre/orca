@@ -27,6 +27,7 @@ import { useCodexTerminalServerIsolationNotice } from '../components/terminal-pa
 import { useCodexSharedSettingsNotice } from '../components/terminal-pane/codex-shared-settings-notice'
 import { useVisibleReviewRefreshReporting } from './use-visible-review-refresh-reporting'
 import { useVisibleHostedReviewRefresh } from './use-visible-hosted-review-refresh'
+import { useCiTriageWatch } from './use-ci-triage-watch'
 import { useProfileStateSaveDelayNotice } from './use-profile-state-save-delay-notice'
 
 /**
@@ -53,6 +54,7 @@ export function useAppShellServices(): void {
   useRemoteRuntimeRecoveryTriggers()
   useVisibleReviewRefreshReporting()
   useVisibleHostedReviewRefresh({ enabled: workspaceSessionReady })
+  useCiTriageWatch({ enabled: workspaceSessionReady })
   useTerminalViewerColorPublication()
   useAutomationDispatchEvents()
   useWorkspaceStatusRulePoller()

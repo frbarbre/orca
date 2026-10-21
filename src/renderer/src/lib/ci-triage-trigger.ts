@@ -54,7 +54,8 @@ export async function maybeStartCiTriage({
     return
   }
   const failedChecks = failedChecksToTriage(checks)
-  if (failedChecks.length === 0) {
+  // Why: a run still going, such as the one on a just-pushed fix, may turn the result around.
+  if (failedChecks.length === 0 || checks.some((check) => check.status !== 'completed')) {
     return
   }
   const workspace = useAppStore
@@ -67,11 +68,12 @@ export async function maybeStartCiTriage({
   if (!workspace) {
     return
   }
+  // Why: GitHub can list a failed run under the head a fix just pushed, so a run is known by its
+  // URL; only a check without one falls back to the head it was reported for.
   const key = JSON.stringify([
     repo.id,
     prNumber,
-    headSha ?? '',
-    failedChecks.map((check) => check.name)
+    failedChecks.map((check) => check.url ?? `${check.name}@${headSha ?? ''}`)
   ])
   const prKey = JSON.stringify([repo.id, prNumber])
   const prStarts = startsByPr.get(prKey) ?? 0

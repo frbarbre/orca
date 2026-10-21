@@ -67,9 +67,27 @@ describe('maybeStartCiTriage', () => {
     expect(startFixChecksAgent).not.toHaveBeenCalled()
   })
 
+  it('leaves a failed run alone when it shows up again under the head a fix pushed', async () => {
+    await triage(40, 'feature', 'before-fix')
+    await triage(40, 'feature', 'after-fix')
+
+    expect(startFixChecksAgent).toHaveBeenCalledTimes(1)
+  })
+
+  it('waits while any check is still running, such as the run on a just-pushed fix', async () => {
+    await triage(41, 'feature', 'sha-running', [
+      ...(failing as unknown as unknown[]),
+      { name: 'ci', status: 'in_progress', conclusion: null, url: 'https://x/runs/8' }
+    ] as never)
+
+    expect(startFixChecksAgent).not.toHaveBeenCalled()
+  })
+
   it('stops after three triage agents on one PR, so pushed fixes cannot loop', async () => {
     for (const sha of ['fix-1', 'fix-2', 'fix-3', 'fix-4', 'fix-5']) {
-      await triage(21, 'feature', sha)
+      await triage(21, 'feature', sha, [
+        { name: 'checks', status: 'completed', conclusion: 'failure', url: `https://x/runs/${sha}` }
+      ] as never)
     }
 
     expect(startFixChecksAgent).toHaveBeenCalledTimes(3)

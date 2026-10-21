@@ -1829,6 +1829,18 @@ sync hit exactly that (#23062 landed two commits later) and was fixed by merging
   HTML preview tests. Upstream's two "HTML review note" tests click its notes shelf's Expand notes,
   which the fork's Agent notes section replaces, so they are dropped, as is a duplicated
   `getKnownWorktreeById` mock key.
+- Verify took three rounds. Upstream retired `AgentIcon` in `ReviewNotesSendMenuContent.tsx` for
+  `AgentTypeIcon`; the fork's auto-picked row uses that too. Upstream's `<FileTypeIcon>` passes
+  `aria-hidden`, so `MaterialIconProps` and the native chat pill's `icon` prop both take React's
+  `AriaAttributes['aria-hidden']`. `use-global-keybindings.ts` hit the line cap again; the
+  group-focus chord's two branches are one check now. `repos:update` is async and writes by
+  `repoTarget(...)`, so the fork's venv-path and port-labels tests await it.
+- Upstream added two read ratchets that fork code tripped. Repo host reads: `agent-turn-recorder.ts`
+  asks `getRepoRoutingConnectionId(repo)` instead of reading `repo.connectionId`. Workspace record
+  reads (`check-workspace-record-read-ratchet.mjs`): status-rule targets and agent notes read through
+  `selectWorktreesByRepo`; `language-server-editor.ts` destructures the field, because its state type
+  is structural and its tests fake it. New fork code that reads `worktreesByRepo`,
+  `folderWorkspaces` or `connectionId` should use those selectors from the start.
 
 **1.4.214 → 1.4.214** (`1b1d09cfb5..4298ba998d`, 695 upstream commits, nineteen conflicts)
 

@@ -9,6 +9,7 @@ import { runtimeTargetForWorkspaceOwner } from '@/lib/resolve-owner'
 import { UNRESOLVED_GIT_HOST_ERROR } from '@/store/slices/editor/actions/git-operation-target'
 import { requestPRCommentReveal } from '@/lib/pr-comment-reveal'
 import { selectWorktreeDiffComments } from '@/store/worktree-diff-comments-selector'
+import { selectWorktreesByRepo } from '@/store/workspace-record-selectors'
 
 const NO_AGENT_NOTES: readonly DiffComment[] = Object.freeze([])
 
@@ -19,7 +20,9 @@ export function selectWorktreeAgentNotes(
   if (!worktreeId) {
     return NO_AGENT_NOTES
   }
-  return getIndexedWorktreeById(state.worktreesByRepo, worktreeId)?.agentNotes ?? NO_AGENT_NOTES
+  return (
+    getIndexedWorktreeById(selectWorktreesByRepo(state), worktreeId)?.agentNotes ?? NO_AGENT_NOTES
+  )
 }
 
 export function useWorktreeAgentNotes(

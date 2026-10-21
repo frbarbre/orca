@@ -21,7 +21,9 @@ type DefinitionContext = {
 }
 
 function localWorktree(state: DefinitionState, worktreeId: string): DefinitionContext | null {
-  for (const worktrees of Object.values(state.worktreesByRepo)) {
+  // Why not selectWorktreesByRepo: this takes a structural state its tests fake; callers pass AppState, so the compiler guards the field.
+  const { worktreesByRepo } = state
+  for (const worktrees of Object.values(worktreesByRepo)) {
     const worktree = worktrees.find((candidate) => candidate.id === worktreeId)
     if (!worktree) {
       continue

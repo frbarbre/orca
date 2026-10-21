@@ -1,4 +1,4 @@
-import type { ComponentType } from 'react'
+import type { AriaAttributes, ComponentType } from 'react'
 import { Badge } from '@/components/ui/badge'
 
 /** The inline chip an atomic prompt node renders as: a skill, or a referenced file. */
@@ -9,7 +9,7 @@ export function NativeChatPromptPill({
   ...badgeProps
 }: {
   // Fork: also a Material Icon Theme file icon, which is an <img>, not an svg.
-  icon: ComponentType<{ className?: string; 'aria-hidden'?: 'true' }>
+  icon: ComponentType<{ className?: string; 'aria-hidden'?: AriaAttributes['aria-hidden'] }>
   label: string
   selected: boolean
   title?: string

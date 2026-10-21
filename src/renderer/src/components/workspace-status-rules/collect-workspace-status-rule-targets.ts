@@ -7,6 +7,7 @@ import type { WorkspaceStatusRuleTarget } from '../../../../shared/workspace-sta
 import type { NewWorkspaceStatusTarget } from '../../../../shared/workspace-new-status-plan'
 import { getPendingReviewDrafts } from '../pending-review/pending-review-draft-store'
 import type { ReviewHeadSyncCandidate } from '../../../../shared/github/review-head-sync'
+import { selectWorktreesByRepo } from '@/store/workspace-record-selectors'
 
 export type WorkspaceStatusRuleScope = {
   targets: WorkspaceStatusRuleTarget[]
@@ -22,7 +23,7 @@ export function collectNewWorkspaceStatusTargets(
   repoIds: readonly string[]
 ): NewWorkspaceStatusTarget[] {
   const scopedRepoIds = new Set(repoIds)
-  return getIndexedAllWorktrees(state.worktreesByRepo).flatMap((worktree) =>
+  return getIndexedAllWorktrees(selectWorktreesByRepo(state)).flatMap((worktree) =>
     scopedRepoIds.has(worktree.repoId) &&
     !worktree.isArchived &&
     !worktree.isBare &&
@@ -56,7 +57,7 @@ export function collectWorkspaceStatusRuleScope(
   // directory, and a remote project's path does not exist on this machine.
   const scopedRepos = repoIds.flatMap((id) => repoMap.get(id) ?? [])
   scope.repoPath = (scopedRepos.find((repo) => !repo.connectionId) ?? scopedRepos[0])?.path ?? null
-  for (const worktree of getIndexedAllWorktrees(state.worktreesByRepo)) {
+  for (const worktree of getIndexedAllWorktrees(selectWorktreesByRepo(state))) {
     if (!scopedRepoIds.has(worktree.repoId)) {
       continue
     }
@@ -109,7 +110,7 @@ export function collectReviewHeadSyncCandidates(
   targets: readonly WorkspaceStatusRuleTarget[]
 ): ReviewHeadSyncCandidate[] {
   const worktrees = new Map(
-    getIndexedAllWorktrees(state.worktreesByRepo).map((worktree) => [worktree.id, worktree])
+    getIndexedAllWorktrees(selectWorktreesByRepo(state)).map((worktree) => [worktree.id, worktree])
   )
   const repoMap = getIndexedRepoMap(state.repos)
   return targets.flatMap((target) => {

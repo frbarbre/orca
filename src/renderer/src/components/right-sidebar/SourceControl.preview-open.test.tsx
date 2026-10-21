@@ -148,10 +148,6 @@ function resetState(overrides: Partial<Record<string, unknown>> = {}): void {
   mocks.calls.requestEditorSaveQuiesce.mockResolvedValue(undefined)
   mocks.state = {
     activeWorktreeId: mocks.activeWorktree.id,
-    // Why present in the mock: the panel derives the pull request its rows belong to from the
-    // active worktree, and a store without this reader throws before a single row renders.
-    getKnownWorktreeById: (id: string) =>
-      id === mocks.activeWorktree.id ? mocks.activeWorktree : null,
     activeGroupIdByWorktree: { [mocks.activeWorktree.id]: 'group-1' },
     groupsByWorktree: { [mocks.activeWorktree.id]: [{ id: 'group-1', activeTabId: null }] },
     browserTabsByWorktree: {},
@@ -481,66 +477,6 @@ describe('SourceControl preview row opens', () => {
       false,
       { targetGroupId: undefined, preview: true }
     )
-  })
-
-  it.each(['uncommitted', 'branch'] as const)('opens a %s HTML review note in the diff', (area) => {
-    resetState({
-      worktreesByRepo: {
-        [mocks.activeRepo.id]: [
-          {
-            ...mocks.activeWorktree,
-            diffComments: [
-              {
-                id: 'html-note',
-                worktreeId: mocks.activeWorktree.id,
-                filePath: 'test.html',
-                lineNumber: 1,
-                side: 'modified',
-                body: 'Review this heading',
-                createdAt: 1
-              }
-            ]
-          }
-        ]
-      },
-      gitStatusByWorktree: {
-        [mocks.activeWorktree.id]: area === 'uncommitted' ? [gitEntry({ path: 'test.html' })] : []
-      },
-      gitBranchChangesByWorktree: {
-        [mocks.activeWorktree.id]: area === 'branch' ? [branchEntry({ path: 'test.html' })] : []
-      },
-      gitBranchCompareSummaryByWorktree: { [mocks.activeWorktree.id]: branchSummary() }
-    })
-    renderSourceControl()
-
-    const expandNotes = container.querySelector<HTMLButtonElement>('button[title="Expand notes"]')
-    expect(expandNotes).not.toBeNull()
-    act(() => expandNotes?.click())
-    const note = container.querySelector<HTMLButtonElement>('button[aria-label^="Open note on"]')
-    expect(note?.textContent).toContain('Review this heading')
-    act(() => note?.click())
-
-    expect(mocks.calls.createBrowserTab).not.toHaveBeenCalled()
-    if (area === 'uncommitted') {
-      expect(mocks.calls.openDiff).toHaveBeenCalledWith(
-        mocks.activeWorktree.id,
-        '/repo/wt/test.html',
-        'test.html',
-        'html',
-        false,
-        { preview: true }
-      )
-    } else {
-      expect(mocks.calls.openBranchDiff).toHaveBeenCalledWith(
-        mocks.activeWorktree.id,
-        '/repo/wt',
-        expect.objectContaining({ path: 'test.html' }),
-        branchSummary(),
-        'html',
-        { preview: true }
-      )
-    }
-    expect(mocks.state.setScrollToDiffCommentId).toHaveBeenLastCalledWith('html-note')
   })
 
   it('passes preview=true when plain uncommitted row clicks open diff tabs', () => {

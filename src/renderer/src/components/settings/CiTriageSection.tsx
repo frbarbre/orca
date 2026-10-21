@@ -3,6 +3,12 @@ import type { Repo } from '../../../../shared/repo-types'
 import { Label } from '../ui/label'
 import { Switch } from '../ui/switch'
 import { Textarea } from '../ui/textarea'
+import { Button } from '../ui/button'
+import {
+  ciTriageInstructions,
+  DEFAULT_CI_TRIAGE_INSTRUCTIONS,
+  parseCiTriageConfig
+} from '../../../../shared/ci-triage'
 import { SearchableSetting } from './SearchableSetting'
 import { translate } from '@/i18n/i18n'
 import type { SettingsSearchEntry } from './settings-search'
@@ -25,7 +31,7 @@ export function getCiTriageSearchEntry(repo: Repo): SettingsSearchEntry {
   }
 }
 
-// Fork: whether an agent triages a workspace PR's failed CI, and what it should know to do so.
+// Fork: whether an agent triages a workspace PR's failed CI, and the prompt it follows.
 export function CiTriageSection({
   repo,
   updateRepo,
@@ -37,7 +43,8 @@ export function CiTriageSection({
 }): React.JSX.Element {
   const entry = getCiTriageSearchEntry(repo)
   const enabled = repo.ciTriage !== undefined
-  const [hints, setHints] = useState(repo.ciTriage?.hints ?? '')
+  const [prompt, setPrompt] = useState(() => ciTriageInstructions(repo.ciTriage ?? {}))
+  const edited = prompt !== DEFAULT_CI_TRIAGE_INSTRUCTIONS
   return (
     <SearchableSetting
       title={entry.title}
@@ -58,33 +65,45 @@ export function CiTriageSection({
           )}
           checked={enabled}
           onCheckedChange={(checked) =>
-            updateRepo(repo.id, { ciTriage: checked ? { hints: hints.trim() } : undefined })
+            updateRepo(repo.id, {
+              ciTriage: checked ? (parseCiTriageConfig({ prompt }) ?? {}) : undefined
+            })
           }
         />
       </div>
       {enabled && (
         <div className="space-y-1">
-          <Label htmlFor="ci-triage-hints" className="text-xs text-muted-foreground">
-            {translate(
-              'auto.components.settings.CiTriageSection.hints',
-              'What the agent should know'
+          <div className="flex items-center justify-between gap-2">
+            <Label htmlFor="ci-triage-prompt" className="text-xs text-muted-foreground">
+              {translate('auto.components.settings.CiTriageSection.prompt', 'Agent prompt')}
+            </Label>
+            {edited && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="xs"
+                onClick={() => {
+                  setPrompt(DEFAULT_CI_TRIAGE_INSTRUCTIONS)
+                  updateRepo(repo.id, { ciTriage: {} })
+                }}
+              >
+                {translate('auto.components.settings.CiTriageSection.reset', 'Reset to default')}
+              </Button>
             )}
-          </Label>
+          </div>
           <Textarea
-            id="ci-triage-hints"
-            value={hints}
-            rows={3}
-            placeholder={translate(
-              'auto.components.settings.CiTriageSection.hintsPlaceholder',
-              'Our Sentry is flowbasedk.sentry.io; main reports e2e failures with source:trunk.'
-            )}
-            onChange={(event) => setHints(event.currentTarget.value)}
+            id="ci-triage-prompt"
+            value={prompt}
+            rows={14}
+            onChange={(event) => setPrompt(event.currentTarget.value)}
             onBlur={() => {
-              if (hints.trim() !== repo.ciTriage?.hints) {
-                updateRepo(repo.id, { ciTriage: { hints: hints.trim() } })
+              const next = parseCiTriageConfig({ prompt }) ?? {}
+              setPrompt(ciTriageInstructions(next))
+              if (next.prompt !== repo.ciTriage?.prompt || repo.ciTriage?.hints) {
+                updateRepo(repo.id, { ciTriage: next })
               }
             }}
-            className="text-xs"
+            className="font-mono text-xs"
           />
         </div>
       )}

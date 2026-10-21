@@ -1,6 +1,10 @@
 import { useAppStore } from '@/store'
 import { startFixChecksAgent } from '@/lib/fix-checks-agent-launch'
-import { buildCiTriagePrompt, failedChecksToTriage } from '../../../shared/ci-triage'
+import {
+  buildCiTriagePrompt,
+  ciTriageInstructions,
+  failedChecksToTriage
+} from '../../../shared/ci-triage'
 import type { Repo } from '../../../shared/repo-types'
 import type { PRCheckDetail } from '../../../shared/github/check-types'
 
@@ -57,7 +61,7 @@ export function maybeStartCiTriage(
       prNumber,
       headSha,
       failedChecks,
-      hints: repo.ciTriage.hints
+      instructions: ciTriageInstructions(repo.ciTriage)
     }),
     launchSource: 'source_control_recovery',
     background: true

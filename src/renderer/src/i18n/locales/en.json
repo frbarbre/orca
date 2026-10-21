@@ -13042,8 +13042,8 @@
           "keywordFlaky": "flaky",
           "keywordSentry": "sentry",
           "toggle": "Triage failed CI with an agent",
-          "hints": "What the agent should know",
-          "hintsPlaceholder": "Our Sentry is flowbasedk.sentry.io; main reports e2e failures with source:trunk."
+          "prompt": "Agent prompt",
+          "reset": "Reset to default"
         },
         "PortLabelsCommandSection": {
           "title": "Port Names",

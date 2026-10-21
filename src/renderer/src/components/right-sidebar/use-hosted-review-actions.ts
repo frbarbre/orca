@@ -1,7 +1,6 @@
 import { gitLabApiFor } from '@/runtime/gitlab-owner-api'
 import { getRepoExecutionHostId } from '../../../../shared/execution-host'
 import { useCallback, useState } from 'react'
-import { toast } from 'sonner'
 import { useConfirmationDialog } from '@/components/confirmation-dialog-context'
 import type { GitHubPRAutoMergeAction } from '@/components/github-pr-merge-state'
 import type { HostedReviewInfo } from '../../../../shared/hosted-review'
@@ -9,12 +8,11 @@ import type { GitHubPRMergeMethod, PRInfo } from '../../../../shared/github/pull
 import type { Repo } from '../../../../shared/repo-types'
 import {
   mergeGitHubHostedReview,
-  setGitHubHostedReviewAutoMerge,
-  updateGitHubHostedReviewState
+  setGitHubHostedReviewAutoMerge
 } from './hosted-review-github-actions'
-import { translate } from '@/i18n/i18n'
 import { buildGitHubPRStackMergeConfirmation } from './github-pr-stack-confirmation'
 import { useReadyHostedReviewAction } from './use-ready-hosted-review-action'
+import { useHostedReviewStateChange } from './use-hosted-review-state-change'
 
 export type HostedReviewActionInfo = Pick<
   HostedReviewInfo,
@@ -64,8 +62,14 @@ export function useHostedReviewActions({
 } {
   const confirm = useConfirmationDialog()
   const [merging, setMerging] = useState(false)
-  const [stateUpdating, setStateUpdating] = useState<'open' | 'closed' | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
+  const { stateUpdating, handleCloseReview, handleReopenReview } = useHostedReviewStateChange({
+    review,
+    githubPR,
+    repo,
+    onRefreshReview,
+    onError: setActionError
+  })
   const { readying, handleMarkReadyForReview } = useReadyHostedReviewAction({
     reviewNumber: review.number,
     githubPR,
@@ -172,108 +176,6 @@ export function useHostedReviewActions({
     repo,
     review.number
   ])
-
-  const handleReviewStateChange = useCallback(
-    async (nextState: 'open' | 'closed') => {
-      if (stateUpdating) {
-        return
-      }
-      const isClosing = nextState === 'closed'
-      const label = isClosing ? 'Close' : 'Reopen'
-      const confirmed = await confirm({
-        title: `${label} ${shortLabel} ${isGitLab ? '!' : '#'}${review.number}?`,
-        description: isClosing
-          ? translate(
-              'auto.components.right.sidebar.HostedReviewActions.a3d572a4de',
-              'This will close the {{value0}}.',
-              { value0: reviewLabel }
-            )
-          : translate(
-              'auto.components.right.sidebar.HostedReviewActions.78f5ff294c',
-              'This will reopen the {{value0}}.',
-              { value0: reviewLabel }
-            ),
-        confirmLabel: label,
-        confirmVariant: isClosing ? 'destructive' : 'default'
-      })
-      if (!confirmed) {
-        return
-      }
-      setStateUpdating(nextState)
-      setActionError(null)
-      try {
-        const result = isGitLab
-          ? isClosing
-            ? await gitLabApiFor({
-                repoPath: repo.path,
-                repoOwnerExecutionHostId: getRepoExecutionHostId(repo)
-              }).closeMR({
-                repoPath: repo.path,
-                repoId: repo.id,
-                iid: review.number
-              })
-            : await gitLabApiFor({
-                repoPath: repo.path,
-                repoOwnerExecutionHostId: getRepoExecutionHostId(repo)
-              }).reopenMR({
-                repoPath: repo.path,
-                repoId: repo.id,
-                iid: review.number
-              })
-          : await updateGitHubHostedReviewState({
-              repo,
-              prNumber: review.number,
-              prRepo: githubPR?.prRepo ?? null,
-              nextState
-            })
-        if (!result.ok) {
-          setActionError(result.error)
-          toast.error(result.error)
-        } else {
-          toast.success(
-            isClosing
-              ? translate(
-                  'auto.components.right.sidebar.HostedReviewActions.closedToast',
-                  '{{value0}} closed',
-                  { value0: shortLabel }
-                )
-              : translate(
-                  'auto.components.right.sidebar.HostedReviewActions.377269db6f',
-                  '{{value0}} reopened',
-                  { value0: shortLabel }
-                )
-          )
-          await onRefreshReview()
-        }
-      } catch (err) {
-        const message =
-          err instanceof Error ? err.message : `Failed to ${label.toLowerCase()} ${reviewLabel}`
-        setActionError(message)
-        toast.error(message)
-      } finally {
-        setStateUpdating(null)
-      }
-    },
-    [
-      confirm,
-      githubPR?.prRepo,
-      isGitLab,
-      onRefreshReview,
-      repo,
-      review.number,
-      reviewLabel,
-      shortLabel,
-      stateUpdating
-    ]
-  )
-
-  const handleCloseReview = useCallback(async () => {
-    await handleReviewStateChange('closed')
-  }, [handleReviewStateChange])
-
-  const handleReopenReview = useCallback(async () => {
-    await handleReviewStateChange('open')
-  }, [handleReviewStateChange])
 
   return {
     merging,

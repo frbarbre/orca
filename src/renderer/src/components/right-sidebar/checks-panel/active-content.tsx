@@ -200,6 +200,15 @@ export function ChecksPanelActiveContent({
           onOpenReview={handleOpenPR}
           onUnlinkReview={handleUnlinkReview}
           onLinkAnotherReview={handleLinkAnotherReview}
+          closeReview={
+            repo
+              ? {
+                  repo,
+                  githubPR: pr ?? null,
+                  onRefreshReview: refreshHostedReviewAfterMutation
+                }
+              : null
+          }
         />
 
         {detachedHeadDisplay && <DetachedHeadBadge display={detachedHeadDisplay} side="bottom" />}

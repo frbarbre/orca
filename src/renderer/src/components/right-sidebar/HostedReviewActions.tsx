@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react'
+import React, { useCallback } from 'react'
 import { LoaderCircle, GitMerge, ChevronDown, GitPullRequestClosed } from 'lucide-react'
 import { useAppStore } from '@/store'
 import { cn } from '@/lib/utils'
@@ -11,32 +11,25 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator
 } from '@/components/ui/dropdown-menu'
-import { presentGitHubPRMergeState } from '@/components/github-pr-merge-state'
 import type { PRInfo } from '../../../../shared/github/pull-request-types'
 import type { Repo } from '../../../../shared/repo-types'
 import type { Worktree } from '../../../../shared/worktree/types'
-import { resolveGitHubPRMergeMethods } from '../../../../shared/github/pull-request-merge-methods'
 import { runWorktreeDelete } from '../sidebar/delete-worktree-flow'
 import { getDeleteStateForWorktreeHost } from '../sidebar/worktree-delete-state-host-match'
-import { presentGitLabMRMergeState } from './gitlab-mr-merge-state'
 import {
   ClosedReviewActions,
   DraftReviewActions,
   HostedReviewActionError,
   MergedReviewActions
 } from './HostedReviewStateActions'
-import { useHostedReviewActions, type HostedReviewActionInfo } from './use-hosted-review-actions'
+import type { HostedReviewActionInfo } from './use-hosted-review-actions'
+import { useHostedReviewMergeControls } from './use-hosted-review-merge-controls'
 import {
   RIGHT_SIDEBAR_MERGE_PRIMARY_BUTTON_CLASS,
   RIGHT_SIDEBAR_PRIMARY_BUTTON_LABEL_CLASS,
   RIGHT_SIDEBAR_SPLIT_ACTION_ROW_CLASS
 } from './right-sidebar-primary-action-layout'
 import { translate } from '@/i18n/i18n'
-import {
-  getGitHubPRStackMergeBlocker,
-  getGitHubPRStackMergeScope,
-  isGitHubPRStackMergeQueueRequired
-} from './github-pr-stack-merge'
 
 export default function HostedReviewActions({
   review,
@@ -54,75 +47,19 @@ export default function HostedReviewActions({
   const isDeletingWorktree = useAppStore(
     (s) => getDeleteStateForWorktreeHost(worktree, s.deleteStateByWorktreeId)?.isDeleting ?? false
   )
-  const isGitLab = review.provider === 'gitlab'
-  const shortLabel = isGitLab ? 'MR' : 'PR'
-  const reviewLabel = isGitLab ? 'merge request' : 'pull request'
-  const stackMergeScope = useMemo(
-    () => (githubPR?.stack ? getGitHubPRStackMergeScope(githubPR.stack, review.number) : null),
-    [githubPR?.stack, review.number]
-  )
-  const stackUsesMergeQueue = isGitHubPRStackMergeQueueRequired(
-    review.mergeQueueRequired,
-    githubPR?.mergeQueueRequired
-  )
-  const stackMergeLabel =
-    stackMergeScope && stackUsesMergeQueue
-      ? stackMergeScope.count === 1
-        ? translate(
-            'auto.components.right.sidebar.HostedReviewActions.9a41a687b7',
-            'Queue through #{{pr}} · {{count}} PR',
-            { pr: review.number, count: stackMergeScope.count }
-          )
-        : translate(
-            'auto.components.right.sidebar.HostedReviewActions.38a1bccb14',
-            'Queue through #{{pr}} · {{count}} PRs',
-            { pr: review.number, count: stackMergeScope.count }
-          )
-      : stackMergeScope?.label
-  const mergePresentation = useMemo(() => {
-    if (isGitLab) {
-      return { ...presentGitLabMRMergeState(review), autoMergeAction: null }
-    }
-    const presentation = presentGitHubPRMergeState({
-      ...githubPR,
-      state: review.state,
-      mergeable: review.mergeable,
-      mergeStateStatus: review.mergeStateStatus,
-      reviewDecision: review.reviewDecision,
-      checksStatus: review.status,
-      autoMergeEnabled: review.autoMergeEnabled,
-      autoMergeAllowed: review.autoMergeAllowed,
-      mergeQueueRequired: review.mergeQueueRequired
-    })
-    if (!githubPR?.stack || !stackMergeScope) {
-      return presentation
-    }
-    const stackBlocker = getGitHubPRStackMergeBlocker(stackMergeScope)
-    return {
-      ...presentation,
-      label: stackMergeLabel ?? stackMergeScope.label,
-      tooltip:
-        stackBlocker ??
-        (stackUsesMergeQueue
-          ? translate(
-              'auto.components.right.sidebar.HostedReviewActions.3de88351c5',
-              'GitHub will add this pull request and every pull request below it to the merge queue.'
-            )
-          : translate(
-              'auto.components.right.sidebar.HostedReviewActions.a32fe6dba6',
-              'GitHub will merge this pull request and every pull request below it in the stack.'
-            )),
-      directMergeAvailable:
-        !stackBlocker &&
-        (stackMergeScope.complete || presentation.directMergeAvailable || stackUsesMergeQueue),
-      autoMergeAction: null
-    }
-  }, [githubPR, isGitLab, review, stackMergeLabel, stackMergeScope, stackUsesMergeQueue])
-  const mergeMethods = useMemo(
-    () => resolveGitHubPRMergeMethods(isGitLab ? null : (githubPR?.mergeMethodSettings ?? null)),
-    [githubPR?.mergeMethodSettings, isGitLab]
-  )
   const {
+    isGitLab,
+    shortLabel,
+    reviewLabel,
+    stackMergeScope,
+    stackUsesMergeQueue,
+    stackMergeLabel,
+    mergePresentation,
+    mergeMethods,
+    uncommittedBlocker,
+    primaryMergeDisabled,
+    directMergeDisabled,
+    menuDisabled,
     merging,
     readying,
     stateUpdating,
@@ -132,25 +69,13 @@ export default function HostedReviewActions({
     handleMarkReadyForReview,
     handleCloseReview,
     handleReopenReview
-  } = useHostedReviewActions({
+  } = useHostedReviewMergeControls({
     review,
     githubPR,
     repo,
-    isGitLab,
-    shortLabel,
-    reviewLabel,
-    defaultMergeMethod: mergeMethods.defaultMethod,
-    autoMergeAction: mergePresentation.autoMergeAction,
+    worktreeId: worktree.id,
     onRefreshReview
   })
-  const isUpdatingReviewState = stateUpdating !== null
-  const primaryMergeDisabled =
-    merging ||
-    isUpdatingReviewState ||
-    (!mergePresentation.directMergeAvailable && !mergePresentation.autoMergeAction)
-  const directMergeDisabled =
-    merging || isUpdatingReviewState || !mergePresentation.directMergeAvailable
-  const menuDisabled = merging || isUpdatingReviewState
 
   const handleDeleteWorktree = useCallback(() => {
     // Why: route every UI delete entry point through the shared funnel so
@@ -234,7 +159,7 @@ export default function HostedReviewActions({
               </TooltipTrigger>
               {primaryMergeDisabled && (
                 <TooltipContent side="bottom" sideOffset={4}>
-                  {mergePresentation.tooltip}
+                  {uncommittedBlocker ?? mergePresentation.tooltip}
                 </TooltipContent>
               )}
             </Tooltip>
@@ -270,7 +195,7 @@ export default function HostedReviewActions({
                 {mergePresentation.autoMergeAction && (
                   <>
                     <DropdownMenuItem
-                      disabled={menuDisabled}
+                      disabled={menuDisabled || uncommittedBlocker !== null}
                       onSelect={() => void handleAutoMerge()}
                     >
                       <GitMerge className="size-3.5" />

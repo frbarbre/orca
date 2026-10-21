@@ -13343,6 +13343,7 @@
             "6645ac7dd1": "Reopening...",
             "b25f63edd7": "open",
             "d2ca293f3d": "Working...",
+            "mergeUncommitted": "Commit your changes before merging ({{files}} uncommitted)",
             "ef064cb7c3": "default",
             "59b4dccf70": "destructive",
             "9a41a687b7": "Queue through #{{pr}} · {{count}} PR",

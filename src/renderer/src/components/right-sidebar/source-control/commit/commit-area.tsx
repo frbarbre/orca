@@ -1,5 +1,13 @@
 import React, { useMemo } from 'react'
-import { ArrowDownUp, ArrowUp, Check, CloudUpload, GitPullRequestArrow, Plus } from 'lucide-react'
+import {
+  ArrowDownUp,
+  ArrowUp,
+  Check,
+  CloudUpload,
+  GitMerge,
+  GitPullRequestArrow,
+  Plus
+} from 'lucide-react'
 import {
   DropdownMenuContent,
   DropdownMenuItem,
@@ -33,7 +41,9 @@ const PRIMARY_ICONS: Partial<
   sync: ArrowDownUp,
   publish: CloudUpload,
   create_pr_intent: GitPullRequestArrow,
-  create_pr: GitPullRequestArrow
+  create_pr: GitPullRequestArrow,
+  merge: GitMerge,
+  auto_merge: GitMerge
 }
 
 export function CommitArea({

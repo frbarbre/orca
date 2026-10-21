@@ -16,10 +16,14 @@ const canCreate: HostedReviewCreationEligibility = {
 
 function renderActionModel({
   suppressed,
-  loading = false
+  loading = false,
+  prState = null,
+  reviewMerge = null
 }: {
   suppressed: boolean
   loading?: boolean
+  prState?: 'open' | null
+  reviewMerge?: Parameters<typeof useSourceControlActionModel>[0]['reviewMerge']
 }) {
   return renderHook(() =>
     useSourceControlActionModel({
@@ -35,7 +39,8 @@ function renderActionModel({
         ahead: 0,
         behind: 0
       },
-      hostedReviewStateForActions: null,
+      hostedReviewStateForActions: prState,
+      reviewMerge,
       isHostedReviewStateLoading: false,
       inFlightRemoteOpKind: null,
       hostedReviewCreation: canCreate,
@@ -56,6 +61,28 @@ function renderActionModel({
     })
   ).result.current
 }
+
+describe('useSourceControlActionModel review merge', () => {
+  it("merges the branch's open PR from the primary once everything is committed and pushed", () => {
+    const model = renderActionModel({
+      suppressed: false,
+      prState: 'open',
+      reviewMerge: {
+        kind: 'merge',
+        label: 'Squash and merge',
+        tooltip: 'Ready to merge',
+        disabled: false,
+        run: () => undefined
+      }
+    })
+
+    expect(model.primaryAction).toMatchObject({
+      kind: 'merge',
+      label: 'Squash and merge',
+      disabled: false
+    })
+  })
+})
 
 describe('useSourceControlActionModel suppression', () => {
   it('preserves normal no-PR Create PR behavior', () => {

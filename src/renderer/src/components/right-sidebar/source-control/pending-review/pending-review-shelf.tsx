@@ -16,6 +16,7 @@ import { useReviewDiffBase } from '@/components/pending-review/use-review-diff-b
 import { usePendingReviewSummary } from '@/components/pending-review/pending-review-summary-store'
 import { useReviewSummaryFocus } from '@/components/pending-review/review-summary-focus'
 import { Composer } from '@/components/composer/Composer'
+import { useAppStore } from '@/store'
 import { PendingReviewDiffBaseSelect } from './pending-review-diff-base-select'
 
 const VERDICTS: {
@@ -66,6 +67,9 @@ export function SourceControlPendingReviewShelf({
     submitter.baseRefName
   )
   const [body, setBody] = usePendingReviewSummary(worktreeId)
+  const uncommittedChanges = useAppStore((state) =>
+    worktreeId ? (state.gitStatusByWorktree[worktreeId]?.length ?? 0) : 0
+  )
   const [uploading, setUploading] = useState(false)
   const [submitting, setSubmitting] = useState<ReviewVerdict | null>(null)
   const composerRef = useRef<HTMLDivElement | null>(null)
@@ -167,6 +171,7 @@ export function SourceControlPendingReviewShelf({
         reviewers={submitter.reviewers}
         onRerequest={submitter.rerequest}
         showHeading={false}
+        uncommittedChanges={uncommittedChanges}
       />
       {diffBase.available ? (
         <div className="px-3 pt-2">

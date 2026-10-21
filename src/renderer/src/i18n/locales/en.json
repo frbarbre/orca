@@ -18511,7 +18511,8 @@
           "title": "Reviewers",
           "loading": "Loading reviewers",
           "rerequest": "Re-request review from {{login}}",
-          "rerequestTip": "Re-request review"
+          "rerequestTip": "Re-request review",
+          "rerequestUncommitted": "Commit your changes before asking for another review ({{files}} uncommitted)"
         }
       },
       "workspaceActions": {

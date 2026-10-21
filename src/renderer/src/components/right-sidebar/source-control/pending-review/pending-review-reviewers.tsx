@@ -87,12 +87,15 @@ function PendingReviewReviewersLoading({
 export function PendingReviewReviewers({
   reviewers,
   onRerequest,
-  showHeading = true
+  showHeading = true,
+  uncommittedChanges = 0
 }: {
   reviewers: readonly PullRequestReviewer[] | null
   onRerequest: (login: string) => Promise<boolean>
   /** Fork: off inside the Review section, whose header already names it. */
   showHeading?: boolean
+  /** Fork: files changed but not committed; a re-request waits until there are none. */
+  uncommittedChanges?: number
 }): React.JSX.Element | null {
   const [requesting, setRequesting] = useState<string | null>(null)
   if (reviewers === null) {
@@ -136,30 +139,39 @@ export function PendingReviewReviewers({
             {reviewer.canRerequest ? (
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon-xs"
-                    aria-label={translate(
-                      'auto.components.sourceControl.reviewers.rerequest',
-                      'Re-request review from {{login}}',
-                      { login: reviewer.login }
-                    )}
-                    disabled={requesting !== null}
-                    onClick={() => void rerequest(reviewer.login)}
-                  >
-                    {requesting === reviewer.login ? (
-                      <LoaderCircle className="size-3.5 animate-spin" />
-                    ) : (
-                      <RefreshCw className="size-3.5" />
-                    )}
-                  </Button>
+                  {/* Why a span: a disabled button gets no pointer events, so it could not say why. */}
+                  <span className="inline-flex">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon-xs"
+                      aria-label={translate(
+                        'auto.components.sourceControl.reviewers.rerequest',
+                        'Re-request review from {{login}}',
+                        { login: reviewer.login }
+                      )}
+                      disabled={requesting !== null || uncommittedChanges > 0}
+                      onClick={() => void rerequest(reviewer.login)}
+                    >
+                      {requesting === reviewer.login ? (
+                        <LoaderCircle className="size-3.5 animate-spin" />
+                      ) : (
+                        <RefreshCw className="size-3.5" />
+                      )}
+                    </Button>
+                  </span>
                 </TooltipTrigger>
                 <TooltipContent>
-                  {translate(
-                    'auto.components.sourceControl.reviewers.rerequestTip',
-                    'Re-request review'
-                  )}
+                  {uncommittedChanges > 0
+                    ? translate(
+                        'auto.components.sourceControl.reviewers.rerequestUncommitted',
+                        'Commit your changes before asking for another review ({{files}} uncommitted)',
+                        { files: String(uncommittedChanges) }
+                      )
+                    : translate(
+                        'auto.components.sourceControl.reviewers.rerequestTip',
+                        'Re-request review'
+                      )}
                 </TooltipContent>
               </Tooltip>
             ) : null}

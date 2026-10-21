@@ -11,6 +11,7 @@ import { TooltipProvider } from '@/components/ui/tooltip'
 import type { PendingReviewQueue } from '@/components/pending-review/use-pending-review-queue'
 import type { ReviewVerdictSubmitter } from '@/components/pending-review/use-submit-review-verdict'
 import { SourceControlPendingReviewShelf } from './pending-review-shelf'
+import { useAppStore } from '@/store'
 
 vi.mock('@/components/pending-review/use-review-diff-base', () => ({
   useReviewDiffBase: () => ({ available: false })
@@ -53,7 +54,8 @@ function ToggleableShelf(props: { queue: PendingReviewQueue; submitter: ReviewVe
 
 function renderShelf(
   collapsed: boolean | 'toggleable',
-  comments: PendingReviewQueue['comments'] = []
+  comments: PendingReviewQueue['comments'] = [],
+  reviewer: { canRerequest?: boolean; state?: string } = {}
 ) {
   const queue = {
     comments,
@@ -69,7 +71,8 @@ function renderShelf(
         name: null,
         avatarUrl: null,
         state: 'pending',
-        canRerequest: false
+        canRerequest: false,
+        ...reviewer
       }
     ],
     rerequest: vi.fn(),
@@ -136,5 +139,17 @@ describe('SourceControlPendingReviewShelf', () => {
     renderShelf('toggleable')
     act(() => requestReviewSummaryFocus('wt'))
     expect(screen.getByPlaceholderText('Add review summary…')).toHaveFocus()
+  })
+
+  it("holds back a re-request while the workspace's changes are not committed", () => {
+    useAppStore.setState({
+      gitStatusByWorktree: { wt: [{ path: 'a.ts' }, { path: 'b.ts' }] as never }
+    })
+    renderShelf(false, [], { canRerequest: true, state: 'commented' })
+
+    expect(
+      screen.getByRole('button', { name: 'Re-request review from MartinBernstorff' })
+    ).toBeDisabled()
+    useAppStore.setState({ gitStatusByWorktree: {} })
   })
 })

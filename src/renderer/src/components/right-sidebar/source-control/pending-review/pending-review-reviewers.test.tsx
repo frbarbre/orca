@@ -67,6 +67,29 @@ describe('PendingReviewReviewers', () => {
     expect(onRerequest).toHaveBeenCalledWith('MartinBernstorff')
   })
 
+  it('holds back a re-request while the workspace has changes that are not committed', async () => {
+    const onRerequest = vi.fn(async () => true)
+    render(
+      <TooltipProvider>
+        <PendingReviewReviewers
+          reviewers={[reviewer({ login: 'zahlio', state: 'commented', canRerequest: true })]}
+          onRerequest={onRerequest}
+          uncommittedChanges={2}
+        />
+      </TooltipProvider>
+    )
+
+    const button = screen.getByRole('button', { name: 'Re-request review from zahlio' })
+    expect(button).toBeDisabled()
+    await userEvent.hover(button.parentElement as HTMLElement)
+    expect(
+      await screen.findAllByText(
+        'Commit your changes before asking for another review (2 uncommitted)'
+      )
+    ).not.toHaveLength(0)
+    expect(onRerequest).not.toHaveBeenCalled()
+  })
+
   it('drops its heading inside the Review section, whose header already says it', () => {
     render(
       <TooltipProvider>

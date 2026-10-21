@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 
-import { renderHook } from '@testing-library/react'
+import { cleanup, renderHook } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { useCiTriageWatch } from './use-ci-triage-watch'
 
@@ -40,7 +40,10 @@ const prCache = (checksStatus: string, headSha: string) => ({
   k: { data: { number: 7, state: 'open', checksStatus, headSha } }
 })
 
-afterEach(() => vi.clearAllMocks())
+afterEach(() => {
+  cleanup()
+  vi.clearAllMocks()
+})
 
 describe('useCiTriageWatch', () => {
   it("fetches a workspace PR's checks once each time its sidebar status turns failed", () => {
@@ -64,6 +67,22 @@ describe('useCiTriageWatch', () => {
     expect(fetchPRChecks).toHaveBeenCalledWith('/code/app', 7, 'feature', 'sha-start', null, {
       repoId: 'repo-1'
     })
+  })
+
+  it('looks again on a later update, at most every 30 seconds, while the PR stays failed', async () => {
+    vi.useFakeTimers()
+    store.set({ fetchPRChecks, prCache: prCache('failure', 'sha-wait') })
+    renderHook(() => useCiTriageWatch({ enabled: true }))
+    await vi.waitFor(() => expect(maybeStartCiTriage).toHaveBeenCalledTimes(1))
+
+    store.set({ fetchPRChecks, prCache: prCache('failure', 'sha-wait') })
+    expect(fetchPRChecks).toHaveBeenCalledTimes(1)
+
+    vi.advanceTimersByTime(30_000)
+    store.set({ fetchPRChecks, prCache: prCache('failure', 'sha-wait') })
+    expect(fetchPRChecks).toHaveBeenCalledTimes(2)
+
+    vi.useRealTimers()
   })
 
   it('hands the checks to triage even when they came from the cache', async () => {

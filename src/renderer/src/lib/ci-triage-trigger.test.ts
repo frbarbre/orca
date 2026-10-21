@@ -74,13 +74,36 @@ describe('maybeStartCiTriage', () => {
     expect(startFixChecksAgent).toHaveBeenCalledTimes(1)
   })
 
-  it('waits while any check is still running, such as the run on a just-pushed fix', async () => {
-    await triage(41, 'feature', 'sha-running', [
+  it('waits while the failed check is running again, such as on a just-pushed fix', async () => {
+    await triage(41, 'feature', 'sha-rerun', [
       ...(failing as unknown as unknown[]),
-      { name: 'ci', status: 'in_progress', conclusion: null, url: 'https://x/runs/8' }
+      { name: 'checks', status: 'in_progress', conclusion: null, url: 'https://x/runs/8' }
     ] as never)
 
     expect(startFixChecksAgent).not.toHaveBeenCalled()
+  })
+
+  it('triages an early failure without waiting for unrelated checks still running', async () => {
+    await triage(42, 'feature', 'sha-early', [
+      { name: 'lint', status: 'completed', conclusion: 'failure', url: 'https://x/runs/9' },
+      { name: 'e2e', status: 'in_progress', conclusion: null, url: 'https://x/runs/10' }
+    ] as never)
+
+    expect(startFixChecksAgent).toHaveBeenCalledTimes(1)
+  })
+
+  it('hands a later failure on the same head only the runs not already triaged', async () => {
+    const lint = { name: 'lint', status: 'completed', conclusion: 'failure', url: 'https://x/l' }
+    const e2e = { name: 'e2e', status: 'completed', conclusion: 'failure', url: 'https://x/e' }
+    await triage(43, 'feature', 'sha-later', [lint] as never)
+    await triage(43, 'feature', 'sha-later', [lint, e2e] as never)
+
+    expect(startFixChecksAgent).toHaveBeenCalledTimes(2)
+    const secondPrompt = (
+      startFixChecksAgent.mock.calls[1] as unknown as [{ basePrompt: string }]
+    )[0].basePrompt
+    expect(secondPrompt).toContain('https://x/e')
+    expect(secondPrompt).not.toContain('https://x/l')
   })
 
   it('stops after three triage agents on one PR, so pushed fixes cannot loop', async () => {

@@ -3,13 +3,14 @@ import { startFixChecksAgent } from '@/lib/fix-checks-agent-launch'
 import {
   buildCiTriagePrompt,
   ciTriageInstructions,
-  failedChecksToTriage
+  failedChecksToTriage,
+  type TriagedCheck
 } from '../../../shared/ci-triage'
 import type { Repo } from '../../../shared/repo-types'
 import type { PRCheckDetail } from '../../../shared/github/check-types'
 import type { GitHubOwnerRepo } from '../../../shared/github/pull-request-types'
 
-const started = new Set<string>()
+const triagedRuns = new Set<string>()
 const startsByPr = new Map<string, number>()
 const MAX_TRIAGES_PER_PR = 3
 
@@ -54,8 +55,15 @@ export async function maybeStartCiTriage({
     return
   }
   const failedChecks = failedChecksToTriage(checks)
-  // Why: a run still going, such as the one on a just-pushed fix, may turn the result around.
-  if (failedChecks.length === 0 || checks.some((check) => check.status !== 'completed')) {
+  if (failedChecks.length === 0) {
+    return
+  }
+  // Why: a failed check running again, as on a just-pushed fix, may turn the result around;
+  // unrelated checks still running are no reason to hold back an early failure.
+  const rerunning = new Set(
+    checks.filter((check) => check.status !== 'completed').map((check) => check.name)
+  )
+  if (failedChecks.some((check) => rerunning.has(check.name))) {
     return
   }
   const workspace = useAppStore
@@ -70,18 +78,18 @@ export async function maybeStartCiTriage({
   }
   // Why: GitHub can list a failed run under the head a fix just pushed, so a run is known by its
   // URL; only a check without one falls back to the head it was reported for.
-  const key = JSON.stringify([
-    repo.id,
-    prNumber,
-    failedChecks.map((check) => check.url ?? `${check.name}@${headSha ?? ''}`)
-  ])
+  const runKey = (check: TriagedCheck): string =>
+    JSON.stringify([repo.id, prNumber, check.url ?? `${check.name}@${headSha ?? ''}`])
+  const untriaged = failedChecks.filter((check) => !triagedRuns.has(runKey(check)))
   const prKey = JSON.stringify([repo.id, prNumber])
   const prStarts = startsByPr.get(prKey) ?? 0
   // Why: each pushed fix is a new head, so a fix that keeps failing would otherwise triage forever.
-  if (started.has(key) || prStarts >= MAX_TRIAGES_PER_PR) {
+  if (untriaged.length === 0 || prStarts >= MAX_TRIAGES_PER_PR) {
     return
   }
-  started.add(key)
+  for (const check of untriaged) {
+    triagedRuns.add(runKey(check))
+  }
   startsByPr.set(prKey, prStarts + 1)
   if (!(await viewerAuthoredPR(repo, prNumber, prRepo))) {
     return
@@ -92,7 +100,7 @@ export async function maybeStartCiTriage({
     basePrompt: buildCiTriagePrompt({
       prNumber,
       headSha,
-      failedChecks,
+      failedChecks: untriaged,
       instructions: ciTriageInstructions(repo.ciTriage)
     }),
     launchSource: 'source_control_recovery',

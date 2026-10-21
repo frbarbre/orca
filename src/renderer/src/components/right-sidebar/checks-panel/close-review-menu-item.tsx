@@ -26,6 +26,7 @@ export function CloseReviewMenuItem({
     repo: target.repo,
     onRefreshReview: target.onRefreshReview
   })
+  const shortLabel = review.provider === 'gitlab' ? 'MR' : 'PR'
   return (
     <DropdownMenuItem
       variant="destructive"
@@ -34,7 +35,7 @@ export function CloseReviewMenuItem({
     >
       <GitPullRequestClosed className="size-3.5" />
       {translate('auto.components.right.sidebar.HostedReviewActions.4d5fb5a284', 'Close')}{' '}
-      {review.provider === 'gitlab' ? 'MR' : 'PR'}
+      {shortLabel}
     </DropdownMenuItem>
   )
 }

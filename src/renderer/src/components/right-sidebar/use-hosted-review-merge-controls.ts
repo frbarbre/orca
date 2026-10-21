@@ -23,8 +23,8 @@ export type HostedReviewPrimaryMerge = {
 }
 
 /**
- * Fork: the PR panel's merge state, methods and actions, shared with Source Control's primary
- * button so both offer the same merge and refuse it while the workspace has uncommitted changes.
+ * Fork: what Source Control's primary button does for the branch's open review — the merge the
+ * PR panel used to offer — refused while the workspace has uncommitted changes.
  */
 export function useHostedReviewMergeControls({
   review,
@@ -110,7 +110,7 @@ export function useHostedReviewMergeControls({
     () => resolveGitHubPRMergeMethods(isGitLab ? null : (githubPR?.mergeMethodSettings ?? null)),
     [githubPR?.mergeMethodSettings, isGitLab]
   )
-  const actions = useHostedReviewActions({
+  const { merging, stateUpdating, handleAutoMerge, handleMerge } = useHostedReviewActions({
     review,
     githubPR,
     repo,
@@ -121,7 +121,6 @@ export function useHostedReviewMergeControls({
     autoMergeAction: mergePresentation.autoMergeAction,
     onRefreshReview
   })
-  const { merging, stateUpdating, handleAutoMerge, handleMerge } = actions
   // Why: merging ships what the PR holds, so work left uncommitted here would be silently left out.
   const uncommittedBlocker =
     uncommittedChanges > 0
@@ -137,12 +136,6 @@ export function useHostedReviewMergeControls({
     isUpdatingReviewState ||
     uncommittedBlocker !== null ||
     (!mergePresentation.directMergeAvailable && !mergePresentation.autoMergeAction)
-  const directMergeDisabled =
-    merging ||
-    isUpdatingReviewState ||
-    uncommittedBlocker !== null ||
-    !mergePresentation.directMergeAvailable
-  const menuDisabled = merging || isUpdatingReviewState
   const usesAutoMerge =
     mergePresentation.autoMergeAction !== null && !mergePresentation.directMergeAvailable
   const primaryMerge: HostedReviewPrimaryMerge | null =
@@ -158,20 +151,5 @@ export function useHostedReviewMergeControls({
             usesAutoMerge ? void handleAutoMerge() : void handleMerge(mergeMethods.defaultMethod)
         }
       : null
-  return {
-    ...actions,
-    isGitLab,
-    shortLabel,
-    reviewLabel,
-    stackMergeScope,
-    stackUsesMergeQueue,
-    stackMergeLabel,
-    mergePresentation,
-    mergeMethods,
-    uncommittedBlocker,
-    primaryMergeDisabled,
-    directMergeDisabled,
-    menuDisabled,
-    primaryMerge
-  }
+  return { primaryMerge }
 }

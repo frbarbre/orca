@@ -1,16 +1,5 @@
 import React, { useCallback } from 'react'
-import { LoaderCircle, GitMerge, ChevronDown, GitPullRequestClosed } from 'lucide-react'
 import { useAppStore } from '@/store'
-import { cn } from '@/lib/utils'
-import { Button } from '@/components/ui/button'
-import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip'
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator
-} from '@/components/ui/dropdown-menu'
 import type { PRInfo } from '../../../../shared/github/pull-request-types'
 import type { Repo } from '../../../../shared/repo-types'
 import type { Worktree } from '../../../../shared/worktree/types'
@@ -22,14 +11,7 @@ import {
   HostedReviewActionError,
   MergedReviewActions
 } from './HostedReviewStateActions'
-import type { HostedReviewActionInfo } from './use-hosted-review-actions'
-import { useHostedReviewMergeControls } from './use-hosted-review-merge-controls'
-import {
-  RIGHT_SIDEBAR_MERGE_PRIMARY_BUTTON_CLASS,
-  RIGHT_SIDEBAR_PRIMARY_BUTTON_LABEL_CLASS,
-  RIGHT_SIDEBAR_SPLIT_ACTION_ROW_CLASS
-} from './right-sidebar-primary-action-layout'
-import { translate } from '@/i18n/i18n'
+import { useHostedReviewActions, type HostedReviewActionInfo } from './use-hosted-review-actions'
 
 export default function HostedReviewActions({
   review,
@@ -47,33 +29,25 @@ export default function HostedReviewActions({
   const isDeletingWorktree = useAppStore(
     (s) => getDeleteStateForWorktreeHost(worktree, s.deleteStateByWorktreeId)?.isDeleting ?? false
   )
+  const isGitLab = review.provider === 'gitlab'
+  const shortLabel = isGitLab ? 'MR' : 'PR'
+  const reviewLabel = isGitLab ? 'merge request' : 'pull request'
   const {
-    isGitLab,
-    shortLabel,
-    reviewLabel,
-    stackMergeScope,
-    stackUsesMergeQueue,
-    stackMergeLabel,
-    mergePresentation,
-    mergeMethods,
-    uncommittedBlocker,
-    primaryMergeDisabled,
-    directMergeDisabled,
-    menuDisabled,
-    merging,
     readying,
     stateUpdating,
     actionError,
-    handleMerge,
-    handleAutoMerge,
     handleMarkReadyForReview,
     handleCloseReview,
     handleReopenReview
-  } = useHostedReviewMergeControls({
+  } = useHostedReviewActions({
     review,
     githubPR,
     repo,
-    worktreeId: worktree.id,
+    isGitLab,
+    shortLabel,
+    reviewLabel,
+    defaultMergeMethod: 'squash',
+    autoMergeAction: null,
     onRefreshReview
   })
 
@@ -98,143 +72,10 @@ export default function HostedReviewActions({
     )
   }
 
+  // Fork: an open review is merged from Source Control's primary button and closed from the
+  // review header's More actions menu, so the panel keeps no merge button of its own.
   if (review.state === 'open') {
-    return (
-      <div className="space-y-1.5">
-        <TooltipProvider delayDuration={300}>
-          <div className={RIGHT_SIDEBAR_SPLIT_ACTION_ROW_CLASS}>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                {/* Why: wrapping in a <span> so the tooltip trigger receives pointer
-                  events even when the merge button inside is disabled. */}
-                <span
-                  className={cn(
-                    'inline-flex min-w-0 max-w-full shrink',
-                    primaryMergeDisabled && 'cursor-not-allowed'
-                  )}
-                >
-                  <Button
-                    type="button"
-                    size="xs"
-                    className={cn(
-                      'rounded-r-none px-3 text-[11px]',
-                      RIGHT_SIDEBAR_MERGE_PRIMARY_BUTTON_CLASS,
-                      'bg-green-600 text-white hover:bg-green-700',
-                      'disabled:opacity-50 disabled:cursor-not-allowed'
-                    )}
-                    onClick={() =>
-                      mergePresentation.autoMergeAction && !mergePresentation.directMergeAvailable
-                        ? void handleAutoMerge()
-                        : void handleMerge(mergeMethods.defaultMethod)
-                    }
-                    disabled={primaryMergeDisabled}
-                  >
-                    {merging ? (
-                      <LoaderCircle className="size-3.5 animate-spin" />
-                    ) : (
-                      <GitMerge className="size-3.5" />
-                    )}
-                    <span className={RIGHT_SIDEBAR_PRIMARY_BUTTON_LABEL_CLASS}>
-                      {merging
-                        ? stackMergeScope
-                          ? stackUsesMergeQueue
-                            ? translate(
-                                'auto.components.right.sidebar.HostedReviewActions.73e0e1819d',
-                                'Queueing stack...'
-                              )
-                            : translate(
-                                'auto.components.right.sidebar.HostedReviewActions.e555a41d32',
-                                'Merging stack...'
-                              )
-                          : translate(
-                              'auto.components.right.sidebar.HostedReviewActions.d2ca293f3d',
-                              'Working...'
-                            )
-                        : mergePresentation.directMergeAvailable
-                          ? (stackMergeLabel ?? mergeMethods.defaultLabel)
-                          : (mergePresentation.autoMergeAction?.label ?? mergePresentation.label)}
-                    </span>
-                  </Button>
-                </span>
-              </TooltipTrigger>
-              {primaryMergeDisabled && (
-                <TooltipContent side="bottom" sideOffset={4}>
-                  {uncommittedBlocker ?? mergePresentation.tooltip}
-                </TooltipContent>
-              )}
-            </Tooltip>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  type="button"
-                  size="xs"
-                  className={cn(
-                    'rounded-l-none border-l border-green-700/50 px-1.5 shrink-0',
-                    'bg-green-600 text-white hover:bg-green-700',
-                    'disabled:opacity-50 disabled:cursor-not-allowed'
-                  )}
-                  disabled={menuDisabled}
-                  aria-label={translate(
-                    'auto.components.right.sidebar.HostedReviewActions.2bfaf4379c',
-                    'More {{value0}} actions',
-                    { value0: reviewLabel }
-                  )}
-                  title={translate(
-                    'auto.components.right.sidebar.HostedReviewActions.9845a71e17',
-                    'More actions'
-                  )}
-                >
-                  {stateUpdating === 'closed' ? (
-                    <LoaderCircle className="size-3.5 animate-spin" />
-                  ) : (
-                    <ChevronDown className="size-3.5" />
-                  )}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-52">
-                {mergePresentation.autoMergeAction && (
-                  <>
-                    <DropdownMenuItem
-                      disabled={menuDisabled || uncommittedBlocker !== null}
-                      onSelect={() => void handleAutoMerge()}
-                    >
-                      <GitMerge className="size-3.5" />
-                      {mergePresentation.autoMergeAction.label}
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                  </>
-                )}
-                {(!stackMergeScope || !stackUsesMergeQueue) &&
-                  mergeMethods.methods.map(({ method, label }) => (
-                    <DropdownMenuItem
-                      key={method}
-                      disabled={directMergeDisabled}
-                      onSelect={() => void handleMerge(method)}
-                    >
-                      <GitMerge className="size-3.5" />
-                      {label}
-                    </DropdownMenuItem>
-                  ))}
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  variant="destructive"
-                  disabled={menuDisabled}
-                  onSelect={() => void handleCloseReview()}
-                >
-                  <GitPullRequestClosed className="size-3.5" />
-                  {translate(
-                    'auto.components.right.sidebar.HostedReviewActions.4d5fb5a284',
-                    'Close'
-                  )}{' '}
-                  {shortLabel}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </TooltipProvider>
-        <HostedReviewActionError message={actionError} />
-      </div>
-    )
+    return actionError ? <HostedReviewActionError message={actionError} /> : null
   }
 
   if (review.state === 'closed') {

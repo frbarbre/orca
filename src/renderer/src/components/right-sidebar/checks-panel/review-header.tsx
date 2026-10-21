@@ -5,8 +5,10 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu'
+import { CloseReviewMenuItem, type CloseReviewTarget } from './close-review-menu-item'
 import { cn } from '@/lib/utils'
 import {
   getTerminalUrlOrcaBrowserHint,
@@ -27,6 +29,8 @@ type ChecksPanelReviewHeaderProps = {
   onOpenReview: (event: React.MouseEvent<HTMLButtonElement>) => void
   onUnlinkReview: () => void
   onLinkAnotherReview: () => void
+  /** Fork: closes an open review from this menu; null when there is no repository to act on. */
+  closeReview?: CloseReviewTarget | null
 }
 
 export function ChecksPanelReviewHeader({
@@ -37,7 +41,8 @@ export function ChecksPanelReviewHeader({
   onRefresh,
   onOpenReview,
   onUnlinkReview,
-  onLinkAnotherReview
+  onLinkAnotherReview,
+  closeReview = null
 }: ChecksPanelReviewHeaderProps): React.JSX.Element {
   const reviewNumberLabel = review.provider === 'gitlab' ? `!${review.number}` : `#${review.number}`
   const ReviewIcon = review.provider === 'gitlab' ? GitMerge : PullRequestIcon
@@ -120,6 +125,12 @@ export function ChecksPanelReviewHeader({
                   'Link another PR'
                 )}
           </DropdownMenuItem>
+          {closeReview && review.state === 'open' ? (
+            <>
+              <DropdownMenuSeparator />
+              <CloseReviewMenuItem review={review} target={closeReview} />
+            </>
+          ) : null}
         </DropdownMenuContent>
       </DropdownMenu>
     </div>

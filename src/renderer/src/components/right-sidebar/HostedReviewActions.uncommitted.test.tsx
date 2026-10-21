@@ -1,39 +1,30 @@
 // @vitest-environment happy-dom
 
 import '@testing-library/jest-dom/vitest'
-import type { ReactNode } from 'react'
-import { cleanup, render, screen } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
+import { cleanup, render, renderHook, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { Repo } from '../../../../shared/repo-types'
 import type { Worktree } from '../../../../shared/worktree/types'
 import HostedReviewActions from './HostedReviewActions'
+import { useHostedReviewMergeControls } from './use-hosted-review-merge-controls'
 
 const store = vi.hoisted(() => ({ gitStatusByWorktree: {} as Record<string, unknown[]> }))
 vi.mock('@/store', () => ({
   useAppStore: (select: (state: unknown) => unknown) =>
     select({ gitStatusByWorktree: store.gitStatusByWorktree, deleteStateByWorktreeId: {} })
 }))
-const handleMerge = vi.hoisted(() => vi.fn())
 vi.mock('./use-hosted-review-actions', () => ({
   useHostedReviewActions: () => ({
     merging: false,
     readying: false,
     stateUpdating: null,
     actionError: null,
-    handleMerge,
+    handleMerge: vi.fn(),
     handleAutoMerge: vi.fn(),
     handleMarkReadyForReview: vi.fn(),
     handleCloseReview: vi.fn(),
     handleReopenReview: vi.fn()
   })
-}))
-vi.mock('@/components/ui/dropdown-menu', () => ({
-  DropdownMenu: ({ children }: { children: ReactNode }) => <>{children}</>,
-  DropdownMenuTrigger: ({ children }: { children: ReactNode }) => <>{children}</>,
-  DropdownMenuContent: () => null,
-  DropdownMenuItem: () => null,
-  DropdownMenuSeparator: () => null
 }))
 
 afterEach(() => {
@@ -41,39 +32,54 @@ afterEach(() => {
   store.gitStatusByWorktree = {}
 })
 
-function renderOpenPR() {
-  render(
-    <HostedReviewActions
-      review={{
-        provider: 'github',
-        number: 42,
-        state: 'open',
-        status: 'success',
-        mergeable: 'MERGEABLE',
-        mergeStateStatus: 'CLEAN',
-        reviewDecision: 'APPROVED'
-      }}
-      repo={{ id: 'repo-1', path: '/repo' } as Repo}
-      worktree={{ id: 'worktree-1' } as Worktree}
-      onRefreshReview={vi.fn().mockResolvedValue(undefined)}
-    />
-  )
-  return screen.getAllByRole('button')[0]
+const openReview = {
+  provider: 'github' as const,
+  number: 42,
+  state: 'open' as const,
+  status: 'success' as const,
+  mergeable: 'MERGEABLE' as const,
+  mergeStateStatus: 'CLEAN',
+  reviewDecision: 'APPROVED' as const
 }
+const repo = { id: 'repo-1', path: '/repo' } as Repo
 
-describe('HostedReviewActions with uncommitted changes', () => {
+describe('HostedReviewActions on an open PR', () => {
+  it("leaves merging to Source Control's primary button, so the panel shows no merge button", () => {
+    const { container } = render(
+      <HostedReviewActions
+        review={openReview}
+        repo={repo}
+        worktree={{ id: 'worktree-1' } as Worktree}
+        onRefreshReview={vi.fn().mockResolvedValue(undefined)}
+      />
+    )
+
+    expect(screen.queryAllByRole('button')).toHaveLength(0)
+    expect(container).toBeEmptyDOMElement()
+  })
+})
+
+describe('useHostedReviewMergeControls', () => {
+  const controls = () =>
+    renderHook(() =>
+      useHostedReviewMergeControls({
+        review: openReview,
+        repo,
+        worktreeId: 'worktree-1',
+        onRefreshReview: vi.fn().mockResolvedValue(undefined)
+      })
+    ).result.current.primaryMerge
+
   it('merges a ready PR from a clean workspace', () => {
-    expect(renderOpenPR()).toBeEnabled()
+    expect(controls()).toMatchObject({ kind: 'merge', disabled: false })
   })
 
-  it('refuses to merge while the workspace has uncommitted changes, and says why', async () => {
+  it('refuses to merge while the workspace has uncommitted changes, and says why', () => {
     store.gitStatusByWorktree = { 'worktree-1': [{ path: 'a.ts' }, { path: 'b.ts' }] }
-    const merge = renderOpenPR()
 
-    expect(merge).toBeDisabled()
-    await userEvent.hover(merge.parentElement as HTMLElement)
-    expect(
-      await screen.findAllByText('Commit your changes before merging (2 uncommitted)')
-    ).not.toHaveLength(0)
+    expect(controls()).toMatchObject({
+      disabled: true,
+      tooltip: 'Commit your changes before merging (2 uncommitted)'
+    })
   })
 })

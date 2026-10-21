@@ -24,6 +24,8 @@ export function useSourceControlActionModel({
   remoteStatusForActions,
   hostedReviewStateForActions,
   reviewMerge,
+  localHeadSha,
+  reviewHeadSha,
   isHostedReviewStateLoading,
   inFlightRemoteOpKind,
   hostedReviewCreation,
@@ -51,6 +53,8 @@ export function useSourceControlActionModel({
   remoteStatusForActions: PrimaryInput['upstreamStatus']
   hostedReviewStateForActions: PrimaryInput['prState']
   reviewMerge: HostedReviewPrimaryMerge | null
+  localHeadSha: string | null
+  reviewHeadSha: string | undefined
   isHostedReviewStateLoading: boolean
   inFlightRemoteOpKind: PrimaryInput['inFlightRemoteOpKind']
   hostedReviewCreation: PrimaryInput['hostedReviewCreation']
@@ -140,7 +144,8 @@ export function useSourceControlActionModel({
         hasUnresolvedConflicts: unresolvedConflictCount > 0,
         isCommitting,
         isRemoteOperationActive: isRemoteOperationActive || isAbortingOperation,
-        upstreamStatus: remoteStatusForActions,
+        localHeadSha,
+        reviewHeadSha,
         prState: hostedReviewStateForActions,
         reviewMerge
       }),
@@ -152,7 +157,8 @@ export function useSourceControlActionModel({
       isAbortingOperation,
       isCommitting,
       isRemoteOperationActive,
-      remoteStatusForActions,
+      localHeadSha,
+      reviewHeadSha,
       reviewMerge,
       unresolvedConflictCount
     ]

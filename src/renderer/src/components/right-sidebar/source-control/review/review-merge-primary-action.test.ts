@@ -1,11 +1,10 @@
 import { describe, expect, it, vi } from 'vitest'
 import { resolveReviewMergePrimaryAction } from './review-merge-primary-action'
 
-const upToDate = { stagedCount: 0, hasUnstagedChanges: false, hasUnresolvedConflicts: false }
 const nothingToCommit = {
   kind: 'commit' as const,
   label: 'Commit',
-  title: 'Nothing to commit. Branch is up to date.',
+  title: 'Linked review branch target is unavailable.',
   disabled: true
 }
 const merge = (overrides = {}) => ({
@@ -18,17 +17,20 @@ const merge = (overrides = {}) => ({
 })
 const resolve = (overrides: Record<string, unknown> = {}) =>
   resolveReviewMergePrimaryAction(nothingToCommit, {
-    ...upToDate,
+    stagedCount: 0,
+    hasUnstagedChanges: false,
+    hasUnresolvedConflicts: false,
     isCommitting: false,
     isRemoteOperationActive: false,
-    upstreamStatus: { hasUpstream: true, ahead: 0, behind: 0 },
+    localHeadSha: 'abc123',
+    reviewHeadSha: 'abc123',
     prState: 'open',
     reviewMerge: merge(),
     ...overrides
   } as never)
 
 describe('resolveReviewMergePrimaryAction', () => {
-  it('merges an open PR once everything is committed and pushed, with its merge method', () => {
+  it('merges an open PR once its head is the commit checked out here, with its merge method', () => {
     expect(resolve()).toEqual({
       kind: 'merge',
       label: 'Squash and merge',
@@ -45,18 +47,12 @@ describe('resolveReviewMergePrimaryAction', () => {
     ).toMatchObject({ kind: 'auto_merge', label: 'Enable auto-merge', disabled: false })
   })
 
-  it('keeps its own action while anything is uncommitted, unpushed or behind', () => {
+  it('keeps its own action while anything is uncommitted or the PR lacks the local head', () => {
     expect(resolve({ stagedCount: 1 })).toBe(nothingToCommit)
     expect(resolve({ hasUnstagedChanges: true })).toBe(nothingToCommit)
-    expect(resolve({ upstreamStatus: { hasUpstream: true, ahead: 1, behind: 0 } })).toBe(
-      nothingToCommit
-    )
-    expect(resolve({ upstreamStatus: { hasUpstream: true, ahead: 0, behind: 2 } })).toBe(
-      nothingToCommit
-    )
-    expect(resolve({ upstreamStatus: { hasUpstream: false, ahead: 0, behind: 0 } })).toBe(
-      nothingToCommit
-    )
+    expect(resolve({ reviewHeadSha: 'older' })).toBe(nothingToCommit)
+    expect(resolve({ localHeadSha: null })).toBe(nothingToCommit)
+    expect(resolve({ reviewHeadSha: undefined })).toBe(nothingToCommit)
   })
 
   it('leaves drafts, closed PRs and busy states alone', () => {

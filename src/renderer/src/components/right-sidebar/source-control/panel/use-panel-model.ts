@@ -27,6 +27,7 @@ export function useSourceControlPanelModel() {
     reviewFlows
   )
   const {
+    activeGitStatusHead,
     activePrFromQueue,
     activeRepo,
     activeRepoTarget,
@@ -99,6 +100,8 @@ export function useSourceControlPanelModel() {
     remoteStatusForActions,
     hostedReviewStateForActions,
     reviewMerge,
+    localHeadSha: activeGitStatusHead,
+    reviewHeadSha: hostedReview?.headSha,
     isHostedReviewStateLoading,
     inFlightRemoteOpKind,
     hostedReviewCreation,

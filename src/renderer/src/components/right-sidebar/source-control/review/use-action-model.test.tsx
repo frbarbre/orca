@@ -18,12 +18,14 @@ function renderActionModel({
   suppressed,
   loading = false,
   prState = null,
-  reviewMerge = null
+  reviewMerge = null,
+  linkedReviewWithoutUpstream = false
 }: {
   suppressed: boolean
   loading?: boolean
   prState?: 'open' | null
   reviewMerge?: Parameters<typeof useSourceControlActionModel>[0]['reviewMerge']
+  linkedReviewWithoutUpstream?: boolean
 }) {
   return renderHook(() =>
     useSourceControlActionModel({
@@ -33,14 +35,13 @@ function renderActionModel({
       isCommitting: false,
       isRemoteOperationActive: false,
       isAbortingOperation: false,
-      remoteStatusForActions: {
-        hasUpstream: true,
-        upstreamName: 'origin/feature',
-        ahead: 0,
-        behind: 0
-      },
+      remoteStatusForActions: linkedReviewWithoutUpstream
+        ? { hasUpstream: false, ahead: 0, behind: 0 }
+        : { hasUpstream: true, upstreamName: 'origin/feature', ahead: 0, behind: 0 },
       hostedReviewStateForActions: prState,
       reviewMerge,
+      localHeadSha: 'abc123',
+      reviewHeadSha: 'abc123',
       isHostedReviewStateLoading: false,
       inFlightRemoteOpKind: null,
       hostedReviewCreation: canCreate,
@@ -67,6 +68,8 @@ describe('useSourceControlActionModel review merge', () => {
     const model = renderActionModel({
       suppressed: false,
       prState: 'open',
+      // Why: a workspace linked to its PR has its upstream withheld from the actions.
+      linkedReviewWithoutUpstream: true,
       reviewMerge: {
         kind: 'merge',
         label: 'Squash and merge',

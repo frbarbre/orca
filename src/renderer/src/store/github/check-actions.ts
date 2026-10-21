@@ -166,7 +166,7 @@ export const createCheckActions = (
       }
       if (repo?.ciTriage && branch) {
         void import('@/lib/ci-triage-trigger').then(({ maybeStartCiTriage }) =>
-          maybeStartCiTriage(repo, prNumber, branch, headSha, checks)
+          maybeStartCiTriage({ repo, prNumber, prRepo: prRepo ?? null, branch, headSha, checks })
         )
       }
       set((s) => {

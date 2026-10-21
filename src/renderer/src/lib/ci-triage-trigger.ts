@@ -7,22 +7,49 @@ import {
 } from '../../../shared/ci-triage'
 import type { Repo } from '../../../shared/repo-types'
 import type { PRCheckDetail } from '../../../shared/github/check-types'
+import type { GitHubOwnerRepo } from '../../../shared/github/pull-request-types'
 
 const started = new Set<string>()
 const startsByPr = new Map<string, number>()
 const MAX_TRIAGES_PER_PR = 3
 
-/**
- * Fork: when a repo with CI triage shows failed checks on a PR that has a workspace here, starts
- * one background agent for that failure to rerun noise once or push a fix with a clear cause.
- */
-export function maybeStartCiTriage(
-  repo: Pick<Repo, 'id' | 'ciTriage'> | undefined,
+async function viewerAuthoredPR(
+  repo: Pick<Repo, 'path' | 'connectionId'>,
   prNumber: number,
-  branch: string,
-  headSha: string | undefined,
+  prRepo: GitHubOwnerRepo | null
+): Promise<boolean> {
+  try {
+    const context = await window.api.pendingReview.context({
+      repoPath: repo.path,
+      prNumber,
+      prRepo,
+      connectionId: repo.connectionId ?? null
+    })
+    return context.viewerDidAuthor
+  } catch {
+    return false
+  }
+}
+
+/**
+ * Fork: when a repo with CI triage shows failed checks on a PR you wrote that has a workspace
+ * here, starts one background agent for that failure to rerun noise once or push a clear fix.
+ */
+export async function maybeStartCiTriage({
+  repo,
+  prNumber,
+  prRepo,
+  branch,
+  headSha,
+  checks
+}: {
+  repo: Pick<Repo, 'id' | 'path' | 'connectionId' | 'ciTriage'> | undefined
+  prNumber: number
+  prRepo: GitHubOwnerRepo | null
+  branch: string
+  headSha: string | undefined
   checks: readonly PRCheckDetail[]
-): void {
+}): Promise<void> {
   if (!repo?.ciTriage) {
     return
   }
@@ -54,6 +81,9 @@ export function maybeStartCiTriage(
   }
   started.add(key)
   startsByPr.set(prKey, prStarts + 1)
+  if (!(await viewerAuthoredPR(repo, prNumber, prRepo))) {
+    return
+  }
   void startFixChecksAgent({
     repoId: repo.id,
     worktreeId: workspace.id,

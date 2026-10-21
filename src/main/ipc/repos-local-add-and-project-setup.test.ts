@@ -451,7 +451,7 @@ describe('repos:add + repos:clone', () => {
     expect(invalidateAuthorizedRootsCacheMock).toHaveBeenCalled()
   })
 
-  it('persists a trimmed Python venv path and drops a non-string one', () => {
+  it('persists a trimmed Python venv path and drops a non-string one', async () => {
     const updated = {
       id: 'repo-python-venv',
       path: '/tmp/repo-python-venv',
@@ -459,24 +459,25 @@ describe('repos:add + repos:clone', () => {
       kind: 'git',
       badgeColor: '#22c55e'
     }
+    mockStore.getRepo.mockReturnValue(updated)
     mockStore.updateRepo.mockReturnValue(updated)
 
-    handlers.get('repos:update')!(null, {
+    await handlers.get('repos:update')!(null, {
       repoId: updated.id,
       updates: { pythonVenvPath: ' apps/backend/.venv ' }
     })
-    expect(mockStore.updateRepo).toHaveBeenLastCalledWith(updated.id, {
+    expect(mockStore.updateRepo).toHaveBeenLastCalledWith(repoTarget(updated.id), {
       pythonVenvPath: 'apps/backend/.venv'
     })
 
-    handlers.get('repos:update')!(null, {
+    await handlers.get('repos:update')!(null, {
       repoId: updated.id,
       updates: { pythonVenvPath: 42 }
     })
-    expect(mockStore.updateRepo).toHaveBeenLastCalledWith(updated.id, {})
+    expect(mockStore.updateRepo).toHaveBeenLastCalledWith(repoTarget(updated.id), {})
   })
 
-  it('persists a trimmed port labels command and drops a non-string one', () => {
+  it('persists a trimmed port labels command and drops a non-string one', async () => {
     const updated = {
       id: 'repo-port-labels',
       path: '/tmp/repo-port-labels',
@@ -484,21 +485,22 @@ describe('repos:add + repos:clone', () => {
       kind: 'git',
       badgeColor: '#22c55e'
     }
+    mockStore.getRepo.mockReturnValue(updated)
     mockStore.updateRepo.mockReturnValue(updated)
 
-    handlers.get('repos:update')!(null, {
+    await handlers.get('repos:update')!(null, {
       repoId: updated.id,
       updates: { portLabelsCommand: ' mise run print-urls ' }
     })
-    expect(mockStore.updateRepo).toHaveBeenLastCalledWith(updated.id, {
+    expect(mockStore.updateRepo).toHaveBeenLastCalledWith(repoTarget(updated.id), {
       portLabelsCommand: 'mise run print-urls'
     })
 
-    handlers.get('repos:update')!(null, {
+    await handlers.get('repos:update')!(null, {
       repoId: updated.id,
       updates: { portLabelsCommand: 7 }
     })
-    expect(mockStore.updateRepo).toHaveBeenLastCalledWith(updated.id, {})
+    expect(mockStore.updateRepo).toHaveBeenLastCalledWith(repoTarget(updated.id), {})
   })
 
   it('persists agent worktree visibility through local repos:update', async () => {

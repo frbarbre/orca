@@ -1,6 +1,7 @@
 import { BrowserWindow } from 'electron'
 import type { Repo } from '../../shared/repo-types'
 import { isFolderRepo } from '../../shared/repo-kind'
+import { getRepoRoutingConnectionId } from '../../shared/execution-host'
 import { getRepoIdFromWorktreeId, splitWorktreeIdForFilesystem } from '../../shared/worktree/id'
 import { recordAgentTurn, snapshotWorktree } from './agent-turn-snapshots'
 import { createAgentTurnTracker } from './agent-turn-tracker'
@@ -44,7 +45,7 @@ function localWorktreePath(
     return undefined
   }
   const repo = deps.getRepo(getRepoIdFromWorktreeId(worktreeId))
-  if (!repo || isFolderRepo(repo) || repo.connectionId) {
+  if (!repo || isFolderRepo(repo) || getRepoRoutingConnectionId(repo)) {
     return undefined
   }
   return splitWorktreeIdForFilesystem(worktreeId)?.worktreePath

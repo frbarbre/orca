@@ -1,4 +1,4 @@
-import type { CSSProperties } from 'react'
+import type { AriaAttributes, CSSProperties } from 'react'
 import { cn } from '@/lib/utils'
 import { fileIconName, folderIconName } from './material-icon-resolve'
 import { useMaterialIcons } from './material-icon-store'
@@ -21,7 +21,7 @@ export type MaterialIconProps = {
   style?: CSSProperties
   size?: number | string
   // Accepted for Lucide parity (upstream's `FileTypeIcon` passes it); the image is always hidden.
-  'aria-hidden'?: boolean
+  'aria-hidden'?: AriaAttributes['aria-hidden']
 }
 
 function MaterialIconImage({

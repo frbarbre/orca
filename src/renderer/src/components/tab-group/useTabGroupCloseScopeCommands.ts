@@ -45,14 +45,16 @@ export function useTabGroupCloseScopeCommands({
   }, [closeItem, groupTabs])
 
   const closeOthers = useCallback(
-    (itemId: string) => {
+    (itemId: string, keep?: ReadonlySet<string>) => {
       const item = groupTabs.find((candidate) => candidate.id === itemId)
       if (!item) {
         return
       }
       // Why: store closeOtherTabs strands dirty files if the save dialog is cancelled; route via closeMany to stay dirty-aware.
       const siblingIds = groupTabs
-        .filter((candidate) => candidate.id !== itemId && !candidate.isPinned)
+        .filter(
+          (candidate) => candidate.id !== itemId && !candidate.isPinned && !keep?.has(candidate.id)
+        )
         .map((candidate) => candidate.id)
       closeMany(siblingIds)
     },
@@ -96,11 +98,18 @@ export function useTabGroupCloseScopeCommands({
     [closeMany, group, groupTabs]
   )
 
-  const closeAllUnpinned = useCallback(() => {
-    closeMany(groupTabs.filter((candidate) => !candidate.isPinned).map((candidate) => candidate.id))
-    // Why: an emptied split is layout state; collapse it like closeGroup does. No-op if tabs remain.
-    closeEmptyGroup(worktreeId, groupId)
-  }, [closeEmptyGroup, closeMany, groupId, groupTabs, worktreeId])
+  const closeAllUnpinned = useCallback(
+    (keep?: ReadonlySet<string>) => {
+      closeMany(
+        groupTabs
+          .filter((candidate) => !candidate.isPinned && !keep?.has(candidate.id))
+          .map((candidate) => candidate.id)
+      )
+      // Why: an emptied split is layout state; collapse it like closeGroup does. No-op if tabs remain.
+      closeEmptyGroup(worktreeId, groupId)
+    },
+    [closeEmptyGroup, closeMany, groupId, groupTabs, worktreeId]
+  )
 
   return {
     closeGroup,

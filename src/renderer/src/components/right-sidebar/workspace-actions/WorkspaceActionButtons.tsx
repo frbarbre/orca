@@ -114,7 +114,7 @@ export function WorkspaceNextActionButton(): React.JSX.Element | null {
       type="button"
       variant="outline"
       size="xs"
-      className="mr-1"
+      className="mx-2"
       disabled={busy}
       onClick={() => run('primary')}
       data-workspace-action={action}

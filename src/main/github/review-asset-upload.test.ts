@@ -122,4 +122,56 @@ describe('resolveGitHubAttachmentUrl', () => {
       )
     ).toBe(null)
   })
+
+  it("signs a private repository's image file through the contents API, finding where its branch name ends", async () => {
+    const signed =
+      'https://raw.githubusercontent.com/acme/widgets/evidence/FB-R52/shot.png?token=ABC'
+    vi.mocked(fetch)
+      .mockResolvedValueOnce(json({ message: 'Not Found' }, 404))
+      .mockResolvedValueOnce(json({ download_url: signed }))
+
+    expect(
+      await resolveGitHubAttachmentUrl(
+        'https://github.com/acme/widgets/raw/evidence/FB-R52/shot.png',
+        10_000
+      )
+    ).toBe(signed)
+
+    const [first, firstInit] = vi.mocked(fetch).mock.calls[0] ?? []
+    const [second] = vi.mocked(fetch).mock.calls[1] ?? []
+    expect(String(first)).toBe(
+      'https://api.github.com/repos/acme/widgets/contents/FB-R52/shot.png?ref=evidence'
+    )
+    expect(firstInit?.headers).toMatchObject({ authorization: 'Bearer t0ken' })
+    expect(String(second)).toBe(
+      'https://api.github.com/repos/acme/widgets/contents/shot.png?ref=evidence%2FFB-R52'
+    )
+  })
+
+  it('reads a blob link that asks for the raw file the same way', async () => {
+    const signed = 'https://raw.githubusercontent.com/acme/widgets/main/docs/a.png?token=X'
+    vi.mocked(fetch).mockResolvedValueOnce(json({ download_url: signed }))
+
+    expect(
+      await resolveGitHubAttachmentUrl(
+        'https://github.com/acme/widgets/blob/main/docs/a.png?raw=true',
+        20_000
+      )
+    ).toBe(signed)
+    expect(String(vi.mocked(fetch).mock.calls[0]?.[0])).toBe(
+      'https://api.github.com/repos/acme/widgets/contents/docs/a.png?ref=main'
+    )
+  })
+
+  it('leaves repository files that are not images, and download links off GitHub file storage', async () => {
+    expect(
+      await resolveGitHubAttachmentUrl('https://github.com/acme/widgets/raw/main/notes.txt')
+    ).toBe(null)
+    expect(fetch).not.toHaveBeenCalled()
+
+    vi.mocked(fetch).mockResolvedValueOnce(json({ download_url: 'https://evil.test/a.png' }))
+    expect(
+      await resolveGitHubAttachmentUrl('https://github.com/acme/widgets/raw/main/b.png', 30_000)
+    ).toBe(null)
+  })
 })

@@ -1,5 +1,6 @@
 import React from 'react'
 import { useGitHubAttachmentSrc } from '@/lib/github-attachment-src'
+import { parseGitHubRepoFileImageUrl } from '../../../../shared/github/review-asset'
 import { ExpandableMarkdownImage, ExpandableMarkdownVideo } from './MarkdownImageLightbox'
 
 export function isGitHubUserAttachmentUrl(href: string | undefined): href is string {
@@ -21,6 +22,24 @@ export function isGitHubUserAttachmentUrl(href: string | undefined): href is str
 function isBareAutolink(children: React.ReactNode, href: string): boolean {
   const text = React.Children.toArray(children).join('').trim()
   return text === href
+}
+
+/** Images GitHub only shows a signed-in viewer: attachments, and files in a repository. */
+export function isGitHubSignedImageSrc(src: string | undefined): src is string {
+  return isGitHubUserAttachmentUrl(src) || parseGitHubRepoFileImageUrl(src) !== null
+}
+
+// Why bare links only: screenshot reports list repository images as plain URLs, while a link
+// someone named stays the link they wrote.
+export function isGitHubRepoImageLink(
+  href: string | undefined,
+  children: React.ReactNode
+): href is string {
+  return parseGitHubRepoFileImageUrl(href) !== null && isBareAutolink(children, href ?? '')
+}
+
+export function repoImageFileName(href: string): string {
+  return parseGitHubRepoFileImageUrl(href)?.refAndPath.at(-1) ?? href
 }
 
 export function isGitHubUserAttachmentVideoLink(

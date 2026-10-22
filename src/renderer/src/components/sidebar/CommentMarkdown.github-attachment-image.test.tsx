@@ -87,6 +87,34 @@ describe('CommentMarkdown GitHub attachment images', () => {
     ).toBe(signedUrl)
   })
 
+  it("shows a private repository's image file from its signed URL", async () => {
+    const fileUrl = 'https://github.com/acme/app/raw/evidence/FB-R52/before-dark.png'
+    const mounted = await renderCommentMarkdown(`![Before](${fileUrl})`)
+
+    expect(mounted.querySelector('img')?.src).toBe(signedUrl)
+    expect(window.api.pendingReview.resolveAssetUrl).toHaveBeenCalledWith(fileUrl)
+  })
+
+  it('previews bare links to repository images, such as a screenshot table', async () => {
+    const fileUrl = 'https://github.com/acme/app/raw/evidence/FB-R52/before-dark.png'
+    const mounted = await renderCommentMarkdown(
+      `| Screen | Before |\n| --- | --- |\n| 01-dark.png | ${fileUrl} |`
+    )
+
+    const image = mounted.querySelector<HTMLImageElement>('td img')
+    expect(image?.src).toBe(signedUrl)
+    expect(image?.alt).toBe('before-dark.png')
+  })
+
+  it('keeps bare links to repository files that are not images as links', async () => {
+    const mounted = await renderCommentMarkdown('https://github.com/acme/app/raw/main/notes.txt')
+
+    expect(mounted.querySelector('img')).toBeNull()
+    expect(mounted.querySelector('a')?.getAttribute('href')).toBe(
+      'https://github.com/acme/app/raw/main/notes.txt'
+    )
+  })
+
   it('keeps the link when the attachment cannot be resolved', async () => {
     vi.stubGlobal('api', { pendingReview: { resolveAssetUrl: () => Promise.resolve(null) } })
     const mounted = await renderCommentMarkdown(

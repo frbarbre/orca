@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { isGitHubAttachmentAssetUrl } from '../../../shared/github/review-asset'
+import { isGitHubSignedImageUrl } from '../../../shared/github/review-asset'
 
 // Why under four minutes: main hands back a URL GitHub signs for five, and caches it for four.
 const TTL_MS = 3 * 60_000
@@ -23,10 +23,10 @@ export type GitHubAttachmentSrc =
   | { status: 'ready'; src: string }
   | { status: 'failed' }
 
-// Why: a private repository's attachment link answers 404 without a github.com session, so the
-// media element gets the signed URL instead; anything else passes through untouched.
+// Why: a private repository's attachment and file links answer 404 without a github.com session,
+// so the media element gets the signed URL instead; anything else passes through untouched.
 export function useGitHubAttachmentSrc(href: string): GitHubAttachmentSrc {
-  const isAttachment = isGitHubAttachmentAssetUrl(href)
+  const isAttachment = isGitHubSignedImageUrl(href)
   const [resolved, setResolved] = useState<{ href: string; src: string | null } | null>(null)
 
   useEffect(() => {

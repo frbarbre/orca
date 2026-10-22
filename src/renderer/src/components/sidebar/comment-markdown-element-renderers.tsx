@@ -9,9 +9,11 @@ import {
 import {
   GitHubUserAttachmentImage,
   GitHubUserAttachmentVideo,
-  isGitHubUserAttachmentUrl,
+  isGitHubRepoImageLink,
+  isGitHubSignedImageSrc,
   isHostedVideoLink,
-  isLinearUploadUrl
+  isLinearUploadUrl,
+  repoImageFileName
 } from './comment-markdown-github-attachment-media'
 import { ExpandableMarkdownImage } from './MarkdownImageLightbox'
 import { MarkdownGitHubCallout } from '@/components/markdown-github-callout'
@@ -86,6 +88,12 @@ export function createCompactCommentMarkdownComponents(
         <GitHubUserAttachmentVideo href={href} className={COMPACT_MEDIA_CLASS}>
           {children}
         </GitHubUserAttachmentVideo>
+      ) : isGitHubRepoImageLink(href, children) ? (
+        <GitHubUserAttachmentImage
+          src={href}
+          alt={repoImageFileName(href)}
+          className={COMPACT_MEDIA_CLASS}
+        />
       ) : (
         <a
           href={href || undefined}
@@ -183,7 +191,7 @@ export function createCompactCommentMarkdownComponents(
     // like "Image #1"; compact cards inline app-managed thumbnails without
     // auto-fetching arbitrary remote image URLs.
     img: ({ alt, src }) => {
-      if (isGitHubUserAttachmentUrl(src)) {
+      if (isGitHubSignedImageSrc(src)) {
         return <GitHubUserAttachmentImage src={src} alt={alt} className={COMPACT_MEDIA_CLASS} />
       }
       if (!isTrustedCompactImageSrc(src) && !isLinearUploadUrl(src)) {
@@ -237,6 +245,8 @@ export function createDocumentCommentMarkdownComponents(
         // Why: GitHub's API returns uploaded videos as bare attachment links;
         // GitHub.com upgrades them to media embeds in its own renderer.
         <GitHubUserAttachmentVideo href={href}>{children}</GitHubUserAttachmentVideo>
+      ) : isGitHubRepoImageLink(href, children) ? (
+        <GitHubUserAttachmentImage src={href} alt={repoImageFileName(href)} />
       ) : (
         <a
           href={href || undefined}
@@ -293,7 +303,7 @@ export function createDocumentCommentMarkdownComponents(
       )
     },
     img: ({ alt, src }) => {
-      if (isGitHubUserAttachmentUrl(src)) {
+      if (isGitHubSignedImageSrc(src)) {
         // Why: private-repo attachment images fail as cross-origin loads; a
         // top-level link opens them in a GitHub-authenticated tab, and falls
         // back to a text link when the image itself can't render.

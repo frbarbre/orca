@@ -2,8 +2,10 @@ import { resolveReleaseApiToken } from '../updater-release-api-token'
 import type { GitHubRepositoryIdentity } from '../../shared/github/pull-request-types'
 import {
   isGitHubAttachmentAssetUrl,
+  parseGitHubRepoFileImageUrl,
   REVIEW_ASSET_MAX_BYTES,
   reviewAssetKind,
+  type GitHubRepoFileImage,
   type UploadReviewAssetRequest,
   type UploadReviewAssetResult
 } from '../../shared/github/review-asset'
@@ -14,6 +16,7 @@ const UPLOAD_TIMEOUT_MS = 10 * 60_000
 const RESOLVED_TTL_MS = 4 * 60_000
 const REPO_NAME_PART = /^[A-Za-z0-9_.-]+$/
 const SIGNED_HOST_SUFFIXES = ['.amazonaws.com', '.githubusercontent.com']
+const MAX_REF_SEGMENTS = 4
 
 const repositoryIds = new Map<string, number>()
 const resolvedUrls = new Map<string, { url: string; expiresAt: number }>()
@@ -154,14 +157,50 @@ function isSignedFileUrl(location: string): boolean {
   }
 }
 
-// Why: a private repository's attachments answer 404 without a github.com session, so the renderer
-// shows the short-lived signed file URL GitHub redirects the token to instead.
+function parseDownloadUrl(body: unknown): string | null {
+  return body &&
+    typeof body === 'object' &&
+    'download_url' in body &&
+    typeof body.download_url === 'string'
+    ? body.download_url
+    : null
+}
+
+// Why every split: `raw/evidence/FB-R52/a.png` may be branch `evidence` or `evidence/FB-R52`, and
+// only GitHub knows which; the shortest branch name is the common case, so it goes first.
+async function resolveRepoFileImageUrl(
+  file: GitHubRepoFileImage,
+  token: string
+): Promise<string | null> {
+  const splits = Math.min(file.refAndPath.length - 1, MAX_REF_SEGMENTS)
+  for (let refLength = 1; refLength <= splits; refLength += 1) {
+    const ref = file.refAndPath.slice(0, refLength).join('/')
+    const path = file.refAndPath.slice(refLength).map(encodeURIComponent).join('/')
+    const response = await fetch(
+      `https://api.github.com/repos/${file.owner}/${file.repo}/contents/${path}?ref=${encodeURIComponent(ref)}`,
+      { headers: githubHeaders(token), signal: AbortSignal.timeout(API_TIMEOUT_MS) }
+    )
+    if (response.status === 404) {
+      continue
+    }
+    if (!response.ok) {
+      return null
+    }
+    const downloadUrl = parseDownloadUrl(await response.json().catch(() => null))
+    return downloadUrl && isSignedFileUrl(downloadUrl) ? downloadUrl : null
+  }
+  return null
+}
+
+// Why: a private repository's attachments and files answer 404 without a github.com session, so
+// the renderer shows the short-lived signed file URL GitHub hands the token instead.
 export async function resolveGitHubAttachmentUrl(
   href: string,
   now: number = Date.now()
 ): Promise<string | null> {
-  // Why this strict: the token goes out with the request, so it may only ever be sent to github.com.
-  if (!isGitHubAttachmentAssetUrl(href)) {
+  const repoFile = parseGitHubRepoFileImageUrl(href)
+  // Why this strict: the token goes out with the request, so it may only ever be sent to GitHub.
+  if (!isGitHubAttachmentAssetUrl(href) && !repoFile) {
     return null
   }
   const cached = resolvedUrls.get(href)
@@ -173,6 +212,13 @@ export async function resolveGitHubAttachmentUrl(
     return null
   }
   try {
+    if (repoFile) {
+      const url = await resolveRepoFileImageUrl(repoFile, token)
+      if (url) {
+        resolvedUrls.set(href, { url, expiresAt: now + RESOLVED_TTL_MS })
+      }
+      return url
+    }
     const response = await fetch(href, {
       headers: { authorization: `Bearer ${token}` },
       redirect: 'manual',

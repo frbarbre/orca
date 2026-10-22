@@ -36,3 +36,50 @@ const GITHUB_ATTACHMENT_URL = /^https:\/\/github\.com\/user-attachments\/assets\
 export function isGitHubAttachmentAssetUrl(href: string | undefined): href is string {
   return typeof href === 'string' && GITHUB_ATTACHMENT_URL.test(href)
 }
+
+const REPO_NAME_PART = /^[A-Za-z0-9_.-]+$/
+const IMAGE_FILE_NAME = /\.(png|jpe?g|gif|webp)$/i
+
+/** A repository file linked from github.com: its owner, repo, and the ref and path run together. */
+export type GitHubRepoFileImage = { owner: string; repo: string; refAndPath: string[] }
+
+/**
+ * Fork: `github.com/<owner>/<repo>/raw/<ref>/<path>` or `.../blob/<ref>/<path>?raw=true` naming an
+ * image. The ref and path are one run of segments, since a branch name may itself hold slashes.
+ */
+export function parseGitHubRepoFileImageUrl(href: string | undefined): GitHubRepoFileImage | null {
+  if (!href) {
+    return null
+  }
+  let url: URL
+  let segments: string[]
+  try {
+    url = new URL(href)
+    segments = url.pathname.split('/').slice(1).map(decodeURIComponent)
+  } catch {
+    return null
+  }
+  if (url.protocol !== 'https:' || url.hostname !== 'github.com' || url.username || url.port) {
+    return null
+  }
+  const [owner, repo, kind, ...refAndPath] = segments
+  const raw = kind === 'raw' || (kind === 'blob' && url.searchParams.get('raw') === 'true')
+  if (
+    !owner ||
+    !repo ||
+    !raw ||
+    !REPO_NAME_PART.test(owner) ||
+    !REPO_NAME_PART.test(repo) ||
+    refAndPath.length < 2 ||
+    refAndPath.some((segment) => !segment || segment === '..') ||
+    !IMAGE_FILE_NAME.test(refAndPath.at(-1) ?? '')
+  ) {
+    return null
+  }
+  return { owner, repo, refAndPath }
+}
+
+/** Images GitHub serves only to a signed-in viewer, so the renderer shows a signed URL for them. */
+export function isGitHubSignedImageUrl(href: string | undefined): href is string {
+  return isGitHubAttachmentAssetUrl(href) || parseGitHubRepoFileImageUrl(href) !== null
+}

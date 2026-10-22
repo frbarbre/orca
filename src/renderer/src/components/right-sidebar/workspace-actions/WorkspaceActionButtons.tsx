@@ -85,12 +85,12 @@ export function WorkspaceReviewButton(): React.JSX.Element | null {
         <Button
           type="button"
           variant="ghost"
-          size="icon-sm"
+          size="icon-xs"
           aria-label={label}
           disabled={busy}
           onClick={() => run('review')}
         >
-          <ScanEye className="size-4" />
+          <ScanEye className="size-3.5" />
         </Button>
       </TooltipTrigger>
       <TooltipContent side="bottom" sideOffset={6}>
@@ -114,7 +114,6 @@ export function WorkspaceNextActionButton(): React.JSX.Element | null {
       type="button"
       variant="outline"
       size="xs"
-      className="mx-2"
       disabled={busy}
       onClick={() => run('primary')}
       data-workspace-action={action}

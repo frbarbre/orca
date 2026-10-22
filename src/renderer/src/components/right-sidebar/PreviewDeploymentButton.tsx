@@ -79,13 +79,13 @@ export function PreviewDeploymentButton(): React.JSX.Element | null {
         <Button
           type="button"
           variant="ghost"
-          size="icon-sm"
+          size="icon-xs"
           aria-label={tooltip}
           data-preview-deployment=""
           onPointerEnter={refresh}
           onClick={() => void window.api.shell.openUrl(deployment.url)}
         >
-          <Telescope className="size-4" />
+          <Telescope className="size-3.5" />
         </Button>
       </TooltipTrigger>
       <TooltipContent side="bottom" sideOffset={6}>

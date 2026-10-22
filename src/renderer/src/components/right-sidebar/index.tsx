@@ -116,7 +116,7 @@ function RightSidebarInner(): React.JSX.Element {
   // Fork: the next step sits where the sidebar toggle was, written out; the toggle's shortcut stays.
   const closeButton = rightSidebarOpen ? (
     <div
-      className={cn('flex shrink-0 items-center gap-0.5', RIGHT_SIDEBAR_HEADER_NO_DRAG_CLASS_NAME)}
+      className={cn('flex shrink-0 items-center gap-2 px-2', RIGHT_SIDEBAR_HEADER_NO_DRAG_CLASS_NAME)}
       data-workspace-action-buttons=""
     >
       <WorkspaceReviewButton />

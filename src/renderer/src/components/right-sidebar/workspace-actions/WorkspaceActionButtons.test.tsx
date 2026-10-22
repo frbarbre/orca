@@ -47,7 +47,7 @@ describe('top bar workspace actions', () => {
 
     const button = screen.getByRole('button', { name: 'Review' })
     expect(button).not.toHaveTextContent('Review')
-    expect(button).toHaveAttribute('data-size', 'icon-sm')
+    expect(button).toHaveAttribute('data-size', 'icon-xs')
   })
 
   it('shows no next action when there is none', () => {

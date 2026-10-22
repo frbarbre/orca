@@ -13680,18 +13680,13 @@
             "d2ca293f3d": "Working...",
             "ef064cb7c3": "default",
             "59b4dccf70": "destructive",
-            "9a41a687b7": "Queue through #{{pr}} · {{count}} PR",
-            "38a1bccb14": "Queue through #{{pr}} · {{count}} PRs",
-            "3de88351c5": "GitHub will add this pull request and every pull request below it to the merge queue.",
-            "a32fe6dba6": "GitHub will merge this pull request and every pull request below it in the stack.",
             "73e0e1819d": "Queueing stack...",
             "e555a41d32": "Merging stack...",
             "markingReady": "Marking ready...",
             "markReady": "Mark ready for review",
             "draftMoreActions": "More {{value0}} actions",
             "closeDraft": "Close",
-            "readyToast": "{{value0}} marked ready for review",
-            "mergeUncommitted": "Commit your changes before merging ({{files}} uncommitted)"
+            "readyToast": "{{value0}} marked ready for review"
           },
           "PortsPanel": {
             "3ea4a02a8f": "Cancel",
@@ -18910,7 +18905,9 @@
         "conflictsTab": "Resolve conflicts",
         "readyTab": "Ready for review",
         "createPrTab": "Create PR",
-        "launchFailed": "Could not start the agent: {{reason}}"
+        "launchFailed": "Could not start the agent: {{reason}}",
+        "enableAutoMerge": "Enable auto-merge",
+        "disableAutoMerge": "Disable auto-merge"
       },
       "workspaceStatusRules": {
         "kept": "Kept {{name}}: {{reason}}",

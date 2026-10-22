@@ -8,8 +8,10 @@ import type { Repo } from '../../../../../shared/repo-types'
 import type { Worktree } from '../../../../../shared/worktree/types'
 import {
   resolveWorkspaceAction,
-  type WorkspaceActionKind
+  type WorkspaceActionKind,
+  type WorkspaceMergeAction
 } from '../../../../../shared/workspace-action'
+import { presentGitHubPRMergeState } from '@/components/github-pr-merge-state'
 
 export type WorkspaceActionContext = {
   worktree: Worktree
@@ -21,6 +23,24 @@ export type WorkspaceActionContext = {
 }
 
 const EMPTY_ENTRIES: GitStatusEntry[] = []
+
+// Why: the same merge-state reading the PR panel used, so the button offers what GitHub accepts.
+// Stacks are left to GitHub, since merging one there also lands every PR below it.
+export function resolvePullRequestMergeAction(pr: PRInfo): WorkspaceMergeAction | null {
+  if (pr.state !== 'open' || pr.stack) {
+    return null
+  }
+  const presentation = presentGitHubPRMergeState(pr)
+  if (presentation.directMergeAvailable) {
+    return 'merge'
+  }
+  if (presentation.autoMergeAction) {
+    return presentation.autoMergeAction.kind === 'enable'
+      ? 'enable-auto-merge'
+      : 'disable-auto-merge'
+  }
+  return null
+}
 
 export function selectWorkspaceActionContext(state: AppState): WorkspaceActionContext | null {
   const worktree = state.activeWorktreeId
@@ -56,7 +76,15 @@ export function selectWorkspaceActionContext(state: AppState): WorkspaceActionCo
     unpushedCommits: upstream?.hasUpstream ? upstream.ahead : 0,
     hasLocalConflicts: unresolvedConflicts.length > 0,
     isDefaultBranch: worktree.isMainWorktree || branch === 'main' || branch === 'master',
-    pullRequest: pr ? { state: pr.state, conflicting: pr.mergeable === 'CONFLICTING' } : null,
+    pullRequest: pr
+      ? {
+          state: pr.state,
+          conflicting: pr.mergeable === 'CONFLICTING',
+          mergeAction: resolvePullRequestMergeAction(pr),
+          headIsLocal:
+            pr.headSha !== undefined && state.gitStatusHeadByWorktree[worktree.id] === pr.headSha
+        }
+      : null,
     pullRequestKnown: entry !== undefined && !entry.error
   })
   return { worktree, repo, branch, pr, unresolvedConflicts, action }

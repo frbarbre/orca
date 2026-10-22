@@ -16,16 +16,10 @@ const canCreate: HostedReviewCreationEligibility = {
 
 function renderActionModel({
   suppressed,
-  loading = false,
-  prState = null,
-  reviewMerge = null,
-  linkedReviewWithoutUpstream = false
+  loading = false
 }: {
   suppressed: boolean
   loading?: boolean
-  prState?: 'open' | null
-  reviewMerge?: Parameters<typeof useSourceControlActionModel>[0]['reviewMerge']
-  linkedReviewWithoutUpstream?: boolean
 }) {
   return renderHook(() =>
     useSourceControlActionModel({
@@ -35,13 +29,13 @@ function renderActionModel({
       isCommitting: false,
       isRemoteOperationActive: false,
       isAbortingOperation: false,
-      remoteStatusForActions: linkedReviewWithoutUpstream
-        ? { hasUpstream: false, ahead: 0, behind: 0 }
-        : { hasUpstream: true, upstreamName: 'origin/feature', ahead: 0, behind: 0 },
-      hostedReviewStateForActions: prState,
-      reviewMerge,
-      localHeadSha: 'abc123',
-      reviewHeadSha: 'abc123',
+      remoteStatusForActions: {
+        hasUpstream: true,
+        upstreamName: 'origin/feature',
+        ahead: 0,
+        behind: 0
+      },
+      hostedReviewStateForActions: null,
       isHostedReviewStateLoading: false,
       inFlightRemoteOpKind: null,
       hostedReviewCreation: canCreate,
@@ -62,30 +56,6 @@ function renderActionModel({
     })
   ).result.current
 }
-
-describe('useSourceControlActionModel review merge', () => {
-  it("merges the branch's open PR from the primary once everything is committed and pushed", () => {
-    const model = renderActionModel({
-      suppressed: false,
-      prState: 'open',
-      // Why: a workspace linked to its PR has its upstream withheld from the actions.
-      linkedReviewWithoutUpstream: true,
-      reviewMerge: {
-        kind: 'merge',
-        label: 'Squash and merge',
-        tooltip: 'Ready to merge',
-        disabled: false,
-        run: () => undefined
-      }
-    })
-
-    expect(model.primaryAction).toMatchObject({
-      kind: 'merge',
-      label: 'Squash and merge',
-      disabled: false
-    })
-  })
-})
 
 describe('useSourceControlActionModel suppression', () => {
   it('preserves normal no-PR Create PR behavior', () => {

@@ -5,11 +5,32 @@ import { cn } from '@/lib/utils'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { translate } from '@/i18n/i18n'
 import type { WorkspaceActionKind } from '../../../../../shared/workspace-action'
+import type { PRInfo } from '../../../../../shared/github/pull-request-types'
+import { resolveGitHubPRMergeMethods } from '../../../../../shared/github/pull-request-merge-methods'
+import { presentGitHubPRMergeState } from '@/components/github-pr-merge-state'
 import { selectWorkspaceActionContext } from './workspace-action-context'
 import { launchWorkspaceAction, type WorkspaceActionLaunch } from './launch-workspace-action'
 
-function primaryCopy(action: WorkspaceActionKind): { label: string; icon: React.JSX.Element } {
+function primaryCopy(
+  action: WorkspaceActionKind,
+  pr: PRInfo | null
+): { label: string; icon: React.JSX.Element } {
   switch (action) {
+    case 'merge':
+      return {
+        label: resolveGitHubPRMergeMethods(pr?.mergeMethodSettings ?? null).defaultLabel,
+        icon: <GitMerge className="size-3.5" />
+      }
+    case 'enable-auto-merge':
+    case 'disable-auto-merge':
+      return {
+        label:
+          (pr ? presentGitHubPRMergeState(pr).autoMergeAction?.label : null) ??
+          (action === 'enable-auto-merge'
+            ? translate('auto.components.workspaceActions.enableAutoMerge', 'Enable auto-merge')
+            : translate('auto.components.workspaceActions.disableAutoMerge', 'Disable auto-merge')),
+        icon: <GitMerge className="size-3.5" />
+      }
     case 'commit-and-push':
       return {
         label: translate('auto.components.workspaceActions.commitAndPush', 'Commit & push'),
@@ -77,6 +98,7 @@ export function WorkspaceActionButtons({
   showLabels?: boolean
 }): React.JSX.Element | null {
   const action = useAppStore((state) => selectWorkspaceActionContext(state)?.action ?? null)
+  const pr = useAppStore((state) => selectWorkspaceActionContext(state)?.pr ?? null)
   const canReview = useAppStore((state) => {
     const pr = selectWorkspaceActionContext(state)?.pr
     return pr?.state === 'open' || pr?.state === 'draft'
@@ -89,7 +111,7 @@ export function WorkspaceActionButtons({
     setBusy(kind)
     void launchWorkspaceAction(kind).finally(() => setBusy(null))
   }
-  const primary = action ? primaryCopy(action) : null
+  const primary = action ? primaryCopy(action, pr) : null
   return (
     <div className="flex shrink-0 items-center gap-1 pr-1" data-workspace-action-buttons="">
       {canReview ? (

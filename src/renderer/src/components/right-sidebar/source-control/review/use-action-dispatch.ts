@@ -10,7 +10,6 @@ import type { SourceControlConflictAbort } from '../sync/use-conflict-abort'
 import type { SourceControlRemoteActionRunner } from '../sync/use-remote-action-runner'
 import type { SourceControlActionModel } from './use-action-model'
 import type { SourceControlHostedReviewCreation } from './use-hosted-review-creation'
-import type { HostedReviewPrimaryMerge } from '../../use-hosted-review-merge-controls'
 
 /**
  * Routes the primary button, the dropdown, the header Create-review affordance and the commit
@@ -29,7 +28,6 @@ export function useSourceControlActionDispatch({
   prGenerating,
   remoteStatus,
   remoteStatusForActions,
-  reviewMerge,
   runCompoundCommitAction,
   runCreatePrIntent,
   runRemoteAction
@@ -46,7 +44,6 @@ export function useSourceControlActionDispatch({
   prGenerating: boolean
   remoteStatus: SourceControlWorktreeContext['remoteStatus']
   remoteStatusForActions: SourceControlWorktreeContext['remoteStatus']
-  reviewMerge: HostedReviewPrimaryMerge | null
   runCompoundCommitAction: SourceControlRemoteActionRunner['runCompoundCommitAction']
   runCreatePrIntent: () => Promise<void>
   runRemoteAction: SourceControlRemoteActionRunner['runRemoteAction']
@@ -127,21 +124,13 @@ export function useSourceControlActionDispatch({
         return
       case 'create_pr_intent':
         void runCreatePrIntent()
-        return
-      case 'merge':
-      case 'auto_merge':
-        if (!primaryAction.disabled) {
-          reviewMerge?.run()
-        }
     }
   }, [
     handleActionInvoke,
     handleStageAllPrimary,
-    primaryAction.disabled,
     primaryAction.kind,
     remoteStatus,
     remoteStatusForActions,
-    reviewMerge,
     runCreatePrIntent
   ])
 

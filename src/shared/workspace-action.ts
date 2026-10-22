@@ -1,10 +1,13 @@
 import type { PRState } from './github/pull-request-types'
 
+export type WorkspaceMergeAction = 'merge' | 'enable-auto-merge' | 'disable-auto-merge'
+
 export type WorkspaceActionKind =
   | 'commit-and-push'
   | 'resolve-conflicts'
   | 'ready-for-review'
   | 'create-pull-request'
+  | WorkspaceMergeAction
 
 export type WorkspaceActionInput = {
   hasUncommittedChanges: boolean
@@ -12,7 +15,14 @@ export type WorkspaceActionInput = {
   unpushedCommits: number
   hasLocalConflicts: boolean
   isDefaultBranch: boolean
-  pullRequest: { state: PRState; conflicting: boolean } | null
+  pullRequest: {
+    state: PRState
+    conflicting: boolean
+    /** What GitHub allows for an open pull request: merge now, or wait through auto-merge. */
+    mergeAction?: WorkspaceMergeAction | null
+    /** The pull request's head is the commit checked out here, so nothing is left to push. */
+    headIsLocal?: boolean
+  } | null
   // Why: an unanswered lookup is not "no pull request", and must not offer Create PR.
   pullRequestKnown: boolean
 }
@@ -36,7 +46,11 @@ export function resolveWorkspaceAction(input: WorkspaceActionInput): WorkspaceAc
     if (pr.conflicting) {
       return 'resolve-conflicts'
     }
-    return pr.state === 'draft' ? 'ready-for-review' : null
+    if (pr.state === 'draft') {
+      return 'ready-for-review'
+    }
+    // Why: merging ships what the pull request holds, so it waits until that is the local work.
+    return pr.headIsLocal ? (pr.mergeAction ?? null) : null
   }
   return null
 }

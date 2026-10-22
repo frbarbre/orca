@@ -63,6 +63,41 @@ describe('resolveWorkspaceAction', () => {
     expect(resolveWorkspaceAction({ ...clean, isDefaultBranch: true })).toBeNull()
   })
 
+  it('merges an open pull request, or toggles its auto-merge, once its head is the local commit', () => {
+    const open = (mergeAction: 'merge' | 'enable-auto-merge' | 'disable-auto-merge' | null) => ({
+      ...clean,
+      pullRequest: { state: 'open' as const, conflicting: false, mergeAction, headIsLocal: true }
+    })
+    expect(resolveWorkspaceAction(open('merge'))).toBe('merge')
+    expect(resolveWorkspaceAction(open('enable-auto-merge'))).toBe('enable-auto-merge')
+    expect(resolveWorkspaceAction(open('disable-auto-merge'))).toBe('disable-auto-merge')
+    expect(resolveWorkspaceAction(open(null))).toBeNull()
+  })
+
+  it('never offers a merge before local work is committed and on the pull request', () => {
+    const pullRequest = {
+      state: 'open' as const,
+      conflicting: false,
+      mergeAction: 'merge' as const,
+      headIsLocal: true
+    }
+    expect(resolveWorkspaceAction({ ...clean, hasUncommittedChanges: true, pullRequest })).toBe(
+      'commit-and-push'
+    )
+    expect(resolveWorkspaceAction({ ...clean, unpushedCommits: 1, pullRequest })).toBe(
+      'commit-and-push'
+    )
+    expect(
+      resolveWorkspaceAction({ ...clean, pullRequest: { ...pullRequest, headIsLocal: false } })
+    ).toBeNull()
+    expect(
+      resolveWorkspaceAction({
+        ...clean,
+        pullRequest: { ...pullRequest, state: 'draft' as const }
+      })
+    ).toBe('ready-for-review')
+  })
+
   it('does not count commits as unpushed when the branch has no upstream yet', () => {
     expect(resolveWorkspaceAction({ ...clean, hasUpstream: false, unpushedCommits: 3 })).toBe(
       'create-pull-request'

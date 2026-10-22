@@ -25,11 +25,20 @@ import {
   selectWorkspaceActionContext,
   type WorkspaceActionContext
 } from './workspace-action-context'
+import type { WorkspaceMergeAction } from '../../../../../shared/workspace-action'
+import { resolveGitHubPRMergeMethods } from '../../../../../shared/github/pull-request-merge-methods'
+import {
+  mergeGitHubHostedReview,
+  setGitHubHostedReviewAutoMerge
+} from '../hosted-review-github-actions'
 
 export type WorkspaceActionLaunch = 'primary' | 'review'
 
 const PROMPT_BY_ACTION: Record<
-  Exclude<NonNullable<WorkspaceActionContext['action']>, 'resolve-conflicts'>,
+  Exclude<
+    NonNullable<WorkspaceActionContext['action']>,
+    'resolve-conflicts' | WorkspaceMergeAction
+  >,
   WorkspaceActionPromptId
 > = {
   'commit-and-push': 'commitAndPush',
@@ -112,9 +121,48 @@ function actionTitle(kind: WorkspaceActionLaunch, context: WorkspaceActionContex
     case 'ready-for-review':
       return translate('auto.components.workspaceActions.readyTab', 'Ready for review')
     case 'create-pull-request':
+    case 'merge':
+    case 'enable-auto-merge':
+    case 'disable-auto-merge':
     case null:
       return translate('auto.components.workspaceActions.createPrTab', 'Create PR')
   }
+}
+
+function isMergeAction(action: WorkspaceActionContext['action']): action is WorkspaceMergeAction {
+  return action === 'merge' || action === 'enable-auto-merge' || action === 'disable-auto-merge'
+}
+
+// Why: merging is one GitHub call with a known outcome, so it runs directly instead of via an agent.
+async function runMergeAction(
+  context: WorkspaceActionContext,
+  action: WorkspaceMergeAction
+): Promise<void> {
+  const pr = context.pr
+  if (!pr) {
+    return
+  }
+  const method = resolveGitHubPRMergeMethods(pr.mergeMethodSettings ?? null).defaultMethod
+  const prRepo = pr.prRepo ?? null
+  const result =
+    action === 'merge'
+      ? await mergeGitHubHostedReview({ repo: context.repo, prNumber: pr.number, method, prRepo })
+      : await setGitHubHostedReviewAutoMerge({
+          repo: context.repo,
+          prNumber: pr.number,
+          enabled: action === 'enable-auto-merge',
+          method: action === 'enable-auto-merge' ? method : undefined,
+          prRepo
+        })
+  if (!result.ok) {
+    toast.error(result.error)
+    return
+  }
+  await useAppStore.getState().fetchPRForBranch(context.repo.path, context.branch, {
+    force: true,
+    repoId: context.repo.id,
+    worktreeId: context.worktree.id
+  })
 }
 
 export async function launchWorkspaceAction(kind: WorkspaceActionLaunch): Promise<void> {
@@ -123,12 +171,27 @@ export async function launchWorkspaceAction(kind: WorkspaceActionLaunch): Promis
   if (!context || (kind === 'primary' && !context.action) || (kind === 'review' && !context.pr)) {
     return
   }
+  if (kind === 'primary' && isMergeAction(context.action)) {
+    try {
+      await runMergeAction(context, context.action)
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : String(error))
+    }
+    return
+  }
   const prompt =
     kind === 'review'
       ? buildTemplatePrompt(context, 'reviewPullRequest')
       : context.action === 'resolve-conflicts'
         ? buildConflictPrompt(context)
-        : buildTemplatePrompt(context, PROMPT_BY_ACTION[context.action ?? 'create-pull-request'])
+        : buildTemplatePrompt(
+            context,
+            PROMPT_BY_ACTION[
+              context.action && !isMergeAction(context.action)
+                ? context.action
+                : 'create-pull-request'
+            ]
+          )
   try {
     const launched = await launchAgentBackgroundSession({
       agent: state.workspaceStatusRules.reviewInbox.agent,

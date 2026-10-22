@@ -9,7 +9,6 @@ import { useSourceControlActionDispatch } from '../review/use-action-dispatch'
 import { useSourceControlActionModel } from '../review/use-action-model'
 import { useSourceControlCreatePrIntentFlows } from '../review/use-create-pr-intent-flows'
 import { useSourceControlReviewFlows } from '../review/use-review-flows'
-import { useSourceControlReviewMerge } from '../review/use-review-merge'
 import { useSourceControlUpstreamStatusFetch } from '../sync/use-upstream-status-fetch'
 import { useSourceControlPanelFoundation } from './use-panel-foundation'
 
@@ -27,9 +26,6 @@ export function useSourceControlPanelModel() {
     reviewFlows
   )
   const {
-    activeGitStatusHead,
-    activePrFromQueue,
-    activeRepo,
     activeRepoTarget,
     activeWorktree,
     activeWorktreeId,
@@ -80,13 +76,6 @@ export function useSourceControlPanelModel() {
     runRemoteAction
   } = commitFlows
   const { handleCreatePullRequest, prGenerating } = reviewFlows
-  const reviewMerge = useSourceControlReviewMerge({
-    hostedReview,
-    githubPR: activePrFromQueue,
-    repo: activeRepo,
-    worktreeId: activeWorktreeId,
-    branchName
-  })
 
   const actionModel = useSourceControlActionModel({
     grouped,
@@ -97,9 +86,6 @@ export function useSourceControlPanelModel() {
     isAbortingOperation,
     remoteStatusForActions,
     hostedReviewStateForActions,
-    reviewMerge,
-    localHeadSha: activeGitStatusHead,
-    reviewHeadSha: hostedReview?.headSha,
     isHostedReviewStateLoading,
     inFlightRemoteOpKind,
     hostedReviewCreation,
@@ -142,7 +128,6 @@ export function useSourceControlPanelModel() {
     prGenerating,
     remoteStatus,
     remoteStatusForActions,
-    reviewMerge,
     runCompoundCommitAction,
     runCreatePrIntent: createPrIntentFlows.runCreatePrIntent,
     runRemoteAction

@@ -17,6 +17,15 @@ vi.mock('@/lib/launch-agent-background-session', () => ({
   launchAgentBackgroundSession: mocks.launch
 }))
 vi.mock('@/lib/focus-terminal-tab-surface', () => ({ focusTerminalTabSurface: vi.fn() }))
+const github = vi.hoisted(() => ({
+  merge: vi.fn(async () => ({ ok: true })),
+  autoMerge: vi.fn(async () => ({ ok: true })),
+  fetchPRForBranch: vi.fn(async () => null)
+}))
+vi.mock('../hosted-review-github-actions', () => ({
+  mergeGitHubHostedReview: github.merge,
+  setGitHubHostedReviewAutoMerge: github.autoMerge
+}))
 vi.mock('@/i18n/i18n', () => ({
   translate: (_key: string, fallback: string, values?: Record<string, unknown>) =>
     fallback.replace(/\{\{(\w+)\}\}/g, (_m, name: string) => String(values?.[name] ?? ''))
@@ -33,6 +42,7 @@ vi.mock('@/store', () => ({
       },
       workspaceStatusRules: { actionPrompts: {}, reviewInbox: { agent: 'claude' } },
       gitConflictOperationByWorktree: {},
+      fetchPRForBranch: github.fetchPRForBranch,
       setActiveTab: mocks.setActiveTab,
       setActiveTabType: mocks.setActiveTabType
     })
@@ -71,6 +81,46 @@ describe('launchWorkspaceAction', () => {
     expect(call.prompt).toContain('as a draft')
     expect(call.prompt).toContain('Titles use feat(scope):')
     expect(mocks.setActiveTab).toHaveBeenCalledWith('tab-1')
+  })
+
+  it("merges the pull request on GitHub with the repo's default method, without an agent", async () => {
+    github.merge.mockClear()
+    setContext({
+      action: 'merge',
+      repo: { id: 'r', path: '/repo' },
+      pr: {
+        number: 3612,
+        state: 'open',
+        prRepo: { owner: 'acme', repo: 'app' },
+        mergeMethodSettings: {
+          defaultMethod: 'squash',
+          allowedMethods: { merge: false, squash: true, rebase: false }
+        }
+      }
+    })
+    await launchWorkspaceAction('primary')
+
+    expect(github.merge).toHaveBeenCalledWith({
+      repo: { id: 'r', path: '/repo' },
+      prNumber: 3612,
+      method: 'squash',
+      prRepo: { owner: 'acme', repo: 'app' }
+    })
+    expect(mocks.launch).not.toHaveBeenCalled()
+    expect(github.fetchPRForBranch).toHaveBeenCalled()
+  })
+
+  it('turns auto-merge on or off on GitHub', async () => {
+    github.autoMerge.mockClear()
+    const pr = { number: 3612, state: 'open', prRepo: null }
+    setContext({ action: 'enable-auto-merge', repo: { id: 'r', path: '/repo' }, pr })
+    await launchWorkspaceAction('primary')
+    setContext({ action: 'disable-auto-merge', repo: { id: 'r', path: '/repo' }, pr })
+    await launchWorkspaceAction('primary')
+
+    expect(github.autoMerge).toHaveBeenNthCalledWith(1, expect.objectContaining({ enabled: true }))
+    expect(github.autoMerge).toHaveBeenNthCalledWith(2, expect.objectContaining({ enabled: false }))
+    expect(mocks.launch).not.toHaveBeenCalled()
   })
 
   it('resolves pull request conflicts with the Source Control conflict prompt', async () => {

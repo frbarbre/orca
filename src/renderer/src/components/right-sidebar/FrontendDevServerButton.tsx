@@ -2,6 +2,7 @@ import React from 'react'
 import { MonitorPlay } from 'lucide-react'
 import { useAppStore } from '@/store'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { Button } from '@/components/ui/button'
 import { getWorkspacePortsByWorktreeId } from '@/lib/workspace-port-groups'
 import { pickFrontendPortLabel } from '@/lib/workspace-port-labels'
 import { shouldOpenWorkspacePortInOrcaBrowser } from '@/lib/workspace-port-actions'
@@ -36,9 +37,10 @@ export function FrontendDevServerButton(): React.JSX.Element | null {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <button
+        <Button
           type="button"
-          className="sidebar-toggle mr-1"
+          variant="ghost"
+          size="icon-sm"
           aria-label={label}
           onClick={() =>
             openInApp
@@ -46,8 +48,8 @@ export function FrontendDevServerButton(): React.JSX.Element | null {
               : void window.api.shell.openUrl(frontend.url)
           }
         >
-          <MonitorPlay size={16} />
-        </button>
+          <MonitorPlay className="size-4" />
+        </Button>
       </TooltipTrigger>
       <TooltipContent side="bottom" sideOffset={6}>
         {label}

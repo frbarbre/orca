@@ -1,22 +1,20 @@
 import React, { useMemo, useState } from 'react'
-import { PanelRight } from 'lucide-react'
 import { useAppStore } from '@/store'
 import { cn } from '@/lib/utils'
 import { useSidebarResize } from '@/hooks/useSidebarResize'
-import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip'
+import { TooltipProvider } from '@/components/ui/tooltip'
 import { ContextMenu, ContextMenuTrigger } from '@/components/ui/context-menu'
-import { getTopActivityBarLayout, showsHeaderActionLabels } from './activity-bar-overflow'
+import { getTopActivityBarLayout } from './activity-bar-overflow'
+import { RIGHT_SIDEBAR_HEADER_NO_DRAG_CLASS_NAME } from './right-sidebar-titlebar-drag-regions'
 import { PreviewDeploymentButton } from './PreviewDeploymentButton'
 import { FrontendDevServerButton } from './FrontendDevServerButton'
 import { ActivityBarButton } from './activity-bar-buttons'
 import { getActiveChecksStatus } from './active-checks-status'
-import { useShortcutLabel } from '@/hooks/useShortcutLabel'
 import {
   RIGHT_SIDEBAR_MIN_WIDTH,
   clampRightSidebarPanelWidth,
   computeMaxRightSidebarPanelWidth
 } from './right-sidebar-width'
-import { translate } from '@/i18n/i18n'
 import { RightSidebarPanelContent } from './right-sidebar-panel-content'
 import { useMeasuredWidth } from './right-sidebar-measured-width'
 import {
@@ -29,7 +27,10 @@ import { RightSidebarTopActivityBar } from './right-sidebar-top-activity-bar'
 import { useRightSidebarActivityItems } from './use-right-sidebar-activity-items'
 import { useRightSidebarTabRouting } from './use-right-sidebar-tab-routing'
 import { useWindowWidth } from './use-window-width'
-import { WorkspaceActionButtons } from './workspace-actions/WorkspaceActionButtons'
+import {
+  WorkspaceNextActionButton,
+  WorkspaceReviewButton
+} from './workspace-actions/WorkspaceActionButtons'
 
 const ACTIVITY_BAR_SIDE_WIDTH = 40
 
@@ -38,11 +39,9 @@ function RightSidebarInner(): React.JSX.Element {
     platform: getRendererAppPlatform(),
     isWebClient: isPairedWebClientWindow()
   })
-  const rightSidebarShortcut = useShortcutLabel('sidebar.right.toggle')
   const rightSidebarOpen = useAppStore((s) => s.rightSidebarOpen)
   const rightSidebarWidth = useAppStore((s) => s.rightSidebarWidth)
   const setRightSidebarWidth = useAppStore((s) => s.setRightSidebarWidth)
-  const toggleRightSidebar = useAppStore((s) => s.toggleRightSidebar)
   const checksStatus = useAppStore((s) => (s.rightSidebarOpen ? getActiveChecksStatus(s) : null))
   const activityBarPosition = useAppStore((s) => s.activityBarPosition)
   const setActivityBarPosition = useAppStore((s) => s.setActivityBarPosition)
@@ -114,34 +113,17 @@ function RightSidebarInner(): React.JSX.Element {
     />
   ))
 
+  // Fork: the next step sits where the sidebar toggle was, written out; the toggle's shortcut stays.
   const closeButton = rightSidebarOpen ? (
-    <>
-      <WorkspaceActionButtons showLabels={showsHeaderActionLabels(renderedRightSidebarWidth)} />
+    <div
+      className={cn('flex shrink-0 items-center gap-0.5', RIGHT_SIDEBAR_HEADER_NO_DRAG_CLASS_NAME)}
+      data-workspace-action-buttons=""
+    >
+      <WorkspaceReviewButton />
       <FrontendDevServerButton />
       <PreviewDeploymentButton />
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <button
-            type="button"
-            className="sidebar-toggle mr-1"
-            onClick={toggleRightSidebar}
-            aria-label={translate(
-              'auto.components.right.sidebar.index.e8e2e4ce74',
-              'Toggle right sidebar'
-            )}
-          >
-            <PanelRight size={16} />
-          </button>
-        </TooltipTrigger>
-        <TooltipContent side="bottom" sideOffset={6}>
-          {translate(
-            'auto.components.right.sidebar.index.9fffaf17c1',
-            'Toggle right sidebar ({{value0}})',
-            { value0: rightSidebarShortcut }
-          )}
-        </TooltipContent>
-      </Tooltip>
-    </>
+      <WorkspaceNextActionButton />
+    </div>
   ) : null
 
   return (

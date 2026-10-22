@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { ActiveRightSidebarTab } from '@/store/slices/editor'
-import { getTopActivityBarLayout, showsHeaderActionLabels } from './activity-bar-overflow'
+import { getTopActivityBarLayout } from './activity-bar-overflow'
 
 const items = (['explorer', 'source-control', 'checks', 'ports'] as ActiveRightSidebarTab[]).map(
   (id) => ({ id })
@@ -34,11 +34,6 @@ describe('getTopActivityBarLayout', () => {
     expect(layout.visibleItems.map((item) => item.id)).toEqual(['explorer', 'source-control'])
     expect(layout.overflowItems.map((item) => item.id)).toEqual(['checks', 'ports'])
     expect(layout.compact).toBe(true)
-  })
-
-  it('drops the header action labels in a narrow panel so the tabs keep their room', () => {
-    expect(showsHeaderActionLabels(640)).toBe(true)
-    expect(showsHeaderActionLabels(480)).toBe(false)
   })
 
   it('keeps the active tab visible even when it would otherwise overflow', () => {

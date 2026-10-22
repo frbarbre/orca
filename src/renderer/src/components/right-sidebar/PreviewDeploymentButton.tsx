@@ -6,6 +6,7 @@ import type { AppState } from '@/store/types'
 import { prCommentsCacheSuffix } from '@/store/github/cache-identity'
 import { getGitHubRepoCacheKey } from '../../../../shared/github/github-cache-key'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { Button } from '@/components/ui/button'
 import { findLatestPreviewDeployment, previewDeploymentTooltip } from '@/lib/preview-deployment'
 import { selectWorkspaceActionContext } from './workspace-actions/workspace-action-context'
 
@@ -75,16 +76,17 @@ export function PreviewDeploymentButton(): React.JSX.Element | null {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <button
+        <Button
           type="button"
-          className="sidebar-toggle mr-1"
+          variant="ghost"
+          size="icon-sm"
           aria-label={tooltip}
           data-preview-deployment=""
           onPointerEnter={refresh}
           onClick={() => void window.api.shell.openUrl(deployment.url)}
         >
-          <Telescope size={16} />
-        </button>
+          <Telescope className="size-4" />
+        </Button>
       </TooltipTrigger>
       <TooltipContent side="bottom" sideOffset={6}>
         {tooltip}

@@ -3,12 +3,6 @@ import type { ActiveRightSidebarTab } from '@/store/slices/editor'
 const TOP_ACTIVITY_BUTTON_WIDTH = 36
 const TOP_ACTIVITY_COMPACT_BUTTON_WIDTH = 28
 const TOP_ACTIVITY_MORE_BUTTON_WIDTH = 32
-const HEADER_ACTION_LABELS_MIN_PANEL_WIDTH = 560
-
-// Why the panel width, not the strip width: the strip widens when labels drop, which would flip it back.
-export function showsHeaderActionLabels(panelWidth: number): boolean {
-  return panelWidth >= HEADER_ACTION_LABELS_MIN_PANEL_WIDTH
-}
 
 export function getTopActivityBarLayout<T extends { id: ActiveRightSidebarTab }>(
   items: readonly T[],

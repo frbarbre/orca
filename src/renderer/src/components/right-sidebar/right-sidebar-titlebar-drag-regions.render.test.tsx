@@ -178,6 +178,10 @@ vi.mock('./PortsPanel', () => ({
   default: () => <div data-ports-panel />
 }))
 
+function workspaceActionsTag(markup: string): string {
+  return markup.match(/<div[^>]*data-workspace-action-buttons[^>]*>/)?.[0] ?? ''
+}
+
 function openingTag(markup: string, className: string): string {
   const match = markup.match(new RegExp(`<[^>]+class="[^"]*${className}[^"]*"[^>]*>`))
   if (!match) {
@@ -250,8 +254,8 @@ describe('rendered right sidebar titlebar drag regions', () => {
     expectNoDrag(buttonOpeningTag(markup, 'Explorer'))
     expectNoDrag(buttonOpeningTag(markup, 'Source Control'))
     expectNoDrag(buttonOpeningTag(markup, 'Checks'))
-    expect(buttonOpeningTag(markup, 'Toggle right sidebar')).toContain('sidebar-toggle')
-    expect(markup).toContain(RIGHT_SIDEBAR_HEADER_NO_DRAG_CLASS_NAME)
+    expect(markup).not.toContain('aria-label="Toggle right sidebar"')
+    expect(workspaceActionsTag(markup)).toContain(RIGHT_SIDEBAR_HEADER_NO_DRAG_CLASS_NAME)
   })
 
   it('uses the custom desktop chrome top strip on Linux desktop', () => {
@@ -311,7 +315,8 @@ describe('rendered right sidebar titlebar drag regions', () => {
     expectNoDrag(buttonOpeningTag(markup, 'Explorer'))
     expectNoDrag(buttonOpeningTag(markup, 'Source Control'))
     expectNoDrag(buttonOpeningTag(markup, 'Checks'))
-    expect(buttonOpeningTag(markup, 'Toggle right sidebar')).toContain('sidebar-toggle')
+    expect(markup).not.toContain('aria-label="Toggle right sidebar"')
+    expect(workspaceActionsTag(markup)).toContain(RIGHT_SIDEBAR_HEADER_NO_DRAG_CLASS_NAME)
   })
 
   it('hides git-only activity buttons for folder workspace ids without a backing repo', () => {

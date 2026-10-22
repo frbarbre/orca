@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { CircleCheck, GitMerge, GitPullRequestArrow, ScanEye, Upload } from 'lucide-react'
 import { useAppStore } from '@/store'
-import { cn } from '@/lib/utils'
+import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { translate } from '@/i18n/i18n'
 import type { WorkspaceActionKind } from '../../../../../shared/workspace-action'
@@ -54,37 +54,45 @@ function primaryCopy(
   }
 }
 
-const BUTTON_CLASS =
-  'inline-flex h-6 shrink-0 items-center gap-1 rounded-md border border-border/70 px-2 text-[11px] font-medium text-foreground transition-colors hover:bg-accent disabled:opacity-50'
-
-function ActionButton({
-  label,
-  icon,
-  showLabel,
-  className,
-  ...buttonProps
-}: {
-  label: string
-  icon: React.JSX.Element
-  showLabel: boolean
-} & React.ComponentProps<'button'>): React.JSX.Element {
-  const button = (
-    <button
-      type="button"
-      className={cn(BUTTON_CLASS, !showLabel && 'px-1.5', className)}
-      aria-label={label}
-      {...buttonProps}
-    >
-      {icon}
-      {showLabel ? label : null}
-    </button>
-  )
-  if (showLabel) {
-    return button
+function useWorkspaceActionLauncher(): {
+  busy: boolean
+  run: (kind: WorkspaceActionLaunch) => void
+} {
+  const [busy, setBusy] = useState(false)
+  return {
+    busy,
+    run: (kind) => {
+      setBusy(true)
+      void launchWorkspaceAction(kind).finally(() => setBusy(false))
+    }
   }
+}
+
+/** The top bar's Review button: an icon, like the other header buttons beside it. */
+export function WorkspaceReviewButton(): React.JSX.Element | null {
+  const canReview = useAppStore((state) => {
+    const pr = selectWorkspaceActionContext(state)?.pr
+    return pr?.state === 'open' || pr?.state === 'draft'
+  })
+  const { busy, run } = useWorkspaceActionLauncher()
+  if (!canReview) {
+    return null
+  }
+  const label = translate('auto.components.workspaceActions.review', 'Review')
   return (
     <Tooltip>
-      <TooltipTrigger asChild>{button}</TooltipTrigger>
+      <TooltipTrigger asChild>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          aria-label={label}
+          disabled={busy}
+          onClick={() => run('review')}
+        >
+          <ScanEye className="size-4" />
+        </Button>
+      </TooltipTrigger>
       <TooltipContent side="bottom" sideOffset={6}>
         {label}
       </TooltipContent>
@@ -92,48 +100,27 @@ function ActionButton({
   )
 }
 
-export function WorkspaceActionButtons({
-  showLabels = true
-}: {
-  showLabels?: boolean
-}): React.JSX.Element | null {
+/** Fork: the workspace's next step, written out so it can be read at a glance. */
+export function WorkspaceNextActionButton(): React.JSX.Element | null {
   const action = useAppStore((state) => selectWorkspaceActionContext(state)?.action ?? null)
   const pr = useAppStore((state) => selectWorkspaceActionContext(state)?.pr ?? null)
-  const canReview = useAppStore((state) => {
-    const pr = selectWorkspaceActionContext(state)?.pr
-    return pr?.state === 'open' || pr?.state === 'draft'
-  })
-  const [busy, setBusy] = useState<WorkspaceActionLaunch | null>(null)
-  if (!action && !canReview) {
+  const { busy, run } = useWorkspaceActionLauncher()
+  if (!action) {
     return null
   }
-  const run = (kind: WorkspaceActionLaunch): void => {
-    setBusy(kind)
-    void launchWorkspaceAction(kind).finally(() => setBusy(null))
-  }
-  const primary = action ? primaryCopy(action, pr) : null
+  const { label, icon } = primaryCopy(action, pr)
   return (
-    <div className="flex shrink-0 items-center gap-1 pr-1" data-workspace-action-buttons="">
-      {canReview ? (
-        <ActionButton
-          label={translate('auto.components.workspaceActions.review', 'Review')}
-          icon={<ScanEye className="size-3.5" />}
-          showLabel={showLabels}
-          disabled={busy !== null}
-          onClick={() => run('review')}
-        />
-      ) : null}
-      {primary ? (
-        <ActionButton
-          label={primary.label}
-          icon={primary.icon}
-          showLabel={showLabels}
-          className="bg-accent/40"
-          disabled={busy !== null}
-          onClick={() => run('primary')}
-          data-workspace-action={action}
-        />
-      ) : null}
-    </div>
+    <Button
+      type="button"
+      variant="outline"
+      size="sm"
+      className="mr-1"
+      disabled={busy}
+      onClick={() => run('primary')}
+      data-workspace-action={action}
+    >
+      {icon}
+      {label}
+    </Button>
   )
 }

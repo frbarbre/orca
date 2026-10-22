@@ -113,7 +113,7 @@ export function WorkspaceNextActionButton(): React.JSX.Element | null {
     <Button
       type="button"
       variant="outline"
-      size="sm"
+      size="xs"
       className="mr-1"
       disabled={busy}
       onClick={() => run('primary')}

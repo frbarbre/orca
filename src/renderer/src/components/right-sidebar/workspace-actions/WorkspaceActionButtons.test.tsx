@@ -35,7 +35,7 @@ describe('top bar workspace actions', () => {
 
     const button = screen.getByRole('button', { name: 'Enable auto-merge' })
     expect(button).toHaveTextContent('Enable auto-merge')
-    expect(button).toHaveAttribute('data-size', 'sm')
+    expect(button).toHaveAttribute('data-size', 'xs')
   })
 
   it('keeps Review a small icon button', () => {

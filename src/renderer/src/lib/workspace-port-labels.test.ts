@@ -43,6 +43,16 @@ describe('pickFrontendPortLabel', () => {
     expect(pickFrontendPortLabel(labels, [21495])).toBeNull()
   })
 
+  it('picks whichever frontend is running, the first listed when several are', () => {
+    const frontends = [
+      { label: 'Frontend dev server', port: 21486, url: 'http://e-4871.localhost:21486' },
+      { label: 'Frontend prebuild', port: 21499, url: 'http://e-4871.localhost:21499' }
+    ]
+    expect(pickFrontendPortLabel(frontends, [21499])?.label).toBe('Frontend prebuild')
+    expect(pickFrontendPortLabel(frontends, [21486, 21499])?.label).toBe('Frontend dev server')
+    expect(pickFrontendPortLabel(frontends, [])).toBeNull()
+  })
+
   it('falls back to the first entry when none is called frontend', () => {
     const [, ...rest] = labels
     expect(pickFrontendPortLabel(rest, [22844])?.label).toBe('Backend docs')

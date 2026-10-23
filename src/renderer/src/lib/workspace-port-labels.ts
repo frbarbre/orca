@@ -36,8 +36,12 @@ export function pickFrontendPortLabel(
   labels: readonly PortLabel[],
   livePorts: readonly number[]
 ): PortLabel | null {
-  const frontend = labels.find((entry) => /frontend/i.test(entry.label)) ?? labels[0]
-  return frontend && livePorts.includes(frontend.port) ? frontend : null
+  const frontends = labels.filter((entry) => /frontend/i.test(entry.label))
+  if (frontends.length === 0) {
+    return labels[0] && livePorts.includes(labels[0].port) ? labels[0] : null
+  }
+  // Why the first running one: a repo can list several, such as a dev server and a prebuild.
+  return frontends.find((entry) => livePorts.includes(entry.port)) ?? null
 }
 
 const cache = new Map<string, { key: string; labels: PortLabel[] }>()

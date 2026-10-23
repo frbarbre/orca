@@ -199,5 +199,23 @@ export const KEYBINDING_DEFINITION_CORE_4: readonly KeybindingDefinition[] = [
     conflictGroup: 'editor',
     searchKeywords: ['shortcut', 'frontend', 'dev server', 'browser', 'open', 'localhost'],
     defaultBindings: platformBindings(['Mod+Shift+B'])
+  },
+  {
+    id: 'workspace.runNextAction',
+    title: 'Run Next Workspace Action',
+    group: 'Global',
+    scope: 'global',
+    conflictGroup: 'editor',
+    searchKeywords: [
+      'shortcut',
+      'next action',
+      'create pr',
+      'commit',
+      'push',
+      'ready for review',
+      'merge',
+      'auto-merge'
+    ],
+    defaultBindings: platformBindings(['Mod+Alt+Enter'])
   }
 ]

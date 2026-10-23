@@ -10,6 +10,8 @@ import {
 } from '@/components/pending-review/review-summary-focus'
 import { activeWorktreePullRequestUrl } from '@/lib/worktree-pull-request-url'
 import { openActiveWorkspaceFrontend } from '@/lib/open-workspace-frontend'
+import { selectWorkspaceActionContext } from '@/components/right-sidebar/workspace-actions/workspace-action-context'
+import { launchWorkspaceAction } from '@/components/right-sidebar/workspace-actions/launch-workspace-action'
 import { useAppStore } from '../store'
 import type { KeybindingActionId } from '../../../shared/keybindings/types'
 
@@ -22,6 +24,7 @@ type SourceControlShortcutId =
   | 'sourceControl.openPullRequest'
   | 'sourceControl.copyPullRequestUrl'
   | 'workspace.openFrontend'
+  | 'workspace.runNextAction'
 
 function focusReviewSummaryInOpenPanel(): boolean {
   const { activeWorktreeId, rightSidebarOpen, rightSidebarTab } = useAppStore.getState()
@@ -108,6 +111,14 @@ export function takeSourceControlShortcut(
   }
   if (matchShortcut('sourceControl.focusReviewSummary') && focusReviewSummaryInOpenPanel()) {
     return 'sourceControl.focusReviewSummary'
+  }
+  if (matchShortcut('workspace.runNextAction')) {
+    if (selectWorkspaceActionContext(useAppStore.getState())?.action) {
+      void launchWorkspaceAction('primary')
+    } else {
+      toast.info(translate('workspace.nextAction.none', 'This workspace has no next action.'))
+    }
+    return 'workspace.runNextAction'
   }
   if (matchShortcut('workspace.openFrontend')) {
     if (!openActiveWorkspaceFrontend()) {

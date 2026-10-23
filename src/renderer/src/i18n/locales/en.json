@@ -21024,6 +21024,9 @@
     "frontend": {
       "notRunning": "No frontend dev server is running."
     },
+    "nextAction": {
+      "none": "This workspace has no next action."
+    },
     "links": {
       "foreignReview": "This review belongs to another repository. Add reviews from this workspace’s repository.",
       "repositoryLoading": "Repository identity is still loading. Try again once it is available.",

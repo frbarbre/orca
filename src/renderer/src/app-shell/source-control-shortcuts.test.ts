@@ -37,6 +37,38 @@ vi.mock('@/lib/open-workspace-frontend', () => ({
   openActiveWorkspaceFrontend: frontend.open
 }))
 
+const nextAction = vi.hoisted(() => ({
+  action: 'create-pull-request' as string | null,
+  launch: vi.fn(() => Promise.resolve())
+}))
+vi.mock('@/components/right-sidebar/workspace-actions/workspace-action-context', () => ({
+  selectWorkspaceActionContext: () => ({ action: nextAction.action })
+}))
+vi.mock('@/components/right-sidebar/workspace-actions/launch-workspace-action', () => ({
+  launchWorkspaceAction: nextAction.launch
+}))
+
+describe('next workspace action shortcut', () => {
+  beforeEach(() => vi.clearAllMocks())
+  const match = (id: string): boolean => id === 'workspace.runNextAction'
+
+  it("runs the top bar's next-action button", () => {
+    nextAction.action = 'create-pull-request'
+
+    expect(takeSourceControlShortcut(match, true, actions)).toBe('workspace.runNextAction')
+    expect(nextAction.launch).toHaveBeenCalledWith('primary')
+    expect(toast.info).not.toHaveBeenCalled()
+  })
+
+  it('says so when the workspace has no next action', () => {
+    nextAction.action = null
+
+    expect(takeSourceControlShortcut(match, true, actions)).toBe('workspace.runNextAction')
+    expect(nextAction.launch).not.toHaveBeenCalled()
+    expect(toast.info).toHaveBeenCalledWith('This workspace has no next action.')
+  })
+})
+
 describe('frontend dev server shortcut', () => {
   beforeEach(() => vi.clearAllMocks())
 

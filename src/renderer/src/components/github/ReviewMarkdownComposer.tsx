@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
-import type { Editor } from '@tiptap/react'
+import type { Editor, JSONContent } from '@tiptap/react'
 import { cn } from '@/lib/utils'
 import { GitHubMarkdownComposer } from './GitHubMarkdownComposer'
 import { filterGitHubMentionOptions } from './github-mention-option-filter'
@@ -19,7 +19,7 @@ import { searchCommentEmoji } from './emoji-shortcode-query'
 import { EmojiShortcodeList } from './emoji-shortcode-list'
 import { useReviewAssetDropClaim } from './review-asset-drop-claim'
 import { composerMentionSuggestions } from './composer-mention-suggestions'
-import { githubFileMentionMarkdown, githubFileMentionTarget } from './github-file-mention'
+import { githubFileMentionContent, githubFileMentionTarget } from './github-file-mention'
 import type { MentionOption } from '@/components/pull-request-page/page-types'
 
 function sameQuery(a: MentionQueryState | null, b: MentionQueryState | null): boolean {
@@ -135,14 +135,18 @@ export function ReviewMarkdownComposer({
   const insert = (option: MentionOption): void => {
     const editor = editorRef.current
     if (editor && query) {
-      const text =
+      const mention: JSONContent =
         option.isFile && fileMentionLinks
-          ? githubFileMentionMarkdown(
+          ? githubFileMentionContent(
               option.login,
               githubFileMentionTarget(scope.pr, worktreeBranch ?? '')
             )
-          : `@${option.login}`
-      editor.chain().focus().insertContentAt({ from: query.from, to: query.to }, `${text} `).run()
+          : { type: 'text', text: `@${option.login}` }
+      editor
+        .chain()
+        .focus()
+        .insertContentAt({ from: query.from, to: query.to }, [mention, { type: 'text', text: ' ' }])
+        .run()
     }
     setQuery(null)
   }

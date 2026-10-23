@@ -57,12 +57,6 @@ export function ConflictSummaryCard({
               { value0: operationLabel, value1: unresolvedCount }
             )}
           </div>
-          <div className="mt-1 text-[11px] text-muted-foreground">
-            {translate(
-              'auto.components.right.sidebar.SourceControl.3eeccbb221',
-              'Resolved files move back to normal changes after they leave the live conflict state.'
-            )}
-          </div>
         </div>
       </div>
       <div className="mt-2">

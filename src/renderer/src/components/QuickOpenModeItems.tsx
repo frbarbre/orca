@@ -5,15 +5,19 @@ import { splitTrailingSegment } from '@/components/file-path-cursor-tooltip'
 import { getFileTypeIcon } from '@/lib/file-type-icons'
 import { translate } from '@/i18n/i18n'
 import { quickOpenTextMatchPreview, type QuickOpenTextRow } from './quick-open-modes'
+import type { GitBranchChangeEntry } from '../../../shared/git-diff-compare-types'
+import { ChangeEntryStat } from './right-sidebar/source-control/listing/change-entry-stat'
 
 export const QUICK_OPEN_GO_TO_LINE_VALUE = 'go-to-line'
 
 export function QuickOpenTextItems({
   rows,
+  changesByPath,
   disabled,
   onSelect
 }: {
   rows: readonly QuickOpenTextRow[]
+  changesByPath: ReadonlyMap<string, GitBranchChangeEntry>
   disabled: boolean
   onSelect: (row: QuickOpenTextRow) => void
 }): React.JSX.Element {
@@ -23,6 +27,7 @@ export function QuickOpenTextItems({
         if (row.kind === 'file') {
           const { directory, filename } = splitTrailingSegment(row.relativePath)
           const FileIcon = getFileTypeIcon(row.relativePath)
+          const change = changesByPath.get(row.relativePath)
           return (
             <CommandItem
               key={row.key}
@@ -39,8 +44,11 @@ export function QuickOpenTextItems({
                 {directory ? (
                   <span className="min-w-0 truncate text-muted-foreground">{directory}</span>
                 ) : null}
-                <span className="ml-auto shrink-0 rounded-full bg-muted px-1.5 text-[10px] tabular-nums text-muted-foreground">
-                  {row.matchCount}
+                <span className="ml-auto flex shrink-0 items-center gap-1 pl-2">
+                  {change ? <ChangeEntryStat entry={change} /> : null}
+                  <span className="shrink-0 rounded-full bg-muted px-1.5 text-[10px] tabular-nums text-muted-foreground">
+                    {row.matchCount}
+                  </span>
                 </span>
               </div>
             </CommandItem>

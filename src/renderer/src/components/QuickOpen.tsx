@@ -136,7 +136,12 @@ function QuickOpenContent({ visible }: { visible: boolean }): React.JSX.Element 
 
   const changesByPath = useQuickOpenChanges(activeWorktreeId)
   const openPath = useCallback(
-    async (selectedPath: string, navigation: QuickOpenQueryTarget, rawQuery?: string) => {
+    async (
+      selectedPath: string,
+      navigation: QuickOpenQueryTarget,
+      rawQuery?: string,
+      matchLength?: number
+    ) => {
       if (!activeWorktreeId || !worktreePath || opening) {
         return
       }
@@ -145,7 +150,7 @@ function QuickOpenContent({ visible }: { visible: boolean }): React.JSX.Element 
       const target = resolveQuickOpenTarget(selectedPath, navigation, changesByPath)
       try {
         if (target.kind === 'diff') {
-          openQuickOpenChange(activeWorktreeId, worktreePath, target.entry)
+          openQuickOpenChange(activeWorktreeId, worktreePath, target, matchLength)
         } else {
           await openQuickOpenFile(
             selectedPath,
@@ -177,12 +182,14 @@ function QuickOpenContent({ visible }: { visible: boolean }): React.JSX.Element 
 
   const handleTextRowSelect = useCallback(
     (row: QuickOpenTextRow) => {
-      void openPath(
-        row.relativePath,
-        row.kind === 'match'
-          ? { pathQuery: row.relativePath, line: row.line, column: row.column }
-          : { pathQuery: row.relativePath }
-      )
+      void (row.kind === 'match'
+        ? openPath(
+            row.relativePath,
+            { pathQuery: row.relativePath, line: row.line, column: row.column },
+            undefined,
+            row.matchLength
+          )
+        : openPath(row.relativePath, { pathQuery: row.relativePath }))
     },
     [openPath]
   )
@@ -278,7 +285,12 @@ function QuickOpenContent({ visible }: { visible: boolean }): React.JSX.Element 
           ) : textSearch.error ? (
             <QuickOpenHint>{textSearch.error}</QuickOpenHint>
           ) : textRows.length > 0 ? (
-            <QuickOpenTextItems rows={textRows} disabled={opening} onSelect={handleTextRowSelect} />
+            <QuickOpenTextItems
+              rows={textRows}
+              changesByPath={changesByPath}
+              disabled={opening}
+              onSelect={handleTextRowSelect}
+            />
           ) : (
             <QuickOpenHint>
               {textSearch.loading

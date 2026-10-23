@@ -1,5 +1,6 @@
 import { openWorkspaceFile } from '@/lib/workspace-file-open'
 import { detectLanguage } from '@/lib/language-detect'
+import { joinPath } from '@/lib/path'
 import { useAppStore } from '@/store'
 import type {
   GitBranchChangeEntry,
@@ -17,7 +18,8 @@ export function openSourceControlChangeEntry({
   statusEntries,
   branchSummary,
   targetGroupId,
-  preview
+  preview,
+  reveal
 }: {
   worktreeId: string
   worktreePath: string
@@ -26,9 +28,14 @@ export function openSourceControlChangeEntry({
   branchSummary: GitBranchCompareSummary | null | undefined
   targetGroupId?: string
   preview?: boolean
+  reveal?: { line: number; column: number; matchLength: number }
 }): void {
   const state = useAppStore.getState()
   const language = detectLanguage(entry.path)
+  if (reveal) {
+    // Why stamp first: the diff surface consumes an armed reveal when it mounts.
+    state.setPendingEditorReveal({ filePath: joinPath(worktreePath, entry.path), ...reveal })
+  }
   if (
     openChangesFilterEntry(state, worktreeId, worktreePath, entry.path, language, {
       targetGroupId,

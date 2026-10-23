@@ -11,6 +11,7 @@ import {
 } from './claude-web-view-state'
 import { useCoveredTerminalFocusHandoff } from './use-covered-terminal-focus-handoff'
 import { useClaudeWebAutoOpen } from './use-claude-web-auto-open'
+import { useHeldClaudeSessionId } from './use-held-claude-session-id'
 import { CLAUDE_WEB_COVER_ATTRIBUTE } from './claude-web-covered-pane'
 import { focusClaudeWebview } from './claude-web-drag-passthrough'
 import type { TerminalPaneController } from './use-terminal-pane-controller'
@@ -56,9 +57,10 @@ export function TerminalPaneClaudeWebPortal({
   const { managedPanes, tabId } = controller
   const leafId = useClaudeWebViewLeafId(tabId)
   const hide = claudeWebView.hide
-  const sessionId = useAppStore((state) =>
+  const liveSessionId = useAppStore((state) =>
     leafId ? resolvePaneClaudeSessionId(state, makePaneKey(tabId, leafId)) : null
   )
+  const sessionId = useHeldClaudeSessionId(leafId, liveSessionId)
   const exitedToShell = useAppStore((state) =>
     leafId
       ? state.paneForegroundAgentByPaneKey[makePaneKey(tabId, leafId)]?.shellForeground === true

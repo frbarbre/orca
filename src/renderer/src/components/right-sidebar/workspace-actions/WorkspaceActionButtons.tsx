@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { CircleCheck, GitMerge, GitPullRequestArrow, ScanEye, Upload } from 'lucide-react'
 import { useAppStore } from '@/store'
 import { Button } from '@/components/ui/button'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { HeaderButtonTooltip } from '../HeaderButtonTooltip'
 import { translate } from '@/i18n/i18n'
 import type { WorkspaceActionKind } from '../../../../../shared/workspace-action'
 import type { PRInfo } from '../../../../../shared/github/pull-request-types'
@@ -80,23 +80,18 @@ export function WorkspaceReviewButton(): React.JSX.Element | null {
   }
   const label = translate('auto.components.workspaceActions.review', 'Review')
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-xs"
-          aria-label={label}
-          disabled={busy}
-          onClick={() => run('review')}
-        >
-          <ScanEye className="size-3.5" />
-        </Button>
-      </TooltipTrigger>
-      <TooltipContent side="bottom" sideOffset={6}>
-        {label}
-      </TooltipContent>
-    </Tooltip>
+    <HeaderButtonTooltip label={label}>
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon-xs"
+        aria-label={label}
+        disabled={busy}
+        onClick={() => run('review')}
+      >
+        <ScanEye className="size-3.5" />
+      </Button>
+    </HeaderButtonTooltip>
   )
 }
 
@@ -110,16 +105,18 @@ export function WorkspaceNextActionButton(): React.JSX.Element | null {
   }
   const { label, icon } = primaryCopy(action, pr)
   return (
-    <Button
-      type="button"
-      variant="outline"
-      size="xs"
-      disabled={busy}
-      onClick={() => run('primary')}
-      data-workspace-action={action}
-    >
-      {icon}
-      {label}
-    </Button>
+    <HeaderButtonTooltip label={label} shortcut="workspace.runNextAction">
+      <Button
+        type="button"
+        variant="outline"
+        size="xs"
+        disabled={busy}
+        onClick={() => run('primary')}
+        data-workspace-action={action}
+      >
+        {icon}
+        {label}
+      </Button>
+    </HeaderButtonTooltip>
   )
 }

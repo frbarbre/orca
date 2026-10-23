@@ -1,7 +1,7 @@
 import React from 'react'
 import { MonitorPlay } from 'lucide-react'
 import { useAppStore } from '@/store'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { HeaderButtonTooltip } from './HeaderButtonTooltip'
 import { Button } from '@/components/ui/button'
 import { getWorkspacePortsByWorktreeId } from '@/lib/workspace-port-groups'
 import { pickFrontendPortLabel } from '@/lib/workspace-port-labels'
@@ -35,25 +35,20 @@ export function FrontendDevServerButton(): React.JSX.Element | null {
   })
 
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-xs"
-          aria-label={label}
-          onClick={() =>
-            openInApp
-              ? createBrowserTab(worktreeId, frontend.url)
-              : void window.api.shell.openUrl(frontend.url)
-          }
-        >
-          <MonitorPlay className="size-3.5" />
-        </Button>
-      </TooltipTrigger>
-      <TooltipContent side="bottom" sideOffset={6}>
-        {label}
-      </TooltipContent>
-    </Tooltip>
+    <HeaderButtonTooltip label={label} shortcut="workspace.openFrontend">
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon-xs"
+        aria-label={label}
+        onClick={() =>
+          openInApp
+            ? createBrowserTab(worktreeId, frontend.url)
+            : void window.api.shell.openUrl(frontend.url)
+        }
+      >
+        <MonitorPlay className="size-3.5" />
+      </Button>
+    </HeaderButtonTooltip>
   )
 }

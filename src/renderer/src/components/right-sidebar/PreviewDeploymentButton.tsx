@@ -5,7 +5,7 @@ import { useAppStore } from '@/store'
 import type { AppState } from '@/store/types'
 import { prCommentsCacheSuffix } from '@/store/github/cache-identity'
 import { getGitHubRepoCacheKey } from '../../../../shared/github/github-cache-key'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { HeaderButtonTooltip } from './HeaderButtonTooltip'
 import { Button } from '@/components/ui/button'
 import { findLatestPreviewDeployment, previewDeploymentTooltip } from '@/lib/preview-deployment'
 import { selectWorkspaceActionContext } from './workspace-actions/workspace-action-context'
@@ -74,23 +74,18 @@ export function PreviewDeploymentButton(): React.JSX.Element | null {
   const tooltip = previewDeploymentTooltip(deployment, target.headSha, now)
 
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-xs"
-          aria-label={tooltip}
-          data-preview-deployment=""
-          onPointerEnter={refresh}
-          onClick={() => void window.api.shell.openUrl(deployment.url)}
-        >
-          <Telescope className="size-3.5" />
-        </Button>
-      </TooltipTrigger>
-      <TooltipContent side="bottom" sideOffset={6}>
-        {tooltip}
-      </TooltipContent>
-    </Tooltip>
+    <HeaderButtonTooltip label={tooltip} shortcut="sourceControl.openPullRequestPreview">
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon-xs"
+        aria-label={tooltip}
+        data-preview-deployment=""
+        onPointerEnter={refresh}
+        onClick={() => void window.api.shell.openUrl(deployment.url)}
+      >
+        <Telescope className="size-3.5" />
+      </Button>
+    </HeaderButtonTooltip>
   )
 }

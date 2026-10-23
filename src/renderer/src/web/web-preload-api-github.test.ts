@@ -55,6 +55,7 @@ describe('web GitHub preload API', () => {
         'prComments',
         'prFileContents',
         'prForBranch',
+        'prPreviewUrl',
         'projectWorkItemDetailsBySlug',
         'rateLimit',
         'refreshPRNow',

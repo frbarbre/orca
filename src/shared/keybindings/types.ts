@@ -111,6 +111,7 @@ export type KeybindingActionId =
   | 'sourceControl.sendQueuedComments'
   | 'sourceControl.openPullRequest'
   | 'sourceControl.copyPullRequestUrl'
+  | 'sourceControl.openPullRequestPreview'
   | 'workspace.openFrontend'
   | 'sourceControl.focusReviewSummary'
   | 'fileExplorer.undo'

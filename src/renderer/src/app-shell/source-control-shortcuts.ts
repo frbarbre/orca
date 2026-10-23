@@ -10,6 +10,7 @@ import {
 } from '@/components/pending-review/review-summary-focus'
 import { activeWorktreePullRequestUrl } from '@/lib/worktree-pull-request-url'
 import { openActiveWorkspaceFrontend } from '@/lib/open-workspace-frontend'
+import { openActivePullRequestPreview } from '@/lib/open-pull-request-preview'
 import { useAppStore } from '../store'
 import type { KeybindingActionId } from '../../../shared/keybindings/types'
 
@@ -21,6 +22,7 @@ type SourceControlShortcutId =
   | 'sourceControl.focusReviewSummary'
   | 'sourceControl.openPullRequest'
   | 'sourceControl.copyPullRequestUrl'
+  | 'sourceControl.openPullRequestPreview'
   | 'workspace.openFrontend'
 
 function focusReviewSummaryInOpenPanel(): boolean {
@@ -128,6 +130,19 @@ export function takeSourceControlShortcut(
         )
     })
     return 'sourceControl.copyPullRequestUrl'
+  }
+  if (matchShortcut('sourceControl.openPullRequestPreview')) {
+    void openActivePullRequestPreview().then((opened) => {
+      if (!opened) {
+        toast.info(
+          translate(
+            'sourceControl.noPullRequestPreview',
+            'No preview deployment for this pull request.'
+          )
+        )
+      }
+    })
+    return 'sourceControl.openPullRequestPreview'
   }
   return null
 }

@@ -20528,7 +20528,8 @@
       "status": "PR #{{number}} unlinked"
     },
     "pullRequestUrlCopied": "Copied pull request URL",
-    "noPullRequest": "This workspace has no pull request yet."
+    "noPullRequest": "This workspace has no pull request yet.",
+    "noPullRequestPreview": "No preview deployment for this pull request."
   },
   "agentsSidebarIntro": {
     "migrated": {

@@ -58,6 +58,38 @@ describe('frontend dev server shortcut', () => {
   })
 })
 
+const preview = vi.hoisted(() => ({ opened: true, open: vi.fn(async () => preview.opened) }))
+vi.mock('@/lib/open-pull-request-preview', () => ({
+  openActivePullRequestPreview: preview.open
+}))
+
+describe('pull request preview shortcut', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  it("opens the active pull request's preview deployment", async () => {
+    preview.opened = true
+    const match = (id: string): boolean => id === 'sourceControl.openPullRequestPreview'
+
+    expect(takeSourceControlShortcut(match, true, actions)).toBe(
+      'sourceControl.openPullRequestPreview'
+    )
+    await vi.waitFor(() => expect(preview.open).toHaveBeenCalledOnce())
+    expect(toast.info).not.toHaveBeenCalled()
+  })
+
+  it('says so when the pull request has no preview deployment', async () => {
+    preview.opened = false
+    const match = (id: string): boolean => id === 'sourceControl.openPullRequestPreview'
+
+    expect(takeSourceControlShortcut(match, true, actions)).toBe(
+      'sourceControl.openPullRequestPreview'
+    )
+    await vi.waitFor(() =>
+      expect(toast.info).toHaveBeenCalledWith('No preview deployment for this pull request.')
+    )
+  })
+})
+
 describe('pull request shortcuts', () => {
   const openUrl = vi.fn(async () => {})
   const writeClipboardText = vi.fn(async () => {})

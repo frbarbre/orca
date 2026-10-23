@@ -192,6 +192,15 @@ export const KEYBINDING_DEFINITION_CORE_4: readonly KeybindingDefinition[] = [
     defaultBindings: { darwin: ['Mod+Alt+Shift+G'], linux: [], win32: [] }
   },
   {
+    id: 'sourceControl.openPullRequestPreview',
+    title: 'Open Pull Request Preview Deployment',
+    group: 'Global',
+    scope: 'global',
+    conflictGroup: 'editor',
+    searchKeywords: ['shortcut', 'pull request', 'preview', 'deployment', 'browser', 'open'],
+    defaultBindings: platformBindings(['Mod+Shift+P'])
+  },
+  {
     id: 'workspace.openFrontend',
     title: 'Open Frontend Dev Server',
     group: 'Global',

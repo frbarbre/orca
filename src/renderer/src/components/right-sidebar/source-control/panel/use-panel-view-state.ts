@@ -5,9 +5,13 @@ import { normalizeSourceControlViewMode } from '../commit/commit-drafts'
 import type { SourceControlStoreActions } from '../listing/use-store-actions'
 import type { SourceControlWorktreeContext } from '../listing/use-worktree-context'
 import type { SourceControlFileCategory } from '../listing/file-category'
+import {
+  getSourceControlFileScope,
+  setSourceControlHiddenCategories,
+  useSourceControlFileScope
+} from '../listing/file-scope-store'
 
 const DEFAULT_COLLAPSED_SECTIONS = ['history'] as const
-const NO_HIDDEN_FILE_CATEGORIES: ReadonlySet<SourceControlFileCategory> = new Set()
 
 function createDefaultCollapsedSections(): Set<string> {
   return new Set(DEFAULT_COLLAPSED_SECTIONS)
@@ -44,11 +48,7 @@ export function useSourceControlPanelViewState({
   const [baseRefDialogOpen, setBaseRefDialogOpen] = useState(false)
   const [filterQuery, setFilterQuery] = useState('')
   // Why kept per worktree, not reset on switch: each worktree's review keeps its own filter.
-  const [hiddenFileCategoriesByWorktree, setHiddenFileCategoriesByWorktree] = useState<
-    ReadonlyMap<string, ReadonlySet<SourceControlFileCategory>>
-  >(() => new Map())
-  const hiddenFileCategories =
-    hiddenFileCategoriesByWorktree.get(activeWorktreeId ?? '') ?? NO_HIDDEN_FILE_CATEGORIES
+  const hiddenFileCategories = useSourceControlFileScope(activeWorktreeId).hiddenCategories
   const isGitHistoryExpanded = !collapsedSections.has('history')
 
   const handleToggleSourceControlViewMode = useCallback(() => {
@@ -96,15 +96,13 @@ export function useSourceControlPanelViewState({
   const toggleFileCategory = useCallback(
     (category: SourceControlFileCategory) => {
       const key = activeWorktreeId ?? ''
-      setHiddenFileCategoriesByWorktree((prev) => {
-        const next = new Set(prev.get(key) ?? NO_HIDDEN_FILE_CATEGORIES)
-        if (next.has(category)) {
-          next.delete(category)
-        } else {
-          next.add(category)
-        }
-        return new Map(prev).set(key, next)
-      })
+      const next = new Set(getSourceControlFileScope(key).hiddenCategories)
+      if (next.has(category)) {
+        next.delete(category)
+      } else {
+        next.add(category)
+      }
+      setSourceControlHiddenCategories(key, next)
     },
     [activeWorktreeId]
   )

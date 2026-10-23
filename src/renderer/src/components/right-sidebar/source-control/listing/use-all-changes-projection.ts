@@ -13,9 +13,13 @@ import type { AllChangesTreeNode } from './all-changes-section'
 import type { SourceControlEntryGroups } from './section-order'
 import type { FlatEntry } from './use-selection'
 import { useChangesFilter } from '@/lib/changes-filter'
-import { compareFileNames } from '../../../../../../shared/file-name-sort'
+import type { GitPathReviewAttributes } from '../../../../../../shared/git-review-attributes'
+import type { SourceControlFileCategory } from './file-category'
+import { buildScopedChangeEntries, selectBranchLineCounts } from './scoped-change-entries'
 
 const NO_ENTRIES: GitBranchChangeEntry[] = []
+const NO_HIDDEN_CATEGORIES: ReadonlySet<SourceControlFileCategory> = new Set()
+const NO_REVIEW_ATTRIBUTES: GitPathReviewAttributes = Object.freeze({})
 const NO_TREE_ROWS: AllChangesTreeNode[] = []
 const NO_SELECTABLE_ENTRIES: FlatEntry[] = []
 
@@ -42,33 +46,29 @@ export function useAllChangesProjection({
   collapsedTreeDirs: ReadonlySet<string>
 }) {
   const enabled = sourceControlGrouping === 'all'
-  // Why the merge-base check: a total can outlive the fork point it measured, like the branch chip's.
-  const lineCounts = useAppStore((s) => {
-    const total = activeWorktreeId ? s.gitBranchLineTotalByWorktree?.[activeWorktreeId] : undefined
-    return total &&
-      activeWorktreeId &&
-      total.mergeBase === s.gitBranchCompareSummaryByWorktree[activeWorktreeId]?.mergeBase
-      ? total.files
-      : undefined
-  })
+  const lineCounts = useAppStore((s) => selectBranchLineCounts(s, activeWorktreeId))
   const changesFilter = useChangesFilter(activeWorktreeId)
-  const uncommittedOnly = changesFilter?.kind === 'uncommitted'
-  // Fork: a previewed turn or commit lists its own files in place of the branch's.
   const sourceEntries =
     changesFilter && changesFilter.kind !== 'uncommitted' ? changesFilter.entries : null
-  const allChangeEntries = useMemo(() => {
-    if (!enabled) {
-      return NO_ENTRIES
-    }
-    if (sourceEntries) {
-      return [...sourceEntries].sort((a, b) => compareFileNames(a.path, b.path))
-    }
-    return buildAllChangeEntries(
-      [...filteredGrouped.staged, ...filteredGrouped.unstaged, ...filteredGrouped.untracked],
-      filteredBranchEntries,
-      { uncommittedOnly, ...(lineCounts ? { lineCounts } : {}) }
-    )
-  }, [enabled, filteredBranchEntries, filteredGrouped, lineCounts, sourceEntries, uncommittedOnly])
+  const allChangeEntries = useMemo(
+    () =>
+      enabled
+        ? buildScopedChangeEntries({
+            statusEntries: [
+              ...filteredGrouped.staged,
+              ...filteredGrouped.unstaged,
+              ...filteredGrouped.untracked
+            ],
+            branchEntries: filteredBranchEntries,
+            changesFilter,
+            lineCounts,
+            // Why none: the grouped and branch lists arrive already filtered by category.
+            hiddenCategories: NO_HIDDEN_CATEGORIES,
+            reviewAttributes: NO_REVIEW_ATTRIBUTES
+          })
+        : NO_ENTRIES,
+    [changesFilter, enabled, filteredBranchEntries, filteredGrouped, lineCounts]
+  )
   const totalAllChangeCount = useMemo(() => {
     if (!enabled) {
       return 0

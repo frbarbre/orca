@@ -8,6 +8,7 @@ import {
 import { getConnectionId } from '@/lib/connection-context'
 import { getRuntimeGitReviewAttributes } from '@/runtime/runtime-git-status-client'
 import type { RuntimeClientTarget } from '../../../../../../shared/runtime-client-target'
+import { setSourceControlReviewAttributes } from './file-scope-store'
 
 const NO_ATTRIBUTES: GitPathReviewAttributes = Object.freeze({})
 
@@ -81,5 +82,11 @@ export function useSourceControlReviewAttributes({
   ])
 
   // Why keep the last answer while a refetch runs: rules rarely change between polls, and rows would flicker between categories.
-  return enabled && store.scope === scope ? store.attributes : NO_ATTRIBUTES
+  const attributes = enabled && store.scope === scope ? store.attributes : NO_ATTRIBUTES
+  useEffect(() => {
+    if (activeWorktreeId) {
+      setSourceControlReviewAttributes(activeWorktreeId, attributes)
+    }
+  }, [activeWorktreeId, attributes])
+  return attributes
 }

@@ -1,6 +1,5 @@
 import { useCallback, useMemo } from 'react'
 import { openWorkspaceFile } from '@/lib/workspace-file-open'
-import { detectLanguage } from '@/lib/language-detect'
 import { useAppStore } from '@/store'
 import type {
   GitBranchChangeEntry,
@@ -15,12 +14,8 @@ import {
   type SourceControlRowOpenEvent
 } from './split-open'
 import { buildAllChangesOpenRowKeys } from './all-changes'
-import { openChangesFilterEntry } from '@/store/slices/editor/actions/open-changes-filter-entry'
-import { getChangesFilter } from '@/lib/changes-filter'
-import {
-  pickUncommittedRowEntry,
-  useOpenDiffFollowsChangesFilter
-} from './open-diff-follows-filter'
+import { useOpenDiffFollowsChangesFilter } from './open-diff-follows-filter'
+import { openSourceControlChangeEntry } from './open-change-entry'
 import type { useAllChangesProjection } from './use-all-changes-projection'
 
 export function useSourceControlRowOpening({
@@ -42,7 +37,6 @@ export function useSourceControlRowOpening({
   statusEntries: readonly GitStatusEntry[]
   allChanges: Pick<ReturnType<typeof useAllChangesProjection>, 'changesFilter' | 'allChangeEntries'>
 }) {
-  const openBranchWorktreeDiff = useAppStore((s) => s.openBranchWorktreeDiff)
   const activeGroupIdByWorktree = useAppStore((s) => s.activeGroupIdByWorktree)
   const groupsByWorktree = useAppStore((s) => s.groupsByWorktree)
   const createEmptySplitGroup = useAppStore((s) => s.createEmptySplitGroup)
@@ -141,57 +135,18 @@ export function useSourceControlRowOpening({
       if (!activeWorktreeId || !worktreePath) {
         return
       }
-      const filterTargetGroupId = resolveSplitTargetGroupId(event)
-      if (
-        openChangesFilterEntry(
-          useAppStore.getState(),
-          activeWorktreeId,
-          worktreePath,
-          entry.path,
-          detectLanguage(entry.path),
-          {
-            targetGroupId: filterTargetGroupId,
-            preview: shouldOpenSourceControlRowAsPreview(event, filterTargetGroupId)
-          }
-        )
-      ) {
-        return
-      }
-      const local = statusEntries.filter((candidate) => candidate.path === entry.path)
-      // Why: a conflicted file opens its resolver, and with no base to compare against the plain
-      // uncommitted diff is the closest view. Showing only uncommitted work opens that work too.
-      const fallback =
-        local.find((candidate) => candidate.conflictKind && candidate.conflictStatus) ??
-        (getChangesFilter(activeWorktreeId)?.kind === 'uncommitted'
-          ? pickUncommittedRowEntry(local)
-          : undefined) ??
-        (branchSummary?.status === 'ready' ? undefined : local[0])
-      if (fallback) {
-        openUncommittedFile(fallback, event)
-        return
-      }
-      if (branchSummary?.status !== 'ready') {
-        return
-      }
       const targetGroupId = resolveSplitTargetGroupId(event)
-      openBranchWorktreeDiff(
-        activeWorktreeId,
+      openSourceControlChangeEntry({
+        worktreeId: activeWorktreeId,
         worktreePath,
         entry,
+        statusEntries,
         branchSummary,
-        detectLanguage(entry.path),
-        { targetGroupId, preview: shouldOpenSourceControlRowAsPreview(event, targetGroupId) }
-      )
+        targetGroupId,
+        preview: shouldOpenSourceControlRowAsPreview(event, targetGroupId)
+      })
     },
-    [
-      activeWorktreeId,
-      branchSummary,
-      openUncommittedFile,
-      openBranchWorktreeDiff,
-      resolveSplitTargetGroupId,
-      statusEntries,
-      worktreePath
-    ]
+    [activeWorktreeId, branchSummary, resolveSplitTargetGroupId, statusEntries, worktreePath]
   )
 
   useOpenDiffFollowsChangesFilter({

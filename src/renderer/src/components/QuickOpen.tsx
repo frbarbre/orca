@@ -2,15 +2,7 @@ import { useQuickOpenInteraction } from './use-quick-open-interaction'
 import React, { useCallback, useDeferredValue, useEffect, useMemo, useState } from 'react'
 import { useAppStore } from '@/store'
 import { useActiveWorktree } from '@/store/selectors'
-import { FileTypeIcon } from '@/components/FileTypeIcon'
-import {
-  CommandDialog,
-  CommandInput,
-  CommandList,
-  CommandEmpty,
-  CommandItem
-} from '@/components/ui/command'
-import { FilePathCursorTooltip, splitTrailingSegment } from '@/components/file-path-cursor-tooltip'
+import { CommandDialog, CommandInput, CommandList, CommandEmpty } from '@/components/ui/command'
 import {
   parseQuickOpenQueryTarget,
   isQuickOpenAbsolutePath,
@@ -30,6 +22,9 @@ import {
   QuickOpenTextItems
 } from './QuickOpenModeItems'
 import { openQuickOpenFile } from './quick-open-file-navigation'
+import { openQuickOpenChange, resolveQuickOpenTarget } from './quick-open-change'
+import { useQuickOpenChanges } from './use-quick-open-changes'
+import { QuickOpenFileItem } from './QuickOpenFileItem'
 import { rankQuickOpenFilesWithHistory } from './quick-open-history-ranking'
 import { useQuickOpenHistory } from '@/lib/quick-open-file-history'
 import { useRuntimeFileListForWorktree } from '@/components/quick-open-file-list'
@@ -139,6 +134,7 @@ function QuickOpenContent({ visible }: { visible: boolean }): React.JSX.Element 
     return rankQuickOpenFilesWithHistory(effectiveTarget.pathQuery, files, history)
   }, [absoluteQuery, parsedTarget.pathQuery, effectiveTarget.pathQuery, files, history])
 
+  const changesByPath = useQuickOpenChanges(activeWorktreeId)
   const openPath = useCallback(
     async (selectedPath: string, navigation: QuickOpenQueryTarget, rawQuery?: string) => {
       if (!activeWorktreeId || !worktreePath || opening) {
@@ -146,15 +142,20 @@ function QuickOpenContent({ visible }: { visible: boolean }): React.JSX.Element 
       }
       const interaction = begin()
       setOpenError(null)
+      const target = resolveQuickOpenTarget(selectedPath, navigation, changesByPath)
       try {
-        await openQuickOpenFile(
-          selectedPath,
-          activeWorktreeId,
-          worktreePath,
-          navigation,
-          rawQuery,
-          interaction.assertCurrent
-        )
+        if (target.kind === 'diff') {
+          openQuickOpenChange(activeWorktreeId, worktreePath, target.entry)
+        } else {
+          await openQuickOpenFile(
+            selectedPath,
+            activeWorktreeId,
+            worktreePath,
+            navigation,
+            rawQuery,
+            interaction.assertCurrent
+          )
+        }
         interaction.assertCurrent()
         skipReturnFocus()
         closeModal()
@@ -166,7 +167,7 @@ function QuickOpenContent({ visible }: { visible: boolean }): React.JSX.Element 
         interaction.finish()
       }
     },
-    [activeWorktreeId, worktreePath, opening, begin, closeModal, skipReturnFocus]
+    [activeWorktreeId, worktreePath, opening, begin, closeModal, skipReturnFocus, changesByPath]
   )
 
   const handleSelect = useCallback(
@@ -329,42 +330,15 @@ function QuickOpenContent({ visible }: { visible: boolean }): React.JSX.Element 
             {translate('auto.components.QuickOpen.74e2e1b3e4', 'No matching files.')}
           </CommandEmpty>
         ) : (
-          filtered.map((item) => {
-            const { directory, filename } = splitTrailingSegment(item.path)
-
-            return (
-              <CommandItem
-                key={item.path}
-                value={item.path}
-                onSelect={() => {
-                  void handleSelect(item.path)
-                }}
-                disabled={opening}
-                // Why: CommandDialog's descendant rule otherwise adds 24px of vertical padding.
-                className="min-w-0 !p-0"
-              >
-                {/* Why: the trigger is this inner element, not the CommandItem.
-                    cmdk sets its own onPointerMove after spreading props, which
-                    drops the one Radix needs to open the tooltip. */}
-                <FilePathCursorTooltip path={item.path}>
-                  <div className="flex w-full min-w-0 items-center gap-2 px-3 py-1">
-                    <FileTypeIcon
-                      filePath={item.path}
-                      className="size-3.5 shrink-0 text-muted-foreground"
-                    />
-                    {/* shrink-0 + max-w-full: the directory gives up all of its
-                        width before the filename loses a character. */}
-                    <span className="min-w-0 max-w-full shrink-0 truncate text-foreground">
-                      {filename}
-                    </span>
-                    {directory ? (
-                      <span className="min-w-0 truncate text-muted-foreground">{directory}</span>
-                    ) : null}
-                  </div>
-                </FilePathCursorTooltip>
-              </CommandItem>
-            )
-          })
+          filtered.map((item) => (
+            <QuickOpenFileItem
+              key={item.path}
+              path={item.path}
+              change={changesByPath.get(item.path)}
+              disabled={opening}
+              onSelect={(path) => void handleSelect(path)}
+            />
+          ))
         )}
         {showsMoreMatches ? (
           <div className="px-3 py-2 text-center text-xs text-muted-foreground">

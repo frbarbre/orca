@@ -8,11 +8,11 @@ import { writeWorkspaceFileDragSourceForWorkspace } from '@/lib/workspace-file-d
 import { translate } from '@/i18n/i18n'
 import { AgentNoteFileBadge } from './agent-note-file-badge'
 import type { GitBranchChangeEntry } from '../../../../../../shared/git-diff-compare-types'
-import { DiffLineCounts } from './diff-line-counts'
+import { ChangeEntryStat } from './change-entry-stat'
 import { SourceControlEntryContextMenu } from './entry-context-menu'
 import { toPermanentSourceControlRowOpenEvent, type SourceControlRowOpenEvent } from './split-open'
 import { SOURCE_CONTROL_TREE_FILE_PADDING_PX, SOURCE_CONTROL_TREE_INDENT_PX } from './row-layout'
-import { STATUS_COLORS, STATUS_LABELS } from '../../status-display'
+import { STATUS_COLORS } from '../../status-display'
 
 export function BranchEntryRow({
   entry,
@@ -129,13 +129,7 @@ export function BranchEntryRow({
             <span className="tabular-nums">{pendingReviewCount}</span>
           </span>
         )}
-        <DiffLineCounts added={entry.added} removed={entry.removed} />
-        <span
-          className="w-4 shrink-0 text-center text-[10px] font-bold"
-          style={{ color: STATUS_COLORS[entry.status] }}
-        >
-          {STATUS_LABELS[entry.status]}
-        </span>
+        <ChangeEntryStat entry={entry} />
       </div>
     </SourceControlEntryContextMenu>
   )

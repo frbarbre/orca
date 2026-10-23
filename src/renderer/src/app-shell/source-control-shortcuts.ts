@@ -12,6 +12,7 @@ import { activeWorktreePullRequestUrl } from '@/lib/worktree-pull-request-url'
 import { openActiveWorkspaceFrontend } from '@/lib/open-workspace-frontend'
 import { selectWorkspaceActionContext } from '@/components/right-sidebar/workspace-actions/workspace-action-context'
 import { launchWorkspaceAction } from '@/components/right-sidebar/workspace-actions/launch-workspace-action'
+import { openActivePullRequestPreview } from '@/lib/open-pull-request-preview'
 import { useAppStore } from '../store'
 import type { KeybindingActionId } from '../../../shared/keybindings/types'
 
@@ -23,6 +24,7 @@ type SourceControlShortcutId =
   | 'sourceControl.focusReviewSummary'
   | 'sourceControl.openPullRequest'
   | 'sourceControl.copyPullRequestUrl'
+  | 'sourceControl.openPullRequestPreview'
   | 'workspace.openFrontend'
   | 'workspace.runNextAction'
 
@@ -139,6 +141,19 @@ export function takeSourceControlShortcut(
         )
     })
     return 'sourceControl.copyPullRequestUrl'
+  }
+  if (matchShortcut('sourceControl.openPullRequestPreview')) {
+    void openActivePullRequestPreview().then((opened) => {
+      if (!opened) {
+        toast.info(
+          translate(
+            'sourceControl.noPullRequestPreview',
+            'No preview deployment for this pull request.'
+          )
+        )
+      }
+    })
+    return 'sourceControl.openPullRequestPreview'
   }
   return null
 }

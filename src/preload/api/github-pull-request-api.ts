@@ -103,6 +103,12 @@ export type GithubPullRequestApi = {
     prRepo?: GitHubOwnerRepo | null
     noCache?: boolean
   }) => Promise<PRComment[]>
+  prPreviewUrl: (args: {
+    repoPath: string
+    repoId?: string
+    prNumber: number
+    prRepo?: GitHubOwnerRepo | null
+  }) => Promise<string | null>
   setPRCommentReaction: (args: {
     repoPath: string
     repoId?: string

@@ -20,6 +20,7 @@ const CLIENT_EXPORTS = [
   'getPRChecks',
   'getPRCheckDetails',
   'getPRComments',
+  'getPRPreviewDeploymentUrl',
   'setPRCommentReaction',
   'resolveReviewThread',
   'setPRFileViewed',

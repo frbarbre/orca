@@ -9,6 +9,7 @@ import {
   requestReviewSummaryFocus
 } from '@/components/pending-review/review-summary-focus'
 import { activeWorktreePullRequestUrl } from '@/lib/worktree-pull-request-url'
+import { openActiveWorkspaceFrontend } from '@/lib/open-workspace-frontend'
 import { useAppStore } from '../store'
 import type { KeybindingActionId } from '../../../shared/keybindings/types'
 
@@ -20,6 +21,7 @@ type SourceControlShortcutId =
   | 'sourceControl.focusReviewSummary'
   | 'sourceControl.openPullRequest'
   | 'sourceControl.copyPullRequestUrl'
+  | 'workspace.openFrontend'
 
 function focusReviewSummaryInOpenPanel(): boolean {
   const { activeWorktreeId, rightSidebarOpen, rightSidebarTab } = useAppStore.getState()
@@ -106,6 +108,12 @@ export function takeSourceControlShortcut(
   }
   if (matchShortcut('sourceControl.focusReviewSummary') && focusReviewSummaryInOpenPanel()) {
     return 'sourceControl.focusReviewSummary'
+  }
+  if (matchShortcut('workspace.openFrontend')) {
+    if (!openActiveWorkspaceFrontend()) {
+      toast.info(translate('workspace.frontend.notRunning', 'No frontend dev server is running.'))
+    }
+    return 'workspace.openFrontend'
   }
   if (matchShortcut('sourceControl.openPullRequest')) {
     withActivePullRequestUrl((url) => void window.api.shell.openUrl(url))

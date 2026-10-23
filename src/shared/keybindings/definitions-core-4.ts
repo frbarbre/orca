@@ -190,5 +190,14 @@ export const KEYBINDING_DEFINITION_CORE_4: readonly KeybindingDefinition[] = [
     searchKeywords: ['shortcut', 'pull request', 'github', 'copy', 'url', 'link'],
     // Why macOS only: Ctrl+Alt+letter is AltGr text input on Windows and Linux.
     defaultBindings: { darwin: ['Mod+Alt+Shift+G'], linux: [], win32: [] }
+  },
+  {
+    id: 'workspace.openFrontend',
+    title: 'Open Frontend Dev Server',
+    group: 'Global',
+    scope: 'global',
+    conflictGroup: 'editor',
+    searchKeywords: ['shortcut', 'frontend', 'dev server', 'browser', 'open', 'localhost'],
+    defaultBindings: platformBindings(['Mod+Shift+B'])
   }
 ]

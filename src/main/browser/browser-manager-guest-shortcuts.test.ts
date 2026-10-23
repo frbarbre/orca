@@ -195,6 +195,10 @@ describe('browserManager', () => {
       | undefined
 
     expect(beforeInputHandler).toBeTypeOf('function')
+    // Fork: New browser tab ships unbound since Mod+Shift+B opens the frontend dev server.
+    browserManager.setSettingsResolver(() => ({
+      keybindings: { 'tab.newBrowser': ['Mod+Shift+B'] }
+    }))
 
     const inputs = [
       {

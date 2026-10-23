@@ -46,6 +46,11 @@ export function pickFrontendPortLabel(
 
 const cache = new Map<string, { key: string; labels: PortLabel[] }>()
 
+/** The labels last read for `worktreeId`, for actions that run outside a mounted component. */
+export function cachedWorktreePortLabels(worktreeId: string): PortLabel[] {
+  return cache.get(worktreeId)?.labels ?? NO_LABELS
+}
+
 /** Runs the repo's URLs command in the workspace, again only when the command or live ports change. */
 export function useWorktreePortLabels(
   worktreeId: string | null,

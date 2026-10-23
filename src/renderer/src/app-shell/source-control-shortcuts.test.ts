@@ -32,6 +32,32 @@ vi.mock('@/lib/worktree-pull-request-url', () => ({
 
 const actions = { openDiffNotesSendMenuForActiveWorktree: () => false }
 
+const frontend = vi.hoisted(() => ({ opened: true, open: vi.fn(() => frontend.opened) }))
+vi.mock('@/lib/open-workspace-frontend', () => ({
+  openActiveWorkspaceFrontend: frontend.open
+}))
+
+describe('frontend dev server shortcut', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  it("opens the active workspace's running frontend", () => {
+    frontend.opened = true
+    const match = (id: string): boolean => id === 'workspace.openFrontend'
+
+    expect(takeSourceControlShortcut(match, true, actions)).toBe('workspace.openFrontend')
+    expect(frontend.open).toHaveBeenCalledOnce()
+    expect(toast.info).not.toHaveBeenCalled()
+  })
+
+  it('says so when no frontend is running', () => {
+    frontend.opened = false
+    const match = (id: string): boolean => id === 'workspace.openFrontend'
+
+    expect(takeSourceControlShortcut(match, true, actions)).toBe('workspace.openFrontend')
+    expect(toast.info).toHaveBeenCalledWith('No frontend dev server is running.')
+  })
+})
+
 describe('pull request shortcuts', () => {
   const openUrl = vi.fn(async () => {})
   const writeClipboardText = vi.fn(async () => {})

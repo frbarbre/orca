@@ -21021,6 +21021,9 @@
     "openDefault": "Open in Default App"
   },
   "workspace": {
+    "frontend": {
+      "notRunning": "No frontend dev server is running."
+    },
     "links": {
       "foreignReview": "This review belongs to another repository. Add reviews from this workspace’s repository.",
       "repositoryLoading": "Repository identity is still loading. Try again once it is available.",

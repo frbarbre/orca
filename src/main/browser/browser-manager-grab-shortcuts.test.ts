@@ -149,6 +149,10 @@ describe('browserManager grab operations', () => {
 
   describe('guest app shortcut forwarding', () => {
     it('forwards Cmd/Ctrl+Shift+B to the renderer and prevents the guest default', () => {
+      // Fork: New browser tab ships unbound since Mod+Shift+B opens the frontend dev server.
+      browserManager.setSettingsResolver(() => ({
+        keybindings: { 'tab.newBrowser': ['Mod+Shift+B'] }
+      }))
       const handlers = guestOnMock.mock.calls
         .filter(([eventName]) => eventName === 'before-input-event')
         .map(([, handler]) => handler)

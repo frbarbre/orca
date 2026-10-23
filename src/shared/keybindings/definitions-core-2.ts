@@ -92,7 +92,8 @@ export const KEYBINDING_DEFINITION_CORE_2: readonly KeybindingDefinition[] = [
     group: 'Tabs',
     scope: 'tabs',
     searchKeywords: ['shortcut', 'tab', 'browser', 'new'],
-    defaultBindings: platformBindings(['Mod+Shift+B'])
+    // Fork: Mod+Shift+B opens the workspace's frontend dev server instead.
+    defaultBindings: platformBindings([])
   },
   {
     id: 'tab.newSimulator',

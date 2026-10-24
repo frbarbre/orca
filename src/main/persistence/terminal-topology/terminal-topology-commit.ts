@@ -1,4 +1,5 @@
 import type { ExecutionHostId } from '../../../shared/execution-host'
+import { hasClosedTerminalTabRecord } from '../../../shared/closed-terminal-tab-tombstones'
 import type { PersistedState } from '../../../shared/persisted-state-types'
 import type {
   TerminalLeafMoveRequest,
@@ -35,7 +36,8 @@ import {
   commitLayoutCommand,
   commitLayoutCommandsAcrossPartitions,
   commitWindowPaneDetach,
-  keepFrozen
+  keepFrozen,
+  type LayoutCommandRun
 } from './layout-command-commit'
 import {
   fencedIfLayoutOwner,
@@ -96,12 +98,28 @@ export function admitPane(
     // A pane main writes again under a closed pane's id binds as any.
     fencedIfLayoutOwner(
       () => partitionsFence([hostId], context.getSession, false),
-      () =>
-        commitPaneChange(
+      () => {
+        // A legacy reattach can land outside the partition that recorded the tab's close.
+        if (
+          admission.type === 'createTerminalTab' &&
+          context
+            .hostIds()
+            .some((id) =>
+              hasClosedTerminalTabRecord(
+                context.getSession(id).closedTerminalTabTombstonesByTabId,
+                admission.tabId,
+                admission.workspace
+              )
+            )
+        ) {
+          return { value: 'tab_closed', persist: false }
+        }
+        return commitPaneChange(
           hostId,
           admitPaneToSession(hostId, context.getSession(hostId), admission),
           context
         )
+      }
     ),
     (outcome) => (outcome === 'admitted' || outcome === 'exists' ? undefined : outcome)
   )
@@ -136,7 +154,8 @@ export function withdrawPane(
 export function applyLayout(
   hostIds: readonly ExecutionHostId[],
   command: LayoutCommand,
-  context: TerminalTopologyCommitContext
+  context: TerminalTopologyCommitContext,
+  run: LayoutCommandRun = {}
 ): () => DurableProfileStateMutation<LayoutApplyOutcome> {
   return traced(
     'apply_layout',
@@ -150,7 +169,7 @@ export function applyLayout(
               { ...command, windowDetach: command.windowDetach },
               context
             )
-          : commitLayoutCommand(hostIds, command, context)
+          : commitLayoutCommand(hostIds, command, context, run)
     ),
     (outcome) => (outcome.ok ? undefined : outcome.code)
   )

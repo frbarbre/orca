@@ -25,14 +25,9 @@ export function createRuntimeFileWatcherRemoval(fileCommands: FileExplorerWatche
     if (!connectionId) {
       stopLanguageServersForRemoval(worktreePath)
     }
+    // Why: the desktop watcher only holds local roots; an SSH path never had one to close.
     const results = await Promise.allSettled([
-      connectionId
-        ? drainBeforeWatcherRemoval(
-            getWorktreeWatcherRemoval().closeRemote(connectionId, worktreePath),
-            deadline,
-            `remote watcher close for ${worktreePath}`
-          )
-        : getWorktreeWatcherRemoval().closeLocal(worktreePath, deadline),
+      connectionId ? undefined : getWorktreeWatcherRemoval().closeLocal(worktreePath, deadline),
       drainBeforeWatcherRemoval(
         fileCommands.closeFileExplorerWatchersForPath(worktreePath, connectionId),
         deadline,
@@ -50,17 +45,13 @@ export function createRuntimeFileWatcherRemoval(fileCommands: FileExplorerWatche
 
   const restore = async (worktreePath: string, connectionId?: string): Promise<void> => {
     await Promise.all([
-      connectionId
-        ? getWorktreeWatcherRemoval().restoreRemote(connectionId, worktreePath)
-        : getWorktreeWatcherRemoval().restoreLocal(worktreePath),
+      connectionId ? undefined : getWorktreeWatcherRemoval().restoreLocal(worktreePath),
       fileCommands.restoreFileExplorerWatchersAfterFailedRemoval(worktreePath, connectionId)
     ])
   }
 
   const forget = (worktreePath: string, connectionId?: string): void => {
-    if (connectionId) {
-      getWorktreeWatcherRemoval().forgetRemote(connectionId, worktreePath)
-    } else {
+    if (!connectionId) {
       getWorktreeWatcherRemoval().forgetLocal(worktreePath)
     }
     fileCommands.forgetFileExplorerWatchersAfterRemoval(worktreePath, connectionId)

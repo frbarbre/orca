@@ -83,22 +83,25 @@ function getStateTone(state: WorktreeCardPrDisplay['state']): string {
 export function ReviewIcon({
   review,
   className,
-  variant = 'provider'
+  variant = 'provider',
+  showChecks = true
 }: {
   review: WorktreeCardPrDisplay
   className?: string
   variant?: 'provider' | 'generic'
+  showChecks?: boolean
 }): React.JSX.Element {
   const providerIcon =
     variant === 'provider' && review.provider === 'gitlab' ? GitMerge : PullRequestIcon
-  const Icon = isRunningOpenReview(review)
+  const running = showChecks && isRunningOpenReview(review)
+  const Icon = running
     ? LoaderCircle
     : (getReviewStateIcon(review.state) ?? providerIcon)
   return createElement(Icon, {
     className: cn(
       className,
-      isRunningOpenReview(review) && 'animate-spin',
-      getCheckTone(review) ?? getStateTone(review.state)
+      running && 'animate-spin',
+      (showChecks ? getCheckTone(review) : null) ?? getStateTone(review.state)
     )
   })
 }

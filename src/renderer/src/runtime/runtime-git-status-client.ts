@@ -1,5 +1,6 @@
 import type { GitHistoryOptions, GitHistoryResult } from '../../../shared/git-history'
 import type { GitPathReviewAttributes } from '../../../shared/git-review-attributes'
+import type { GitMutationInFlight } from '../../../shared/git-mutation-in-flight'
 import type {
   GitConflictOperation,
   GitStagingArea,
@@ -222,6 +223,24 @@ export async function getRuntimeGitConflictOperation(
   return callRuntimeRpc<GitConflictOperation>(
     target,
     'git.conflictOperation',
+    { worktree: toRuntimeWorktreeSelector(context.worktreeId) },
+    { timeoutMs: 15_000 }
+  )
+}
+
+export async function getRuntimeGitMutationInFlight(
+  context: RuntimeGitContext
+): Promise<GitMutationInFlight> {
+  const target = context.target
+  if (target.kind === 'local' || !context.worktreeId) {
+    return window.api.git.mutationInFlight({
+      worktreePath: resolveLocalWorktreePath(context),
+      connectionId: context.connectionId
+    })
+  }
+  return callRuntimeRpc<GitMutationInFlight>(
+    target,
+    'git.mutationInFlight',
     { worktree: toRuntimeWorktreeSelector(context.worktreeId) },
     { timeoutMs: 15_000 }
   )

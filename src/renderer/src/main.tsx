@@ -26,6 +26,8 @@ import { primeTerminalWebglAddon } from './lib/pane-manager/pane-webgl-renderer'
 import { SkillWarningPreviewLauncher } from './components/skills/SkillWarningPreviewLauncher'
 import { installBrowserClientPageRenderer } from './components/browser-pane/browser-client-page-renderer-installation'
 import { setMainReleaseRepoOverride } from '../../shared/release-channel'
+import { registerBrowserClientPageGuestMessageHandler } from './components/browser-pane/browser-client-page-retained-elements'
+import { handleGuestWindowCloseMessage } from './components/browser-pane/host-guest/browser-page-window-close'
 import { installOsFileDropCancellationGuard } from './lib/os-file-drop-cancellation-guard'
 import { startMaterialIconConfigSync } from './lib/material-icons/material-icon-config-sync'
 import { installRightSidebarFollowsFile } from './lib/right-sidebar-follows-file'
@@ -57,6 +59,7 @@ if (
 }
 
 applyDocumentTheme('system', { disableTransitions: false })
+registerBrowserClientPageGuestMessageHandler(handleGuestWindowCloseMessage)
 const browserClientPageRenderer = installBrowserClientPageRenderer()
 import.meta.hot?.dispose(() => browserClientPageRenderer?.dispose())
 

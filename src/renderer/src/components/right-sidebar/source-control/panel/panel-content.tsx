@@ -43,7 +43,7 @@ export function SourceControlPanelContent(props: SourceControlPanelReadyProps) {
     filteredGrouped,
     handleAbortOperationForConflict,
     handleContextMenu,
-    openUncommittedFile,
+    handleOpenDiff,
     handleResolveConflictsWithAI,
     handleSelect,
     handleStage,
@@ -56,11 +56,12 @@ export function SourceControlPanelContent(props: SourceControlPanelReadyProps) {
     hiddenFileCategories,
     isAbortingOperation,
     isCategoryFilterActive,
+    isCheckingRecoveryAdmission,
     isExecutingBulk,
     normalizedFilter,
     openAllDiffs,
     openBranchAllDiffs,
-    openBranchFile,
+    openCommittedDiff,
     openConflictReview,
     presentFileCategories,
     refreshActiveGitStatus,
@@ -85,10 +86,7 @@ export function SourceControlPanelContent(props: SourceControlPanelReadyProps) {
     visibleTreeRowsBySection
   } = model
 
-  const hasFilteredUncommittedEntries =
-    filteredGrouped.staged.length > 0 ||
-    filteredGrouped.unstaged.length > 0 ||
-    filteredGrouped.untracked.length > 0
+  const hasFilteredUncommittedEntries = displaySections.length > 0
   const hasFilteredBranchEntries = filteredBranchEntries.length > 0
   const showGenericEmptyState =
     !hasUncommittedEntries && branchSummary?.status === 'ready' && branchEntries.length === 0
@@ -102,6 +100,7 @@ export function SourceControlPanelContent(props: SourceControlPanelReadyProps) {
         unresolvedConflictCount={unresolvedConflictReviewEntries.length}
         conflictOperation={conflictOperation}
         sourceControlAiActionsVisible={sourceControlAiActionsVisible}
+        isRecoveryBusy={isCheckingRecoveryAdmission}
         isAbortingOperation={isAbortingOperation}
         onAbortOperation={handleAbortOperationForConflict}
         onResolveWithAi={() => void handleResolveConflictsWithAI()}
@@ -221,7 +220,6 @@ export function SourceControlPanelContent(props: SourceControlPanelReadyProps) {
           requestDiscardAllInArea={requestDiscardAllInArea}
           handleStageAllPaths={handleStageAllPaths}
           handleStageSectionPaths={handleStageSectionPaths}
-          isStatusTruncated={repositoryHuge !== undefined}
           handleUnstagePaths={handleUnstagePaths}
           sourceControlViewMode={sourceControlViewMode}
           visibleTreeRowsBySection={visibleTreeRowsBySection}
@@ -241,7 +239,7 @@ export function SourceControlPanelContent(props: SourceControlPanelReadyProps) {
           handleContextMenu={handleContextMenu}
           revealInExplorer={revealInExplorer}
           activeConnectionId={activeConnectionId}
-          openUncommittedFile={openUncommittedFile}
+          handleOpenDiff={handleOpenDiff}
           handleStage={handleStage}
           handleUnstage={handleUnstage}
           requestDiscardEntry={requestDiscardEntry}
@@ -285,7 +283,7 @@ export function SourceControlPanelContent(props: SourceControlPanelReadyProps) {
             worktreePath={worktreePath}
             revealInExplorer={revealInExplorer}
             activeConnectionId={activeConnectionId}
-            openBranchFile={openBranchFile}
+            openCommittedDiff={openCommittedDiff}
             openBranchAllDiffs={openBranchAllDiffs}
             diffCommentCountByPath={diffCommentCountByPath}
             reviewThreadCountByPath={reviewThreadCountByPath}

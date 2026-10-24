@@ -22,6 +22,8 @@ const buttonVariants = cva(
         'ghost-destructive':
           'text-destructive hover:bg-destructive/10 hover:text-destructive dark:hover:bg-destructive/20',
         link: 'text-primary underline-offset-4 hover:underline',
+        'pane-title': 'pane-title-split-trigger',
+        'pane-title-close': 'pane-title-close',
         // The worktree card's "rename failed" chip, for a failure the user can open.
         'destructive-chip':
           'border border-destructive/40 bg-destructive/10 text-destructive hover:bg-destructive/15 hover:text-destructive'

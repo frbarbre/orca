@@ -15,6 +15,7 @@ import type { OrcaWorkspaceLayout } from '../global-settings-types'
 import type { DiffComment, MobileDiffReviewState } from '../diff-comment-types'
 import type { PendingReviewComment } from '../github/pending-review-comment'
 import type { SmartTier } from '../sidebar-list/sort-stamps'
+import type { ExternalConversationLink } from '../external-conversation-link'
 
 // ─── Worktree metadata (persisted user-authored fields only) ─────────
 export type WorktreeMeta = {
@@ -106,4 +107,6 @@ export type WorktreeMeta = {
   automationProvenance?: AutomationWorkspaceProvenance
   /** System-owned provenance for workspaces created via `orca worktree create`. */
   cliProvenance?: CliWorkspaceProvenance
+  /** System-owned connector threads whose agents run here; never published on `Worktree`. */
+  externalConversations?: ExternalConversationLink[]
 }

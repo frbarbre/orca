@@ -41,6 +41,7 @@ export function ChecksPanelActiveContent({
     activeWorktreeId,
     agentComposerState,
     aiActionDisabledReason,
+    fixChecksDisabledReason,
     checks,
     checksError,
     checksLoading,
@@ -135,8 +136,8 @@ export function ChecksPanelActiveContent({
               onFixChecksWithAI={
                 sourceControlAiActionsVisible ? () => void handleFixChecksWithAI() : undefined
               }
-              fixChecksDisabled={Boolean(aiActionDisabledReason)}
-              fixChecksDisabledReason={aiActionDisabledReason}
+              fixChecksDisabled={Boolean(fixChecksDisabledReason)}
+              fixChecksDisabledReason={fixChecksDisabledReason}
               onRerunChecks={rerunChecks}
               isRerunningChecks={isRerunningChecks}
             />

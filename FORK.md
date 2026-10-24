@@ -1782,6 +1782,58 @@ sync hit exactly that (#23062 landed two commits later) and was fixed by merging
 
 ### Sync log
 
+**1.4.214 → 1.4.214** (`88aa3f27ce..293bfe795d`, 604 upstream commits, thirty-five conflicts)
+
+- `package.json` still says 1.4.214, so the branch name repeats a tenth time; the earlier pull
+  request for it is merged, so a new one is opened on the same name.
+- Generated files — `bundled-skill-guides.ts`, `rpc-params-catalog.generated.ts`, `en.json`,
+  `en-runtime-required.json`: took upstream's and regenerated after `pnpm install` (upstream's
+  lockfile moved). `runtime-git-api-contract.test.ts`: upstream deleted it (#32206); took the delete.
+- Imports and list entries both sides added — `cli/specs/index.ts` (notes and ports specs),
+  `main.tsx`, `runtime-git-status-client.ts`, `web-git-api.ts`, `repo-types.ts` (upstream's moved
+  `jira/jira-project-reference` plus the fork's `CiTriageConfig`), `global-settings-types.ts`
+  (fork's `ForkBaseSettings` stays; upstream's `GlobalSettingsBase` import dropped as unused),
+  `app-api.ts`, `runtime-file-watcher-removal.ts` (fork's language-server stop beside upstream's
+  comment): kept both. Upstream stripped doc comments in `worktree-removal-leftover.ts` and
+  `worktree-metadata-merge.ts`; took that, kept `provesFailedRemovalLeftover`.
+- `updater-prerelease-feed.ts` — upstream reasserted a module-level `TAG_HREF_RE`. Kept the fork's
+  derived `tagHrefPattern()` (§1).
+- `register-app-menu.ts` — upstream's `resolveNativeEditTarget` now covers webviews, which is what
+  the fork's paste item did. Took upstream's logic, but back in `app-menu-paste-item.ts`: inlined,
+  the fork's View section submenus put the file past its 300-line cap.
+- Upstream reverted HTML preview by default (#31893), renaming the row openers back
+  (`openUncommittedFile` → `handleOpenDiff`, `openBranchFile` → `openCommittedDiff`) and deleting
+  `lib/workspace-file-open.ts`. `use-row-opening.ts`, `use-file-listing.ts`, `panel-content.tsx` take
+  the old names with fork #35/#46's `activeOpenRowKey`, `openAllChangesEntry` and filter follower
+  re-applied; `open-change-entry.ts` opens through `openUncommittedEntry`. `SourceControl.preview-open.test.tsx`
+  takes upstream's tests minus the fork-deleted commit-box ones, and keeps a `getKnownWorktreeById`
+  mock for the fork's PR comment scope. `branch-entry-row.tsx` keeps its `data-source-control-*`
+  attributes, which upstream dropped.
+- Upstream combined untracked files into Changes (#31831): `sourceControlGroupOrder` is now
+  `SourceControlDisplaySectionArea[]` and `filterSourceControlGroupedPathEntries` is gone. Fork #17's
+  category narrowing and `filteredGrouped` (the all-changes list reads it) now live in
+  `listing/use-file-category-grouping.ts`, which also keeps `use-file-projection.ts` under its cap.
+- Upstream added its own clickable PR comment locations (#32031, `CommentLocationLabel`, opening
+  the file in the editor). The fork's §2 `onOpenLocation(comment)` opens the diff at the line and
+  was kept in `comment-row.tsx`, `comment-group.tsx`, `comments-list.tsx`,
+  `use-comments-list-state.tsx` and `active-content.tsx`; upstream's `(path, line)` wiring and
+  `openAnnotationLocation` call were dropped. Upstream's `fixChecksDisabledReason` is applied to the
+  fork's triage strip. Upstream's new `comment-row.test.tsx` cases for `CommentLocationLabel` fail
+  on the fork; Verify does not run them.
+- `MarkdownImageLightbox.tsx` — upstream's controlled `ExpandableMarkdownImage` (native chat image
+  previews: `open`, `triggerRef`, `dialogProps`, `PanZoomImageDialog`) against fork #15's gallery.
+  The image takes upstream's component and, when uncontrolled inside a `MediaGalleryProvider`,
+  registers with and opens the gallery instead; videos stay on the fork's `MediaLightbox`.
+- `virtualized-list.tsx` — upstream's `activeRowKey` / `minimumRows` / `rangeExtractor` (quick
+  command dropdown) beside the fork's `scrollToRowKey` effects.
+- `worktree-review-helpers.tsx` — upstream's `showChecks`; the fork's running spinner now also
+  respects it.
+- `use-native-chat-context-menu.test.tsx` — upstream dropped the layout-section mock; kept the
+  fork's `AgentViewSubmenu` mock. `use-file-projection-work.test.tsx` takes upstream's group order
+  plus the fork's category constants. `web-preload-api-composition.test.ts` and
+  `web-preload-api-github.test.ts`: upstream retired both inventories, so §3's
+  `'reviewStatusRules'` re-apply has nothing left to go into.
+
 **1.4.214 → 1.4.214** (`4298ba998d..88aa3f27ce`, 615 upstream commits, thirty-two conflicts)
 
 - `package.json` still says 1.4.214, so the branch name repeats a ninth time; the earlier pull

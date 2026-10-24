@@ -149,6 +149,8 @@ function resetState(overrides: Partial<Record<string, unknown>> = {}): void {
     activeWorktreeId: mocks.activeWorktree.id,
     activeGroupIdByWorktree: { [mocks.activeWorktree.id]: 'group-1' },
     groupsByWorktree: { [mocks.activeWorktree.id]: [{ id: 'group-1', activeTabId: null }] },
+    // Fork: the PR comment scope resolves its workspace through this.
+    getKnownWorktreeById: () => mocks.activeWorktree,
     repos: [mocks.activeRepo],
     worktreesByRepo: { [mocks.activeRepo.id]: [mocks.activeWorktree] },
     sshConnectionStates: new Map(),

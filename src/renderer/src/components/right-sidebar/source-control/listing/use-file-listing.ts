@@ -102,6 +102,7 @@ export function useSourceControlFileListing({
     presentFileCategories,
     isCategoryFilterActive,
     isGitHistoryVisible,
+    filteredGrouped,
     displaySections,
     unfilteredDisplaySectionsById,
     filteredBranchEntries,

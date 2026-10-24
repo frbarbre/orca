@@ -1,4 +1,3 @@
-import { openWorkspaceFile } from '@/lib/workspace-file-open'
 import { detectLanguage } from '@/lib/language-detect'
 import { joinPath } from '@/lib/path'
 import { useAppStore } from '@/store'
@@ -10,6 +9,7 @@ import type { GitStatusEntry } from '../../../../../../shared/git-status-types'
 import { openChangesFilterEntry } from '@/store/slices/editor/actions/open-changes-filter-entry'
 import { getChangesFilter } from '@/lib/changes-filter'
 import { pickUncommittedRowEntry } from './open-diff-follows-filter'
+import { openUncommittedEntry } from './open-uncommitted-entry'
 
 export function openSourceControlChangeEntry({
   worktreeId,
@@ -54,13 +54,7 @@ export function openSourceControlChangeEntry({
       : undefined) ??
     (branchSummary?.status === 'ready' ? undefined : local[0])
   if (fallback) {
-    openWorkspaceFile({
-      kind: 'uncommitted',
-      worktreeId,
-      worktreePath,
-      entry: fallback,
-      options: { targetGroupId, preview }
-    })
+    openUncommittedEntry(state, worktreeId, worktreePath, fallback, { targetGroupId, preview })
     return
   }
   if (branchSummary?.status !== 'ready') {

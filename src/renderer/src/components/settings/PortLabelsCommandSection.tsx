@@ -1,6 +1,6 @@
 import type { Repo } from '../../../../shared/repo-types'
 import { Label } from '../ui/label'
-import { RepoSettingsDraftInput } from './RepositorySettingsDraftInput'
+import { RepoSettingsDraftInput } from './repository/RepositorySettingsDraftInput'
 import { SearchableSetting } from './SearchableSetting'
 import { translate } from '@/i18n/i18n'
 import type { SettingsSearchEntry } from './settings-search'

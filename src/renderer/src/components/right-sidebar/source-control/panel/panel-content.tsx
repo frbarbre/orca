@@ -40,7 +40,6 @@ export function SourceControlPanelContent(props: SourceControlPanelReadyProps) {
     fileListScrollElement,
     filterQuery,
     filteredBranchEntries,
-    filteredGrouped,
     handleAbortOperationForConflict,
     handleContextMenu,
     handleOpenDiff,

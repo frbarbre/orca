@@ -31,7 +31,7 @@ function project(
       filterQuery: '',
       hiddenFileCategories: new Set(hiddenFileCategories),
       reviewAttributes,
-      sourceControlGroupOrder: ['staged', 'unstaged', 'untracked'],
+      sourceControlGroupOrder: ['staged', 'unstaged'],
       activeWorktreeId: 'wt-1',
       worktreePath: '/repo',
       isFolder: false,
@@ -66,7 +66,9 @@ describe('useSourceControlFileProjection file categories', () => {
 
   it('keeps hidden files out of the section bulk actions', () => {
     const projection = project(['generated'])
+    // Untracked files share the Changes section with unstaged ones.
     expect(paths(projection.unfilteredDisplaySectionsById.get('unstaged')?.items ?? [])).toEqual([
+      'e2e/login.ts',
       'src/app.test.ts'
     ])
   })

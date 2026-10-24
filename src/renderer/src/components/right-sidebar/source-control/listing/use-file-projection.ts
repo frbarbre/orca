@@ -11,10 +11,13 @@ import {
   type SourceControlFileFilterState
 } from './file-filter'
 import {
-  collectSourceControlFileCategories,
   filterSourceControlPathEntriesByCategory,
   type SourceControlFileCategory
 } from './file-category'
+import {
+  filterSourceControlEntryGroups,
+  useSourceControlCategoryGrouping
+} from './use-file-category-grouping'
 import {
   applyGitStatusEntryAreasToSourceControlTree,
   buildGitStatusSourceControlTree,
@@ -132,26 +135,14 @@ export function useSourceControlFileProjection({
     return groups
   }, [entries])
 
-  const presentFileCategories = useMemo(
-    () => collectSourceControlFileCategories([entries, branchEntries], reviewAttributes),
-    [branchEntries, entries, reviewAttributes]
-  )
-  // Why: a hidden category that is absent from this diff narrows nothing, so it must not read as an active filter.
-  const isCategoryFilterActive = presentFileCategories.some((category) =>
-    hiddenFileCategories.has(category)
-  )
-  const categoryGrouped = useMemo((): SourceControlEntryGroups => {
-    if (!isCategoryFilterActive) {
-      return grouped
-    }
-    const narrow = (items: GitStatusEntry[]): GitStatusEntry[] =>
-      filterSourceControlPathEntriesByCategory(items, hiddenFileCategories, reviewAttributes)
-    return {
-      staged: narrow(grouped.staged),
-      unstaged: narrow(grouped.unstaged),
-      untracked: narrow(grouped.untracked)
-    }
-  }, [grouped, hiddenFileCategories, isCategoryFilterActive, reviewAttributes])
+  const { presentFileCategories, isCategoryFilterActive, categoryGrouped } =
+    useSourceControlCategoryGrouping({
+      entries,
+      branchEntries,
+      grouped,
+      hiddenFileCategories,
+      reviewAttributes
+    })
 
   const fileFilterState = useMemo(() => getSourceControlFileFilterState(filterQuery), [filterQuery])
   const normalizedFilter = fileFilterState.normalizedFilter
@@ -161,11 +152,7 @@ export function useSourceControlFileProjection({
     Boolean(activeWorktreeId && worktreePath && !isFolder)
 
   const filteredGrouped = useMemo(
-    (): SourceControlEntryGroups => ({
-      staged: filterSourceControlPathEntries(categoryGrouped.staged, fileFilterState),
-      unstaged: filterSourceControlPathEntries(categoryGrouped.unstaged, fileFilterState),
-      untracked: filterSourceControlPathEntries(categoryGrouped.untracked, fileFilterState)
-    }),
+    () => filterSourceControlEntryGroups(categoryGrouped, fileFilterState),
     [categoryGrouped, fileFilterState]
   )
 

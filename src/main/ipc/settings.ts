@@ -41,6 +41,7 @@ import {
 } from '../../shared/computer-awake-mode'
 import { resolveAiVaultSearchSettings } from '../../shared/ai-vault-search-settings'
 import { applySessionSearchSettingsChange } from '../ai-vault-search/session-search-enablement'
+import { APPEARANCE_MENU_KEYS } from './appearance-menu-keys'
 
 const SETTINGS_CHANGED_WHITELIST_SET = new Set<string>(SETTINGS_CHANGED_WHITELIST)
 
@@ -57,16 +58,6 @@ function sanitizeRendererSettingsUpdate(args: Partial<GlobalSettings>): Partial<
   delete sanitizedArgs.disabledPlugins
   return sanitizedArgs
 }
-
-// Electron menus do not react to settings; rebuild appearance checkboxes after writes.
-const APPEARANCE_MENU_KEYS: readonly (keyof GlobalSettings)[] = [
-  'showTasksButton',
-  'showAutomationsButton',
-  'showMobileButton',
-  'showTitlebarAppName',
-  // Fork: View > Source Control Sections.
-  'sourceControlSectionLayout'
-]
 
 export function registerSettingsHandlers(
   store: Store,

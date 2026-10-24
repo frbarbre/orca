@@ -14,7 +14,6 @@ import {
   Image as ImageIcon,
   PanelBottomClose,
   PanelRightClose,
-  SquareTerminal,
   X
 } from 'lucide-react'
 import {
@@ -37,7 +36,7 @@ import { useStructuredChatPaneActions } from './use-structured-chat-pane-actions
 import { isEditableTarget } from '@/lib/editable-target'
 import { findEditablePrimarySelectionPasteTarget } from '@/lib/primary-selection-paste'
 import { NativeChatCopyOrcaSessionIdMenuItem } from './NativeChatCopyOrcaSessionIdMenuItem'
-import { AgentViewSubmenu } from '@/components/terminal-pane/AgentViewSubmenu'
+import { NativeChatSwitchViewMenuItem } from './NativeChatSwitchViewMenuItem'
 import { NativeChatSelectionQuote } from './NativeChatSelectionQuote'
 import { NativeChatPaneMenuItems } from './NativeChatPaneMenuItems'
 import type { NativeChatComposerHandle } from './native-chat-composer-types'
@@ -299,24 +298,11 @@ export function useNativeChatContextMenu({
           {onFind ? <NativeChatFindMenuItem onSelect={() => onFind(state.returnFocusTo)} /> : null}
           {showTerminalPaneActions ? (
             <>
-              {onSwitchToTerminal && agentView ? (
-                <AgentViewSubmenu
-                  tabId={agentView.tabId}
-                  leafId={agentView.leafId}
-                  canChat
-                  isChat
-                  onToggleChat={onSwitchToTerminal}
-                />
-              ) : onSwitchToTerminal ? (
-                <DropdownMenuItem onSelect={onSwitchToTerminal}>
-                  <SquareTerminal />
-                  {translate(
-                    'components.tab.bar.SortableTabContextMenu.switchToTerminalView',
-                    'Continue with Terminal Agent'
-                  )}
-                  <DropdownMenuShortcut>{shortcutLabel}</DropdownMenuShortcut>
-                </DropdownMenuItem>
-              ) : null}
+              <NativeChatSwitchViewMenuItem
+                onSwitchToTerminal={onSwitchToTerminal}
+                agentView={agentView}
+                shortcutLabel={shortcutLabel}
+              />
               {actions.canContinueAgentSessionInNewSession ? (
                 <AgentSessionContinuationMenuItem
                   onSelect={actions.onContinueAgentSessionInNewSession}

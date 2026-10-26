@@ -209,8 +209,27 @@ describe('LSP session', () => {
     expect(watched?.params).toEqual({
       changes: [
         { uri: 'file:///repo/apps/backend/a.py', type: 2 },
+        { uri: 'file:///repo/apps/backend/new.py', type: 2 },
         { uri: 'file:///repo/apps/backend/new.py', type: 1 },
         { uri: 'file:///repo/apps/backend/gone.py', type: 3 }
+      ]
+    })
+  })
+
+  it('reports a created path as changed first, so an atomic save over a known file is reread', async () => {
+    const server = fakeServer(null)
+    const session = createLspSession({ transport: server.transport, rootPath: '/repo' })
+    await session.definition(request('text'))
+
+    session.filesChanged([{ filePath: '/repo/src/lib.ts', type: 'create' }])
+
+    const watched = server.received.find(
+      (message) => message.method === 'workspace/didChangeWatchedFiles'
+    )
+    expect(watched?.params).toEqual({
+      changes: [
+        { uri: 'file:///repo/src/lib.ts', type: 2 },
+        { uri: 'file:///repo/src/lib.ts', type: 1 }
       ]
     })
   })

@@ -3,7 +3,6 @@ import {
   resolveWorktreeCardReview,
   worktreeCardReviewCacheKeys
 } from '@/components/sidebar/worktree-card-review-resolution'
-import type { GitHubOwnerRepo } from '../../../shared/github/pull-request-types'
 
 type PullRequestUrlState = Pick<
   AppState,
@@ -15,15 +14,8 @@ type PullRequestUrlState = Pick<
   | 'prCache'
 >
 
-export type ActiveGitHubPullRequest = {
-  worktreeId: string
-  repoPath: string
-  repoId: string
-  prNumber: number
-  prRepo: GitHubOwnerRepo | null
-}
-
-function activeWorktreeReview(state: PullRequestUrlState) {
+/** The URL of the review the active workspace's card shows, when it has one. */
+export function activeWorktreePullRequestUrl(state: PullRequestUrlState): string | null {
   const worktree = state.activeWorktreeId
     ? state.getKnownWorktreeById(state.activeWorktreeId)
     : undefined
@@ -41,27 +33,5 @@ function activeWorktreeReview(state: PullRequestUrlState) {
     hostedReviewCacheKey ? state.hostedReviewCache[hostedReviewCacheKey] : undefined,
     prCacheKey ? state.prCache?.[prCacheKey] : undefined
   )
-  return prDisplay ? { worktree, repo, prDisplay } : null
-}
-
-/** The URL of the review the active workspace's card shows, when it has one. */
-export function activeWorktreePullRequestUrl(state: PullRequestUrlState): string | null {
-  return activeWorktreeReview(state)?.prDisplay.url ?? null
-}
-
-export function activeWorktreeGitHubPullRequest(
-  state: PullRequestUrlState
-): ActiveGitHubPullRequest | null {
-  const review = activeWorktreeReview(state)
-  if (!review?.repo || review.prDisplay.provider !== 'github') {
-    return null
-  }
-  const { worktree, repo, prDisplay } = review
-  return {
-    worktreeId: worktree.id,
-    repoPath: repo.path,
-    repoId: repo.id,
-    prNumber: prDisplay.number,
-    prRepo: ('githubRepository' in prDisplay ? prDisplay.githubRepository : undefined) ?? null
-  }
+  return prDisplay?.url ?? null
 }

@@ -39,11 +39,36 @@ vi.mock('@/lib/open-workspace-frontend', () => ({
 
 const nextAction = vi.hoisted(() => ({
   action: 'create-pull-request' as string | null,
+  prState: null as string | null,
   launch: vi.fn(() => Promise.resolve())
 }))
 vi.mock('@/components/right-sidebar/workspace-actions/workspace-action-context', () => ({
-  selectWorkspaceActionContext: () => ({ action: nextAction.action })
+  selectWorkspaceActionContext: () => ({
+    action: nextAction.action,
+    pr: nextAction.prState ? { state: nextAction.prState } : null
+  })
 }))
+
+describe('review shortcut', () => {
+  beforeEach(() => vi.clearAllMocks())
+  const match = (id: string): boolean => id === 'workspace.review'
+
+  it("runs the top bar's Review button on an open pull request", () => {
+    nextAction.prState = 'open'
+
+    expect(takeSourceControlShortcut(match, true, actions)).toBe('workspace.review')
+    expect(nextAction.launch).toHaveBeenCalledWith('review')
+    expect(toast.info).not.toHaveBeenCalled()
+  })
+
+  it('says so when there is no open pull request to review', () => {
+    nextAction.prState = 'merged'
+
+    expect(takeSourceControlShortcut(match, true, actions)).toBe('workspace.review')
+    expect(nextAction.launch).not.toHaveBeenCalled()
+    expect(toast.info).toHaveBeenCalledWith('This workspace has no pull request to review.')
+  })
+})
 vi.mock('@/components/right-sidebar/workspace-actions/launch-workspace-action', () => ({
   launchWorkspaceAction: nextAction.launch
 }))

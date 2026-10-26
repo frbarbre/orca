@@ -226,5 +226,14 @@ export const KEYBINDING_DEFINITION_CORE_4: readonly KeybindingDefinition[] = [
       'auto-merge'
     ],
     defaultBindings: platformBindings(['Mod+Alt+Enter'])
+  },
+  {
+    id: 'workspace.review',
+    title: 'Review Pull Request',
+    group: 'Global',
+    scope: 'global',
+    conflictGroup: 'editor',
+    searchKeywords: ['shortcut', 'review', 'pull request', 'pr', 'agent'],
+    defaultBindings: platformBindings(['Mod+Alt+Shift+Enter'])
   }
 ]

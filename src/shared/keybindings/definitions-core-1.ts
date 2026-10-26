@@ -227,8 +227,8 @@ export const KEYBINDING_DEFINITION_CORE_1: readonly KeybindingDefinition[] = [
     title: 'Show Checks',
     group: 'Global',
     scope: 'global',
-    searchKeywords: ['shortcut', 'sidebar', 'checks', 'ci'],
-    defaultBindings: platformBindings([])
+    searchKeywords: ['shortcut', 'sidebar', 'checks', 'ci', 'pull request', 'pr'],
+    defaultBindings: platformBindings(['Mod+Shift+K'])
   },
   {
     id: 'sidebar.ports.toggle',

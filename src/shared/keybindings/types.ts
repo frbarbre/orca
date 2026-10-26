@@ -115,6 +115,7 @@ export type KeybindingActionId =
   | 'sourceControl.openPullRequestPreview'
   | 'workspace.openFrontend'
   | 'workspace.runNextAction'
+  | 'workspace.review'
   | 'sourceControl.focusReviewSummary'
   | 'fileExplorer.undo'
   | 'fileExplorer.redo'

@@ -6,7 +6,6 @@ import {
   getPRCheckDetails,
   getPRChecks,
   getPRComments,
-  getPRPreviewDeploymentUrl,
   getRepoSlug,
   getRepoUpstream,
   resolveReviewThread,
@@ -92,28 +91,6 @@ export function registerGitHubPRReadHandlers(store: Store): void {
           url: args.url,
           prRepo: args.prRepo ?? null
         },
-        getGitHubRepoConnectionId(repo),
-        ...getGitHubLocalGitOptionArgs(store, repo)
-      )
-    }
-  )
-
-  ipcMain.handle(
-    'gh:prPreviewUrl',
-    (
-      _event,
-      args: {
-        repoPath: string
-        repoId?: string | null
-        prNumber: number
-        prRepo?: GitHubOwnerRepo | null
-      }
-    ) => {
-      const repo = assertRegisteredGitHubRepo(args, store)
-      return getPRPreviewDeploymentUrl(
-        repo.path,
-        args.prNumber,
-        args.prRepo ?? null,
         getGitHubRepoConnectionId(repo),
         ...getGitHubLocalGitOptionArgs(store, repo)
       )

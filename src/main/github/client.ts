@@ -18,7 +18,6 @@ export { getPRChecks } from './client/check/get-pr-checks'
 export { getPRComments } from './client/fetch/get-pr-comments'
 export { getPRForBranch } from './client/lookup/get-pr-for-branch'
 export { getPRForBranchOutcome } from './client/lookup/pr-for-branch-outcome'
-export { getPRPreviewDeploymentUrl } from './client/fetch/pr-preview-deployment-url'
 export {
   getPullRequestPushTarget,
   type PullRequestPushTarget

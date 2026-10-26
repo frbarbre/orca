@@ -21,6 +21,24 @@ describe('pull request shortcuts', () => {
     }
   )
 
+  it.each(['darwin', 'linux', 'win32'] as const)(
+    'shows the Checks tab with Mod+Shift+K on %s',
+    (platform) => {
+      expect(getEffectiveKeybindingsForAction('sidebar.checks.toggle', platform)).toEqual([
+        'Mod+Shift+K'
+      ])
+    }
+  )
+
+  it.each(['darwin', 'linux', 'win32'] as const)(
+    'reviews the pull request with Mod+Alt+Shift+Enter on %s',
+    (platform) => {
+      expect(getEffectiveKeybindingsForAction('workspace.review', platform)).toEqual([
+        'Mod+Alt+Shift+Enter'
+      ])
+    }
+  )
+
   it('copies its URL with Shift+Option+Cmd+G on macOS', () => {
     expect(
       keybindingMatchesAction(

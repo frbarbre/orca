@@ -80,7 +80,7 @@ export function WorkspaceReviewButton(): React.JSX.Element | null {
   }
   const label = translate('auto.components.workspaceActions.review', 'Review')
   return (
-    <HeaderButtonTooltip label={label}>
+    <HeaderButtonTooltip label={label} shortcut="workspace.review">
       <Button
         type="button"
         variant="ghost"

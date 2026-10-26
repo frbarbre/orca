@@ -21362,6 +21362,9 @@
     "nextAction": {
       "none": "This workspace has no next action."
     },
+    "review": {
+      "none": "This workspace has no pull request to review."
+    },
     "frontend": {
       "notRunning": "No frontend dev server is running."
     }

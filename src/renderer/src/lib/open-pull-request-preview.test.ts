@@ -1,69 +1,90 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const pullRequest = vi.hoisted(() => ({
-  current: null as {
-    worktreeId: string
-    repoPath: string
-    repoId: string
-    prNumber: number
-    prRepo: { owner: string; repo: string } | null
-  } | null
-}))
-const openWorkspaceFrontendUrl = vi.hoisted(() => vi.fn())
+const TARGET = {
+  repoPath: '/code/app',
+  repoId: 'repo-1',
+  prNumber: 7,
+  prRepo: { owner: 'acme', repo: 'app' },
+  headSha: 'abc1234',
+  commentsCacheKey: 'comments-7'
+}
 
-vi.mock('@/store', () => ({ useAppStore: { getState: () => ({}) } }))
-vi.mock('@/lib/worktree-pull-request-url', () => ({
-  activeWorktreeGitHubPullRequest: () => pullRequest.current
+function previewComment(url: string, createdAt: string) {
+  return { isBot: true, body: `🔎 **Preview deployment** for \`abc1234\`: ${url}`, createdAt }
+}
+
+const mocks = vi.hoisted(() => ({
+  target: null as typeof TARGET | null,
+  commentsCache: {} as Record<string, { data: unknown[] }>,
+  fetchPRComments: vi.fn(),
+  openUrl: vi.fn()
 }))
-vi.mock('@/lib/open-workspace-frontend', () => ({ openWorkspaceFrontendUrl }))
+
+vi.mock('@/store', () => ({
+  useAppStore: {
+    getState: () => ({
+      commentsCache: mocks.commentsCache,
+      fetchPRComments: mocks.fetchPRComments
+    })
+  }
+}))
+vi.mock('@/components/right-sidebar/preview-deployment-target', () => ({
+  selectPreviewTarget: () => mocks.target
+}))
 
 import { openActivePullRequestPreview } from './open-pull-request-preview'
 
 describe('openActivePullRequestPreview', () => {
-  const prPreviewUrl = vi.fn()
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.stubGlobal('window', { api: { gh: { prPreviewUrl } } })
+    mocks.target = TARGET
+    mocks.commentsCache = {}
+    mocks.fetchPRComments.mockResolvedValue(undefined)
+    vi.stubGlobal('window', { api: { shell: { openUrl: mocks.openUrl } } })
   })
 
-  it("opens the pull request's preview deployment in the workspace", async () => {
-    pullRequest.current = {
-      worktreeId: 'wt-1',
-      repoPath: '/code/app',
-      repoId: 'repo-1',
-      prNumber: 7,
-      prRepo: { owner: 'acme', repo: 'app' }
+  it('opens the newest preview the preview button shows, like a click on it', async () => {
+    mocks.commentsCache = {
+      'comments-7': {
+        data: [
+          previewComment('https://old.pages.dev', '2026-10-20T10:00:00Z'),
+          previewComment('https://new.pages.dev', '2026-10-21T10:00:00Z')
+        ]
+      }
     }
-    prPreviewUrl.mockResolvedValue('https://abc.pages.dev')
 
     await expect(openActivePullRequestPreview()).resolves.toBe(true)
-    expect(prPreviewUrl).toHaveBeenCalledWith({
-      repoPath: '/code/app',
-      repoId: 'repo-1',
-      prNumber: 7,
-      prRepo: { owner: 'acme', repo: 'app' }
-    })
-    expect(openWorkspaceFrontendUrl).toHaveBeenCalledWith('wt-1', 'https://abc.pages.dev')
+    expect(mocks.openUrl).toHaveBeenCalledWith('https://new.pages.dev')
+    expect(mocks.fetchPRComments).not.toHaveBeenCalled()
   })
 
-  it('opens nothing when the pull request has no preview deployment', async () => {
-    pullRequest.current = {
-      worktreeId: 'wt-1',
-      repoPath: '/code/app',
+  it("loads the pull request's comments when none are cached yet", async () => {
+    mocks.fetchPRComments.mockImplementation(() => {
+      mocks.commentsCache['comments-7'] = {
+        data: [previewComment('https://fresh.pages.dev', '2026-10-21T10:00:00Z')]
+      }
+      return Promise.resolve()
+    })
+
+    await expect(openActivePullRequestPreview()).resolves.toBe(true)
+    expect(mocks.fetchPRComments).toHaveBeenCalledWith('/code/app', 7, {
       repoId: 'repo-1',
-      prNumber: 7,
-      prRepo: null
-    }
-    prPreviewUrl.mockResolvedValue(null)
+      prRepo: { owner: 'acme', repo: 'app' }
+    })
+    expect(mocks.openUrl).toHaveBeenCalledWith('https://fresh.pages.dev')
+  })
+
+  it('opens nothing when the pull request has no preview comment', async () => {
+    mocks.commentsCache = { 'comments-7': { data: [] } }
 
     await expect(openActivePullRequestPreview()).resolves.toBe(false)
-    expect(openWorkspaceFrontendUrl).not.toHaveBeenCalled()
+    expect(mocks.openUrl).not.toHaveBeenCalled()
   })
 
   it('opens nothing without a pull request', async () => {
-    pullRequest.current = null
+    mocks.target = null
 
     await expect(openActivePullRequestPreview()).resolves.toBe(false)
-    expect(prPreviewUrl).not.toHaveBeenCalled()
+    expect(mocks.fetchPRComments).not.toHaveBeenCalled()
   })
 })

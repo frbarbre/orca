@@ -2,38 +2,10 @@ import React, { useEffect, useMemo, useState } from 'react'
 import { Telescope } from 'lucide-react'
 import { useShallow } from 'zustand/react/shallow'
 import { useAppStore } from '@/store'
-import type { AppState } from '@/store/types'
-import { prCommentsCacheSuffix } from '@/store/github/cache-identity'
-import { getGitHubRepoCacheKey } from '../../../../shared/github/github-cache-key'
 import { HeaderButtonTooltip } from './HeaderButtonTooltip'
 import { Button } from '@/components/ui/button'
 import { findLatestPreviewDeployment, previewDeploymentTooltip } from '@/lib/preview-deployment'
-import { selectWorkspaceActionContext } from './workspace-actions/workspace-action-context'
-
-function selectPreviewTarget(state: AppState) {
-  const context = selectWorkspaceActionContext(state)
-  const pr = context?.pr
-  if (!context || !pr) {
-    return null
-  }
-  const { repo } = context
-  return {
-    repoPath: repo.path,
-    repoId: repo.id,
-    prNumber: pr.number,
-    prRepo: pr.prRepo,
-    headSha: pr.headSha,
-    commentsCacheKey: getGitHubRepoCacheKey(
-      repo.path,
-      repo.id,
-      prCommentsCacheSuffix(pr.number, pr.prRepo),
-      state.settings,
-      repo.connectionId,
-      repo.executionHostId,
-      true
-    )
-  }
-}
+import { selectPreviewTarget } from './preview-deployment-target'
 
 // Fork: our PRs get a bot comment per push with a preview URL; keep the newest one a click away.
 export function PreviewDeploymentButton(): React.JSX.Element | null {

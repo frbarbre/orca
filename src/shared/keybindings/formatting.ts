@@ -132,6 +132,17 @@ function formatKeyToken(token: string, isMac: boolean): string {
   return (isMac ? MAC_KEY_TOKEN_LABELS : KEY_TOKEN_LABELS)[token] ?? token
 }
 
+const DIRECTIONAL_GROUP_HISTORY_FALLBACKS: readonly (readonly KeybindingActionId[])[] = [
+  ['tabGroup.focusLeft', 'worktree.history.back'],
+  ['tabGroup.focusRight', 'worktree.history.forward']
+]
+
+function isDirectionalGroupHistoryFallback(actionIds: ReadonlySet<KeybindingActionId>): boolean {
+  return DIRECTIONAL_GROUP_HISTORY_FALLBACKS.some(
+    (pair) => actionIds.size === pair.length && pair.every((actionId) => actionIds.has(actionId))
+  )
+}
+
 export function findKeybindingConflicts(
   platform: NodeJS.Platform,
   overrides?: KeybindingOverrides,
@@ -208,6 +219,8 @@ export function findKeybindingConflictsForDefinitions(
           options.includeMainProcessInterception &&
           Array.from(actionIds).every(isDigitIndexActionId)
         ) &&
+        // Fork: with a single tab group the directional chord falls back to worktree history.
+        !(options.includeMainProcessInterception && isDirectionalGroupHistoryFallback(actionIds)) &&
         setIntersects(actionIds, customizedActions)
     )
     .map(({ binding, actionIds }) => ({

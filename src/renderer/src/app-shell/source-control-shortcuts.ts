@@ -27,6 +27,7 @@ type SourceControlShortcutId =
   | 'sourceControl.openPullRequestPreview'
   | 'workspace.openFrontend'
   | 'workspace.runNextAction'
+  | 'workspace.review'
 
 function focusReviewSummaryInOpenPanel(): boolean {
   const { activeWorktreeId, rightSidebarOpen, rightSidebarTab } = useAppStore.getState()
@@ -121,6 +122,17 @@ export function takeSourceControlShortcut(
       toast.info(translate('workspace.nextAction.none', 'This workspace has no next action.'))
     }
     return 'workspace.runNextAction'
+  }
+  if (matchShortcut('workspace.review')) {
+    const prState = selectWorkspaceActionContext(useAppStore.getState())?.pr?.state
+    if (prState === 'open' || prState === 'draft') {
+      void launchWorkspaceAction('review')
+    } else {
+      toast.info(
+        translate('workspace.review.none', 'This workspace has no pull request to review.')
+      )
+    }
+    return 'workspace.review'
   }
   if (matchShortcut('workspace.openFrontend')) {
     if (!openActiveWorkspaceFrontend()) {

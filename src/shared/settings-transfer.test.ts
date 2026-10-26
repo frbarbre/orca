@@ -25,6 +25,7 @@ const settings = {
   telemetry: { optedIn: true },
   githubProjects: [{ id: 1 }],
   terminalMacOptionAsAltMigrated: true,
+  uiLanguagePortugueseMigrationApplied: true,
   workspaceDir: '/Users/me/orca/workspaces',
   voice: { enabled: true, modelsDir: '/Users/me/models', microphoneDeviceId: 'mic-1' },
   notifications: { enabled: true, customSoundPath: '/Users/me/ping.wav' },

@@ -38,28 +38,14 @@ function parseProcessSessionRecord(raw: string): ClaudeProcessSessionRecord | nu
   }
 }
 
-// Why: Claude Code writes one `sessions/<pid>.json` per live process; `bridgeSessionId` is the
-// Remote Control session claude.ai serves. A resumed session can leave several files behind, so
-// the most recently updated one wins.
-export async function resolveClaudeRemoteSessionUrl(
+// Why: a resumed session can leave several process files behind; the most recently updated wins.
+export function resolveClaudeRemoteSessionUrlFromRecords(
   sessionId: string,
-  configDir: string = defaultClaudeConfigDir()
-): Promise<ClaudeRemoteSessionUrlResult> {
-  const sessionsDir = join(configDir, 'sessions')
-  let names: string[]
-  try {
-    names = await readdir(sessionsDir)
-  } catch {
-    return { status: 'session-not-found' }
-  }
+  rawRecords: readonly string[]
+): ClaudeRemoteSessionUrlResult {
   let match: ClaudeProcessSessionRecord | null = null
-  for (const name of names) {
-    if (!name.endsWith('.json')) {
-      continue
-    }
-    const record = await readFile(join(sessionsDir, name), 'utf8')
-      .then(parseProcessSessionRecord)
-      .catch(() => null)
+  for (const raw of rawRecords) {
+    const record = parseProcessSessionRecord(raw)
     if (record?.sessionId === sessionId && (!match || record.updatedAt > match.updatedAt)) {
       match = record
     }
@@ -71,4 +57,25 @@ export async function resolveClaudeRemoteSessionUrl(
     return { status: 'remote-control-off', startedAt: match.startedAt }
   }
   return { status: 'ready', url: `https://claude.ai/code/${match.bridgeSessionId}` }
+}
+
+// Why: Claude Code writes one `sessions/<pid>.json` per live process; `bridgeSessionId` is the
+// Remote Control session claude.ai serves.
+export async function resolveClaudeRemoteSessionUrl(
+  sessionId: string,
+  configDir: string = defaultClaudeConfigDir()
+): Promise<ClaudeRemoteSessionUrlResult> {
+  const sessionsDir = join(configDir, 'sessions')
+  let names: string[]
+  try {
+    names = await readdir(sessionsDir)
+  } catch {
+    return { status: 'session-not-found' }
+  }
+  const records = await Promise.all(
+    names
+      .filter((name) => name.endsWith('.json'))
+      .map((name) => readFile(join(sessionsDir, name), 'utf8').catch(() => ''))
+  )
+  return resolveClaudeRemoteSessionUrlFromRecords(sessionId, records)
 }

@@ -1,7 +1,9 @@
 import { useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { makePaneKey } from '../../../../shared/stable-pane-id'
+import type { ExecutionHostId } from '../../../../shared/execution-host'
 import { useAppStore } from '@/store'
+import { getKnownExecutionHostIdForWorktree } from '@/lib/worktree-runtime-owner'
 import type { ManagedPane } from '@/lib/pane-manager/pane-manager'
 import { ClaudeWebView } from './ClaudeWebView'
 import {
@@ -20,11 +22,13 @@ function ClaudeWebPaneCover({
   pane,
   tabId,
   sessionId,
+  hostId,
   onSwitchToTerminal
 }: {
   pane: Pick<ManagedPane, 'terminal'>
   tabId: string
   sessionId: string
+  hostId: ExecutionHostId | null
   onSwitchToTerminal: () => void
 }): React.JSX.Element {
   const coverRef = useRef<HTMLDivElement>(null)
@@ -44,7 +48,12 @@ function ClaudeWebPaneCover({
         }
       }}
     >
-      <ClaudeWebView tabId={tabId} sessionId={sessionId} onSwitchToTerminal={onSwitchToTerminal} />
+      <ClaudeWebView
+        tabId={tabId}
+        sessionId={sessionId}
+        hostId={hostId}
+        onSwitchToTerminal={onSwitchToTerminal}
+      />
     </div>
   )
 }
@@ -52,15 +61,17 @@ function ClaudeWebPaneCover({
 export function TerminalPaneClaudeWebPortal({
   controller
 }: {
-  controller: Pick<TerminalPaneController, 'managedPanes' | 'tabId'>
+  controller: Pick<TerminalPaneController, 'managedPanes' | 'tabId' | 'worktreeId'>
 }): React.JSX.Element | null {
-  const { managedPanes, tabId } = controller
+  const { managedPanes, tabId, worktreeId } = controller
   const leafId = useClaudeWebViewLeafId(tabId)
   const hide = claudeWebView.hide
   const liveSessionId = useAppStore((state) =>
     leafId ? resolvePaneClaudeSessionId(state, makePaneKey(tabId, leafId)) : null
   )
   const sessionId = useHeldClaudeSessionId(leafId, liveSessionId)
+  // Why: Claude Code writes the session's claude.ai link on the host it runs on, e.g. over SSH.
+  const hostId = useAppStore((state) => getKnownExecutionHostIdForWorktree(state, worktreeId))
   const exitedToShell = useAppStore((state) =>
     leafId
       ? state.paneForegroundAgentByPaneKey[makePaneKey(tabId, leafId)]?.shellForeground === true
@@ -87,6 +98,7 @@ export function TerminalPaneClaudeWebPortal({
       pane={pane}
       tabId={tabId}
       sessionId={sessionId}
+      hostId={hostId}
       onSwitchToTerminal={() => hide(tabId)}
     />,
     pane.container,

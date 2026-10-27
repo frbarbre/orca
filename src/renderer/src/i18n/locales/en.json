@@ -3940,7 +3940,7 @@
             "pageLabel": "Claude Code on the web",
             "loadFailed": "claude.ai could not be loaded.",
             "remoteControlOff": "Remote Control is not on for this session. Run /remote-control in Claude Code, then try again.",
-            "sessionNotFound": "This Claude Code session could not be found on this machine.",
+            "sessionNotFound": "This Claude Code session could not be found on the machine running it.",
             "retry": "Try again"
           }
         }

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { AlertCircle, Loader2, SquareTerminal } from 'lucide-react'
 import { ORCA_BROWSER_GUEST_WEB_PREFERENCES_ATTRIBUTE } from '../../../../shared/browser-guest-web-preferences'
 import type { ClaudeRemoteSessionUrlResult } from '../../../../shared/claude-remote-session'
+import type { ExecutionHostId } from '../../../../shared/execution-host'
 import { moveFocusToRendererBeforeWebviewDetach } from '@/components/browser-pane/host-guest/webview-registry'
 import { Button } from '@/components/ui/button'
 import { translate } from '@/i18n/i18n'
@@ -113,17 +114,19 @@ function unavailableMessage(result: ClaudeRemoteSessionUrlResult | 'failed'): st
   }
   return translate(
     'auto.components.terminal.pane.ClaudeWebView.sessionNotFound',
-    'This Claude Code session could not be found on this machine.'
+    'This Claude Code session could not be found on the machine running it.'
   )
 }
 
 export function ClaudeWebView({
   tabId,
   sessionId,
+  hostId,
   onSwitchToTerminal
 }: {
   tabId: string
   sessionId: string
+  hostId: ExecutionHostId | null
   onSwitchToTerminal: () => void
 }): React.JSX.Element {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -138,7 +141,8 @@ export function ClaudeWebView({
     setPageState('loading')
     void Promise.all([
       pollClaudeRemoteSessionUrl(
-        () => window.api.claudeRemoteSession.resolveUrl({ sessionId }),
+        () =>
+          window.api.claudeRemoteSession.resolveUrl({ sessionId, ...(hostId ? { hostId } : {}) }),
         controller.signal
       ),
       window.api.browser.sessionResolvePartition({ profileId: null })
@@ -174,7 +178,7 @@ export function ClaudeWebView({
       controller.abort()
       detach?.()
     }
-  }, [sessionId, tabId, attempt])
+  }, [sessionId, hostId, tabId, attempt])
 
   const unavailable =
     resolved === 'failed' || (resolved !== null && resolved.status !== 'ready')

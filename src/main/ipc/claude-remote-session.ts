@@ -1,7 +1,9 @@
 import { BrowserWindow, clipboard, ipcMain, Menu, shell, webContents } from 'electron'
 import type { KeybindingOverrides } from '../../shared/keybindings'
 import type { ClaudeRemoteSessionUrlResult } from '../../shared/claude-remote-session'
+import { parseExecutionHostId } from '../../shared/execution-host'
 import { resolveClaudeRemoteSessionUrl } from '../claude/claude-remote-session-url'
+import { resolveSshClaudeRemoteSessionUrl } from '../claude/claude-remote-session-url-ssh'
 import { installClaudeWebGuestShortcuts } from '../claude/claude-web-guest-shortcuts'
 import { installClaudeWebContextMenu } from '../claude/claude-web-context-menu'
 import { installClaudeWebExternalLinks } from '../claude/claude-web-external-links'
@@ -12,10 +14,18 @@ export function registerClaudeRemoteSessionHandlers(
 ): void {
   ipcMain.handle(
     'claudeRemoteSession:resolveUrl',
-    async (_event, args: { sessionId?: unknown }): Promise<ClaudeRemoteSessionUrlResult> => {
+    async (
+      _event,
+      args: { sessionId?: unknown; hostId?: unknown }
+    ): Promise<ClaudeRemoteSessionUrlResult> => {
       const sessionId = args?.sessionId
       if (typeof sessionId !== 'string' || sessionId.length === 0 || sessionId.length > 200) {
         return { status: 'session-not-found' }
+      }
+      // Why: an SSH session's Claude Code writes its process files on that host, not this one.
+      const host = parseExecutionHostId(typeof args.hostId === 'string' ? args.hostId : null)
+      if (host?.kind === 'ssh') {
+        return resolveSshClaudeRemoteSessionUrl(host.targetId, sessionId)
       }
       return resolveClaudeRemoteSessionUrl(sessionId)
     }

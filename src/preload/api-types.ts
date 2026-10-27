@@ -75,6 +75,7 @@ import type {
   ClaudeRemoteSessionUrlResult,
   ClaudeWebReplayedKey
 } from '../shared/claude-remote-session'
+import type { ExecutionHostId } from '../shared/execution-host'
 import type {
   LanguageServerDefinitionResult,
   LanguageServerHoverResult,
@@ -159,7 +160,10 @@ export type PreloadApi = {
   memory: MemoryApi
   claudeUsage: ClaudeUsageApi
   claudeRemoteSession: {
-    resolveUrl: (args: { sessionId: string }) => Promise<ClaudeRemoteSessionUrlResult>
+    resolveUrl: (args: {
+      sessionId: string
+      hostId?: ExecutionHostId
+    }) => Promise<ClaudeRemoteSessionUrlResult>
     attachGuest: (args: { webContentsId: number }) => Promise<void>
     onReplayKey: (callback: (key: ClaudeWebReplayedKey) => void) => () => void
   }

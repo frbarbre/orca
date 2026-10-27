@@ -1,9 +1,10 @@
 import { ipcRenderer } from 'electron'
 import type { PreloadApi } from '../api-types'
 import type { ClaudeWebReplayedKey } from '../../shared/claude-remote-session'
+import type { ExecutionHostId } from '../../shared/execution-host'
 
 export const claudeRemoteSessionApi = {
-  resolveUrl: (args: { sessionId: string }) =>
+  resolveUrl: (args: { sessionId: string; hostId?: ExecutionHostId }) =>
     ipcRenderer.invoke('claudeRemoteSession:resolveUrl', args),
   attachGuest: (args: { webContentsId: number }) =>
     ipcRenderer.invoke('claudeRemoteSession:attachGuest', args),

@@ -100,22 +100,22 @@ Two rules, both learned the hard way:
    arm it — a fork build then silently checks upstream's releases and offers an upstream version.
    `src/main/updater-fork-feed-lazy.test.ts` guards this; do not collapse those functions to consts.
 
-| File                                           | What is ours                                                                                                                                                                                     |
-| ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `src/main/updater/updater-manual-install.ts`   | Whole file (new). `armForkUpdateChannel` + the manual-install helpers.                                                                                                                           |
-| `src/main/index.ts`                            | The `armForkUpdateChannel(app.isPackaged)` call and its import. If upstream restructures startup, move the call — keep it before any updater setup runs.                                         |
-| `src/main/updater/updater-setup.ts`            | `ORCA_UPDATE_FEED_URL ??` on the feed URL, and the `!isManualInstallOnlyUpdate()` term in `autoInstallOnAppQuit`.                                                                                |
-| `src/main/updater/updater-release-feed.ts`     | `ORCA_UPDATE_FEED_URL ??` on the fallback feed URL.                                                                                                                                              |
-| `src/main/updater-prerelease-feed.ts`          | `repoBase()` / `atomFeedUrl()` / `releasesDownloadBase()` / `tagHrefPattern()` and the regexes derived from them. Upstream hardcodes the slug; keep it derived, and keep these as **functions**. |
-| `src/main/updater/updater-download-install.ts` | The `isManualInstallOnlyUpdate()` early return at the top of `downloadUpdate` and `quitAndInstall`.                                                                                              |
-| `config/electron-builder.config.cjs`           | `owner: process.env.ORCA_PUBLISH_OWNER ?? 'frbarbre'` and `releaseType: … : 'release'`.                                                                                                          |
-| `.github/workflows/fork-release.yml`           | Whole file (new).                                                                                                                                                                                |
-| `config/scripts/fork-release-notes.mjs` (+ test) | Whole file (new). Resolves the fork version and writes the two-part release notes. |
-| `config/scripts/test-fork-features.sh` | Whole file (new). Runs every test a fork commit touched; part of [Verify](#verify). |
-| `.github/workflows/fork-verify.yml` | Whole file (new). [Verify](#verify) on pull requests. |
-| `config/scripts/fork-disable-upstream-pr-workflows.mjs` | Whole file (new). Keeps upstream's pull-request workflows disabled on this repository. |
-| `src/shared/release-channel.ts` | `setMainReleaseRepoOverride` and the `mainReleaseRepo()` it feeds. `MAIN_RELEASE_REPO` itself stays upstream's — same rule as the updater URLs. |
-| `src/renderer/src/main.tsx` | Arms that override from `VITE_ORCA_RELEASES_REPO`. The renderer cannot read the main process's env, so release-notes links there resolved to upstream's repo — a 404 for every fork-only version. |
+| File                                                    | What is ours                                                                                                                                                                                      |
+| ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/main/updater/updater-manual-install.ts`            | Whole file (new). `armForkUpdateChannel` + the manual-install helpers.                                                                                                                            |
+| `src/main/index.ts`                                     | The `armForkUpdateChannel(app.isPackaged)` call and its import. If upstream restructures startup, move the call — keep it before any updater setup runs.                                          |
+| `src/main/updater/updater-setup.ts`                     | `ORCA_UPDATE_FEED_URL ??` on the feed URL, and the `!isManualInstallOnlyUpdate()` term in `autoInstallOnAppQuit`.                                                                                 |
+| `src/main/updater/updater-release-feed.ts`              | `ORCA_UPDATE_FEED_URL ??` on the fallback feed URL.                                                                                                                                               |
+| `src/main/updater-prerelease-feed.ts`                   | `repoBase()` / `atomFeedUrl()` / `releasesDownloadBase()` / `tagHrefPattern()` and the regexes derived from them. Upstream hardcodes the slug; keep it derived, and keep these as **functions**.  |
+| `src/main/updater/updater-download-install.ts`          | The `isManualInstallOnlyUpdate()` early return at the top of `downloadUpdate` and `quitAndInstall`.                                                                                               |
+| `config/electron-builder.config.cjs`                    | `owner: process.env.ORCA_PUBLISH_OWNER ?? 'frbarbre'` and `releaseType: … : 'release'`.                                                                                                           |
+| `.github/workflows/fork-release.yml`                    | Whole file (new).                                                                                                                                                                                 |
+| `config/scripts/fork-release-notes.mjs` (+ test)        | Whole file (new). Resolves the fork version and writes the two-part release notes.                                                                                                                |
+| `config/scripts/test-fork-features.sh`                  | Whole file (new). Runs every test a fork commit touched; part of [Verify](#verify).                                                                                                               |
+| `.github/workflows/fork-verify.yml`                     | Whole file (new). [Verify](#verify) on pull requests.                                                                                                                                             |
+| `config/scripts/fork-disable-upstream-pr-workflows.mjs` | Whole file (new). Keeps upstream's pull-request workflows disabled on this repository.                                                                                                            |
+| `src/shared/release-channel.ts`                         | `setMainReleaseRepoOverride` and the `mainReleaseRepo()` it feeds. `MAIN_RELEASE_REPO` itself stays upstream's — same rule as the updater URLs.                                                   |
+| `src/renderer/src/main.tsx`                             | Arms that override from `VITE_ORCA_RELEASES_REPO`. The renderer cannot read the main process's env, so release-notes links there resolved to upstream's repo — a 404 for every fork-only version. |
 
 #### The fork installs its own updates (macOS)
 
@@ -131,7 +131,7 @@ Four things verified on a real machine before this was written, each of which th
 - **A detached child outlives the app.** `spawn(..., { detached: true, stdio: 'ignore' })` plus
   `unref()` survives the parent exiting, which is precisely what the script waits for.
 - **Downloading in-process avoids Gatekeeper entirely.** `com.apple.quarantine` is set by the
-  *downloader*, not by the act of downloading; a file written by Node gets only
+  _downloader_, not by the act of downloading; a file written by Node gets only
   `com.apple.provenance`, which Gatekeeper does not act on. The script still strips quarantine
   defensively.
 - **`codesign -v` cannot be the gate.** It fails on a perfectly good install of this fork — "code
@@ -143,11 +143,11 @@ The swap moves the old bundle to `Orca.app.previous` rather than deleting it, so
 one `mv` from recovery, and every failure path relaunches the version that is still installed.
 `ditto` does the expanding, not `unzip`, which does not preserve bundle symlinks or permissions.
 
-| File | What is ours |
-| --- | --- |
-| `src/main/updater/fork-install/*` (+ tests) | Whole directory (new): manifest parsing, the checksum-gated download, the settings backup, the swap script and the orchestrator. |
-| `src/main/updater/updater-manual-install.ts` | Arms `ORCA_UPDATE_SELF_INSTALL` on macOS. |
-| `src/main/updater/updater-download-install.ts` | The self-install branch of `downloadUpdate`, and the early return in `quitAndInstall`. |
+| File                                           | What is ours                                                                                                                     |
+| ---------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `src/main/updater/fork-install/*` (+ tests)    | Whole directory (new): manifest parsing, the checksum-gated download, the settings backup, the swap script and the orchestrator. |
+| `src/main/updater/updater-manual-install.ts`   | Arms `ORCA_UPDATE_SELF_INSTALL` on macOS.                                                                                        |
+| `src/main/updater/updater-download-install.ts` | The self-install branch of `downloadUpdate`, and the early return in `quitAndInstall`.                                           |
 
 Two things that are **not** ours and must not be changed:
 
@@ -181,22 +181,22 @@ New files (no conflict unless upstream adds the same path):
 
 Modified files, and what to re-apply:
 
-| File                                                                                                | What is ours                                                                                                                                                                                                                                                                                                 |
-| --------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `src/shared/keybindings/types.ts`                                                                   | `editor.previousFile` / `editor.nextFile` in the action union.                                                                                                                                                                                                                                               |
-| `src/shared/keybindings/definitions-core-4.ts`                                                      | The two definitions. **These files have a 300-line ESLint cap** — if upstream has grown this one, move ours to whichever `definitions-core-*.ts` has room.                                                                                                                                                   |
-| `src/renderer/src/components/editor/editor-shortcuts.ts`                                            | `installChangedFileNavigationShortcut`, including the `beginChangedFileHold` call on a fresh press. `installMonacoDiffChangeNavigationShortcut` stays upstream's.                                                                                                                                            |
+| File                                                                                                | What is ours                                                                                                                                                                                                                                                                                                                                                              |
+| --------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/shared/keybindings/types.ts`                                                                   | `editor.previousFile` / `editor.nextFile` in the action union.                                                                                                                                                                                                                                                                                                            |
+| `src/shared/keybindings/definitions-core-4.ts`                                                      | The two definitions. **These files have a 300-line ESLint cap** — if upstream has grown this one, move ours to whichever `definitions-core-*.ts` has room.                                                                                                                                                                                                                |
+| `src/renderer/src/components/editor/editor-shortcuts.ts`                                            | `installChangedFileNavigationShortcut`, including the `beginChangedFileHold` call on a fresh press. `installMonacoDiffChangeNavigationShortcut` stays upstream's.                                                                                                                                                                                                         |
 | `src/renderer/src/components/editor/diff-navigation-context.tsx`                                    | The file-nav listener and the `registerDiffEditorForOutsideShortcuts` registration, installed and torn down on the same seam as the change-nav one. The change-nav shortcut is handed an adapter whose `goToDiff` is `goToDiffWithoutWrap`, and the header buttons call `goToDiffWithoutWrap` too — this is what stops Monaco wrapping from the last change to the first. |
-| `src/renderer/.../store/slices/editor/types/editor-files-slice.ts`                                  | `stepToChangedFile` and its `options?: ChangedFileStepOptions` (`wrap: false` for a held chord).                                                                                                                                                                                                             |
-| `src/renderer/src/components/editor/DiffViewer.tsx`                                                 | `useDiffViewerPendingRevealScroll` + the `hasPendingReveal` argument.                                                                                                                                          |
-| `src/renderer/src/components/terminal-workspace-editor-shortcuts.ts`                                | The `handleDiffShortcutOutsideEditor` call at the top of `handleTerminalWorkspaceEditorShortcut`.                                                                                                                                                                                                            |
-| `src/renderer/src/components/editor/useDiffViewerFirstChangeAutoScroll.ts`                          | The `hasPendingReveal` input that makes the auto-scroll stand down.                                                                                                                                                                                                                                          |
-| `src/renderer/src/components/editor/monaco-reveal.ts`, `use-monaco-reveal-scheduler.ts`             | Type widened from `IStandaloneCodeEditor` to `ICodeEditor` so the diff editor can reuse the scheduler.                                                                                                                                                                                                       |
-| `src/renderer/src/components/virtualized-list.tsx`                                                  | `scrollToRowKey`, `alignRowWithinScrollPadding`, and the flow-path wrapper — rendered **only when a caller passes `scrollToRowKey`**, so every other list keeps upstream's bare fragment. Heavily edited — merge with care.                                                                                                                                                                                                    |
-| `src/renderer/.../checks-panel/comment-row.tsx`, `comment-group.tsx`, `use-comments-list-state.tsx` | The `onOpenLocation` prop and the clickable path badge.                                                                                                                                                                                                                                                      |
-| `src/renderer/.../source-control/listing/*`                                                         | `activeOpenRowKey`, the branch-row `isOpenFile` highlight, the published review order in `use-published-review-order.ts`.                                                                                                                                                                                              |
-| `src/renderer/.../source-control/panel/panel-ready.tsx`                                             | `scroll-pt-7` on the file-list scroller — reserves the sticky section header; the Commits dock sets the bottom padding (§35).                                                                                                                                                                                                                                |
-| `src/renderer/.../listing/active-open-file-keys.ts`                                                 | The `branch::<path>` key. Branch keys **must bypass** the availability filter.                                                                                                                                                                                                                               |
+| `src/renderer/.../store/slices/editor/types/editor-files-slice.ts`                                  | `stepToChangedFile` and its `options?: ChangedFileStepOptions` (`wrap: false` for a held chord).                                                                                                                                                                                                                                                                          |
+| `src/renderer/src/components/editor/DiffViewer.tsx`                                                 | `useDiffViewerPendingRevealScroll` + the `hasPendingReveal` argument.                                                                                                                                                                                                                                                                                                     |
+| `src/renderer/src/components/terminal-workspace-editor-shortcuts.ts`                                | The `handleDiffShortcutOutsideEditor` call at the top of `handleTerminalWorkspaceEditorShortcut`.                                                                                                                                                                                                                                                                         |
+| `src/renderer/src/components/editor/useDiffViewerFirstChangeAutoScroll.ts`                          | The `hasPendingReveal` input that makes the auto-scroll stand down.                                                                                                                                                                                                                                                                                                       |
+| `src/renderer/src/components/editor/monaco-reveal.ts`, `use-monaco-reveal-scheduler.ts`             | Type widened from `IStandaloneCodeEditor` to `ICodeEditor` so the diff editor can reuse the scheduler.                                                                                                                                                                                                                                                                    |
+| `src/renderer/src/components/virtualized-list.tsx`                                                  | `scrollToRowKey`, `alignRowWithinScrollPadding`, and the flow-path wrapper — rendered **only when a caller passes `scrollToRowKey`**, so every other list keeps upstream's bare fragment. Heavily edited — merge with care.                                                                                                                                               |
+| `src/renderer/.../checks-panel/comment-row.tsx`, `comment-group.tsx`, `use-comments-list-state.tsx` | The `onOpenLocation` prop and the clickable path badge.                                                                                                                                                                                                                                                                                                                   |
+| `src/renderer/.../source-control/listing/*`                                                         | `activeOpenRowKey`, the branch-row `isOpenFile` highlight, the published review order in `use-published-review-order.ts`.                                                                                                                                                                                                                                                 |
+| `src/renderer/.../source-control/panel/panel-ready.tsx`                                             | `scroll-pt-7` on the file-list scroller — reserves the sticky section header; the Commits dock sets the bottom padding (§35).                                                                                                                                                                                                                                             |
+| `src/renderer/.../listing/active-open-file-keys.ts`                                                 | The `branch::<path>` key. Branch keys **must bypass** the availability filter.                                                                                                                                                                                                                                                                                            |
 
 Four upstream **test** files carry our additions. Take upstream's version, then re-apply:
 
@@ -292,9 +292,9 @@ Modified files, and what to re-apply:
 | `src/shared/rpc-contract/client-ui-params.ts`                                   | `workspaceStatusRules: WorkspaceStatusRules.optional()` and its import.                                                                                                                                           |
 | `src/main/persistence/loading-store/normalize-loaded-ui-state.ts`               | One `normalizeWorkspaceStatusRuleConfig(...)` line in the returned object.                                                                                                                                        |
 | `src/main/persistence/applying-settings/ui-state-read.ts`, `ui-state-update.ts` | One normalize line each, beside `workspaceStatuses`.                                                                                                                                                              |
-| `src/renderer/.../source-control/sync/use-base-refs.ts`                         | `useIsReviewedCommit(normalizedWorktreeBaseRef)` and the `compareBaseRef` line that prefers a pinned reviewed commit. The PR/rebase target (`effectiveBaseRef`) stays upstream's.                                   |
-| `src/main/git/source-control/branch-compare.ts`                                 | `isReviewBaseRef(baseRef) ? baseOid : resolveMergeBase(...)` — a review base is an exact base. Every diff consumer reads `summary.mergeBase`, so the file diffs follow.                                       |
-| `src/main/startup/main-process-ipc-bootstrap.ts`                                | The `review-status-rules:snapshot` handler, and `pending-review:resolve-base` (registered-path check first).                                                                                                                                                                       |
+| `src/renderer/.../source-control/sync/use-base-refs.ts`                         | `useIsReviewedCommit(normalizedWorktreeBaseRef)` and the `compareBaseRef` line that prefers a pinned reviewed commit. The PR/rebase target (`effectiveBaseRef`) stays upstream's.                                 |
+| `src/main/git/source-control/branch-compare.ts`                                 | `isReviewBaseRef(baseRef) ? baseOid : resolveMergeBase(...)` — a review base is an exact base. Every diff consumer reads `summary.mergeBase`, so the file diffs follow.                                           |
+| `src/main/startup/main-process-ipc-bootstrap.ts`                                | The `review-status-rules:snapshot` handler, and `pending-review:resolve-base` (registered-path check first).                                                                                                      |
 | `src/preload/api-types.ts`, `src/preload/index.ts`                              | The `reviewStatusRules` member.                                                                                                                                                                                   |
 | `src/renderer/src/web/web-preload-api.ts`                                       | `...createWebReviewStatusRulesApi()`.                                                                                                                                                                             |
 | `src/renderer/src/store/slices/ui/ui-slice-contract-preferences.ts`             | The three `workspaceStatusRules` members.                                                                                                                                                                         |
@@ -330,7 +330,7 @@ Two things about the transport, both learned the hard way:
   (`gh-exec-file.ts:187`), so `gh api --input -` silently sends an empty body. The input is
   therefore embedded in the mutation document, which is what `review-verdict-mutation.ts` builds
   and escapes.
-- `hostedReview` already means *the pull request itself* in this codebase, so this feature is named
+- `hostedReview` already means _the pull request itself_ in this codebase, so this feature is named
   `pendingReviewComment` / `reviewVerdict` throughout. Do not rename it to "review".
 
 New files (no conflict unless upstream adds the same path):
@@ -348,36 +348,36 @@ New files (no conflict unless upstream adds the same path):
 
 Modified files, and what is ours:
 
-| File | What is ours |
-| --- | --- |
-| `src/shared/worktree/types.ts`, `meta-types.ts`, `rpc-contract/worktree-params.ts` | `pendingReviewComments` beside `diffComments`. |
-| `ipc/worktree-metadata-merge.ts`, `ipc/worktrees/folder-workspace-model.ts`, `runtime/runtime-folder-workspace.ts` | `pendingReviewComments` forwarded out of persisted metadata. **Every one of these has to list the field by name**: they rebuild the renderer's `Worktree` field by field, so one that is left out is written on every change and then dropped on the next launch, with nothing failing in between. Now read only to adopt drafts written before they moved onto the device. |
-| `src/main/github/pending-review-draft-store.ts` (+ test), `components/pending-review/pending-review-draft-store.ts` (+ test) | New. The device-local queue: the file, and the renderer store that keeps an edit made before the first load finishes. Reached through `pending-review:drafts-read` / `-write` on the fork's own IPC surface, so no upstream persistence code is touched. |
-| `DiffCommentPopover.tsx` | `DiffCommentMode` gains `'pending'`, the third radio, and the relabelled `'review'` button ("Comment now"). |
-| `DiffLineCommentPopoverHost.tsx` | The `onQueueForReview` prop and the third submit arm. |
-| `use-diff-review-comment.ts` | `resolveMode` falls back for any non-note mode, not only `'review'`. |
-| `inline-pr-comment-placement.ts` (+ test) | The placement union gains `kind`, and pending drafts are placed alongside threads. |
-| `useInlinePRCommentZones.tsx` | The `pendingReview` input and the pending branch in `renderZone`. |
-| `editor/DiffViewer.tsx` | The queue hook, `onQueueForReview`, and passing the queue to the zones. |
-| `source-control/panel/panel-ready.tsx` | The shelf, hidden at zero drafts like the notes shelf. |
-| `source-control/listing/section-header.tsx` | An optional `className`, so the pending-review section can reuse the changed-file section header with its own spacing. |
-| `src/preload/api-types.ts`, `index.ts`, `web/web-preload-api.ts` | The `pendingReview` member. |
-| `src/renderer/src/components/ui/textarea.tsx` | The `seamless` variant, so a composer can own the border and put its actions inside the same box. Added as a primitive variant because the design-system lint refuses that restyle at the call site. |
-| `checks-panel/comments-list.tsx` | `<PendingReviewPanelSection />` above the list. |
-| `tab-bar/EditorFileTab.tsx` (+ its test's stub) | The per-file pending badge beside the unresolved-thread one. |
-| `source-control/listing/*`, `panel/panel-content.tsx` | `pendingReviewCountByPath` threaded to the file rows, mirroring `reviewThreadCountByPath`. |
-| `src/main/startup/main-process-ipc-bootstrap.ts` | The `pending-review:submit` and `pending-review:context` handlers. |
-| `src/renderer/src/components/ui/button.tsx` | The `ghost-destructive` variant. |
-| `src/renderer/src/components/ui/textarea.tsx` | The `seamless` variant. |
-| `src/renderer/src/lib/pr-comment-action-state.ts` | The `'pending'` state. |
-| `right-sidebar/pr-comment-presentation.ts` | `statusBadgePending` and `commentEditorText` (the editor used to hardcode a size, so editing shrank the text). |
-| `checks-panel/comment-controls.tsx` | The Pending branch of `PRCommentActionBadge`. |
-| `checks-panel/comment-row.tsx` | `forceMutable`, and the editor taking its type scale from the presentation. |
-| `checks-panel/comment-editor.tsx` | New. The body editor, lifted out because the row hit its 400-line cap. It grows to fit the draft up to 240px, then scrolls, and takes mod+Enter as submit (plain Enter is a newline — a comment is prose). |
-| `diff-comments/DiffCommentPopover.tsx` | `MODE_OPTIONS` and the segmented Agent/Comment/Review control. |
-| `diff-comments/use-diff-review-comment.ts` | Commentable lines seeded synchronously and `null` until known, so the popover does not open on the wrong destination and switch a frame later. |
-| `diff-comments/diff-comment-zone-mouse-events.ts`, `useInlinePRCommentZones.tsx` | `installDiffCommentZoneKeyStopper`, so a keystroke typed in a zone card does not also drive the editor. |
-| `editor/editor-shortcuts.ts` | The typing-target guard on both diff navigation shortcuts. |
+| File                                                                                                                         | What is ours                                                                                                                                                                                                                                                                                                                                                                |
+| ---------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/shared/worktree/types.ts`, `meta-types.ts`, `rpc-contract/worktree-params.ts`                                           | `pendingReviewComments` beside `diffComments`.                                                                                                                                                                                                                                                                                                                              |
+| `ipc/worktree-metadata-merge.ts`, `ipc/worktrees/folder-workspace-model.ts`, `runtime/runtime-folder-workspace.ts`           | `pendingReviewComments` forwarded out of persisted metadata. **Every one of these has to list the field by name**: they rebuild the renderer's `Worktree` field by field, so one that is left out is written on every change and then dropped on the next launch, with nothing failing in between. Now read only to adopt drafts written before they moved onto the device. |
+| `src/main/github/pending-review-draft-store.ts` (+ test), `components/pending-review/pending-review-draft-store.ts` (+ test) | New. The device-local queue: the file, and the renderer store that keeps an edit made before the first load finishes. Reached through `pending-review:drafts-read` / `-write` on the fork's own IPC surface, so no upstream persistence code is touched.                                                                                                                    |
+| `DiffCommentPopover.tsx`                                                                                                     | `DiffCommentMode` gains `'pending'`, the third radio, and the relabelled `'review'` button ("Comment now").                                                                                                                                                                                                                                                                 |
+| `DiffLineCommentPopoverHost.tsx`                                                                                             | The `onQueueForReview` prop and the third submit arm.                                                                                                                                                                                                                                                                                                                       |
+| `use-diff-review-comment.ts`                                                                                                 | `resolveMode` falls back for any non-note mode, not only `'review'`.                                                                                                                                                                                                                                                                                                        |
+| `inline-pr-comment-placement.ts` (+ test)                                                                                    | The placement union gains `kind`, and pending drafts are placed alongside threads.                                                                                                                                                                                                                                                                                          |
+| `useInlinePRCommentZones.tsx`                                                                                                | The `pendingReview` input and the pending branch in `renderZone`.                                                                                                                                                                                                                                                                                                           |
+| `editor/DiffViewer.tsx`                                                                                                      | The queue hook, `onQueueForReview`, and passing the queue to the zones.                                                                                                                                                                                                                                                                                                     |
+| `source-control/panel/panel-ready.tsx`                                                                                       | The shelf, hidden at zero drafts like the notes shelf.                                                                                                                                                                                                                                                                                                                      |
+| `source-control/listing/section-header.tsx`                                                                                  | An optional `className`, so the pending-review section can reuse the changed-file section header with its own spacing.                                                                                                                                                                                                                                                      |
+| `src/preload/api-types.ts`, `index.ts`, `web/web-preload-api.ts`                                                             | The `pendingReview` member.                                                                                                                                                                                                                                                                                                                                                 |
+| `src/renderer/src/components/ui/textarea.tsx`                                                                                | The `seamless` variant, so a composer can own the border and put its actions inside the same box. Added as a primitive variant because the design-system lint refuses that restyle at the call site.                                                                                                                                                                        |
+| `checks-panel/comments-list.tsx`                                                                                             | `<PendingReviewPanelSection />` above the list.                                                                                                                                                                                                                                                                                                                             |
+| `tab-bar/EditorFileTab.tsx` (+ its test's stub)                                                                              | The per-file pending badge beside the unresolved-thread one.                                                                                                                                                                                                                                                                                                                |
+| `source-control/listing/*`, `panel/panel-content.tsx`                                                                        | `pendingReviewCountByPath` threaded to the file rows, mirroring `reviewThreadCountByPath`.                                                                                                                                                                                                                                                                                  |
+| `src/main/startup/main-process-ipc-bootstrap.ts`                                                                             | The `pending-review:submit` and `pending-review:context` handlers.                                                                                                                                                                                                                                                                                                          |
+| `src/renderer/src/components/ui/button.tsx`                                                                                  | The `ghost-destructive` variant.                                                                                                                                                                                                                                                                                                                                            |
+| `src/renderer/src/components/ui/textarea.tsx`                                                                                | The `seamless` variant.                                                                                                                                                                                                                                                                                                                                                     |
+| `src/renderer/src/lib/pr-comment-action-state.ts`                                                                            | The `'pending'` state.                                                                                                                                                                                                                                                                                                                                                      |
+| `right-sidebar/pr-comment-presentation.ts`                                                                                   | `statusBadgePending` and `commentEditorText` (the editor used to hardcode a size, so editing shrank the text).                                                                                                                                                                                                                                                              |
+| `checks-panel/comment-controls.tsx`                                                                                          | The Pending branch of `PRCommentActionBadge`.                                                                                                                                                                                                                                                                                                                               |
+| `checks-panel/comment-row.tsx`                                                                                               | `forceMutable`, and the editor taking its type scale from the presentation.                                                                                                                                                                                                                                                                                                 |
+| `checks-panel/comment-editor.tsx`                                                                                            | New. The body editor, lifted out because the row hit its 400-line cap. It grows to fit the draft up to 240px, then scrolls, and takes mod+Enter as submit (plain Enter is a newline — a comment is prose).                                                                                                                                                                  |
+| `diff-comments/DiffCommentPopover.tsx`                                                                                       | `MODE_OPTIONS` and the segmented Agent/Comment/Review control.                                                                                                                                                                                                                                                                                                              |
+| `diff-comments/use-diff-review-comment.ts`                                                                                   | Commentable lines seeded synchronously and `null` until known, so the popover does not open on the wrong destination and switch a frame later.                                                                                                                                                                                                                              |
+| `diff-comments/diff-comment-zone-mouse-events.ts`, `useInlinePRCommentZones.tsx`                                             | `installDiffCommentZoneKeyStopper`, so a keystroke typed in a zone card does not also drive the editor.                                                                                                                                                                                                                                                                     |
+| `editor/editor-shortcuts.ts`                                                                                                 | The typing-target guard on both diff navigation shortcuts.                                                                                                                                                                                                                                                                                                                  |
 
 #### The diff base: since last review, or the whole pull request
 
@@ -391,13 +391,12 @@ diff itself would run. Note that git resolves a well-formed sha naming no object
 commit comes back as **`no-merge-base`**, not `invalid-base` — `commit-resolution.ts` treats both as
 missing, and that mapping is the thing to keep if this is ever rewritten.
 
-| File | What is ours |
-| --- | --- |
-| `src/renderer/src/components/ui/segmented-tabs.tsx` | New. The Agent/Comment/Review control lifted out of `DiffCommentPopover` so the shelf can reuse it, plus `fullWidth`. |
-| `src/renderer/src/components/pending-review/use-review-diff-base.ts`, `use-commit-resolves.ts`, `commit-resolution.ts` (+ test) | New. The base switch and the reachability probe. |
-| `src/main/github/review-verdict-mutation.ts`, `submit-review-verdict.ts`, `pending-review-api.ts` | `viewerLatestReview { commit { oid } }` and `baseRefName` on the context query. |
-| `source-control/panel/branch-context-row.tsx` | A min height on the HEAD line. The line-total chip unmounts while a new base compares and the row is a hair taller with it, so the panel jumped on every switch. |
-
+| File                                                                                                                            | What is ours                                                                                                                                                     |
+| ------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/renderer/src/components/ui/segmented-tabs.tsx`                                                                             | New. The Agent/Comment/Review control lifted out of `DiffCommentPopover` so the shelf can reuse it, plus `fullWidth`.                                            |
+| `src/renderer/src/components/pending-review/use-review-diff-base.ts`, `use-commit-resolves.ts`, `commit-resolution.ts` (+ test) | New. The base switch and the reachability probe.                                                                                                                 |
+| `src/main/github/review-verdict-mutation.ts`, `submit-review-verdict.ts`, `pending-review-api.ts`                               | `viewerLatestReview { commit { oid } }` and `baseRefName` on the context query.                                                                                  |
+| `source-control/panel/branch-context-row.tsx`                                                                                   | A min height on the HEAD line. The line-total chip unmounts while a new base compares and the row is a hair taller with it, so the panel jumped on every switch. |
 
 #### Editing a comment that is already on the pull request
 
@@ -418,15 +417,15 @@ Three things worth keeping:
 An `(edited)` marker comes from `lastEditedAt`, which the review-threads query now selects for
 inline comments, conversation comments and review summaries alike.
 
-| File | What is ours |
-| --- | --- |
-| `src/main/github/update-published-comment.ts` | New. The `updatePullRequestReviewComment` mutation. |
-| `src/renderer/src/components/pending-review/editable-published-comment.ts` (+ test) | New. The `viewerCanUpdate` gate. |
-| `src/main/github/client/fetch/pr-review-threads-query.ts` | `lastEditedAt` and `viewerCanUpdate` on all three comment selections. |
-| `src/main/github/client/fetch/get-pr-comments.ts`, `src/shared/github/comment-types.ts` | Those two fields mapped onto `PRComment`. |
-| `checks-panel/comment-row.tsx` | `canEditComment` beside `canMutateComment`, and the `(edited)` marker in both layouts. |
-| `checks-panel/use-checks-panel-comment-mutations.tsx` | The inline branch of `handleEditComment`. |
-| `src/renderer/src/web/web-preload-api-composition.test.ts` | `pendingReview` added to the enumerated web surface — the review-mode merge left this red. |
+| File                                                                                    | What is ours                                                                               |
+| --------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| `src/main/github/update-published-comment.ts`                                           | New. The `updatePullRequestReviewComment` mutation.                                        |
+| `src/renderer/src/components/pending-review/editable-published-comment.ts` (+ test)     | New. The `viewerCanUpdate` gate.                                                           |
+| `src/main/github/client/fetch/pr-review-threads-query.ts`                               | `lastEditedAt` and `viewerCanUpdate` on all three comment selections.                      |
+| `src/main/github/client/fetch/get-pr-comments.ts`, `src/shared/github/comment-types.ts` | Those two fields mapped onto `PRComment`.                                                  |
+| `checks-panel/comment-row.tsx`                                                          | `canEditComment` beside `canMutateComment`, and the `(edited)` marker in both layouts.     |
+| `checks-panel/use-checks-panel-comment-mutations.tsx`                                   | The inline branch of `handleEditComment`.                                                  |
+| `src/renderer/src/web/web-preload-api-composition.test.ts`                              | `pendingReview` added to the enumerated web surface — the review-mode merge left this red. |
 
 #### Closing a review workspace once you have reviewed
 
@@ -445,16 +444,16 @@ The delete is guarded three ways: git refuses a checkout with uncommitted work o
 (force stays off), and the plan refuses one holding unsent review comments, which live in
 workspace metadata where git cannot see them.
 
-| File | What is ours |
-| --- | --- |
-| `src/shared/workspace-status-rules.ts` (+ test) | `readViewerReviewStanding`. |
-| `src/shared/workspace-status-rule-plan.ts` (+ test) | The reviewed-removal arm, `forgetHandledKey`, and `sinceReviewCommit` on a creation. |
-| `src/shared/workspace-status-rule-config.ts` | `onReviewed`. |
-| `review-status-snapshot-query.ts`, `-mapping.ts`, `review-status-snapshot-types.ts` | `commit { oid }` on `latestReviews`. |
-| `workspace-status-rules/apply-workspace-status-rule-plan.ts`, `create-review-workspace.ts`, `collect-workspace-status-rule-targets.ts` | Forgetting the key after a removal lands, the re-clone base, and the pending-comment guard. |
-| `store/slices/ui/ui-slice-workspace-status-rule-actions.ts` + its contract | `forgetPullRequestHandled`. |
-| `settings/PullRequestStatusRulesSection.tsx` | The toggle, and the second prompt box. |
-| `src/shared/workspace-status-rule-prompt.ts` (+ test) | `{{sinceCommit}}`, which falls back to the base branch so a first-look prompt never shows a raw placeholder. |
+| File                                                                                                                                   | What is ours                                                                                                 |
+| -------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `src/shared/workspace-status-rules.ts` (+ test)                                                                                        | `readViewerReviewStanding`.                                                                                  |
+| `src/shared/workspace-status-rule-plan.ts` (+ test)                                                                                    | The reviewed-removal arm, `forgetHandledKey`, and `sinceReviewCommit` on a creation.                         |
+| `src/shared/workspace-status-rule-config.ts`                                                                                           | `onReviewed`.                                                                                                |
+| `review-status-snapshot-query.ts`, `-mapping.ts`, `review-status-snapshot-types.ts`                                                    | `commit { oid }` on `latestReviews`.                                                                         |
+| `workspace-status-rules/apply-workspace-status-rule-plan.ts`, `create-review-workspace.ts`, `collect-workspace-status-rule-targets.ts` | Forgetting the key after a removal lands, the re-clone base, and the pending-comment guard.                  |
+| `store/slices/ui/ui-slice-workspace-status-rule-actions.ts` + its contract                                                             | `forgetPullRequestHandled`.                                                                                  |
+| `settings/PullRequestStatusRulesSection.tsx`                                                                                           | The toggle, and the second prompt box.                                                                       |
+| `src/shared/workspace-status-rule-prompt.ts` (+ test)                                                                                  | `{{sinceCommit}}`, which falls back to the base branch so a first-look prompt never shows a raw placeholder. |
 
 A re-request runs `reviewInbox.rereviewPromptTemplate` instead of the first-look prompt, because
 the question is no longer "what does this change do" but "what did the author do about what you
@@ -471,12 +470,12 @@ The pull request facts behind the shelf (node id, head commit, reviewers) are fe
 the shelf loads rather than cached for the session, which had left the verdict and the reviewed
 commit stale.
 
-| File | What is ours |
-| --- | --- |
-| `src/shared/github/pull-request-reviewers.ts` (+ test) | `buildPullRequestReviewers`. |
-| `src/main/github/review-verdict-mutation.ts`, `submit-review-verdict.ts` | Reviewer fields on the facts query, and their parsing. |
-| `pending-review/use-submit-review-verdict.ts` | `reviewers` and `rerequest`, through `gh.requestPRReviewers`. |
-| `source-control/pending-review/pending-review-reviewers.tsx` (+ test) | The list. |
+| File                                                                     | What is ours                                                  |
+| ------------------------------------------------------------------------ | ------------------------------------------------------------- |
+| `src/shared/github/pull-request-reviewers.ts` (+ test)                   | `buildPullRequestReviewers`.                                  |
+| `src/main/github/review-verdict-mutation.ts`, `submit-review-verdict.ts` | Reviewer fields on the facts query, and their parsing.        |
+| `pending-review/use-submit-review-verdict.ts`                            | `reviewers` and `rerequest`, through `gh.requestPRReviewers`. |
+| `source-control/pending-review/pending-review-reviewers.tsx` (+ test)    | The list.                                                     |
 
 ### 5. Editor theming from a VS Code theme file
 
@@ -516,12 +515,12 @@ Cmd+Option+Left/Right still go back and forward through worktree history.
 Terminals, browsers and chats render in overlay layers above the group body rather than inside it,
 so both "which group has focus" and "focus this group's content" are decided by geometry.
 
-| File | What is ours |
-| --- | --- |
-| `src/shared/keybindings/definitions-group-direction.ts`, `directional-group-focus.ts` | The four actions and their matcher. |
-| `src/renderer/src/lib/tab-group-focus/` (+ tests) | `findRectInDirection` and `focusTabGroupInDirection`. |
-| `src/main/window/main-window-shortcut-routing.ts` | Yielding the chord to the renderer. |
-| `app-shell/use-global-keybindings.ts` | Running the move, and the single-group history fallback. |
+| File                                                                                  | What is ours                                             |
+| ------------------------------------------------------------------------------------- | -------------------------------------------------------- |
+| `src/shared/keybindings/definitions-group-direction.ts`, `directional-group-focus.ts` | The four actions and their matcher.                      |
+| `src/renderer/src/lib/tab-group-focus/` (+ tests)                                     | `findRectInDirection` and `focusTabGroupInDirection`.    |
+| `src/main/window/main-window-shortcut-routing.ts`                                     | Yielding the chord to the renderer.                      |
+| `app-shell/use-global-keybindings.ts`                                                 | Running the move, and the single-group history fallback. |
 
 ### 7. Linear title on workspace cards
 
@@ -529,12 +528,12 @@ Card display → "Linear title" adds the linked Linear issue's title as a line u
 branch row. Off by default. It reuses the card's existing Linear fetch, which now also runs when
 only the title is shown.
 
-| File | What is ours |
-| --- | --- |
-| `src/shared/ui-chrome-types.ts`, `src/shared/worktree/card-properties.ts` | `'linear-title'` in the union and in `WORKTREE_CARD_PROPERTIES`. |
+| File                                                                                     | What is ours                                                                                                                         |
+| ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `src/shared/ui-chrome-types.ts`, `src/shared/worktree/card-properties.ts`                | `'linear-title'` in the union and in `WORKTREE_CARD_PROPERTIES`.                                                                     |
 | `sidebar/fork-card-property-options.ts`, one call in `sidebar-workspace-option-items.ts` | The menu option, slotted after upstream's shared Card display choices (`withForkCardDisplayOptions`). PR author rides the same list. |
-| `sidebar/use-worktree-card-controller.ts` | `showLinearTitle`, and fetching for it. |
-| `sidebar/worktree-card-parent-content.tsx`, `worktree-card-linear-title.tsx` (+ test) | The row. |
+| `sidebar/use-worktree-card-controller.ts`                                                | `showLinearTitle`, and fetching for it.                                                                                              |
+| `sidebar/worktree-card-parent-content.tsx`, `worktree-card-linear-title.tsx` (+ test)    | The row.                                                                                                                             |
 
 ### 8. Review workspaces follow the pull request, and other PR automations
 
@@ -718,9 +717,18 @@ a colleague imports on their machine. `src/shared/settings-transfer.ts` (+ test)
   ids, migration/defaulted/dismissed bookkeeping, internal terminal switches), applied at every
   nesting level, so a portable object still loses a private field such as a sound file's path.
   Quick commands scoped to a project are dropped; unscoped ones travel.
-- **UI**: an allowlist of preferences — board columns, sidebar grouping and filters, card
-  properties, status bar, zoom — and the status rules minus `repoIds`, the handled-PR ledger and
-  `newWorkspaceStatusSince`.
+- **UI**: preferences only — board columns, sidebar and agents-view grouping and filters, card
+  properties, status bar, zoom, browser defaults, pet — and the status rules minus `repoIds`, the
+  handled-PR ledger and `newWorkspaceStatusSince`. `settings-transfer-ui-fields.ts` lists every
+  `PersistedUIState` key as `true` (exported) or `false`, so a new key fails typecheck until it is
+  classified.
+- **Projects**: each project's portable settings (CI triage prompt, port labels command, base ref,
+  hooks, source-control AI, relative symlink paths and venv, issue source, fork sync, worktree
+  visibility, Jira project), keyed by the git remote's `canonicalKey` and applied on import to every
+  local project with that remote, on every host. `settings-transfer-projects.ts` maps every `Repo`
+  field to a parser (exported, and checked again on import) or `null` (local); the map `satisfies`
+  every key of `Repo`, so a new field fails typecheck until it is classified. Folder workspaces and
+  projects without a resolved remote are skipped.
 - **Files**: `~/.orca/keybindings.json` and `~/.orca/themes/editor-{dark,light}.json`, when they are
   valid JSON (`main/settings-transfer/settings-transfer.ts`, + test).
 
@@ -751,19 +759,19 @@ New files: `src/shared/git-review-attributes.ts` (+ test), `src/main/git/check-r
 `use-published-review-order.ts` (the review order, moved out of `use-file-listing.ts`), and
 `tests/e2e/source-control-file-type-filter.spec.ts`.
 
-| File | What is ours |
-| --- | --- |
-| `src/main/ipc/filesystem.ts` | The `registerFilesystemGitReviewAttributesHandlers` call. |
-| `src/main/providers/git-provider-contract.ts`, `ssh-git-working-tree-provider.ts` | `checkReviewAttributes`. |
-| `src/main/runtime/runtime-git-status-commands.ts`, `orca-runtime-git.ts`, `runtime-git-command-surface.ts`, `rpc/methods/git.ts`, `rpc/methods/git-params.ts`, `runtime-git-api-contract.test.ts` | `checkRuntimeGitReviewAttributes` and the `git.checkReviewAttributes` method. |
-| `src/shared/rpc-contract/git-params.ts` | `GitCheckReviewAttributes`; regenerate the catalog with `pnpm run generate:rpc-params-catalog`. |
-| `src/relay/git-handler-read-operations.ts`, `git-handler-registration.ts` | `checkReviewAttributes` and its registration. |
-| `src/preload/api/git-bridge.ts`, `git-inspection-api.ts`, `src/renderer/src/web/preload-api/web-git-api.ts` | `checkReviewAttributes`. |
-| `src/renderer/src/runtime/runtime-git-status-client.ts`, `runtime-git-client.ts` | `getRuntimeGitReviewAttributes`. |
-| `source-control/panel/use-panel-view-state.ts` | `hiddenFileCategories` / `toggleFileCategory`, kept per worktree (`hiddenFileCategoriesByWorktree`) so each remembers its own filter; test `use-panel-view-state.file-types.test.ts`. |
-| `source-control/panel/use-panel-foundation.ts`, `listing/use-file-listing.ts` | Passing `hiddenFileCategories` and `reviewAttributes` into the projection. |
-| `source-control/listing/use-file-projection.ts` | `categoryGrouped` feeds both the text filter and `unfilteredDisplaySectionsById`, so section Stage all / Discard all / View all never act on hidden files. Branch entries are category-filtered before the text filter. |
-| `source-control/panel/panel-content.tsx`, `listing/content-status.tsx` | The filter under the commit surface and the "All changed files are hidden" empty state. |
+| File                                                                                                                                                                                              | What is ours                                                                                                                                                                                                            |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/main/ipc/filesystem.ts`                                                                                                                                                                      | The `registerFilesystemGitReviewAttributesHandlers` call.                                                                                                                                                               |
+| `src/main/providers/git-provider-contract.ts`, `ssh-git-working-tree-provider.ts`                                                                                                                 | `checkReviewAttributes`.                                                                                                                                                                                                |
+| `src/main/runtime/runtime-git-status-commands.ts`, `orca-runtime-git.ts`, `runtime-git-command-surface.ts`, `rpc/methods/git.ts`, `rpc/methods/git-params.ts`, `runtime-git-api-contract.test.ts` | `checkRuntimeGitReviewAttributes` and the `git.checkReviewAttributes` method.                                                                                                                                           |
+| `src/shared/rpc-contract/git-params.ts`                                                                                                                                                           | `GitCheckReviewAttributes`; regenerate the catalog with `pnpm run generate:rpc-params-catalog`.                                                                                                                         |
+| `src/relay/git-handler-read-operations.ts`, `git-handler-registration.ts`                                                                                                                         | `checkReviewAttributes` and its registration.                                                                                                                                                                           |
+| `src/preload/api/git-bridge.ts`, `git-inspection-api.ts`, `src/renderer/src/web/preload-api/web-git-api.ts`                                                                                       | `checkReviewAttributes`.                                                                                                                                                                                                |
+| `src/renderer/src/runtime/runtime-git-status-client.ts`, `runtime-git-client.ts`                                                                                                                  | `getRuntimeGitReviewAttributes`.                                                                                                                                                                                        |
+| `source-control/panel/use-panel-view-state.ts`                                                                                                                                                    | `hiddenFileCategories` / `toggleFileCategory`, kept per worktree (`hiddenFileCategoriesByWorktree`) so each remembers its own filter; test `use-panel-view-state.file-types.test.ts`.                                   |
+| `source-control/panel/use-panel-foundation.ts`, `listing/use-file-listing.ts`                                                                                                                     | Passing `hiddenFileCategories` and `reviewAttributes` into the projection.                                                                                                                                              |
+| `source-control/listing/use-file-projection.ts`                                                                                                                                                   | `categoryGrouped` feeds both the text filter and `unfilteredDisplaySectionsById`, so section Stage all / Discard all / View all never act on hidden files. Branch entries are category-filtered before the text filter. |
+| `source-control/panel/panel-content.tsx`, `listing/content-status.tsx`                                                                                                                            | The filter under the commit surface and the "All changed files are hidden" empty state.                                                                                                                                 |
 
 ### 18. Claude web view
 
@@ -784,7 +792,10 @@ session's Remote Control to connect (`claude-remote-session-poll.ts`, keyed off 
 Claude Code writes `sessions/<pid>.json` in its config dir (`CLAUDE_CONFIG_DIR` or `~/.claude`) for
 each live process, with the hook `sessionId` and, while Remote Control is connected,
 `bridgeSessionId`. That file is undocumented; if it moves, the cover says the session was not found.
-Local sessions only: an SSH workspace's file lives on the remote host and is not read.
+An SSH workspace's file lives on the remote host: the renderer passes the tab's host id and
+`claude-remote-session-url-ssh.ts` prints the matching files over the SSH connection (POSIX hosts;
+a Windows host reports not found). A main process without `hostId` support ignores it and reads
+locally, as before.
 
 It deliberately does not add a `viewMode` value: `viewMode` is persisted, sanitized to
 `'terminal' | 'chat'` and mirrored to mobile and runtime hosts. The web view is renderer state
@@ -838,20 +849,20 @@ and in `src/renderer/src/components/terminal-pane/`: `claude-web-view-state.ts` 
 `claude-web-prompt-focus.ts`, `claude-web-covered-pane.ts`,
 `TerminalPaneClaudeWebPortal.tsx`; plus `tests/e2e/claude-web-view.spec.ts`.
 
-| File | What is ours |
-| --- | --- |
-| `src/main/ipc/register-core-handlers/register-core-handlers.ts` (+ test) | `registerClaudeRemoteSessionHandlers(() => keybindings?.getOverrides())`: the keybinding service, as the main window reads, so rebinds reach the web view; the test passes a stand-in service and expects it in the dashboard popout call too. |
-| `src/main/menu/register-app-menu.ts` (+ test) | The Paste item comes from `createAppMenuPasteItem` (new `app-menu-paste-item.ts`, which also holds upstream's paste routing); the test's "pastes natively into a focused guest webview" case. |
-| `src/preload/api-types.ts`, `src/preload/index.ts` | `claudeRemoteSession`. |
-| `src/shared/global-settings-types.ts`, `default-global-settings.ts` | `openClaudeTabsInWebView`. |
-| `src/renderer/src/components/settings/NativeChatExperimentalSetting.tsx`, `ClaudeWebDefaultViewSetting.tsx` | The "Open Claude in Claude web" switch (upstream removed the Default view select it used to be an option of). |
-| `src/renderer/src/components/terminal-pane/TerminalPaneSurface.tsx` | `<TerminalPaneClaudeWebPortal>`, the `claudeWebTabId` / `claudeWebLeafId` props and `webViewLeafId`. |
-| `src/renderer/src/components/terminal-pane/TerminalPaneHeaderOverlay.tsx` | The optional `webViewLeafId` prop and its single-pane early return. |
-| `src/renderer/src/components/terminal-pane/use-terminal-window-wake-recovery.ts` (+ test), `use-terminal-pane-global-effects.ts` | The optional `tabId` and the web-view clause beside the chat-cover check; the caller passes `tabId`. |
-| `src/renderer/src/components/terminal-pane/TerminalContextMenu.tsx` | The optional `claudeWeb*` props; `<AgentViewSubmenu>` replaces upstream's chat toggle when the tab is known. |
-| `src/renderer/src/components/tab-bar/SortableTabContextMenu.tsx` | `<AgentViewSubmenu>` replaces upstream's "Switch to chat/terminal view" item. |
-| `src/renderer/src/components/native-chat/use-native-chat-context-menu.tsx` (+ test), `NativeChatResolvedView.tsx` | The optional `agentView` argument: a terminal-backed chat's right-click menu shows `<AgentViewSubmenu>` instead of "Switch to terminal view". Structured chats keep their menu. |
-| `SortableTabContextMenu.test.tsx`, `SortableTab.rename-shortcut.test.tsx`, `register-core-handlers.test.ts` | Store fields / module mocks for the above; re-apply after taking upstream's test. |
+| File                                                                                                                             | What is ours                                                                                                                                                                                                                                   |
+| -------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/main/ipc/register-core-handlers/register-core-handlers.ts` (+ test)                                                         | `registerClaudeRemoteSessionHandlers(() => keybindings?.getOverrides())`: the keybinding service, as the main window reads, so rebinds reach the web view; the test passes a stand-in service and expects it in the dashboard popout call too. |
+| `src/main/menu/register-app-menu.ts` (+ test)                                                                                    | The Paste item comes from `createAppMenuPasteItem` (new `app-menu-paste-item.ts`, which also holds upstream's paste routing); the test's "pastes natively into a focused guest webview" case.                                                  |
+| `src/preload/api-types.ts`, `src/preload/index.ts`                                                                               | `claudeRemoteSession`.                                                                                                                                                                                                                         |
+| `src/shared/global-settings-types.ts`, `default-global-settings.ts`                                                              | `openClaudeTabsInWebView`.                                                                                                                                                                                                                     |
+| `src/renderer/src/components/settings/NativeChatExperimentalSetting.tsx`, `ClaudeWebDefaultViewSetting.tsx`                      | The "Open Claude in Claude web" switch (upstream removed the Default view select it used to be an option of).                                                                                                                                  |
+| `src/renderer/src/components/terminal-pane/TerminalPaneSurface.tsx`                                                              | `<TerminalPaneClaudeWebPortal>`, the `claudeWebTabId` / `claudeWebLeafId` props and `webViewLeafId`.                                                                                                                                           |
+| `src/renderer/src/components/terminal-pane/TerminalPaneHeaderOverlay.tsx`                                                        | The optional `webViewLeafId` prop and its single-pane early return.                                                                                                                                                                            |
+| `src/renderer/src/components/terminal-pane/use-terminal-window-wake-recovery.ts` (+ test), `use-terminal-pane-global-effects.ts` | The optional `tabId` and the web-view clause beside the chat-cover check; the caller passes `tabId`.                                                                                                                                           |
+| `src/renderer/src/components/terminal-pane/TerminalContextMenu.tsx`                                                              | The optional `claudeWeb*` props; `<AgentViewSubmenu>` replaces upstream's chat toggle when the tab is known.                                                                                                                                   |
+| `src/renderer/src/components/tab-bar/SortableTabContextMenu.tsx`                                                                 | `<AgentViewSubmenu>` replaces upstream's "Switch to chat/terminal view" item.                                                                                                                                                                  |
+| `src/renderer/src/components/native-chat/use-native-chat-context-menu.tsx` (+ test), `NativeChatResolvedView.tsx`                | The optional `agentView` argument: a terminal-backed chat's right-click menu shows `<AgentViewSubmenu>` instead of "Switch to terminal view". Structured chats keep their menu.                                                                |
+| `SortableTabContextMenu.test.tsx`, `SortableTab.rename-shortcut.test.tsx`, `register-core-handlers.test.ts`                      | Store fields / module mocks for the above; re-apply after taking upstream's test.                                                                                                                                                              |
 
 ### 19. Send a note in three key presses
 
@@ -865,6 +876,7 @@ once and focuses its trigger on the next frame, after the composer's own focus h
 
 `pickAutoSendTarget` (`src/renderer/src/lib/auto-send-target.ts`) ranks the eligible targets of
 any agent type:
+
 - A session that is the active tab of a group in the worktree's layout beats one that is not.
 - After that, the latest activity wins: the agent status `updatedAt`, falling back to the tab's `lastFocusedAt`.
 
@@ -880,15 +892,15 @@ New files: `src/renderer/src/lib/auto-send-target.ts` (+ test),
 `src/renderer/src/components/editor/ReviewNotesSendMenuContent.auto-picked.test.tsx`,
 `tests/e2e/note-send-keyboard.spec.ts`.
 
-| File | What is ours |
-| --- | --- |
-| `src/renderer/src/components/editor/ReviewNotesSendMenuContent.tsx` (+ test) | The `groupsByWorktree` / `layoutByWorktree` selectors, the `autoPicked` memo, and `AutoPickedMenuItem` rendered first; the test's store defaults and `sessionItems` helper. |
-| `src/renderer/src/components/editor/NotesSendMenu.tsx` (+ test) | The `focusRequestKey` prop, `triggerRef` and its focus effect; `useRef` in the test's fake React. |
-| `src/renderer/src/components/diff-comments/diff-comment-zone-card.tsx` | `focusRequestKey={comment.id}`. |
-| `src/renderer/src/components/diff-comments/DiffCommentDraftCard.tsx` (+ test), `DiffCommentPopover.tsx` | `armNoteSendFocus()` on the Mod+Enter submit. |
-| `src/renderer/src/store/slices/diffComments.ts` | `noteCreatedForSendFocus(comment.id)` in `addDiffComment`. |
-| `src/renderer/src/lib/active-agent-note-send.ts`, `active-agent-note-send-delivery.ts`, `active-agent-terminal-send-readiness.ts` | `sendNowWhenWorking` for a Claude pane, `agentWorking` on readiness, and `sendQueuedPromptNow`; new test `active-agent-note-send-send-now.test.ts`. |
-| `src/renderer/src/i18n/locales/en.json`, `en-runtime-required.json` | The `autoPicked` key. |
+| File                                                                                                                              | What is ours                                                                                                                                                                |
+| --------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/renderer/src/components/editor/ReviewNotesSendMenuContent.tsx` (+ test)                                                      | The `groupsByWorktree` / `layoutByWorktree` selectors, the `autoPicked` memo, and `AutoPickedMenuItem` rendered first; the test's store defaults and `sessionItems` helper. |
+| `src/renderer/src/components/editor/NotesSendMenu.tsx` (+ test)                                                                   | The `focusRequestKey` prop, `triggerRef` and its focus effect; `useRef` in the test's fake React.                                                                           |
+| `src/renderer/src/components/diff-comments/diff-comment-zone-card.tsx`                                                            | `focusRequestKey={comment.id}`.                                                                                                                                             |
+| `src/renderer/src/components/diff-comments/DiffCommentDraftCard.tsx` (+ test), `DiffCommentPopover.tsx`                           | `armNoteSendFocus()` on the Mod+Enter submit.                                                                                                                               |
+| `src/renderer/src/store/slices/diffComments.ts`                                                                                   | `noteCreatedForSendFocus(comment.id)` in `addDiffComment`.                                                                                                                  |
+| `src/renderer/src/lib/active-agent-note-send.ts`, `active-agent-note-send-delivery.ts`, `active-agent-terminal-send-readiness.ts` | `sendNowWhenWorking` for a Claude pane, `agentWorking` on readiness, and `sendQueuedPromptNow`; new test `active-agent-note-send-send-now.test.ts`.                         |
+| `src/renderer/src/i18n/locales/en.json`, `en-runtime-required.json`                                                               | The `autoPicked` key.                                                                                                                                                       |
 
 ### 20. Centre a diff's first change after layout
 
@@ -946,19 +958,19 @@ New files: `src/shared/rpc-contract/agent-note-params.ts`, `src/main/runtime/rpc
 `src/renderer/src/components/diff-comments/diff-comment-zone-card.agent-note.test.tsx`,
 `tests/e2e/agent-notes.spec.ts`.
 
-| File | What is ours |
-| --- | --- |
-| `src/shared/diff-comment-types.ts` | `DiffCommentAgentAuthor` and `agentAuthor`. |
-| `src/shared/worktree/meta-types.ts`, `src/shared/worktree/types.ts` | `agentNotes`. |
-| `src/main/ipc/worktree-metadata-merge.ts` | `agentNotes: meta?.agentNotes`. |
-| `src/main/runtime/rpc/methods/index.ts`, `src/shared/rpc-contract/rpc-params-catalog.generated.ts` | `AGENT_NOTE_METHODS`; regenerate the catalog. |
-| `src/cli/specs/index.ts`, `src/cli/handler-group-manifest.ts` | The `notes` specs and handler group. |
-| `src/renderer/src/components/diff-comments/DiffCommentCard.tsx`, `diff-comment-zone-card.tsx` | The `agentName` prop and its header; no edit/send for agent notes. |
-| `src/renderer/src/components/editor/DiffViewer.tsx`, `DiffSectionItem.tsx` | `useFileAgentNotes` merged into the decorator's comments; delete routes to `removeAgentNote`. |
-| `src/renderer/src/components/editor/EditorPanelHeader.tsx` | `<AgentNotesPill>`. |
-| `src/renderer/src/components/right-sidebar/source-control/panel/panel-ready.tsx` | `<AgentNotesShelf>`. |
-| `src/renderer/src/assets/main.css` | The agent badge and note-thread styles. |
-| `skill-guides/orca-cli.md` (+ generated guides), `docs/site/content/docs/cli/reference.mdx` | The Diff Notes / Diff notes sections. |
+| File                                                                                               | What is ours                                                                                  |
+| -------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| `src/shared/diff-comment-types.ts`                                                                 | `DiffCommentAgentAuthor` and `agentAuthor`.                                                   |
+| `src/shared/worktree/meta-types.ts`, `src/shared/worktree/types.ts`                                | `agentNotes`.                                                                                 |
+| `src/main/ipc/worktree-metadata-merge.ts`                                                          | `agentNotes: meta?.agentNotes`.                                                               |
+| `src/main/runtime/rpc/methods/index.ts`, `src/shared/rpc-contract/rpc-params-catalog.generated.ts` | `AGENT_NOTE_METHODS`; regenerate the catalog.                                                 |
+| `src/cli/specs/index.ts`, `src/cli/handler-group-manifest.ts`                                      | The `notes` specs and handler group.                                                          |
+| `src/renderer/src/components/diff-comments/DiffCommentCard.tsx`, `diff-comment-zone-card.tsx`      | The `agentName` prop and its header; no edit/send for agent notes.                            |
+| `src/renderer/src/components/editor/DiffViewer.tsx`, `DiffSectionItem.tsx`                         | `useFileAgentNotes` merged into the decorator's comments; delete routes to `removeAgentNote`. |
+| `src/renderer/src/components/editor/EditorPanelHeader.tsx`                                         | `<AgentNotesPill>`.                                                                           |
+| `src/renderer/src/components/right-sidebar/source-control/panel/panel-ready.tsx`                   | `<AgentNotesShelf>`.                                                                          |
+| `src/renderer/src/assets/main.css`                                                                 | The agent badge and note-thread styles.                                                       |
+| `skill-guides/orca-cli.md` (+ generated guides), `docs/site/content/docs/cli/reference.mdx`        | The Diff Notes / Diff notes sections.                                                         |
 
 ### 22. Outdated review threads stay in the diff
 
@@ -986,11 +998,11 @@ catalog and ranking (`searchWorkspaceEmojiShortcodes`). New files in `src/render
 `emoji-shortcode-query.ts` (+ test), `emoji-shortcode-list.tsx`, `review-emoji-shortcode-extension.ts`;
 plus `pull-request-page/mentions/textarea.emoji.test.tsx`.
 
-| File | What is ours |
-| --- | --- |
-| `src/renderer/src/components/github/ReviewMarkdownComposer.tsx` | The `ReviewEmojiShortcode` extension, emoji query state, `insertEmoji`, the emoji branch of the key handler, `<EmojiShortcodeList>`. |
-| `src/renderer/src/components/pull-request-page/mentions/textarea.tsx` | Emoji query state, `insertEmoji`, the emoji key handling and `<EmojiShortcodeList>` anchored to the textarea. |
-| `src/renderer/src/components/github/github-mention-autocomplete.tsx` | `clampListLeft` (`autocomplete-list-position.ts`) on the list's `left`, so neither list runs off the right edge; test `emoji-shortcode-list.test.tsx`. |
+| File                                                                  | What is ours                                                                                                                                           |
+| --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `src/renderer/src/components/github/ReviewMarkdownComposer.tsx`       | The `ReviewEmojiShortcode` extension, emoji query state, `insertEmoji`, the emoji branch of the key handler, `<EmojiShortcodeList>`.                   |
+| `src/renderer/src/components/pull-request-page/mentions/textarea.tsx` | Emoji query state, `insertEmoji`, the emoji key handling and `<EmojiShortcodeList>` anchored to the textarea.                                          |
+| `src/renderer/src/components/github/github-mention-autocomplete.tsx`  | `clampListLeft` (`autocomplete-list-position.ts`) on the list's `left`, so neither list runs off the right edge; test `emoji-shortcode-list.test.tsx`. |
 
 ### 25. Preview deployment button and a roomier right-panel header
 
@@ -1003,13 +1015,13 @@ To fit it and the other header buttons, `getTopActivityBarLayout` (`activity-bar
 narrows the tab buttons (`compact`, 28px) before moving any behind More, and `showsHeaderActionLabels`
 turns Review / Commit & push into icon buttons with tooltips below a 560px panel.
 
-| File | What is ours |
-| --- | --- |
-| `src/renderer/src/components/right-sidebar/activity-bar-overflow.ts` | The `compact` step and `showsHeaderActionLabels`; the overflow tests now use 100px for "too tight". |
-| `src/renderer/src/components/right-sidebar/activity-bar-buttons.tsx` | `compact` prop on `ActivityBarButton`. |
-| `src/renderer/src/components/right-sidebar/right-sidebar-top-activity-bar.tsx` | Passes `compact` through. |
-| `src/renderer/src/components/right-sidebar/workspace-actions/WorkspaceActionButtons.tsx` | `ActionButton` with the `showLabels` prop. |
-| `src/renderer/src/components/right-sidebar/index.tsx` | Renders `PreviewDeploymentButton` and passes `showLabels`. |
+| File                                                                                     | What is ours                                                                                        |
+| ---------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| `src/renderer/src/components/right-sidebar/activity-bar-overflow.ts`                     | The `compact` step and `showsHeaderActionLabels`; the overflow tests now use 100px for "too tight". |
+| `src/renderer/src/components/right-sidebar/activity-bar-buttons.tsx`                     | `compact` prop on `ActivityBarButton`.                                                              |
+| `src/renderer/src/components/right-sidebar/right-sidebar-top-activity-bar.tsx`           | Passes `compact` through.                                                                           |
+| `src/renderer/src/components/right-sidebar/workspace-actions/WorkspaceActionButtons.tsx` | `ActionButton` with the `showLabels` prop.                                                          |
+| `src/renderer/src/components/right-sidebar/index.tsx`                                    | Renders `PreviewDeploymentButton` and passes `showLabels`.                                          |
 
 ### 26. Language servers: a registry of languages and servers
 
@@ -1110,18 +1122,18 @@ the worktree history. Mice that don't send buttons 3/4 to the page are caught in
 (left = back), Windows/Linux an `app-command`; both go out as `ui:worktreeHistoryNavigate`.
 The file editor's `smoothScrolling` is off, so a reveal is instant.
 
-| File | What is ours |
-| --- | --- |
-| `src/shared/repo-types.ts`, `ipc/repos/repo-update-handler.ts`, `repo-update-operations.ts`, `repo-lifecycle-operations.ts`, `store/repos/repo-state.ts` | `pythonVenvPath` (trimmed, non-strings dropped). |
-| `src/renderer/src/components/settings/RepositoryPane.tsx`, `repository-git-worktree-search-entries.ts` | The Python Environment section (`PythonEnvironmentSection.tsx`) and its search entry. |
-| `src/shared/global-settings-types.ts` | `languageServers`. |
-| `src/renderer/src/lib/settings-navigation-types.ts`, `hooks/settings-navigation-workflow-sections.ts`, `components/settings/settings-git-task-section-renderers.tsx`, `settings-page-renderer.tsx` | The `language-servers` section. |
-| `src/renderer/src/lib/material-icons/material-icon.tsx` | `MaterialNamedIcon` for the language logos. |
-| `src/main/ipc/register-core-handlers/register-core-handlers.ts` (+ test mock) | `registerLanguageServerHandlers()`. |
-| `src/preload/index.ts`, `src/preload/api-types.ts` | `languageServer` API. |
-| `src/renderer/src/app-shell/TitlebarLeftControls.tsx`, `app-command-handlers.ts`, `hooks/ipc-events/workspace-shortcut-ipc-bridge.ts` | Back/Forward call `goInCodeHistory` instead of `goBackWorktree`/`goForwardWorktree`. |
-| `src/renderer/src/components/editor/MonacoEditor.tsx` | `smoothScrolling: false`. |
-| `src/main/window/main-window-state-lifecycle.ts` | `installMainWindowNavigationGestures(mainWindow)`. |
+| File                                                                                                                                                                                               | What is ours                                                                          |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| `src/shared/repo-types.ts`, `ipc/repos/repo-update-handler.ts`, `repo-update-operations.ts`, `repo-lifecycle-operations.ts`, `store/repos/repo-state.ts`                                           | `pythonVenvPath` (trimmed, non-strings dropped).                                      |
+| `src/renderer/src/components/settings/RepositoryPane.tsx`, `repository-git-worktree-search-entries.ts`                                                                                             | The Python Environment section (`PythonEnvironmentSection.tsx`) and its search entry. |
+| `src/shared/global-settings-types.ts`                                                                                                                                                              | `languageServers`.                                                                    |
+| `src/renderer/src/lib/settings-navigation-types.ts`, `hooks/settings-navigation-workflow-sections.ts`, `components/settings/settings-git-task-section-renderers.tsx`, `settings-page-renderer.tsx` | The `language-servers` section.                                                       |
+| `src/renderer/src/lib/material-icons/material-icon.tsx`                                                                                                                                            | `MaterialNamedIcon` for the language logos.                                           |
+| `src/main/ipc/register-core-handlers/register-core-handlers.ts` (+ test mock)                                                                                                                      | `registerLanguageServerHandlers()`.                                                   |
+| `src/preload/index.ts`, `src/preload/api-types.ts`                                                                                                                                                 | `languageServer` API.                                                                 |
+| `src/renderer/src/app-shell/TitlebarLeftControls.tsx`, `app-command-handlers.ts`, `hooks/ipc-events/workspace-shortcut-ipc-bridge.ts`                                                              | Back/Forward call `goInCodeHistory` instead of `goBackWorktree`/`goForwardWorktree`.  |
+| `src/renderer/src/components/editor/MonacoEditor.tsx`                                                                                                                                              | `smoothScrolling: false`.                                                             |
+| `src/main/window/main-window-state-lifecycle.ts`                                                                                                                                                   | `installMainWindowNavigationGestures(mainWindow)`.                                    |
 
 ### 27. Git Blame for the cursor's line
 
@@ -1149,16 +1161,16 @@ fit. Settings → General →
 Editor → **Git Blame** has "Show line blame" and "Show "You" for my commits" (`GitBlameSetting.tsx`,
 `gitBlame` in `GlobalSettings`, read as on unless `false`).
 
-| File | What is ours |
-| --- | --- |
-| `src/shared/global-settings-types.ts` | `gitBlame`. |
-| `src/renderer/src/components/settings/GeneralEditorSettingsSection.tsx`, `general-editor-search.ts` | `GitBlameSetting` and its search entry. |
-| `src/main/ipc/register-core-handlers/register-core-handlers.ts` (+ test mock) | `registerGitBlameHandlers()`. |
-| `src/preload/index.ts`, `src/preload/api-types.ts` | `gitBlame` API. |
-| `src/renderer/src/lib/monaco-setup.ts` | The `git blame` setup step. |
-| `src/renderer/src/assets/main.css` | `.orca-git-blame-inline`. |
-| `src/renderer/src/components/editor/useDiffViewerFirstChangeAutoScroll.ts` (+ test) | A pending reveal (a definition jump into a diff) is latched before the editor exists, so a slow diff no longer scrolls the jump back to its first change. |
-| `src/renderer/src/components/editor/MonacoEditor.tsx`, `DiffViewer.tsx`, `DiffSectionBody.tsx` | `fixedOverflowWidgets: true`, so hovers near the right edge aren't clipped by the editor. |
+| File                                                                                                | What is ours                                                                                                                                              |
+| --------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/shared/global-settings-types.ts`                                                               | `gitBlame`.                                                                                                                                               |
+| `src/renderer/src/components/settings/GeneralEditorSettingsSection.tsx`, `general-editor-search.ts` | `GitBlameSetting` and its search entry.                                                                                                                   |
+| `src/main/ipc/register-core-handlers/register-core-handlers.ts` (+ test mock)                       | `registerGitBlameHandlers()`.                                                                                                                             |
+| `src/preload/index.ts`, `src/preload/api-types.ts`                                                  | `gitBlame` API.                                                                                                                                           |
+| `src/renderer/src/lib/monaco-setup.ts`                                                              | The `git blame` setup step.                                                                                                                               |
+| `src/renderer/src/assets/main.css`                                                                  | `.orca-git-blame-inline`.                                                                                                                                 |
+| `src/renderer/src/components/editor/useDiffViewerFirstChangeAutoScroll.ts` (+ test)                 | A pending reveal (a definition jump into a diff) is latched before the editor exists, so a slow diff no longer scrolls the jump back to its first change. |
+| `src/renderer/src/components/editor/MonacoEditor.tsx`, `DiffViewer.tsx`, `DiffSectionBody.tsx`      | `fixedOverflowWidgets: true`, so hovers near the right edge aren't clipped by the editor.                                                                 |
 
 A jump that replaces its tab closes it with `closeTabKeepingReveal` (`lib/close-tab-keeping-reveal.ts`):
 `closeFile` clears the pending reveal, which a diff target has not applied yet, so the diff opened
@@ -1189,16 +1201,16 @@ entries once (`material-icon-config-sync.ts`, started in `main.tsx`). Settings �
 `keybindings.json`. The extension's color, opacity and saturation settings aren't supported: the
 extension applies them by rewriting SVG files.
 
-| File | What is ours |
-| --- | --- |
-| `src/renderer/src/lib/file-type-icons.ts` (+ upstream test import) | `getFileTypeIcon` returns Material icons; the Lucide version is `getLucideFileTypeIcon`. |
-| `src/renderer/src/components/right-sidebar/FileExplorerRow.tsx`, `source-control/listing/tree-directory-rows.tsx`, `editor/combined-diff/browse-files/combined-diff-file-tree-row.tsx` | `MaterialFolderIcon` instead of Lucide `Folder`/`FolderOpen`; explorer icons at 16px. |
-| `src/renderer/src/components/editor/DiffSectionHeader.tsx` | The file's icon before its path. |
-| `src/renderer/src/main.tsx` | `startMaterialIconConfigSync()`. |
-| `src/main/ipc/register-core-handlers/register-core-handlers.ts` (+ test mock) | `registerMaterialIconHandlers()`. |
-| `src/preload/index.ts`, `src/preload/api-types.ts` | `materialIcons` API. |
-| `src/renderer/src/components/settings/GeneralEditorSettingsSection.tsx`, `general-editor-search.ts` | `FileIconsSetting` and its search entry. |
-| `package.json`, `pnpm-lock.yaml` | `material-icon-theme` 5.39.0. |
+| File                                                                                                                                                                                   | What is ours                                                                             |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `src/renderer/src/lib/file-type-icons.ts` (+ upstream test import)                                                                                                                     | `getFileTypeIcon` returns Material icons; the Lucide version is `getLucideFileTypeIcon`. |
+| `src/renderer/src/components/right-sidebar/FileExplorerRow.tsx`, `source-control/listing/tree-directory-rows.tsx`, `editor/combined-diff/browse-files/combined-diff-file-tree-row.tsx` | `MaterialFolderIcon` instead of Lucide `Folder`/`FolderOpen`; explorer icons at 16px.    |
+| `src/renderer/src/components/editor/DiffSectionHeader.tsx`                                                                                                                             | The file's icon before its path.                                                         |
+| `src/renderer/src/main.tsx`                                                                                                                                                            | `startMaterialIconConfigSync()`.                                                         |
+| `src/main/ipc/register-core-handlers/register-core-handlers.ts` (+ test mock)                                                                                                          | `registerMaterialIconHandlers()`.                                                        |
+| `src/preload/index.ts`, `src/preload/api-types.ts`                                                                                                                                     | `materialIcons` API.                                                                     |
+| `src/renderer/src/components/settings/GeneralEditorSettingsSection.tsx`, `general-editor-search.ts`                                                                                    | `FileIconsSetting` and its search entry.                                                 |
+| `package.json`, `pnpm-lock.yaml`                                                                                                                                                       | `material-icon-theme` 5.39.0.                                                            |
 
 ### 29. The right sidebar follows the active file's kind
 
@@ -1210,8 +1222,8 @@ changes, so a panel the user picks stays while they move between diffs or betwee
 Terminals, browsers and other tabs change nothing. It switches the tab without opening a closed
 sidebar.
 
-| File | What is ours |
-| --- | --- |
+| File                        | What is ours                        |
+| --------------------------- | ----------------------------------- |
 | `src/renderer/src/main.tsx` | `installRightSidebarFollowsFile()`. |
 
 ### 30. Quick Open: filename-first ranking, `%` text search, `:` go to line
@@ -1224,11 +1236,11 @@ the project search (`searchRuntimeFiles`) and lists matches grouped by file. `:l
 in the active editor file. `file:line` already worked upstream (`quick-open-modes.ts`,
 `use-quick-open-text-search.ts`, `QuickOpenModeItems.tsx`).
 
-| File | What is ours |
-| --- | --- |
-| `src/renderer/src/components/QuickOpen.tsx` | Text and go-to-line modes, `openPath`, the placeholder. |
-| `src/renderer/src/components/quick-open-history-ranking.ts` | Filename tiers and dependency-folder demotion. |
-| `src/renderer/src/i18n/locales/en.json` | `quickOpen.*` mode strings. |
+| File                                                        | What is ours                                            |
+| ----------------------------------------------------------- | ------------------------------------------------------- |
+| `src/renderer/src/components/QuickOpen.tsx`                 | Text and go-to-line modes, `openPath`, the placeholder. |
+| `src/renderer/src/components/quick-open-history-ranking.ts` | Filename tiers and dependency-folder demotion.          |
+| `src/renderer/src/i18n/locales/en.json`                     | `quickOpen.*` mode strings.                             |
 
 A trailing `:` (`base.py:`, `file:12:`) is a line number still being typed, so the parser drops
 it instead of searching for a literal colon (`src/shared/quick-open-query-target.ts`; upstream kept
@@ -1253,13 +1265,13 @@ source control's "Agent turns" section opens it through `git.commitCompare` and
 (`right-sidebar/source-control/agent-turns/`). SSH and folder workspaces are skipped. Two agents in
 one worktree, or your own edits during a turn, land in that turn's diff.
 
-| File | What is ours |
-| --- | --- |
-| `src/main/startup/main-window-agent-status.ts` | `observeAgentTurn(...)` per hook event. |
-| `src/main/ipc/register-core-handlers/register-core-handlers.ts` | `registerAgentTurnHandlers()`. |
-| `src/preload/index.ts`, `src/preload/api-types.ts` | `agentTurns` bridge. |
-| `src/renderer/src/components/right-sidebar/source-control/panel/panel-content.tsx` | `AgentTurnsSection`. |
-| `src/renderer/src/i18n/locales/en.json` | `agentTurns.title`. |
+| File                                                                               | What is ours                            |
+| ---------------------------------------------------------------------------------- | --------------------------------------- |
+| `src/main/startup/main-window-agent-status.ts`                                     | `observeAgentTurn(...)` per hook event. |
+| `src/main/ipc/register-core-handlers/register-core-handlers.ts`                    | `registerAgentTurnHandlers()`.          |
+| `src/preload/index.ts`, `src/preload/api-types.ts`                                 | `agentTurns` bridge.                    |
+| `src/renderer/src/components/right-sidebar/source-control/panel/panel-content.tsx` | `AgentTurnsSection`.                    |
+| `src/renderer/src/i18n/locales/en.json`                                            | `agentTurns.title`.                     |
 
 ### 32. Resizable, uniform source-control sections
 
@@ -1280,13 +1292,13 @@ overflow menu's "Notes" item are removed, and notes stay in the diff viewer. The
 notes" shortcut no longer reveals source control. The diff viewer's notes menus answer it instead
 (`EditorPanelHeader.tsx`, `combined-diff-toolbar.tsx`, `ui-slice-agent-actions.ts`).
 
-| File | What is ours |
-| --- | --- |
-| `package.json` | `react-resizable-panels` 4.13.3. |
-| `src/renderer/src/components/right-sidebar/source-control/panel/panel-ready.tsx` | Shelves passed to `SourceControlResizableSections`; no Notes shelf. |
-| `src/renderer/src/components/right-sidebar/source-control/panel/header-toolbar.tsx`, `header-overflow-menu.tsx` | No Notes item. |
-| `src/renderer/src/components/right-sidebar/source-control/notes/agent-notes-shelf.tsx` | `SectionHeader` header, no list cap. |
-| `src/renderer/src/components/right-sidebar/source-control/pending-review/pending-review-shelf.tsx` | No list cap or border. |
+| File                                                                                                            | What is ours                                                        |
+| --------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| `package.json`                                                                                                  | `react-resizable-panels` 4.13.3.                                    |
+| `src/renderer/src/components/right-sidebar/source-control/panel/panel-ready.tsx`                                | Shelves passed to `SourceControlResizableSections`; no Notes shelf. |
+| `src/renderer/src/components/right-sidebar/source-control/panel/header-toolbar.tsx`, `header-overflow-menu.tsx` | No Notes item.                                                      |
+| `src/renderer/src/components/right-sidebar/source-control/notes/agent-notes-shelf.tsx`                          | `SectionHeader` header, no list cap.                                |
+| `src/renderer/src/components/right-sidebar/source-control/pending-review/pending-review-shelf.tsx`              | No list cap or border.                                              |
 
 ### 33. Latest-turn shortcut and horizontal trackpad scroll in combined diffs
 
@@ -1298,12 +1310,12 @@ that filter off when it is already showing (`lib/agent-turn-open.ts`, shared wit
 scrolling reaches the outer list, and upstream re-added only Shift+wheel for sideways scrolling. A
 mostly horizontal trackpad swipe now scrolls the pane too (`diff-editor-shift-wheel-scroll.ts`).
 
-| File | What is ours |
-| --- | --- |
-| `src/shared/keybindings/definitions-core-4.ts`, `types.ts` | `sourceControl.openLatestAgentTurn`. |
-| `src/renderer/src/app-shell/use-global-keybindings.ts` | One `takeSourceControlShortcut(...)` call for both source-control shortcuts. |
-| `src/renderer/src/components/editor/diff-editor-shift-wheel-scroll.ts` | Horizontal swipes without Shift. |
-| `src/renderer/src/i18n/locales/en.json` | `agentTurns.none`. |
+| File                                                                   | What is ours                                                                 |
+| ---------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| `src/shared/keybindings/definitions-core-4.ts`, `types.ts`             | `sourceControl.openLatestAgentTurn`.                                         |
+| `src/renderer/src/app-shell/use-global-keybindings.ts`                 | One `takeSourceControlShortcut(...)` call for both source-control shortcuts. |
+| `src/renderer/src/components/editor/diff-editor-shift-wheel-scroll.ts` | Horizontal swipes without Shift.                                             |
+| `src/renderer/src/i18n/locales/en.json`                                | `agentTurns.none`.                                                           |
 
 ### 34. Cmd+click inside a Peek preview
 
@@ -1342,20 +1354,20 @@ renders only the Create review composer when that is the next step. `commit/comm
 left in place, unused, to keep upstream merges clean. The two `SourceControl.preview-open` tests of
 its Stage All button are removed.
 
-| File | What is ours |
-| --- | --- |
-| `src/shared/global-settings-types.ts` | `sourceControlGrouping?`. |
-| `src/renderer/src/store/slices/editor/types/open-file.ts`, `editor-files-slice.ts`, `create-editor-slice.ts` | `'branch-worktree'` diff source and `openBranchWorktreeDiff`. |
-| `src/renderer/src/store/slices/editor/actions/changed-file-order.ts`, `open-diff-at-location.ts` | The `'branch-worktree'` area. |
-| `src/renderer/src/components/editor/useEditorPanelDiffContentLoader.ts` | The `branch-worktree` read. |
-| `editor-autosave.ts`, `editor-panel-diff-reload.ts`, `editor-external-watch-path-index.ts`, `EditorDiffFileSurface.tsx` | `'branch-worktree'` next to `'unstaged'`. |
-| `source-control/listing/use-file-listing.ts`, `use-row-opening.ts`, `use-published-review-order.ts` | The projection, opener, highlight and review order. Upstream's open-in path block moved to `use-open-in-selection-path.ts` for the line limit. |
-| `source-control/listing/tree-directory-rows.tsx` | The branch directory row takes only the header fields. |
-| `source-control/panel/use-panel-view-state.ts`, `use-panel-foundation.ts`, `panel-ready.tsx`, `header-toolbar.tsx`, `header-overflow-menu.tsx`, `panel-content.tsx` | The grouping toggle, the section, and the bottom dock. |
-| `source-control/listing/file-category-filter.tsx` | The `compact` popout. |
-| `source-control/panel/commit-surface.tsx` | No commit box. |
-| `SourceControl.open-file-highlight.test.tsx`, `SourceControl.preview-open.test.tsx`, `SourceControl.virtual-file-list.test.tsx` | `sourceControlGrouping: 'status'`, since they cover upstream's sections; the commit-box tests removed. |
-| `src/renderer/src/i18n/locales/en.json` | `allChanges.*`. |
+| File                                                                                                                                                                | What is ours                                                                                                                                   |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/shared/global-settings-types.ts`                                                                                                                               | `sourceControlGrouping?`.                                                                                                                      |
+| `src/renderer/src/store/slices/editor/types/open-file.ts`, `editor-files-slice.ts`, `create-editor-slice.ts`                                                        | `'branch-worktree'` diff source and `openBranchWorktreeDiff`.                                                                                  |
+| `src/renderer/src/store/slices/editor/actions/changed-file-order.ts`, `open-diff-at-location.ts`                                                                    | The `'branch-worktree'` area.                                                                                                                  |
+| `src/renderer/src/components/editor/useEditorPanelDiffContentLoader.ts`                                                                                             | The `branch-worktree` read.                                                                                                                    |
+| `editor-autosave.ts`, `editor-panel-diff-reload.ts`, `editor-external-watch-path-index.ts`, `EditorDiffFileSurface.tsx`                                             | `'branch-worktree'` next to `'unstaged'`.                                                                                                      |
+| `source-control/listing/use-file-listing.ts`, `use-row-opening.ts`, `use-published-review-order.ts`                                                                 | The projection, opener, highlight and review order. Upstream's open-in path block moved to `use-open-in-selection-path.ts` for the line limit. |
+| `source-control/listing/tree-directory-rows.tsx`                                                                                                                    | The branch directory row takes only the header fields.                                                                                         |
+| `source-control/panel/use-panel-view-state.ts`, `use-panel-foundation.ts`, `panel-ready.tsx`, `header-toolbar.tsx`, `header-overflow-menu.tsx`, `panel-content.tsx` | The grouping toggle, the section, and the bottom dock.                                                                                         |
+| `source-control/listing/file-category-filter.tsx`                                                                                                                   | The `compact` popout.                                                                                                                          |
+| `source-control/panel/commit-surface.tsx`                                                                                                                           | No commit box.                                                                                                                                 |
+| `SourceControl.open-file-highlight.test.tsx`, `SourceControl.preview-open.test.tsx`, `SourceControl.virtual-file-list.test.tsx`                                     | `sourceControlGrouping: 'status'`, since they cover upstream's sections; the commit-box tests removed.                                         |
+| `src/renderer/src/i18n/locales/en.json`                                                                                                                             | `allChanges.*`.                                                                                                                                |
 
 ### 36. Source-control sections: one Review section, dragged order, hidden sections
 
@@ -1377,17 +1389,17 @@ View > Source Control Sections has a visibility checkbox for each
 (`main/menu/source-control-sections-menu.ts`). Both are saved in `sourceControlSectionLayout`
 (`{ order, hidden }`). Saving it rebuilds the menu, which reads the labels' English fallbacks.
 
-| File | What is ours |
-| --- | --- |
-| `src/shared/global-settings-types.ts` | `GlobalSettings` extends `ForkBaseSettings` (`shared/fork-source-control-settings.ts`: `sourceControlGrouping`, `sourceControlSectionLayout`), kept out of this file for its line limit. |
-| `src/main/menu/register-app-menu.ts` | The optional `getPanelSectionSubmenus`, appended after Appearance. |
-| `src/main/startup/main-process-i18n-menu.ts` | Its implementation (`buildPanelSectionsSubmenus`). |
-| `src/main/ipc/settings.ts` | `sourceControlSectionLayout` in `APPEARANCE_MENU_KEYS`. |
-| `source-control/listing/section-header.tsx` | Optional `count`; the header wrapped in its section's chrome. |
-| `source-control/panel/resizable-sections.tsx` | Ordered sections with drop zones; handles between panels, not after each shelf. |
-| `source-control/panel/panel-ready.tsx`, `panel-content.tsx` | The order, hiding, the Agent turns shelf. |
-| `source-control/pending-review/pending-review-shelf.tsx` | The Review header, `collapsed` / `onToggle`, the drafts disclosure. |
-| `src/renderer/src/i18n/locales/en.json` | `menu.sourceControlSections`, `sourceControlSections.hide`, `sourceControlSections.review`. |
+| File                                                        | What is ours                                                                                                                                                                             |
+| ----------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/shared/global-settings-types.ts`                       | `GlobalSettings` extends `ForkBaseSettings` (`shared/fork-source-control-settings.ts`: `sourceControlGrouping`, `sourceControlSectionLayout`), kept out of this file for its line limit. |
+| `src/main/menu/register-app-menu.ts`                        | The optional `getPanelSectionSubmenus`, appended after Appearance.                                                                                                                       |
+| `src/main/startup/main-process-i18n-menu.ts`                | Its implementation (`buildPanelSectionsSubmenus`).                                                                                                                                       |
+| `src/main/ipc/settings.ts`                                  | `sourceControlSectionLayout` in `APPEARANCE_MENU_KEYS`.                                                                                                                                  |
+| `source-control/listing/section-header.tsx`                 | Optional `count`; the header wrapped in its section's chrome.                                                                                                                            |
+| `source-control/panel/resizable-sections.tsx`               | Ordered sections with drop zones; handles between panels, not after each shelf.                                                                                                          |
+| `source-control/panel/panel-ready.tsx`, `panel-content.tsx` | The order, hiding, the Agent turns shelf.                                                                                                                                                |
+| `source-control/pending-review/pending-review-shelf.tsx`    | The Review header, `collapsed` / `onToggle`, the drafts disclosure.                                                                                                                      |
+| `src/renderer/src/i18n/locales/en.json`                     | `menu.sourceControlSections`, `sourceControlSections.hide`, `sourceControlSections.review`.                                                                                              |
 
 ### 37. PR panel sections
 
@@ -1401,13 +1413,13 @@ own panel's sections). The layout is saved under `sourceControlSectionLayout.pr`
 passing / failing / pending chips as header actions, and Comments keeps its actions there.
 Pending review shows only with drafts.
 
-| File | What is ours |
-| --- | --- |
-| `checks-panel/active-content.tsx` | The sections, built into `PrPanelSections`. |
-| `checks-panel/checks-list.tsx`, `use-checks-list-state.tsx` | The opt-in `sectionHeader` (the folder-workspace row keeps the old summary). |
-| `checks-panel/comments-list.tsx`, `use-comments-list-state.tsx` | The opt-in `sectionHeader`; the actions lifted into `headerActions`; pending review left out in that mode. |
-| `src/renderer/src/components/pending-review/PendingReviewPanelSection.tsx` | The opt-in `sectionHeader`. |
-| `src/renderer/src/i18n/locales/en.json` | `menu.prPanelSections`, `prPanelSections.*`. |
+| File                                                                       | What is ours                                                                                               |
+| -------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `checks-panel/active-content.tsx`                                          | The sections, built into `PrPanelSections`.                                                                |
+| `checks-panel/checks-list.tsx`, `use-checks-list-state.tsx`                | The opt-in `sectionHeader` (the folder-workspace row keeps the old summary).                               |
+| `checks-panel/comments-list.tsx`, `use-comments-list-state.tsx`            | The opt-in `sectionHeader`; the actions lifted into `headerActions`; pending review left out in that mode. |
+| `src/renderer/src/components/pending-review/PendingReviewPanelSection.tsx` | The opt-in `sectionHeader`.                                                                                |
+| `src/renderer/src/i18n/locales/en.json`                                    | `menu.prPanelSections`, `prPanelSections.*`.                                                               |
 
 ### 38. Only uncommitted changes (⌥⌘U)
 
@@ -1419,14 +1431,14 @@ again. The flag is per workspace and kept outside the panel
 (`lib/changes-filter.ts`, see §46), so the shortcut works while the panel is closed. It is not
 saved across restarts.
 
-| File | What is ours |
-| --- | --- |
-| `src/shared/keybindings/definitions-core-4.ts`, `types.ts` | The action and its default chord. |
-| `src/renderer/src/app-shell/source-control-shortcuts.ts` | Toggling the active workspace's flag. |
-| `source-control/listing/all-changes.ts` | `buildAllChangeEntries`' `uncommittedOnly` option. |
-| `source-control/listing/use-all-changes-projection.ts`, `use-file-listing.ts` | Reading the flag. |
-| `source-control/listing/all-changes-section.tsx`, `panel/panel-content.tsx` | The badge; the section stays up while the filter empties it. |
-| `src/renderer/src/i18n/locales/en.json` | `allChanges.uncommittedOnly`, `allChanges.showAllChanges`. |
+| File                                                                          | What is ours                                                 |
+| ----------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| `src/shared/keybindings/definitions-core-4.ts`, `types.ts`                    | The action and its default chord.                            |
+| `src/renderer/src/app-shell/source-control-shortcuts.ts`                      | Toggling the active workspace's flag.                        |
+| `source-control/listing/all-changes.ts`                                       | `buildAllChangeEntries`' `uncommittedOnly` option.           |
+| `source-control/listing/use-all-changes-projection.ts`, `use-file-listing.ts` | Reading the flag.                                            |
+| `source-control/listing/all-changes-section.tsx`, `panel/panel-content.tsx`   | The badge; the section stays up while the filter empties it. |
+| `src/renderer/src/i18n/locales/en.json`                                       | `allChanges.uncommittedOnly`, `allChanges.showAllChanges`.   |
 
 ### 39. Send queued comments from anywhere (⌥⌘S)
 
@@ -1438,14 +1450,14 @@ comments have loaded (`checks-panel/use-pr-comment-queue-panel.ts`), because the
 its acknowledgement live there and the panel is unmounted on other tabs. The count reads the same
 queue the inline cards and the Comments list write.
 
-| File | What is ours |
-| --- | --- |
-| `src/shared/keybindings/definitions-core-4.ts`, `types.ts` | The action and its default chord. |
-| `src/renderer/src/app-shell/source-control-shortcuts.ts` | Sending from the shortcut. |
-| `right-sidebar/pr-comment-queue-context.ts` | `readPRCommentQueueContextKey`, `subscribePRCommentQueue` exported. |
-| `checks-panel/active-content.tsx` | The queue context publish moved into `usePRCommentQueuePanel`. |
-| `status-bar/StatusBarSurface.tsx` | The segment, first among the attention segments. |
-| `src/renderer/src/i18n/locales/en.json` | `queuedComments.*`. |
+| File                                                       | What is ours                                                        |
+| ---------------------------------------------------------- | ------------------------------------------------------------------- |
+| `src/shared/keybindings/definitions-core-4.ts`, `types.ts` | The action and its default chord.                                   |
+| `src/renderer/src/app-shell/source-control-shortcuts.ts`   | Sending from the shortcut.                                          |
+| `right-sidebar/pr-comment-queue-context.ts`                | `readPRCommentQueueContextKey`, `subscribePRCommentQueue` exported. |
+| `checks-panel/active-content.tsx`                          | The queue context publish moved into `usePRCommentQueuePanel`.      |
+| `status-bar/StatusBarSurface.tsx`                          | The segment, first among the attention segments.                    |
+| `src/renderer/src/i18n/locales/en.json`                    | `queuedComments.*`.                                                 |
 
 ### 40. Resolved comments as their own PR panel section
 
@@ -1455,12 +1467,12 @@ others (§37). It opens closed, like the accordion it replaces, and lists every 
 whatever the Comments audience filter (`checks-panel/resolved-comments-section.tsx`). Outside the
 PR panel, `PRCommentsList` keeps the accordion.
 
-| File | What is ours |
-| --- | --- |
-| `checks-panel/comment-sections.tsx` | The Comments and Resolved sections, built for `active-content.tsx`. |
-| `checks-panel/comments-list.tsx` | No resolved accordion in section mode. |
-| `src/shared/source-control-sections.ts` | `pr-resolved`. |
-| `src/renderer/src/i18n/locales/en.json` | `prPanelSections.resolved`. |
+| File                                    | What is ours                                                        |
+| --------------------------------------- | ------------------------------------------------------------------- |
+| `checks-panel/comment-sections.tsx`     | The Comments and Resolved sections, built for `active-content.tsx`. |
+| `checks-panel/comments-list.tsx`        | No resolved accordion in section mode.                              |
+| `src/shared/source-control-sections.ts` | `pr-resolved`.                                                      |
+| `src/renderer/src/i18n/locales/en.json` | `prPanelSections.resolved`.                                         |
 
 ### 41. The new-comment box opens a gap instead of covering code
 
@@ -1470,11 +1482,11 @@ lines and saved comment cards below move down rather than sit under it. The zone
 so it sorts ahead of saved comment zones on the same line, right where the box draws. The box no
 longer flips above its line near the bottom, since that would cover the code above.
 
-| File | What is ours |
-| --- | --- |
-| `diff-comments/DiffLineCommentPopoverHost.tsx` | The spacer, sized from the box. |
-| `diff-comments/DiffCommentPopover.tsx` | `onHeightChange`; inline placement when it is passed. |
-| `diff-comments/diff-comment-popover-position.ts` | The `inline` option. |
+| File                                             | What is ours                                          |
+| ------------------------------------------------ | ----------------------------------------------------- |
+| `diff-comments/DiffLineCommentPopoverHost.tsx`   | The spacer, sized from the box.                       |
+| `diff-comments/DiffCommentPopover.tsx`           | `onHeightChange`; inline placement when it is passed. |
+| `diff-comments/diff-comment-popover-position.ts` | The `inline` option.                                  |
 
 ### 42. Who reacted, on hover
 
@@ -1484,13 +1496,13 @@ its total, so this adds nodes, not connections. `GitHubReaction.reactors` carrie
 reaction chip's tooltip reads "alice, bob and 2 others reacted with 👍"
 (`github/comment-reactors-label.ts`).
 
-| File | What is ours |
-| --- | --- |
-| `src/main/github/client/fetch/pr-review-threads-query.ts` | The reactor logins. |
-| `src/main/github/comment-reactions.ts` | Mapping them onto `reactors`. |
-| `src/shared/github/comment-types.ts` | `GitHubReaction.reactors`. |
-| `src/renderer/src/components/github/CommentReactions.tsx` | The tooltip on each chip. |
-| `src/renderer/src/i18n/locales/en.json` | `commentReactors.*`. |
+| File                                                      | What is ours                  |
+| --------------------------------------------------------- | ----------------------------- |
+| `src/main/github/client/fetch/pr-review-threads-query.ts` | The reactor logins.           |
+| `src/main/github/comment-reactions.ts`                    | Mapping them onto `reactors`. |
+| `src/shared/github/comment-types.ts`                      | `GitHubReaction.reactors`.    |
+| `src/renderer/src/components/github/CommentReactions.tsx` | The tooltip on each chip.     |
+| `src/renderer/src/i18n/locales/en.json`                   | `commentReactors.*`.          |
 
 ### 43. Pending review as its own Source Control section
 
@@ -1499,13 +1511,13 @@ Your unsent review comments leave the Review section (§36) for a Pending review
 collapses, drags and hides like the others. It shows only while drafts are queued. Review keeps
 the reviewers, diff base, standing and verdict form, and its header no longer counts drafts.
 
-| File | What is ours |
-| --- | --- |
-| `source-control/pending-review/pending-comments-section.tsx` | The section. |
-| `source-control/pending-review/pending-review-shelf.tsx` | The drafts disclosure removed. |
-| `source-control/panel/panel-ready.tsx` | The section's shelf. |
-| `src/shared/source-control-sections.ts` | `pending-comments`. |
-| `src/renderer/src/i18n/locales/en.json` | `sourceControlSections.pendingComments`. |
+| File                                                         | What is ours                             |
+| ------------------------------------------------------------ | ---------------------------------------- |
+| `source-control/pending-review/pending-comments-section.tsx` | The section.                             |
+| `source-control/pending-review/pending-review-shelf.tsx`     | The drafts disclosure removed.           |
+| `source-control/panel/panel-ready.tsx`                       | The section's shelf.                     |
+| `src/shared/source-control-sections.ts`                      | `pending-comments`.                      |
+| `src/renderer/src/i18n/locales/en.json`                      | `sourceControlSections.pendingComments`. |
 
 ### 44. Keyboard scrolling in the combined diff
 
@@ -1517,12 +1529,12 @@ editor's hidden caret does not swallow them. The next/previous-file step (`edito
 top while the combined diff is the active tab, instead of opening that file in its own tab:
 `stepToChangedFile` asks `lib/combined-diff-file-stepper.ts` first.
 
-| File | What is ours |
-| --- | --- |
-| `combined-diff/scroll-viewport/combined-diff-keyboard-scroll.ts` | Which keys scroll; which file comes next. |
-| `combined-diff/scroll-viewport/use-combined-diff-keyboard-scroll.ts` | The listener and the file stepper. |
-| `combined-diff/CombinedDiffViewer.tsx` | The hook. |
-| `src/renderer/src/store/slices/editor/actions/step-to-changed-file.ts` | Asking the combined diff first. |
+| File                                                                   | What is ours                              |
+| ---------------------------------------------------------------------- | ----------------------------------------- |
+| `combined-diff/scroll-viewport/combined-diff-keyboard-scroll.ts`       | Which keys scroll; which file comes next. |
+| `combined-diff/scroll-viewport/use-combined-diff-keyboard-scroll.ts`   | The listener and the file stepper.        |
+| `combined-diff/CombinedDiffViewer.tsx`                                 | The hook.                                 |
+| `src/renderer/src/store/slices/editor/actions/step-to-changed-file.ts` | Asking the combined diff first.           |
 
 ### 45. Tab drags over the Claude web view
 
@@ -1538,11 +1550,11 @@ drag ending, so a drag over a Claude tab, or bringing the dragged Claude tab bac
 dropped it. `focusClaudeWebview` holds that focus back while a drag is in flight, like browser
 tabs do, and the page takes it once the drag ends if the cover still holds focus.
 
-| File | What is ours |
-| --- | --- |
-| `terminal-pane/claude-web-drag-passthrough.ts` | The enrolment; `focusClaudeWebview`. |
-| `terminal-pane/ClaudeWebView.tsx` | Enrolling on attach, leaving on detach; drag-safe focus. |
-| `terminal-pane/TerminalPaneClaudeWebPortal.tsx` | The cover's drag-safe focus hand-off. |
+| File                                            | What is ours                                             |
+| ----------------------------------------------- | -------------------------------------------------------- |
+| `terminal-pane/claude-web-drag-passthrough.ts`  | The enrolment; `focusClaudeWebview`.                     |
+| `terminal-pane/ClaudeWebView.tsx`               | Enrolling on attach, leaving on detach; drag-safe focus. |
+| `terminal-pane/TerminalPaneClaudeWebPortal.tsx` | The cover's drag-safe focus hand-off.                    |
 
 ### 46. Turns and commits preview as a Changes filter
 
@@ -1561,15 +1573,15 @@ A previewed turn turns "Historical changes" once a newer turn lands (`syncLatest
 `panel-ready.tsx`). The Changes header's View all button is gone. The combined view stays in the
 code for the "Group by status" sections' view buttons.
 
-| File | What is ours |
-| --- | --- |
-| `src/renderer/src/lib/changes-filter.ts` | The filter, replacing `uncommitted-only-store.ts`; badge labels. |
-| `src/renderer/src/lib/show-in-changes.ts` | Setting a turn or commit filter and opening its first file. |
-| `store/slices/editor/actions/open-changes-filter-entry.ts` | Which diff a row opens under the filter. |
-| `store/slices/editor/actions/open-diff-at-location.ts`, `source-control/listing/use-row-opening.ts` | Asking it first. |
-| `source-control/listing/use-all-changes-projection.ts`, `all-changes-section.tsx`, `all-changes.ts`, `panel/panel-content.tsx` | The filtered list, the badge, commit-tab row highlight, no View all. |
-| `src/renderer/src/lib/agent-turn-open.ts`, `agent-turns/agent-turns-section.tsx`, `sync/use-git-history-commit-actions.ts`, `sync/git-history-commit-files.tsx`, `src/renderer/src/lib/monaco-git-blame.ts`, `src/renderer/src/app-shell/source-control-shortcuts.ts` | The entry points. |
-| `src/renderer/src/i18n/locales/*.json` | `allChanges.*`; the old "Open all changes together" key removed. |
+| File                                                                                                                                                                                                                                                                  | What is ours                                                         |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| `src/renderer/src/lib/changes-filter.ts`                                                                                                                                                                                                                              | The filter, replacing `uncommitted-only-store.ts`; badge labels.     |
+| `src/renderer/src/lib/show-in-changes.ts`                                                                                                                                                                                                                             | Setting a turn or commit filter and opening its first file.          |
+| `store/slices/editor/actions/open-changes-filter-entry.ts`                                                                                                                                                                                                            | Which diff a row opens under the filter.                             |
+| `store/slices/editor/actions/open-diff-at-location.ts`, `source-control/listing/use-row-opening.ts`                                                                                                                                                                   | Asking it first.                                                     |
+| `source-control/listing/use-all-changes-projection.ts`, `all-changes-section.tsx`, `all-changes.ts`, `panel/panel-content.tsx`                                                                                                                                        | The filtered list, the badge, commit-tab row highlight, no View all. |
+| `src/renderer/src/lib/agent-turn-open.ts`, `agent-turns/agent-turns-section.tsx`, `sync/use-git-history-commit-actions.ts`, `sync/git-history-commit-files.tsx`, `src/renderer/src/lib/monaco-git-blame.ts`, `src/renderer/src/app-shell/source-control-shortcuts.ts` | The entry points.                                                    |
+| `src/renderer/src/i18n/locales/*.json`                                                                                                                                                                                                                                | `allChanges.*`; the old "Open all changes together" key removed.     |
 
 ### 47. Group-focus arrows from the Claude web view
 
@@ -1579,8 +1591,8 @@ in main and focus never left the page. Like the main window's routing, the direc
 goes to the renderer ahead of window actions; it moves to the next group, or falls back to history
 when there is only one.
 
-| File | What is ours |
-| --- | --- |
+| File                                            | What is ours                           |
+| ----------------------------------------------- | -------------------------------------- |
 | `src/main/claude/claude-web-guest-shortcuts.ts` | The directional chord forwarded first. |
 
 ### 48. Keeping the Claude web view in step with delivered prompts
@@ -1592,12 +1604,12 @@ noted for its tab (`terminal-pane/claude-web-prompt-sync.ts`); that tab's Claude
 its page has loaded and four seconds have passed since delivery, reads the page text, and reloads
 once if the prompt's opening line is not there, or if the page cannot be read.
 
-| File | What is ours |
-| --- | --- |
-| `terminal-pane/claude-web-prompt-sync.ts` | The noted prompts, the check and the watcher. |
-| `terminal-pane/ClaudeWebView.tsx` | The watcher per page. |
-| `src/renderer/src/lib/agent-launch-prompt-delivery.ts` | Noting a submitted launch prompt. |
-| `src/renderer/src/lib/active-agent-note-send.ts` | Noting a prompt sent to a running agent. |
+| File                                                   | What is ours                                  |
+| ------------------------------------------------------ | --------------------------------------------- |
+| `terminal-pane/claude-web-prompt-sync.ts`              | The noted prompts, the check and the watcher. |
+| `terminal-pane/ClaudeWebView.tsx`                      | The watcher per page.                         |
+| `src/renderer/src/lib/agent-launch-prompt-delivery.ts` | Noting a submitted launch prompt.             |
+| `src/renderer/src/lib/active-agent-note-send.ts`       | Noting a prompt sent to a running agent.      |
 
 ### 49. Agent notes read as markdown
 
@@ -1607,10 +1619,10 @@ turns a literal `\n` in `--body` into a line break (agents pass paragraphs that 
 argument; `\\n` stays literal), and its help tells agents to lead with the point and use short
 paragraphs or a list.
 
-| File | What is ours |
-| --- | --- |
-| `src/renderer/src/components/diff-comments/DiffCommentCard.tsx`, `src/renderer/src/assets/main.css` | Markdown for agent notes. |
-| `src/cli/handlers/notes.ts`, `src/cli/specs/notes.ts` | `\n` in the body; the formatting guidance. |
+| File                                                                                                | What is ours                               |
+| --------------------------------------------------------------------------------------------------- | ------------------------------------------ |
+| `src/renderer/src/components/diff-comments/DiffCommentCard.tsx`, `src/renderer/src/assets/main.css` | Markdown for agent notes.                  |
+| `src/cli/handlers/notes.ts`, `src/cli/specs/notes.ts`                                               | `\n` in the body; the formatting guidance. |
 
 ### 50. Review workspaces open as the agent beside the first file
 
@@ -1623,10 +1635,10 @@ that fails, leaves the agent on its own. Either way it ends by selecting the age
 (scoped to the review worktree), since the setup and default tabs open in that group too and would
 otherwise be the one shown.
 
-| File | What is ours |
-| --- | --- |
-| `workspace-status-rules/open-review-workspace-layout.ts` | The split and the first file. |
-| `workspace-status-rules/create-review-workspace.ts` | Running it after the agent launches. |
+| File                                                     | What is ours                         |
+| -------------------------------------------------------- | ------------------------------------ |
+| `workspace-status-rules/open-review-workspace-layout.ts` | The split and the first file.        |
+| `workspace-status-rules/create-review-workspace.ts`      | Running it after the agent launches. |
 
 ### 51. No Create PR in the Source Control header
 
@@ -1634,8 +1646,8 @@ Like the commit box (§35), the header's Create PR button is gone: PRs are opene
 CLI. The panel passes the header no create-PR action, so the upstream header keeps its own behaviour
 and tests.
 
-| File | What is ours |
-| --- | --- |
+| File                                   | What is ours                          |
+| -------------------------------------- | ------------------------------------- |
 | `source-control/panel/panel-ready.tsx` | `visibleCreatePrHeaderAction={null}`. |
 
 ### 52. Source Control as one scroll
@@ -1649,12 +1661,12 @@ bottom scroll-padding tracking (`dock-scroll-padding.ts`) is gone. The Changes l
 against that scroller, measuring its offset inside it. The "New pull request" composer
 (`commit-surface.tsx`) is removed too: PRs are opened by the agent or the CLI (§51).
 
-| File | What is ours |
-| --- | --- |
-| `source-control/panel/stacked-sections.tsx` | The single scroller and its ordered, droppable sections. |
-| `source-control/panel/commits-section.tsx` | Commits as the last section. |
-| `source-control/panel/panel-ready.tsx`, `panel-content.tsx` | Using them; no composer. |
-| `source-control/listing/section-header.tsx` | Not sticky. |
+| File                                                        | What is ours                                             |
+| ----------------------------------------------------------- | -------------------------------------------------------- |
+| `source-control/panel/stacked-sections.tsx`                 | The single scroller and its ordered, droppable sections. |
+| `source-control/panel/commits-section.tsx`                  | Commits as the last section.                             |
+| `source-control/panel/panel-ready.tsx`, `panel-content.tsx` | Using them; no composer.                                 |
+| `source-control/listing/section-header.tsx`                 | Not sticky.                                              |
 
 ### 53. A follow-up on a note goes straight to an agent
 
@@ -1664,12 +1676,12 @@ thread's other unsent messages and the same context prompt as the note's send me
 starts the default agent in the card's group with that prompt (`lib/send-notes-to-best-agent.ts`).
 The sent notes are marked sent once delivered. A failed send keeps them pending and says why.
 
-| File | What is ours |
-| --- | --- |
+| File                                               | What is ours                              |
+| -------------------------------------------------- | ----------------------------------------- |
 | `src/renderer/src/lib/send-notes-to-best-agent.ts` | Pick or start the agent, send, mark sent. |
-| `diff-comments/agent-note-replies-list.tsx` | Sending on submit. |
-| `diff-comments/diff-comment-zone-card.tsx` | The group a new agent opens in. |
-| `src/renderer/src/i18n/locales/en.json` | `notesFollowUp.*`. |
+| `diff-comments/agent-note-replies-list.tsx`        | Sending on submit.                        |
+| `diff-comments/diff-comment-zone-card.tsx`         | The group a new agent opens in.           |
+| `src/renderer/src/i18n/locales/en.json`            | `notesFollowUp.*`.                        |
 
 ### 54. A shortcut to the review summary
 
@@ -1679,12 +1691,12 @@ collapsed. It is a request the section takes up (`pending-review/review-summary-
 collapsed section has no editor yet; elsewhere the chord is left to whatever else is bound to it.
 Escape in the box lets go of it.
 
-| File | What is ours |
-| --- | --- |
-| `src/shared/keybindings/definitions-core-4.ts`, `types.ts` | The binding. |
-| `src/renderer/src/components/pending-review/review-summary-focus.ts` | The request and focusing the editor once it mounts. |
-| `app-shell/source-control-shortcuts.ts` | Taking the chord only with the panel showing a Review section. |
-| `source-control/pending-review/pending-review-shelf.tsx` | Expanding and focusing on request. |
+| File                                                                 | What is ours                                                   |
+| -------------------------------------------------------------------- | -------------------------------------------------------------- |
+| `src/shared/keybindings/definitions-core-4.ts`, `types.ts`           | The binding.                                                   |
+| `src/renderer/src/components/pending-review/review-summary-focus.ts` | The request and focusing the editor once it mounts.            |
+| `app-shell/source-control-shortcuts.ts`                              | Taking the chord only with the panel showing a Review section. |
+| `source-control/pending-review/pending-review-shelf.tsx`             | Expanding and focusing on request.                             |
 
 ### 55. The Changes header totals the listed lines
 
@@ -1694,13 +1706,13 @@ branch total's ranged diff (merge base → working tree) now also returns its pe
 (`files` on `GitBranchLineTotal`), which a row touched both on the branch and since takes in place of
 the per-area counts it could not add up. Turns and commits already count their rows.
 
-| File | What is ours |
-| --- | --- |
-| `src/shared/git-branch-line-total.ts`, `git-status-types.ts` | Per-file counts on the total. |
+| File                                                                                             | What is ours                                 |
+| ------------------------------------------------------------------------------------------------ | -------------------------------------------- |
+| `src/shared/git-branch-line-total.ts`, `git-status-types.ts`                                     | Per-file counts on the total.                |
 | `src/shared/git-branch-line-total-files.ts`, `store/slices/editor/actions/git-status-actions.ts` | Republishing when only a file's count moved. |
-| `source-control/listing/all-changes.ts`, `use-all-changes-projection.ts` | Rows taking the exact count. |
-| `source-control/listing/all-changes-section.tsx` | The header total. |
-| `src/renderer/src/i18n/locales/en.json` | `allChanges.lineTotal`. |
+| `source-control/listing/all-changes.ts`, `use-all-changes-projection.ts`                         | Rows taking the exact count.                 |
+| `source-control/listing/all-changes-section.tsx`                                                 | The header total.                            |
+| `src/renderer/src/i18n/locales/en.json`                                                          | `allChanges.lineTotal`.                      |
 
 ### 56. Review summaries show their verdict
 
@@ -1708,13 +1720,13 @@ A review summary in the PR panel carries the verdict it was submitted with (Appr
 requested, Commented, Dismissed) as a badge beside the author, so it reads apart from a plain
 comment. The Comments list no longer heads open threads with "Needs review · N".
 
-| File | What is ours |
-| --- | --- |
-| `src/shared/github/comment-types.ts` | `reviewState` on `PRComment`, `toPRReviewSummaryState`. |
-| `src/main/github/client/fetch/pr-review-threads-query.ts` | `state` on `reviews.nodes`. |
-| `src/main/github/client/fetch/get-pr-comments.ts` | `reviewState` on both the GraphQL and the REST review summaries. |
-| `checks-panel/comment-row.tsx` | `<ReviewStateBadge>` after the author name (badge in `review-state-badge.tsx`). |
-| `checks-panel/comments-list.tsx` | The "Needs review" label removed; open threads render first, unlabelled. |
+| File                                                      | What is ours                                                                    |
+| --------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| `src/shared/github/comment-types.ts`                      | `reviewState` on `PRComment`, `toPRReviewSummaryState`.                         |
+| `src/main/github/client/fetch/pr-review-threads-query.ts` | `state` on `reviews.nodes`.                                                     |
+| `src/main/github/client/fetch/get-pr-comments.ts`         | `reviewState` on both the GraphQL and the REST review summaries.                |
+| `checks-panel/comment-row.tsx`                            | `<ReviewStateBadge>` after the author name (badge in `review-state-badge.tsx`). |
+| `checks-panel/comments-list.tsx`                          | The "Needs review" label removed; open threads render first, unlabelled.        |
 
 ### 57. `orca file open --line/--column` — retired
 
@@ -2209,7 +2221,7 @@ sync hit exactly that (#23062 landed two commits later) and was fixed by merging
 - The full run found **three fork bugs that every scoped test run had missed**, none caused by the
   merge: the self-updater imported `node:child_process` directly (upstream's import-boundary ratchet
   forbids it — use `spawnProcess` from `src/shared/child-process`); the fork's scroll-by-key wrapper in
-  `virtualized-list.tsx` put a `div` between *every* below-threshold list and its container, breaking
+  `virtualized-list.tsx` put a `div` between _every_ below-threshold list and its container, breaking
   the artifacts table's ownership of its rows (it is now opt-in via `scrollToRowKey`); and
   `mobile-web-bundle-packaging-workflow-contract.test.mjs` enumerates packaging jobs and did not know
   the fork's two workflows. Scoped runs are fine while building a feature; a full run before a release

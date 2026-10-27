@@ -21,7 +21,10 @@ it('generates no :has() selector that any element on the page could depend on', 
       : [compiler.root ?? { base: resolve('src/renderer/src'), pattern: '**/*' }]
   const scanner = new Scanner({
     sources: [
-      ...automaticSources.map((source: object) => ({ ...source, negated: false })),
+      ...automaticSources.map((source: { base: string; pattern: string }) => ({
+        ...source,
+        negated: false
+      })),
       ...compiler.sources
     ]
   })

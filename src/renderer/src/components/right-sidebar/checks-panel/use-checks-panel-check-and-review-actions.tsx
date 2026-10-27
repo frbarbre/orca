@@ -20,6 +20,7 @@ import type { GitHubPRStackEntry } from '../../../../../shared/github/pull-reque
 import { openGitHubPRStackEntry } from '../github-pr-stack-entry-worktree'
 import { activateAndRevealWorktree } from '@/lib/worktree-activation'
 import { useAppStore } from '@/store'
+import { selectWorktreesByRepo } from '@/store/workspace-record-selectors'
 import type { ChecksPanelCheckAndReviewActionsInput } from './check-and-review-action-dependencies'
 import { useChecksPanelReviewLinkActions } from './use-checks-panel-review-link-actions'
 
@@ -342,7 +343,7 @@ export function useChecksPanelCheckAndReviewActions(model: ChecksPanelCheckAndRe
     (entry: GitHubPRStackEntry, modifiers: GitHubPRStackMapNavigationModifiers) => {
       const repoId = activeWorktree?.repoId
       openGitHubPRStackEntry(entry, modifiers, {
-        worktrees: repoId ? (useAppStore.getState().worktreesByRepo[repoId] ?? []) : [],
+        worktrees: repoId ? (selectWorktreesByRepo(useAppStore.getState())[repoId] ?? []) : [],
         activateWorktree: (worktreeId) => activateAndRevealWorktree(worktreeId),
         openUrl: (url, event) =>
           openChecksPanelHostedReviewUrl({

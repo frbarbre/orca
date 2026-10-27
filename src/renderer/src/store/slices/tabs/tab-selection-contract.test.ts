@@ -25,6 +25,7 @@ function selectedTab(contentType: TabContentType): Tab {
 function selectionState(tab: Tab | null): SelectionState {
   return {
     rightSidebarExplorerViewByWorktree: {},
+    rightSidebarTabByWorktree: {},
     activeGroupIdByWorktree: { [workspace]: 'group' },
     groupsByWorktree: {
       [workspace]: [
@@ -87,7 +88,11 @@ function selectionState(tab: Tab | null): SelectionState {
 }
 
 function activate(state: SelectionState) {
-  const { restoredRightSidebarExplorerView: _view, ...surface } = resolveActivatedWorktreeSurface(
+  const {
+    restoredRightSidebarExplorerView: _view,
+    restoredRightSidebarTab: _tab,
+    ...surface
+  } = resolveActivatedWorktreeSurface(
     state,
     workspace,
     undefined,

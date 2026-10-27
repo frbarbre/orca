@@ -39,6 +39,7 @@ import { editorThemeName, ensureCustomEditorThemes } from '@/lib/custom-editor-t
 import { usePendingReviewForDiff } from '@/components/pending-review/use-pending-review-for-diff'
 import { useDocumentDarkTheme } from '@/hooks/use-document-dark-theme'
 import { trackDiffEditorFile } from '@/lib/editor-model-files'
+import { installDiffEditorRestartLanguageServerAction } from './restart-language-server-action'
 
 export default function DiffViewer({
   modelKey,
@@ -253,6 +254,7 @@ export default function DiffViewer({
 
       const originalEditor = diffEditor.getOriginalEditor()
       const modifiedEditor = diffEditor.getModifiedEditor()
+      modifiedEditor.onDidDispose(installDiffEditorRestartLanguageServerAction(diffEditor))
       modifiedEditor.onDidDispose(() => {
         if (diffEditorRef.current !== diffEditor) {
           return

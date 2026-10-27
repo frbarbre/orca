@@ -18,6 +18,7 @@ import {
 } from './diff-editor-word-wrap-options'
 import { monacoFindOptions } from './monaco-find-options'
 import { installDiffEditorShiftWheelScroll } from './diff-editor-shift-wheel-scroll'
+import { installDiffEditorRestartLanguageServerAction } from './restart-language-server-action'
 
 const ImageDiffViewer = lazy(() => import('./ImageDiffViewer'))
 
@@ -73,8 +74,11 @@ export function DiffSectionBody({
   const handleEditorMount: DiffOnMount = (diffEditor, monaco) => {
     diffEditorRef.current = diffEditor
     const cleanupShiftWheelScroll = installDiffEditorShiftWheelScroll(diffEditor)
+    const cleanupRestartLanguageServerAction =
+      installDiffEditorRestartLanguageServerAction(diffEditor)
     diffEditor.getModifiedEditor().onDidDispose(() => {
       cleanupShiftWheelScroll()
+      cleanupRestartLanguageServerAction()
       if (diffEditorRef.current !== diffEditor) {
         return
       }

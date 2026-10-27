@@ -4,10 +4,7 @@ import { toast } from 'sonner'
 import { useAppStore } from '@/store'
 import { translate } from '@/i18n/i18n'
 import { getMonacoCodebaseSearchQuery } from './monaco-codebase-search'
-import {
-  languageServerForMonacoLanguage,
-  restartLanguageServers
-} from '@/lib/restart-language-servers'
+import { addRestartLanguageServerAction } from './restart-language-server-action'
 import { getDiffCommentPopoverLeft } from '../diff-comments/diff-comment-popover-position'
 import {
   installEditorAddReviewNoteShortcut,
@@ -107,18 +104,7 @@ export function installMonacoEditorInputBindings(params: MonacoEditorInputBindin
       state.showRightSidebarSearch({ query })
     }
   })
-  const restartLanguageServerAction = editorInstance.addAction({
-    id: 'orca.restartLanguageServer',
-    label: translate('languageServers.restartAction', 'Restart Language Server'),
-    contextMenuGroupId: 'navigation',
-    contextMenuOrder: 3,
-    run: () => {
-      const language = languageServerForMonacoLanguage(
-        editorInstance.getModel()?.getLanguageId() ?? ''
-      )
-      void restartLanguageServers(language ? [language] : undefined)
-    }
-  })
+  const restartLanguageServerAction = addRestartLanguageServerAction(editorInstance)
   const onLargeTextPaste = (event: ClipboardEvent): void => {
     let endSaveDeferral: (() => void) | null = null
     handleMonacoLargeTextPaste(editorInstance, event, {

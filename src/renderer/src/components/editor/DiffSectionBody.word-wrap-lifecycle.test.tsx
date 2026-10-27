@@ -62,6 +62,9 @@ vi.mock('./diff-editor-word-wrap-options', () => ({
 vi.mock('./diff-editor-shift-wheel-scroll', () => ({
   installDiffEditorShiftWheelScroll: () => cleanupShiftWheel
 }))
+vi.mock('./restart-language-server-action', () => ({
+  installDiffEditorRestartLanguageServerAction: () => () => {}
+}))
 vi.mock('@/i18n/i18n', () => ({ translate: (_key: string, fallback: string) => fallback }))
 
 const props: ComponentProps<typeof DiffSectionBody> = {

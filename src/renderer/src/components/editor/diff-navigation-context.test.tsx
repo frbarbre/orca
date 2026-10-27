@@ -38,7 +38,12 @@ function createFakeEditor(initialCount: number): FakeDiffEditor {
       })),
     getModifiedEditor: () => ({
       getPosition: () => ({ lineNumber: cursorLine }),
-      getModel: () => ({ getLineCount: () => 1000 })
+      getModel: () => ({ getLineCount: () => 1000 }),
+      getScrollTop: () => 0,
+      setScrollTop: vi.fn(),
+      getLayoutInfo: () => ({ height: 1000 * 20 }),
+      getTopForLineNumber: (lineNumber: number) => (lineNumber - 1) * 20,
+      getBottomForLineNumber: (lineNumber: number) => lineNumber * 20
     }),
     goToDiff: vi.fn(),
     getContainerDomNode: () => containerNode,

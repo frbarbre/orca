@@ -4,6 +4,8 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { useAppStore } from '@/store'
 import { translate } from '@/i18n/i18n'
+import { getRepoExecutionHostId } from '../../../../shared/execution-host'
+import { findReposForProject } from '../../../../shared/settings-transfer-projects'
 import {
   buildSettingsTransferBundle,
   mergeImportedSettings,
@@ -24,6 +26,17 @@ function describeBundle(bundle: SettingsTransferBundle): string {
   ]
   if (bundle.ui.workspaceStatusRules) {
     parts.push(translate('auto.components.settings.transfer.summaryRules', 'automations'))
+  }
+  if (bundle.projects.length > 0) {
+    parts.push(
+      translate(
+        'auto.components.settings.transfer.summaryProjects',
+        'settings of {{count}} projects',
+        {
+          count: bundle.projects.length
+        }
+      )
+    )
   }
   if (bundle.keybindings !== null) {
     parts.push(translate('auto.components.settings.transfer.summaryKeybindings', 'keybindings'))
@@ -51,7 +64,12 @@ export function SettingsTransferSection(): React.JSX.Element {
         window.api.ui.get(),
         window.api.settingsTransfer.readFiles()
       ])
-      const bundle = buildSettingsTransferBundle({ settings, ui, files })
+      const bundle = buildSettingsTransferBundle({
+        settings,
+        ui,
+        repos: useAppStore.getState().repos,
+        files
+      })
       const result = await window.api.settingsTransfer.save(JSON.stringify(bundle, null, 2))
       if (result.ok) {
         toast.success(
@@ -97,6 +115,12 @@ export function SettingsTransferSection(): React.JSX.Element {
       const currentSettings = await window.api.settings.get()
       await window.api.settings.set(mergeImportedSettings(currentSettings, bundle.settings))
       await window.api.ui.set(ui)
+      const { repos, updateRepo } = useAppStore.getState()
+      for (const project of bundle.projects) {
+        for (const repo of findReposForProject(repos, project)) {
+          await updateRepo(repo.id, project.settings, { hostId: getRepoExecutionHostId(repo) })
+        }
+      }
       await window.api.settingsTransfer.writeFiles({
         keybindings: bundle.keybindings,
         editorThemes: bundle.editorThemes
@@ -121,7 +145,7 @@ export function SettingsTransferSection(): React.JSX.Element {
         title={translate('auto.components.settings.transfer.title', 'Share settings')}
         description={translate(
           'auto.components.settings.transfer.description',
-          'Export your preferences, board columns, automations, keybindings and editor themes to a file a colleague can import. Accounts, tokens, API keys, local paths and your projects are left out.'
+          'Export your preferences, board columns, automations, project settings, keybindings and editor themes to a file a colleague can import. Project settings apply to the projects they have with the same git remote. Accounts, tokens, API keys and local paths are left out.'
         )}
       />
       <div className="flex gap-2">
@@ -139,7 +163,7 @@ export function SettingsTransferSection(): React.JSX.Element {
           <p>
             {translate(
               'auto.components.settings.transfer.confirm',
-              'This replaces your {{summary}}. Your accounts, projects and workspaces stay as they are. Orca reloads afterwards.',
+              'This replaces your {{summary}}. Your accounts and workspaces stay as they are. Orca reloads afterwards.',
               { summary: describeBundle(pending) }
             )}
           </p>

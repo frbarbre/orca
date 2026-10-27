@@ -1,5 +1,12 @@
 import type { GlobalSettings } from './global-settings-types'
 import type { PersistedUIState } from './persisted-ui-state-types'
+import type { Repo } from './repo-types'
+import {
+  parsePortableProjects,
+  pickPortableProjects,
+  type ProjectSettingsTransfer
+} from './settings-transfer-projects'
+import { UI_STATE_EXPORT } from './settings-transfer-ui-fields'
 import type { WorkspaceStatusRuleConfig } from './workspace-status-rule-config'
 
 export type SettingsSource = GlobalSettings | Record<string, unknown>
@@ -22,6 +29,7 @@ export type SettingsTransferBundle = SettingsTransferFiles & {
   exportedAt: string
   settings: Record<string, unknown>
   ui: Record<string, unknown>
+  projects: ProjectSettingsTransfer[]
 }
 
 // Why a denylist backed by name patterns: a new setting that holds a credential or a local path
@@ -78,50 +86,9 @@ const PRIVATE_SETTING_KEYS = new Set([
   'minimaxUsageModels'
 ])
 
-// Why an allowlist for UI state: almost all of it is this machine's window, tips and history; only
-// these are preferences someone would want to copy.
-const PORTABLE_UI_KEYS = [
-  'groupBy',
-  'sortBy',
-  'projectOrderBy',
-  'showActiveOnly',
-  'hideSleepingWorkspaces',
-  'showSleepingWorkspaces',
-  'hideDefaultBranchWorkspace',
-  'alwaysShowDefaultBranchWorkspace',
-  'hideAutomationGeneratedWorkspaces',
-  'hideCliCreatedWorkspaces',
-  'hideDetachedHeadWorkspaces',
-  'hideTemporaryCheckoutWorkspaces',
-  'hideWorkspacesFromOtherDevices',
-  'agentsShowChildAgents',
-  'agentsCompactMode',
-  'agentsShowSearch',
-  'agentsGroupBy',
-  'agentsReadFilter',
-  'agentsHideAutomationGeneratedWorkspaces',
-  'agentsHideCliCreatedWorkspaces',
-  'agentsHideWorkspacesFromOtherDevices',
-  'uiZoomLevel',
-  'editorFontZoomLevel',
-  'worktreeCardProperties',
-  'agentActivityDisplayMode',
-  'workspaceStatuses',
-  'workspaceBoardOpacity',
-  'workspaceBoardColumnWidth',
-  'syncTaskStatusFromWorkspaceBoard',
-  'statusBarItems',
-  'statusBarVisible',
-  'usagePercentageDisplay',
-  'statusBarUsageMode',
-  'browserDefaultUrl',
-  'browserDefaultSearchEngine',
-  'browserDefaultZoomLevel',
-  'petVisible',
-  'petId',
-  'petSize',
-  'workspaceStatusRules'
-] as const
+const PORTABLE_UI_KEYS = Object.entries(UI_STATE_EXPORT).flatMap(([key, portable]) =>
+  portable ? [key] : []
+)
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
@@ -205,6 +172,7 @@ export function pickPortableUi(ui: UiSource): Record<string, unknown> {
 export function buildSettingsTransferBundle(input: {
   settings: SettingsSource
   ui: UiSource
+  repos: readonly Repo[]
   files: SettingsTransferFiles
   now?: Date
 }): SettingsTransferBundle {
@@ -214,6 +182,7 @@ export function buildSettingsTransferBundle(input: {
     exportedAt: (input.now ?? new Date()).toISOString(),
     settings: pickPortableSettings(input.settings),
     ui: pickPortableUi(input.ui),
+    projects: pickPortableProjects(input.repos),
     keybindings: input.files.keybindings,
     editorThemes: input.files.editorThemes
   }
@@ -260,6 +229,7 @@ export function parseSettingsTransfer(text: string): ParsedSettingsTransfer {
       exportedAt: typeof raw.exportedAt === 'string' ? raw.exportedAt : '',
       settings: isRecord(raw.settings) ? pickPortableSettings(raw.settings) : {},
       ui: isRecord(raw.ui) ? pickPortableUi(raw.ui) : {},
+      projects: parsePortableProjects(raw.projects),
       keybindings: typeof raw.keybindings === 'string' ? raw.keybindings : null,
       editorThemes: parseEditorThemes(raw.editorThemes)
     }

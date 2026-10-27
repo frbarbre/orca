@@ -5,6 +5,7 @@ import {
   mergeImportedStatusRules,
   parseSettingsTransfer
 } from './settings-transfer'
+import type { Repo } from './repo-types'
 import { cloneDefaultWorkspaceStatusRuleConfig } from './workspace-status-rule-config'
 
 const settings = {
@@ -54,11 +55,37 @@ const ui = {
   }
 }
 
+const repo: Repo = {
+  id: 'repo-1',
+  path: '/Users/me/src/app',
+  displayName: 'app',
+  badgeColor: '#000',
+  addedAt: 1,
+  gitRemoteIdentity: {
+    canonicalKey: 'github.com/acme/app',
+    remoteName: 'origin',
+    remoteUrl: 'git@github.com:acme/app.git'
+  },
+  ghAccount: { host: 'github.com', user: 'me' },
+  worktreeBasePath: '/Users/me/worktrees',
+  pythonVenvPath: '/Users/me/venv',
+  symlinkPaths: ['.env', '/etc/hosts', '../secrets'],
+  portLabelsCommand: 'pnpm ports',
+  ciTriage: { prompt: 'Triage it' }
+}
+const folder: Repo = { ...repo, id: 'folder-1', kind: 'folder', gitRemoteIdentity: null }
+
 const files = { keybindings: '{"tab.runQuickCommand":["Mod+R"]}', editorThemes: {} }
 
 describe('settings transfer', () => {
   it('exports preferences and leaves out credentials, paths, this machine and bookkeeping', () => {
-    const bundle = buildSettingsTransferBundle({ settings, ui, files, now: new Date(0) })
+    const bundle = buildSettingsTransferBundle({
+      settings,
+      ui,
+      repos: [repo, folder],
+      files,
+      now: new Date(0)
+    })
 
     expect(Object.keys(bundle.settings).sort()).toEqual([
       'diffDefaultView',
@@ -85,6 +112,17 @@ describe('settings transfer', () => {
       statusByCondition: { reviewing: 'review' },
       actionPrompts: { reviewPullRequest: 'Review it' }
     })
+    expect(bundle.projects).toEqual([
+      {
+        remote: 'github.com/acme/app',
+        name: 'app',
+        settings: {
+          symlinkPaths: ['.env'],
+          portLabelsCommand: 'pnpm ports',
+          ciTriage: { prompt: 'Triage it' }
+        }
+      }
+    ])
     expect(bundle.keybindings).toBe(files.keybindings)
   })
 
@@ -95,7 +133,14 @@ describe('settings transfer', () => {
       settings: { theme: 'light', opencodeGoApiKey: 'planted' },
       ui: { groupBy: 'repo', windowBounds: { x: 9 }, workspaceStatusRules: { repoIds: ['x'] } },
       keybindings: null,
-      editorThemes: { 'editor-dark.json': '{}', '../../etc/passwd': 'x' }
+      editorThemes: { 'editor-dark.json': '{}', '../../etc/passwd': 'x' },
+      projects: [
+        {
+          remote: 'github.com/acme/app',
+          settings: { ciTriage: { prompt: 'Triage' }, worktreeBasePath: '/tmp', forkSyncMode: 'x' }
+        },
+        { remote: 'github.com/acme/other', settings: { path: '/tmp' } }
+      ]
     })
 
     const parsed = parseSettingsTransfer(edited)
@@ -105,6 +150,9 @@ describe('settings transfer', () => {
       expect(parsed.bundle.settings).toEqual({ theme: 'light' })
       expect(parsed.bundle.ui).toEqual({ groupBy: 'repo', workspaceStatusRules: {} })
       expect(parsed.bundle.editorThemes).toEqual({ 'editor-dark.json': '{}' })
+      expect(parsed.bundle.projects).toEqual([
+        { remote: 'github.com/acme/app', name: '', settings: { ciTriage: { prompt: 'Triage' } } }
+      ])
     }
   })
 

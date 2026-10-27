@@ -250,7 +250,12 @@ function buildAndApplyMenu(options: RegisterAppMenuOptions): void {
         label: `${translateMain('menu.forceReload', 'Force Reload')}\t${shortcutLabel('app.forceReload')}`,
         click: () => reloadFocusedWindow(true)
       },
-      { role: 'toggleDevTools' },
+      {
+        // Why not the toggleDevTools role: it inspects the focused web contents, which is an embedded page whenever one has focus.
+        label: translateMain('menu.toggleDevTools', 'Toggle Developer Tools'),
+        accelerator: isMac ? 'Alt+Command+I' : 'Ctrl+Shift+I',
+        click: () => BrowserWindow.getFocusedWindow()?.webContents.toggleDevTools()
+      },
       { type: 'separator' },
       {
         label: `${translateMain('menu.resetSize', 'Reset Size')}\t${shortcutLabel('zoom.reset')}`,

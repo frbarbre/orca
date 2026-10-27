@@ -553,6 +553,7 @@
     "view": "View",
     "reload": "Reload",
     "forceReload": "Force Reload",
+    "toggleDevTools": "Toggle Developer Tools",
     "resetSize": "Reset Size",
     "zoomIn": "Zoom In",
     "zoomOut": "Zoom Out",

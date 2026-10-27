@@ -164,6 +164,25 @@ describe('registerAppMenu', () => {
     expect(options.onBeforeReload).toHaveBeenCalledWith({ ignoreCache: false, webContentsId: 101 })
   })
 
+  it("toggles the focused window's own DevTools, not an embedded page's", () => {
+    const toggleDevToolsMock = vi.fn()
+    const guestToggleDevToolsMock = vi.fn()
+    getFocusedWindowMock.mockReturnValue({ webContents: { toggleDevTools: toggleDevToolsMock } })
+    getFocusedWebContentsMock.mockReturnValue({ toggleDevTools: guestToggleDevToolsMock })
+
+    registerAppMenu(buildMenuOptions())
+
+    const devToolsItem = getSubmenu(getTemplate(), 'View').find(
+      (item) => item.label === 'Toggle Developer Tools'
+    )
+    expect(devToolsItem?.role).toBeUndefined()
+    expect(devToolsItem?.accelerator).toBe(isMac ? 'Alt+Command+I' : 'Ctrl+Shift+I')
+    devToolsItem?.click?.({} as never, {} as never, {} as never)
+
+    expect(toggleDevToolsMock).toHaveBeenCalledTimes(1)
+    expect(guestToggleDevToolsMock).not.toHaveBeenCalled()
+  })
+
   it('force reloads the focused window from the view menu', () => {
     const reloadMock = vi.fn()
     const reloadIgnoringCacheMock = vi.fn()

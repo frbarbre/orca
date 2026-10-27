@@ -39,7 +39,7 @@ vi.mock('@/components/ui/dropdown-menu', () => ({
 
 afterEach(cleanup)
 
-function renderHeader(state: 'open' | 'merged', closeReview = true) {
+function renderHeader(state: 'open' | 'draft' | 'merged', closeReview = true) {
   render(
     <TooltipProvider>
       <ChecksPanelReviewHeader
@@ -66,12 +66,16 @@ function renderHeader(state: 'open' | 'merged', closeReview = true) {
 }
 
 describe('ChecksPanelReviewHeader close action', () => {
-  it('closes an open PR from the More actions menu', async () => {
-    renderHeader('open')
+  it.each(['open', 'draft'] as const)(
+    'closes a %s PR from the More actions menu',
+    async (state) => {
+      handleCloseReview.mockClear()
+      renderHeader(state)
 
-    await userEvent.click(screen.getByRole('button', { name: /Close PR/ }))
-    expect(handleCloseReview).toHaveBeenCalledOnce()
-  })
+      await userEvent.click(screen.getByRole('button', { name: /Close PR/ }))
+      expect(handleCloseReview).toHaveBeenCalledOnce()
+    }
+  )
 
   it('offers no close for a PR that is already merged or has no repository', () => {
     renderHeader('merged')

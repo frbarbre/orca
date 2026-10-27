@@ -125,7 +125,7 @@ export function ChecksPanelReviewHeader({
                   'Link another PR'
                 )}
           </DropdownMenuItem>
-          {closeReview && review.state === 'open' ? (
+          {closeReview && (review.state === 'open' || review.state === 'draft') ? (
             <>
               <DropdownMenuSeparator />
               <CloseReviewMenuItem review={review} target={closeReview} />

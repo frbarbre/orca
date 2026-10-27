@@ -7,7 +7,6 @@ import { runWorktreeDelete } from '../sidebar/delete-worktree-flow'
 import { getDeleteStateForWorktreeHost } from '../sidebar/worktree-delete-state-host-match'
 import {
   ClosedReviewActions,
-  DraftReviewActions,
   HostedReviewActionError,
   MergedReviewActions
 } from './HostedReviewStateActions'
@@ -32,14 +31,7 @@ export default function HostedReviewActions({
   const isGitLab = review.provider === 'gitlab'
   const shortLabel = isGitLab ? 'MR' : 'PR'
   const reviewLabel = isGitLab ? 'merge request' : 'pull request'
-  const {
-    readying,
-    stateUpdating,
-    actionError,
-    handleMarkReadyForReview,
-    handleCloseReview,
-    handleReopenReview
-  } = useHostedReviewActions({
+  const { stateUpdating, actionError, handleReopenReview } = useHostedReviewActions({
     review,
     githubPR,
     repo,
@@ -57,24 +49,9 @@ export default function HostedReviewActions({
     runWorktreeDelete(worktree.id, worktree.hostId ? { expectedHostId: worktree.hostId } : {})
   }, [worktree.hostId, worktree.id])
 
-  if (review.state === 'draft' && (review.provider === 'github' || review.provider === 'gitlab')) {
-    return (
-      <DraftReviewActions
-        shortLabel={shortLabel}
-        reviewLabel={reviewLabel}
-        isGitLab={isGitLab}
-        readying={readying}
-        stateUpdating={stateUpdating}
-        actionError={actionError}
-        onMarkReadyForReview={() => void handleMarkReadyForReview()}
-        onCloseReview={() => void handleCloseReview()}
-      />
-    )
-  }
-
-  // Fork: an open review is merged from Source Control's primary button and closed from the
-  // review header's More actions menu, so the panel keeps no merge button of its own.
-  if (review.state === 'open') {
+  // Fork: an open review is merged and a draft marked ready from the top bar's next-action button,
+  // and both are closed from the review header's More actions menu, so neither has a panel button.
+  if (review.state === 'open' || review.state === 'draft') {
     return actionError ? <HostedReviewActionError message={actionError} /> : null
   }
 

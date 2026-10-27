@@ -13459,10 +13459,6 @@
             "b25f63edd7": "ouvrir",
             "ef064cb7c3": "default",
             "59b4dccf70": "destructive",
-            "markingReady": "Marquage prêt....",
-            "markReady": "Marquer comme prêt à être examiné",
-            "draftMoreActions": "Plus d'actions {{value0}}",
-            "closeDraft": "Fermer",
             "readyToast": "{{value0}} marqué prêt à être examiné"
           },
           "PortsPanel": {

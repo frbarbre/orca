@@ -13282,10 +13282,6 @@
             "ef064cb7c3": "기본",
             "59b4dccf70": "파괴적인",
             "closedToast": "{{value0}} 폐쇄됨",
-            "markingReady": "표시 준비됨...",
-            "markReady": "검토 준비 완료로 표시",
-            "draftMoreActions": "추가 {{value0}} 작업",
-            "closeDraft": "닫기",
             "readyToast": "{{value0}}을(를) 검토 준비 완료로 표시했습니다."
           },
           "PortsPanel": {

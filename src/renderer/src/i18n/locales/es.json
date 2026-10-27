@@ -13314,11 +13314,7 @@
             "b25f63edd7": "abierto",
             "ef064cb7c3": "por defecto",
             "59b4dccf70": "destructivo",
-            "closeDraft": "Cerrar",
             "closedToast": "{{value0}} cerrado",
-            "markingReady": "Marcado listo...",
-            "markReady": "Marcar listo para revisión",
-            "draftMoreActions": "Más acciones de {{value0}}",
             "readyToast": "{{value0}} marcado como listo para revisión"
           },
           "PortsPanel": {

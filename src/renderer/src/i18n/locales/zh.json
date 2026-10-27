@@ -13282,10 +13282,6 @@
             "ef064cb7c3": "默认",
             "59b4dccf70": "destructive",
             "closedToast": "{{value0}} 已关闭",
-            "markingReady": "标记准备好...",
-            "markReady": "标记为可供审核",
-            "draftMoreActions": "更多 {{value0}} 操作",
-            "closeDraft": "关闭",
             "readyToast": "{{value0}} 标记为可供审核"
           },
           "PortsPanel": {

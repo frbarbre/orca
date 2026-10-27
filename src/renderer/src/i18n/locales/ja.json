@@ -13282,10 +13282,6 @@
             "ef064cb7c3": "デフォルト",
             "59b4dccf70": "破壊的な",
             "closedToast": "{{value0}} 閉店",
-            "markingReady": "マーキング準備完了…",
-            "markReady": "レビュー準備完了としてマークを付ける",
-            "draftMoreActions": "その他の {{value0}} 操作",
-            "closeDraft": "閉じる",
             "readyToast": "{{value0}} はレビュー準備完了としてマークされています"
           },
           "PortsPanel": {

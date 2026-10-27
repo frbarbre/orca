@@ -10056,10 +10056,6 @@
             "59b4dccf70": "destrutivo",
             "73e0e1819d": "Colocando a pilha na fila...",
             "e555a41d32": "Mergeando a pilha...",
-            "markingReady": "Marcando como pronto...",
-            "markReady": "Marcar como pronto para review",
-            "draftMoreActions": "Mais ações de {{value0}}",
-            "closeDraft": "Fechar",
             "readyToast": "{{value0}} marcado como pronto para review"
           },
           "SourceControlAgentActionDialogForm": {

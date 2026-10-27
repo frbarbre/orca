@@ -47,6 +47,9 @@ export function useWorktreeCardController(props: ResolvedWorktreeCardProps) {
   } = foundation.cardDetails
   const showLinearTitle = foundation.cardProps.includes('linear-title')
   const showPrAuthor = foundation.cardProps.includes('pr-author')
+  const showStack = foundation.cardProps.includes('stack')
+  const prStack =
+    review.prDisplay && 'stack' in review.prDisplay ? review.prDisplay.stack : undefined
   const shouldRefreshHostedReview = foundation.newCardStyle ? showStatus : showPR
   const detailsHoverControl = useWorktreeCardDetailsHoverControl()
   const hoverDetailsOpen = detailsHoverControl.hoverOpen
@@ -171,6 +174,8 @@ export function useWorktreeCardController(props: ResolvedWorktreeCardProps) {
     showLinearIssue,
     showLinearTitle,
     showPrAuthor,
+    showStack,
+    prStack,
     showJiraIssue,
     showPR,
     showAutomation,

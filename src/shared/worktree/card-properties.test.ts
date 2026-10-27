@@ -14,6 +14,15 @@ describe('worktree card properties', () => {
     )
   })
 
+  it('keeps the stack position once chosen', () => {
+    expect(normalizeWorktreeCardProperties(['pr', 'stack'])).toEqual([
+      'status',
+      'unread',
+      'pr',
+      'stack'
+    ])
+  })
+
   it('returns combined mode update payloads', () => {
     expect(getWorktreeCardModeUpdates('Compact')).toEqual({
       settings: { compactWorktreeCards: true },

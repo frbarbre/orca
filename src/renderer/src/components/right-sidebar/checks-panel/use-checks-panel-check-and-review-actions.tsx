@@ -16,6 +16,10 @@ import { isMacPlatform } from '../../terminal-pane/terminal-link-open-hints'
 import { translate } from '@/i18n/i18n'
 import type { PRCheckDetail, PRCheckRunDetails } from '../../../../../shared/github/check-types'
 import type { GitHubPRStackMapNavigationModifiers } from '../GitHubPRStackMap'
+import type { GitHubPRStackEntry } from '../../../../../shared/github/pull-request-types'
+import { openGitHubPRStackEntry } from '../github-pr-stack-entry-worktree'
+import { activateAndRevealWorktree } from '@/lib/worktree-activation'
+import { useAppStore } from '@/store'
 import type { ChecksPanelCheckAndReviewActionsInput } from './check-and-review-action-dependencies'
 import { useChecksPanelReviewLinkActions } from './use-checks-panel-review-link-actions'
 
@@ -335,15 +339,21 @@ export function useChecksPanelCheckAndReviewActions(model: ChecksPanelCheckAndRe
   )
 
   const handleOpenStackPR = useCallback(
-    (url: string, modifiers: GitHubPRStackMapNavigationModifiers) => {
-      openChecksPanelHostedReviewUrl({
-        url,
-        event: modifiers,
-        isMac: isMacPlatform(),
-        worktreeId: activeWorktreeId
+    (entry: GitHubPRStackEntry, modifiers: GitHubPRStackMapNavigationModifiers) => {
+      const repoId = activeWorktree?.repoId
+      openGitHubPRStackEntry(entry, modifiers, {
+        worktrees: repoId ? (useAppStore.getState().worktreesByRepo[repoId] ?? []) : [],
+        activateWorktree: (worktreeId) => activateAndRevealWorktree(worktreeId),
+        openUrl: (url, event) =>
+          openChecksPanelHostedReviewUrl({
+            url,
+            event,
+            isMac: isMacPlatform(),
+            worktreeId: activeWorktreeId
+          })
       })
     },
-    [activeWorktreeId]
+    [activeWorktree?.repoId, activeWorktreeId]
   )
 
   const { handleUnlinkReview, handleLinkAnotherReview, handleLinkSuppressedPullRequest } =

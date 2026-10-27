@@ -52,9 +52,13 @@ describe('desktop Workspace options copy', () => {
   })
 
   it('matches the shared card display choices, with or without project groups', () => {
+    // Fork-only options (Linear title, PR author, Stack) are desktop-only, so the phone's list leaves them out.
+    const sharedIds = new Set<string>(WORKSPACE_CARD_DISPLAY_CHOICES.map((choice) => choice.id))
     for (const hasProjectGroups of [false, true]) {
       expect(
-        getWorktreeCardDisplayOptions(hasProjectGroups).map(({ id, label }) => ({ id, label }))
+        getWorktreeCardDisplayOptions(hasProjectGroups)
+          .filter(({ id }) => sharedIds.has(id))
+          .map(({ id, label }) => ({ id, label }))
       ).toEqual(
         WORKSPACE_CARD_DISPLAY_CHOICES.map((choice) => ({
           id: choice.id,

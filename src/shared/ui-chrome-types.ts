@@ -40,6 +40,8 @@ export type WorktreeCardProperty =
   | 'linear-issue'
   | 'linear-title'
   | 'pr-author'
+  // Fork: the PR's position in its GitHub stack.
+  | 'stack'
   | 'jira-issue'
   | 'pr'
   | 'automation'

@@ -104,7 +104,7 @@ describe('GitHubPRStackMap', () => {
     )
 
     expect(onOpenPullRequest).toHaveBeenCalledTimes(1)
-    expect(onOpenPullRequest).toHaveBeenCalledWith('https://github.com/acme/repo/pull/203', {
+    expect(onOpenPullRequest).toHaveBeenCalledWith(expect.objectContaining({ number: 203 }), {
       metaKey: false,
       ctrlKey: false,
       shiftKey: false

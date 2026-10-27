@@ -14,6 +14,7 @@ import type { WorktreeCardPresentation } from './worktree-card-presentation'
 import { WorktreeCardSshHostControl } from './WorktreeCardSshHostControl'
 import { WorktreeTitleInlineRename } from './WorktreeTitleInlineRename'
 import { WorktreeCardPrAuthor } from './worktree-card-pr-author'
+import { WorktreeCardStackPosition } from './worktree-card-stack-position'
 import type { WorktreeCardController } from './use-worktree-card-controller'
 
 // Why: pinned and compact inline project cues share this chip so both read as the same affordance.
@@ -270,10 +271,17 @@ export function WorktreeCardHeader({
         )}
 
         {showTitleRowIndicators && titleRowIndicators}
+        <WorktreeCardStackPosition
+          enabled={card.showStack}
+          stack={card.prStack}
+          className={showTitleRowIndicators ? 'mr-1.5' : 'ml-auto mr-1.5'}
+        />
         <WorktreeCardPrAuthor
           worktreeId={card.worktree.id}
           enabled={card.showPrAuthor}
-          className={showTitleRowIndicators ? 'mr-1.5' : 'ml-auto mr-1.5'}
+          className={
+            showTitleRowIndicators || (card.showStack && card.prStack) ? 'mr-1.5' : 'ml-auto mr-1.5'
+          }
         />
       </div>
 

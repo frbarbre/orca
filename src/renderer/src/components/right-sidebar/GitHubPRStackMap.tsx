@@ -54,7 +54,10 @@ export function GitHubPRStackMap({
 }: {
   stack: GitHubPRStack
   currentPRNumber: number
-  onOpenPullRequest: (url: string, modifiers: GitHubPRStackMapNavigationModifiers) => void
+  onOpenPullRequest: (
+    entry: GitHubPRStackEntry,
+    modifiers: GitHubPRStackMapNavigationModifiers
+  ) => void
 }): React.JSX.Element {
   const [open, setOpen] = useState(false)
   const entries = useMemo(
@@ -125,7 +128,7 @@ export function GitHubPRStackMap({
                     current && 'bg-accent'
                   )}
                   onClick={(event) =>
-                    onOpenPullRequest(entry.url, {
+                    onOpenPullRequest(entry, {
                       metaKey: event.metaKey,
                       ctrlKey: event.ctrlKey,
                       shiftKey: event.shiftKey

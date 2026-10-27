@@ -6196,7 +6196,8 @@
           "cli": "Orca CLI",
           "workspaceOptions": "Workspace options",
           "linearTitle": "Linear title",
-          "prAuthor": "PR author"
+          "prAuthor": "PR author",
+          "stack": "Stack"
         },
         "SshTargetRow": {
           "4677394048": "Connecting…",
@@ -6267,7 +6268,8 @@
           "branchIdentity": "Branch",
           "branchFolderPathIdentity": "Branch or folder path",
           "ef18787206": "Queued for deletion",
-          "prAuthor": "Pull request by {{login}}"
+          "prAuthor": "Pull request by {{login}}",
+          "stackPosition": "Stack #{{stack}}, {{position}} of {{size}}"
         },
         "WorktreeCardAgents": {
           "1b0a156717": "Agents"

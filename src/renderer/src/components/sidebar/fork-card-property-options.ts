@@ -27,6 +27,15 @@ const FORK_CARD_DISPLAY_OPTIONS: { after: WorktreeCardProperty; option: CardDisp
         )
       }
     }
+  },
+  {
+    after: 'jira-issue',
+    option: {
+      id: 'stack',
+      get label() {
+        return translate('auto.components.sidebar.SidebarWorkspaceOptionsMenu.stack', 'Stack')
+      }
+    }
   }
 ]
 

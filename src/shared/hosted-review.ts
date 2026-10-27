@@ -1,6 +1,7 @@
 import type {
   CardCheckStatus,
   CheckStatus,
+  GitHubPRStack,
   GitHubRepositoryIdentity,
   PRConflictSummary,
   PRMergeableState,
@@ -53,6 +54,8 @@ export type HostedReviewInfo = {
   /** Target branch name for review-created worktree compare-base repair. */
   baseRefName?: string
   conflictSummary?: PRConflictSummary
+  /** Fork: the GitHub stack the PR sits in, for the card's stack position. */
+  stack?: GitHubPRStack
 }
 
 export type HostedReviewForBranchArgs = {

@@ -6,11 +6,13 @@ import {
 } from '@/lib/restart-language-servers'
 
 type DiffEditorPanes = {
-  getOriginalEditor: () => editor.ICodeEditor
-  getModifiedEditor: () => editor.ICodeEditor
+  getOriginalEditor: () => editor.IStandaloneCodeEditor
+  getModifiedEditor: () => editor.IStandaloneCodeEditor
 }
 
-export function addRestartLanguageServerAction(codeEditor: editor.ICodeEditor): IDisposable {
+export function addRestartLanguageServerAction(
+  codeEditor: editor.IStandaloneCodeEditor
+): IDisposable {
   return codeEditor.addAction({
     id: 'orca.restartLanguageServer',
     label: translate('languageServers.restartAction', 'Restart Language Server'),

@@ -20,7 +20,7 @@ function createPane(languageId: string) {
     },
     getModel: () => ({ getLanguageId: () => languageId })
   }
-  return { pane: pane as unknown as editor.ICodeEditor, actions, dispose }
+  return { pane: pane as unknown as editor.IStandaloneCodeEditor, actions, dispose }
 }
 
 describe('installDiffEditorRestartLanguageServerAction', () => {

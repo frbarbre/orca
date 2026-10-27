@@ -87,6 +87,65 @@ describe('setupContextualCopy', () => {
     expect(setInterval).not.toHaveBeenCalled()
   })
 
+  it('leaves the hint label alone on scroll while its text is unchanged', () => {
+    // Why: any DOM write under body can restyle the whole page, so a scroll must not rewrite the label.
+    let scroll = (): void => {}
+    let labelWrites = 0
+    const hintNode = {
+      className: '',
+      offsetHeight: 28,
+      style: { display: '' },
+      label: '',
+      get textContent() {
+        return this.label
+      },
+      set textContent(value: string) {
+        labelWrites += 1
+        this.label = value
+      }
+    }
+    vi.stubGlobal('window', {
+      clearInterval: vi.fn(),
+      clearTimeout: vi.fn(),
+      setInterval: vi.fn(() => 1),
+      setTimeout: vi.fn(() => 2)
+    })
+    vi.stubGlobal('document', { createElement: () => hintNode })
+    // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: The editor stub implements every method setupContextualCopy invokes in this scenario.
+    const editorInstance = {
+      addContentWidget: vi.fn(),
+      getContainerDomNode: () => ({ addEventListener: vi.fn(), removeEventListener: vi.fn() }),
+      getModel: () => null,
+      getSelection: () => null,
+      hasTextFocus: () => true,
+      layoutContentWidget: vi.fn(),
+      onDidBlurEditorText: () => ({ dispose: vi.fn() }),
+      onDidChangeCursorSelection: () => ({ dispose: vi.fn() }),
+      onDidDispose: () => ({ dispose: vi.fn() }),
+      onDidFocusEditorText: () => ({ dispose: vi.fn() }),
+      onDidScrollChange: (listener: () => void) => {
+        scroll = listener
+        return { dispose: vi.fn() }
+      },
+      removeContentWidget: vi.fn()
+    } as unknown as editor.IStandaloneCodeEditor
+
+    setupContextualCopy({
+      editorInstance,
+      filePath: 'src/example.ts',
+      setCopyToast: vi.fn(),
+      propsRef: { current: { language: 'typescript', relativePath: 'src/example.ts' } },
+      copyToastTimeoutRef: { current: null }
+    })
+    const writesAfterSetup = labelWrites
+    scroll()
+    scroll()
+    scroll()
+
+    expect(hintNode.textContent).toBe('Copy context Copy Context')
+    expect(labelWrites).toBe(writesAfterSetup)
+  })
+
   it('refreshes a visible hint without reading selection text and extracts it only on copy', async () => {
     let refreshHint = (): void => {}
     let keydown = (_event: KeyboardEvent): void => {}

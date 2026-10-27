@@ -79,6 +79,7 @@ export function createSetActiveWorktree(
       const worktree = findKnownWorktreeById(s, worktreeId, executionHostId)
       const {
         restoredRightSidebarExplorerView,
+        restoredRightSidebarTab,
         activeFileId,
         activeBrowserTabId,
         activeTabType,
@@ -125,6 +126,17 @@ export function createSetActiveWorktree(
         s.activeTabTypeByWorktree[worktreeId] === activeTabType
           ? s.activeTabTypeByWorktree
           : { ...s.activeTabTypeByWorktree, [worktreeId]: activeTabType }
+      // Why record on leave: the tab changes through many setters, so the worktree being left
+      // keeps whatever it last showed.
+      const leavingWorktreeId = s.activeWorktreeId !== worktreeId ? s.activeWorktreeId : null
+      const nextRightSidebarTabByWorktree =
+        leavingWorktreeId && s.rightSidebarTabByWorktree[leavingWorktreeId] !== s.rightSidebarTab
+          ? { ...s.rightSidebarTabByWorktree, [leavingWorktreeId]: s.rightSidebarTab }
+          : s.rightSidebarTabByWorktree
+      const nextRightSidebarTab =
+        leavingWorktreeId !== null || s.activeWorktreeId === null
+          ? restoredRightSidebarTab
+          : s.rightSidebarTab
       const hasStateChange =
         s.activeWorktreeId !== worktreeId ||
         s.activeWorkspaceExecutionHostId !== (executionHostId ?? null) ||
@@ -134,6 +146,8 @@ export function createSetActiveWorktree(
         s.activeBrowserTabId !== activeBrowserTabId ||
         s.activeTabType !== activeTabType ||
         s.rightSidebarExplorerView !== restoredRightSidebarExplorerView ||
+        s.rightSidebarTab !== nextRightSidebarTab ||
+        nextRightSidebarTabByWorktree !== s.rightSidebarTabByWorktree ||
         s.activeTabId !== activeTabId ||
         nextActiveTabTypeByWorktree !== s.activeTabTypeByWorktree ||
         nextEverActivated !== s.everActivatedWorktreeIds ||
@@ -161,6 +175,8 @@ export function createSetActiveWorktree(
         activeTabType,
         activeTabTypeByWorktree: nextActiveTabTypeByWorktree,
         rightSidebarExplorerView: restoredRightSidebarExplorerView,
+        rightSidebarTab: nextRightSidebarTab,
+        rightSidebarTabByWorktree: nextRightSidebarTabByWorktree,
         activeTabId,
         everActivatedWorktreeIds: nextEverActivated,
         ...tabsByWorktreeUpdate

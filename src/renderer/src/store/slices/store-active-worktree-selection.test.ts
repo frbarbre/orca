@@ -144,7 +144,8 @@ describe('setActiveWorktree', () => {
     expect(worktrees.map((worktree) => worktree.id)).toEqual([backgroundId, focusedId])
   })
 
-  it('keeps the current right sidebar tab when switching worktrees', () => {
+  // Fork: a worktree opens on Source Control the first time, then on the tab last used in it.
+  it('opens a new worktree on Source Control and restores each worktree’s last tab', () => {
     const store = createTestStore()
     const wt1 = 'repo1::/path/wt1'
     const wt2 = 'repo1::/path/wt2'
@@ -156,18 +157,22 @@ describe('setActiveWorktree', () => {
           makeWorktree({ id: wt2, repoId: 'repo1', path: '/path/wt2' })
         ]
       },
-      rightSidebarTab: 'checks',
-      rightSidebarTabByWorktree: { [wt1]: 'search' as never, [wt2]: 'explorer' }
+      rightSidebarTab: 'explorer'
     })
+
+    store.getState().setActiveWorktree(wt1)
+    expect(store.getState().rightSidebarTab).toBe('source-control')
+    store.getState().setRightSidebarTab('checks')
+
+    store.getState().setActiveWorktree(wt2)
+    expect(store.getState().rightSidebarTab).toBe('source-control')
+    store.getState().setRightSidebarTab('explorer')
 
     store.getState().setActiveWorktree(wt1)
     expect(store.getState().rightSidebarTab).toBe('checks')
 
     store.getState().setActiveWorktree(wt2)
-    expect(store.getState().rightSidebarTab).toBe('checks')
-
-    store.getState().setActiveWorktree(wt1)
-    expect(store.getState().rightSidebarTab).toBe('checks')
+    expect(store.getState().rightSidebarTab).toBe('explorer')
   })
 
   it('restores the Explorer files/search subview per worktree when switching', () => {
@@ -203,22 +208,6 @@ describe('setActiveWorktree', () => {
 
     store.getState().setActiveWorktree(wt1)
     expect(store.getState().rightSidebarExplorerView).toBe('search')
-  })
-
-  it('does not reset the right sidebar tab for worktrees without remembered sidebar state', () => {
-    const store = createTestStore()
-    const wt = 'repo1::/path/wt1'
-
-    seedStore(store, {
-      worktreesByRepo: {
-        repo1: [makeWorktree({ id: wt, repoId: 'repo1', path: '/path/wt1' })]
-      },
-      rightSidebarTab: 'checks'
-    })
-
-    store.getState().setActiveWorktree(wt)
-
-    expect(store.getState().rightSidebarTab).toBe('checks')
   })
 
   it('does not notify subscribers when reselecting the already-active reconciled worktree', () => {

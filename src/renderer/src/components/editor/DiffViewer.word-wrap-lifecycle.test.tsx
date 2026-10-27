@@ -13,7 +13,9 @@ const fixture = vi.hoisted(() => {
       onDidDispose: (callback: () => void) => {
         disposals.add(callback)
         return { dispose: () => disposals.delete(callback) }
-      }
+      },
+      getPosition: () => ({ lineNumber: 1 }),
+      getModel: () => ({ getLineCount: () => 3 })
     }
     const disposeUpdate = vi.fn()
     const editor = {
@@ -21,7 +23,7 @@ const fixture = vi.hoisted(() => {
       getModifiedEditor: () => modifiedEditor,
       onDidDispose: vi.fn(() => ({ dispose: vi.fn() })),
       onDidUpdateDiff: () => ({ dispose: disposeUpdate }),
-      getLineChanges: () => [{}],
+      getLineChanges: () => [{ modifiedStartLineNumber: 2, modifiedEndLineNumber: 2 }],
       goToDiff: vi.fn(),
       saveViewState: () => null,
       focus: vi.fn()
@@ -78,6 +80,9 @@ vi.mock('./useContextualCopySetup', () => ({
   useContextualCopySetup: () => ({ setupCopy: vi.fn(), toastNode: null })
 }))
 vi.mock('../diff-comments/useDiffCommentDecorator', () => ({ useDiffCommentDecorator: vi.fn() }))
+vi.mock('@/components/diff-comments/useInlinePRCommentZones', () => ({
+  useInlinePRCommentZones: vi.fn()
+}))
 vi.mock('./useDiffViewerFirstChangeAutoScroll', () => ({
   useDiffViewerFirstChangeAutoScroll: vi.fn()
 }))
@@ -95,7 +100,13 @@ vi.mock('./diff-model-swap-view-state', () => ({
 vi.mock('./restart-language-server-action', () => ({
   installDiffEditorRestartLanguageServerAction: () => vi.fn()
 }))
-vi.mock('./editor-shortcuts', () => ({ installMonacoDiffChangeNavigationShortcut: () => vi.fn() }))
+vi.mock('@/components/pr-comments/use-inline-pr-comment-actions', () => ({
+  useInlinePRCommentActions: () => ({ groups: [], prNumber: null })
+}))
+vi.mock('./editor-shortcuts', () => ({
+  installMonacoDiffChangeNavigationShortcut: () => vi.fn(),
+  installChangedFileNavigationShortcut: () => vi.fn()
+}))
 vi.mock('./LargeDiffFallback', () => ({ LargeDiffFallback: () => <div>Large diff</div> }))
 
 function NavigationProbe(): React.JSX.Element {

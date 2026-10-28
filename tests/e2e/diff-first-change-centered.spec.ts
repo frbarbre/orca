@@ -74,6 +74,7 @@ test('opening each changed file centres its single-line change', async ({
         message: `${name}'s change should be on screen`
       })
       .not.toBeNull()
+    // ast-grep-ignore: test-no-real-time-wait -- a late re-scroll has no signal; give it time to happen
     await orcaPage.waitForTimeout(1_000)
     const offset = await changedLineOffsetFromMiddle(orcaPage, name)
     expect(

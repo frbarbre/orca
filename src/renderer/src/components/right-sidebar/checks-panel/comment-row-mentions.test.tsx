@@ -18,7 +18,7 @@ describe('a PR comment that mentions someone', () => {
           author: 'zahlio',
           authorAvatarUrl: '',
           body: '@madsenmm Remember to only use the token',
-          createdAt: new Date().toISOString(),
+          createdAt: '2026-01-01T00:00:00.000Z',
           url: 'https://example.test/1'
         }}
         botAuthorOverrides={new Set()}
@@ -27,7 +27,7 @@ describe('a PR comment that mentions someone', () => {
         actionState="open"
         isQueued={false}
         presentation={getPRCommentPresentationClasses()}
-        now={Date.now()}
+        now={Date.parse('2026-01-01T00:05:00.000Z')}
         onEditComment={vi.fn(async () => true)}
         onDeleteComment={vi.fn()}
       />

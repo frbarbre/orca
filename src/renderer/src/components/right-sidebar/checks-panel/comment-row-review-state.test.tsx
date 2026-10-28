@@ -17,7 +17,7 @@ function renderRow(overrides: Partial<PRComment>) {
         author: 'madsenmm',
         authorAvatarUrl: '',
         body: 'Frontend is good, nice',
-        createdAt: new Date().toISOString(),
+        createdAt: '2026-01-01T00:00:00.000Z',
         url: 'https://example.test/1',
         ...overrides
       }}
@@ -27,7 +27,7 @@ function renderRow(overrides: Partial<PRComment>) {
       actionState="open"
       isQueued={false}
       presentation={getPRCommentPresentationClasses()}
-      now={Date.now()}
+      now={Date.parse('2026-01-01T00:05:00.000Z')}
       onEditComment={vi.fn(async () => true)}
       onDeleteComment={vi.fn()}
     />

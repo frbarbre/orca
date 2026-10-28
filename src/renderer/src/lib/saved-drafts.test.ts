@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import { act, renderHook } from '@testing-library/react'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { reloadSavedDraftsForTests, useSavedDraft } from './saved-drafts'
 
 afterEach(() => {
@@ -30,16 +30,21 @@ describe('useSavedDraft', () => {
   })
 
   it('drops drafts nobody has touched for a month', () => {
-    const old = Date.now() - 31 * 24 * 60 * 60 * 1000
-    localStorage.setItem(
-      'orca.savedDrafts.v1',
-      JSON.stringify({
-        stale: { text: 'old', savedAt: old },
-        fresh: { text: 'new', savedAt: Date.now() }
-      })
-    )
-    reloadSavedDraftsForTests()
-    expect(renderHook(() => useSavedDraft('stale')).result.current[0]).toBe('')
-    expect(renderHook(() => useSavedDraft('fresh')).result.current[0]).toBe('new')
+    const now = Date.parse('2026-01-01T00:00:00.000Z')
+    vi.useFakeTimers({ now, toFake: ['Date'] })
+    try {
+      localStorage.setItem(
+        'orca.savedDrafts.v1',
+        JSON.stringify({
+          stale: { text: 'old', savedAt: now - 31 * 24 * 60 * 60 * 1000 },
+          fresh: { text: 'new', savedAt: now }
+        })
+      )
+      reloadSavedDraftsForTests()
+      expect(renderHook(() => useSavedDraft('stale')).result.current[0]).toBe('')
+      expect(renderHook(() => useSavedDraft('fresh')).result.current[0]).toBe('new')
+    } finally {
+      vi.useRealTimers()
+    }
   })
 })

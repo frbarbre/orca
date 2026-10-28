@@ -15,7 +15,7 @@ function comment(overrides: Partial<PRComment> = {}): PRComment {
     author: 'frbarbre',
     authorAvatarUrl: '',
     body: 'this needs a second look',
-    createdAt: new Date().toISOString(),
+    createdAt: '2026-01-01T00:00:00.000Z',
     url: 'https://example.test/1',
     path: 'src/app.ts',
     line: 12,
@@ -34,7 +34,7 @@ function renderRow(overrides: Partial<PRComment>, onOpenLocation = vi.fn()) {
       actionState="open"
       isQueued={false}
       presentation={getPRCommentPresentationClasses()}
-      now={Date.now()}
+      now={Date.parse('2026-01-01T00:05:00.000Z')}
       onOpenLocation={onOpenLocation}
     />
   )

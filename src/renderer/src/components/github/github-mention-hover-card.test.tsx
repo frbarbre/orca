@@ -47,13 +47,10 @@ describe('GitHub mention hover card', () => {
     expect(mention?.textContent).toBe('@madsenmm')
     expect(container.querySelectorAll('[data-github-mention]')).toHaveLength(1)
 
-    await act(async () => {
-      mention?.focus()
-      await new Promise((resolve) => setTimeout(resolve, 400))
-    })
+    act(() => mention?.focus())
 
+    await vi.waitFor(() => expect(document.body.textContent).toContain('Mads Madsen'))
     expect(userProfile).toHaveBeenCalledWith('madsenmm')
-    expect(document.body.textContent).toContain('Mads Madsen')
     expect(document.body.textContent).toContain('Builds the frontend')
     expect(document.body.textContent).toContain('Copenhagen')
   })

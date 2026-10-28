@@ -51,7 +51,7 @@ test('sends a fresh note to the auto-picked agent with three key presses', async
     .filter({ hasText: 'export const line3 = 3' })
     .first()
   await expect(line).toBeVisible({ timeout: 15_000 })
-  // Let the filesystem watcher finish its model refresh before opening a draft in that model.
+  // ast-grep-ignore: test-no-real-time-wait -- the watcher's model refresh exposes no signal to wait on
   await orcaPage.waitForTimeout(3_000)
   await line.hover({ position: { x: 4, y: 8 } })
   await orcaPage.locator('.orca-diff-comment-add-btn').click()

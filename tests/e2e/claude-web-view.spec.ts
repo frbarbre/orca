@@ -191,7 +191,7 @@ test('focuses the prompt when the web view is opened, and restores it after a re
   await markPaneRunningClaude(orcaPage, { tabId, leafId })
   await expect(webview).toHaveAttribute('src', PAGE_URL)
   await expect.poll(() => inGuest<boolean>(PROMPT_IS_DRAWN)).toBe(true)
-  // Why a pause: proving focus never arrives needs time for a wrong focus to have happened.
+  // ast-grep-ignore: test-no-real-time-wait -- proving focus never arrives needs time for a wrong focus
   await orcaPage.waitForTimeout(1_500)
   expect(await inGuest<boolean>(PROMPT_IS_FOCUSED)).toBe(false)
 })
@@ -229,6 +229,7 @@ test('opens a new Claude Code tab in the web view when that is the default view'
   // Why: an auto-opened web view once pulled its tab back, so one click on another tab didn't stick.
   await orcaPage.locator(`[data-testid="sortable-tab"][data-tab-id="${firstTabId}"]`).click()
   await expect.poll(activeTabId).toBe(firstTabId)
+  // ast-grep-ignore: test-no-real-time-wait -- proving the tab is not pulled back needs time for it to happen
   await orcaPage.waitForTimeout(1_500)
   expect(await activeTabId()).toBe(firstTabId)
 })

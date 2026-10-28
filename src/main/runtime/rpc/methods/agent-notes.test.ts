@@ -22,7 +22,7 @@ function createRuntime(initial: StoredWorktree) {
       updates: { agentNotes?: DiffComment[] }
     ) => {
       // Why yield: a real write awaits the store, so a racing add would read the old list here.
-      await new Promise((resolve) => setTimeout(resolve, 5))
+      await new Promise((resolve) => setImmediate(resolve))
       stored = { ...stored, ...updates }
       return stored
     }

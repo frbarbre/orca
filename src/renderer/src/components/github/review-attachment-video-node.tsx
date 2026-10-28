@@ -1,10 +1,9 @@
 import React from 'react'
 import { Node } from '@tiptap/core'
-import { NodeViewWrapper, type ReactNodeViewProps } from '@tiptap/react'
+import { NodeViewWrapper, ReactNodeViewRenderer, type ReactNodeViewProps } from '@tiptap/react'
 import { X } from 'lucide-react'
 import { translate } from '@/i18n/i18n'
 import { cn } from '@/lib/utils'
-import { safeReactNodeViewRenderer } from '@/components/editor/safe-react-node-view-renderer'
 import { GitHubUserAttachmentVideo } from '@/components/sidebar/comment-markdown-github-attachment-media'
 import { isGitHubAttachmentAssetUrl } from '../../../../shared/github/review-asset'
 
@@ -80,6 +79,6 @@ export const ReviewAttachmentVideo = Node.create({
   renderMarkdown: (node) => String(node.attrs?.src ?? ''),
 
   addNodeView() {
-    return safeReactNodeViewRenderer(ReviewAttachmentVideoView)
+    return ReactNodeViewRenderer(ReviewAttachmentVideoView)
   }
 })

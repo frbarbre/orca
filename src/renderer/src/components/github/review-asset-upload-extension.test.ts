@@ -89,6 +89,9 @@ describe('ReviewAssetUpload', () => {
     expect(uploading).toHaveBeenLastCalledWith(false)
     expect(target.getMarkdown()).toContain(VIDEO_URL)
     expect(target.view.dom.querySelector('.review-asset-pending-video')).toBeNull()
+    const types: string[] = []
+    target.state.doc.forEach((node) => types.push(node.type.name))
+    expect(types).toContain('reviewAttachmentVideo')
   })
 
   it('uploads a dropped file even after the window guard has claimed the drop', async () => {

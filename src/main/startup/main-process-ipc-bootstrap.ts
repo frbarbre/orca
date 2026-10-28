@@ -12,7 +12,10 @@ import type { ResolveReviewBaseRequest } from '../../shared/github/review-base'
 import { resolveRegisteredWorktreePath } from '../ipc/registered-worktree-roots-cache'
 import { getLocalGitOptionsForRegisteredWorktree } from '../ipc/local-worktree-runtime-options'
 import { getPullRequestReviewContext, submitReviewVerdict } from '../github/submit-review-verdict'
-import { updatePublishedReviewComment } from '../github/update-published-comment'
+import {
+  deletePublishedReviewComment,
+  updatePublishedReviewComment
+} from '../github/update-published-comment'
 import {
   readPendingReviewDrafts,
   writePendingReviewDrafts,
@@ -20,6 +23,7 @@ import {
   writePendingReviewSummary
 } from '../github/pending-review-draft-store'
 import type {
+  DeletePublishedCommentRequest,
   PendingReviewComment,
   SubmitReviewVerdictRequest,
   UpdatePublishedCommentRequest
@@ -121,6 +125,11 @@ export function registerMainProcessIpcHandlers(): void {
   ipcMain.handle(
     'pending-review:update-comment',
     (_event, request: UpdatePublishedCommentRequest) => updatePublishedReviewComment(request)
+  )
+
+  ipcMain.handle(
+    'pending-review:delete-comment',
+    (_event, request: DeletePublishedCommentRequest) => deletePublishedReviewComment(request)
   )
 
   ipcMain.handle('pending-review:asset-upload', (_event, request: UploadReviewAssetRequest) =>

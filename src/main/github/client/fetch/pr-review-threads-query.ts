@@ -20,6 +20,7 @@ query($owner: String!, $repo: String!, $pr: Int!) {
               createdAt
               lastEditedAt
               viewerCanUpdate
+              viewerCanDelete
               url
               path
               reactionGroups {

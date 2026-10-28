@@ -27,6 +27,14 @@ export function createWebPendingReviewApi(): Pick<PreloadApi, 'pendingReview'> {
             'Comments are edited from the desktop app.'
           )
         }),
+      deleteComment: () =>
+        Promise.resolve({
+          ok: false as const,
+          error: translate(
+            'auto.web.pendingReview.deleteDesktopOnly',
+            'Comments are deleted from the desktop app.'
+          )
+        }),
       // Why missing: the repository lives on the desktop's machine, not in the browser.
       resolveBase: () => Promise.resolve({ kind: 'missing' as const }),
       context: () =>

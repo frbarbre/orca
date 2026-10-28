@@ -18,7 +18,10 @@ vi.mock('./rate-limit', () => ({
   noteRepositoryRateLimitSpend: vi.fn()
 }))
 
-import { updatePublishedReviewComment } from './update-published-comment'
+import {
+  deletePublishedReviewComment,
+  updatePublishedReviewComment
+} from './update-published-comment'
 
 describe('updatePublishedReviewComment', () => {
   beforeEach(() => mocks.ghExecFileAsync.mockReset())
@@ -69,5 +72,34 @@ describe('updatePublishedReviewComment', () => {
       'updatePullRequestReviewComment('
     )
     expect(result).toEqual({ ok: true, body: 'Fixed', lastEditedAt: null })
+  })
+})
+
+describe('deletePublishedReviewComment', () => {
+  beforeEach(() => mocks.ghExecFileAsync.mockReset())
+
+  it('removes an inline review comment through the delete mutation', async () => {
+    mocks.ghExecFileAsync.mockResolvedValue({
+      stdout: JSON.stringify({ data: { deletePullRequestReviewComment: { clientMutationId: null } } })
+    })
+
+    const result = await deletePublishedReviewComment({ repoPath: '/repo', commentNodeId: 'PRRC_1' })
+
+    const args: string[] = mocks.ghExecFileAsync.mock.calls[0]?.[0] ?? []
+    expect(args.find((arg) => arg.startsWith('query='))).toContain(
+      'deletePullRequestReviewComment('
+    )
+    expect(args).toContain('id=PRRC_1')
+    expect(result).toEqual({ ok: true })
+  })
+
+  it("passes on GitHub's reason when it refuses", async () => {
+    mocks.ghExecFileAsync.mockResolvedValue({
+      stdout: JSON.stringify({ errors: [{ message: 'Resource not accessible by integration' }] })
+    })
+
+    const result = await deletePublishedReviewComment({ repoPath: '/repo', commentNodeId: 'PRRC_1' })
+
+    expect(result).toEqual({ ok: false, error: 'Resource not accessible by integration' })
   })
 })

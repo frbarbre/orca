@@ -45,6 +45,10 @@ export type UpdatePublishedCommentResult =
   | { ok: true; body: string; lastEditedAt: string | null }
   | { ok: false; error: string }
 
+export type DeletePublishedCommentRequest = Omit<UpdatePublishedCommentRequest, 'body' | 'kind'>
+
+export type DeletePublishedCommentResult = { ok: true } | { ok: false; error: string }
+
 const MAX_PENDING_REVIEW_COMMENTS = 200
 
 export function addPendingReviewComment(

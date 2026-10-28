@@ -120,6 +120,61 @@ describe('review summary state', () => {
     })
   })
 
+  it('keeps whether this viewer may delete an inline review comment', async () => {
+    getOwnerRepoMock.mockResolvedValueOnce({ owner: 'acme', repo: 'widgets' })
+    const reviewComment = (databaseId: number, viewerCanDelete: boolean) => ({
+      id: `PRRC_${databaseId}`,
+      databaseId,
+      author: { __typename: 'User', login: 'frbarbre', avatarUrl: 'https://avatar' },
+      body: `comment ${databaseId}`,
+      createdAt: '2026-10-13T08:00:00Z',
+      lastEditedAt: null,
+      viewerCanUpdate: true,
+      viewerCanDelete,
+      url: `https://github.com/acme/widgets/pull/7#discussion_r${databaseId}`,
+      path: 'src/a.ts',
+      reactionGroups: []
+    })
+    ghExecFileAsyncMock
+      .mockResolvedValueOnce({
+        stdout: JSON.stringify({
+          data: {
+            repository: {
+              pullRequest: {
+                reviewThreads: {
+                  nodes: [
+                    {
+                      id: 'PRRT_1',
+                      isResolved: false,
+                      line: 3,
+                      startLine: null,
+                      originalLine: 3,
+                      originalStartLine: null,
+                      comments: { nodes: [reviewComment(11, true), reviewComment(12, false)] }
+                    }
+                  ]
+                },
+                comments: { nodes: [] },
+                reviews: { nodes: [] }
+              }
+            }
+          }
+        })
+      })
+      .mockResolvedValueOnce({ stdout: '[]' })
+      .mockResolvedValueOnce({ stdout: '[]' })
+
+    const comments = await getPRComments('/repo-root', 7)
+
+    expect(Object.fromEntries(comments.map((c) => [c.id, c.viewerCanDelete]))).toEqual({
+      11: true,
+      12: false
+    })
+    expect(ghExecFileAsyncMock.mock.calls[0]?.[0]).toEqual(
+      expect.arrayContaining([expect.stringMatching(/reviewThreads[\s\S]*\bviewerCanDelete\b/)])
+    )
+  })
+
   it('keeps the state from REST reviews when GraphQL is rate limited', async () => {
     rateLimitGuardMock.mockImplementation(((bucket: string) =>
       bucket === 'graphql'

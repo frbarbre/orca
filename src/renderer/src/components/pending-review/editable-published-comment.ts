@@ -11,6 +11,11 @@ export function isEditablePublishedReviewComment(comment: PRComment): boolean {
   return Boolean(comment.threadId && comment.viewerCanUpdate && comment.reactionSubjectId)
 }
 
+/** Fork: an inline review comment already on the pull request that GitHub lets this viewer delete. */
+export function isDeletablePublishedReviewComment(comment: PRComment): boolean {
+  return Boolean(comment.threadId && comment.viewerCanDelete && comment.reactionSubjectId)
+}
+
 /** Fork: a submitted review's summary, which GitHub lets its author rewrite but not delete. */
 export function isEditablePublishedReviewSummary(comment: PRComment): boolean {
   return Boolean(

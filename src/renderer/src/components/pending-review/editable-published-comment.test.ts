@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  isDeletablePublishedReviewComment,
   isEditablePublishedReviewComment,
   isEditablePublishedReviewSummary
 } from './editable-published-comment'
@@ -36,6 +37,28 @@ describe('isEditablePublishedReviewComment', () => {
 
   it('refuses without the node id the edit mutation needs to locate the comment', () => {
     expect(isEditablePublishedReviewComment(comment({ reactionSubjectId: undefined }))).toBe(false)
+  })
+})
+
+describe('isDeletablePublishedReviewComment', () => {
+  it('accepts an inline comment the provider says this viewer may delete', () => {
+    expect(isDeletablePublishedReviewComment(comment({ viewerCanDelete: true }))).toBe(true)
+  })
+
+  it('refuses when the provider withholds permission', () => {
+    expect(isDeletablePublishedReviewComment(comment({ viewerCanDelete: false }))).toBe(false)
+    expect(isDeletablePublishedReviewComment(comment())).toBe(false)
+  })
+
+  it('refuses a conversation comment and one without a node id', () => {
+    expect(
+      isDeletablePublishedReviewComment(comment({ viewerCanDelete: true, threadId: undefined }))
+    ).toBe(false)
+    expect(
+      isDeletablePublishedReviewComment(
+        comment({ viewerCanDelete: true, reactionSubjectId: undefined })
+      )
+    ).toBe(false)
   })
 })
 

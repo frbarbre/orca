@@ -1858,6 +1858,11 @@ sync hit exactly that (#23062 landed two commits later) and was fixed by merging
   `ORCA_CODE_QUALITY_BASE=upstream/main`, scoping the changed-file ratchets to the fork's own diff.
 - Verify round 2: that scope surfaced sleeps and wall-clock reads in nine fork tests; fixed, with
   `ast-grep-ignore` reasons on the e2e pauses that prove an absence.
+- Main gained fourteen fork commits while Verify ran, so it was merged into the branch: two
+  conflicts (`EditorPanel.tsx`'s diff provider, the image-preview test's imports). The new review
+  video node used upstream's deleted `safe-react-node-view-renderer` and now uses the stock
+  renderer; main's stepper test moved to `native-chat-image-stepper.test.tsx` to keep the
+  image-preview test under its cap.
 
 **1.4.214 → 1.4.214** (`88aa3f27ce..293bfe795d`, 604 upstream commits, thirty-five conflicts)
 

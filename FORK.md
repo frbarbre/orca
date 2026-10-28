@@ -1846,6 +1846,18 @@ sync hit exactly that (#23062 landed two commits later) and was fixed by merging
   `shared/source-control-section-order.ts`). Upstream renamed the shared "Switch to terminal view"
   key's text, so the Claude web error card has its own key; the chat View item takes upstream's
   nullable shortcut label.
+- Verify round 1: upstream's shortcut settings now need a title for every action (the fork's live
+  in `settings/fork-keybinding-title-copy.ts`); settings transfer had to classify three new fields;
+  `defaultLabel` and `deriveNotesSendAgentTargets`' arguments changed. Three files hit their line
+  caps: the fork's IPC registrations moved to `register-fork-core-handlers.ts`, the fix-checks
+  background surface to `fix-checks-agent-surface.ts`, and the Auto-picked row became a memo
+  component so upstream's `ReviewNotesSendMenuContent.test.tsx` (exactly at its cap) needs no fork
+  lines. 31 locale keys only fork-removed UI used were deleted from every catalog. And upstream's
+  flaky-test ratchet crashed (`spawnSync git ENOBUFS`) listing a sync's changed files against
+  origin/main, so `fork-verify.yml` fetches upstream and runs `pnpm lint` with
+  `ORCA_CODE_QUALITY_BASE=upstream/main`, scoping the changed-file ratchets to the fork's own diff.
+- Verify round 2: that scope surfaced sleeps and wall-clock reads in nine fork tests; fixed, with
+  `ast-grep-ignore` reasons on the e2e pauses that prove an absence.
 
 **1.4.214 → 1.4.214** (`88aa3f27ce..293bfe795d`, 604 upstream commits, thirty-five conflicts)
 

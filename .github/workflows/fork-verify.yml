@@ -105,7 +105,7 @@ jobs:
       - name: Update channel survived
         run: |
           grep -n "armForkUpdateChannel" src/main/index.ts
-          grep -n "ORCA_RELEASES_REPO_URL" src/main/updater-prerelease-feed.ts
+          grep -n "ORCA_RELEASES_REPO_URL" src/main/updater-release-repo.ts
           grep -n "ORCA_UPDATE_FEED_URL" src/main/updater/updater-setup.ts
           grep -n "ORCA_UPDATE_FEED_URL" src/main/updater/updater-release-feed.ts
           grep -n "isManualInstallOnlyUpdate" src/main/updater/updater-download-install.ts

@@ -10,7 +10,7 @@ import {
 } from '../../source-control-tree'
 import { ALL_CHANGES_AREA, buildAllChangeEntries } from './all-changes'
 import type { AllChangesTreeNode } from './all-changes-section'
-import type { SourceControlEntryGroups } from './section-order'
+import type { SourceControlEntryGroups } from '../../../../../../shared/source-control-section-order'
 import type { FlatEntry } from './use-selection'
 import { useChangesFilter } from '@/lib/changes-filter'
 import type { GitPathReviewAttributes } from '../../../../../../shared/git-review-attributes'

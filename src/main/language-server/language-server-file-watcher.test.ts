@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createProjectFileWatcher } from './language-server-file-watcher'
-import type { WatcherProcessCallback } from '../ipc/parcel-watcher-process-subscription'
-import type { WatcherProcessSubscribeOptions } from '../ipc/parcel-watcher-process-protocol'
+import type { WatcherProcessCallback } from '../ipc/filesystem/watcher-process/parcel-watcher-process-subscription'
+import type { WatcherProcessSubscribeOptions } from '../ipc/filesystem/watcher-process/parcel-watcher-process-protocol'
 
 describe('createProjectFileWatcher', () => {
   let deliver: WatcherProcessCallback = () => undefined

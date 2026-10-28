@@ -8,7 +8,7 @@ import {
   filterSourceControlPathEntriesByCategory,
   type SourceControlFileCategory
 } from './file-category'
-import type { SourceControlEntryGroups } from './section-order'
+import type { SourceControlEntryGroups } from '../../../../../../shared/source-control-section-order'
 
 export function useSourceControlCategoryGrouping({
   entries,

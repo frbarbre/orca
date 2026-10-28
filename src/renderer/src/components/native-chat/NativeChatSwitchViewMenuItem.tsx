@@ -12,7 +12,7 @@ export function NativeChatSwitchViewMenuItem({
 }: {
   onSwitchToTerminal?: () => void
   agentView?: { tabId: string; leafId: string | null }
-  shortcutLabel: string
+  shortcutLabel: string | null
 }): React.JSX.Element | null {
   if (!onSwitchToTerminal) {
     return null
@@ -35,7 +35,7 @@ export function NativeChatSwitchViewMenuItem({
         'components.tab.bar.SortableTabContextMenu.switchToTerminalView',
         'Continue with Terminal Agent'
       )}
-      <DropdownMenuShortcut>{shortcutLabel}</DropdownMenuShortcut>
+      {shortcutLabel ? <DropdownMenuShortcut>{shortcutLabel}</DropdownMenuShortcut> : null}
     </DropdownMenuItem>
   )
 }

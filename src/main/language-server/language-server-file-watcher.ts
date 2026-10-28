@@ -1,13 +1,13 @@
-import { subscribeViaWatcherProcess } from '../ipc/parcel-watcher-process'
-import type { WatcherProcessSubscribeOptions } from '../ipc/parcel-watcher-process-protocol'
+import { subscribeViaWatcherProcess } from '../ipc/filesystem/watcher-process/parcel-watcher-process'
+import type { WatcherProcessSubscribeOptions } from '../ipc/filesystem/watcher-process/parcel-watcher-process-protocol'
 import type {
   WatcherProcessCallback,
   WatcherProcessSubscription
-} from '../ipc/parcel-watcher-process-subscription'
+} from '../ipc/filesystem/watcher-process/parcel-watcher-process-subscription'
 import {
   buildParcelWatcherIgnoreOptions,
   WATCHER_IGNORE_DIRS
-} from '../ipc/filesystem-watcher-ignore'
+} from '../ipc/filesystem/watchers/filesystem-watcher-ignore'
 import type { WatchedFileChange } from './lsp-session'
 import type { WatchProjectFiles } from './language-server-service'
 

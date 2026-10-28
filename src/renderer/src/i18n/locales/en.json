@@ -698,7 +698,9 @@
     "copy": "Copy",
     "selectAll": "Select All",
     "quitAndStopAllSessions": "Quit Completely...",
-    "quitAndStopAllSessionsTooltip": "Also stops every terminal session, including running agents. Plain Quit keeps them running so Orca reattaches on next launch."
+    "quitAndStopAllSessionsTooltip": "Also stops every terminal session, including running agents. Plain Quit keeps them running so Orca reattaches on next launch.",
+    "sourceControlSections": "Source Control Sections",
+    "prPanelSections": "PR Panel Sections"
   },
   "tray": {
     "openOrca": "Open Orca",
@@ -863,6 +865,14 @@
         "insecureOrigin": "Orca refused to pair from this page: it is plain http on another machine, so anyone on the network path could replace it and take the pairing code. Open the web client over https, at localhost on this computer, or through an SSH tunnel. To allow it anyway, the server operator can restart Orca with ORCA_ALLOW_INSECURE_WEB_PAIRING=1.",
         "deviceDowngraded": "This Orca server no longer supports this browser’s sign-in key (it may have been downgraded). Update the server, or pair this browser again.",
         "unauthorized": "Unauthorized. Pair this web client again."
+      },
+      "pendingReview": {
+        "submitDesktopOnly": "Reviews are submitted from the desktop app.",
+        "editDesktopOnly": "Comments are edited from the desktop app.",
+        "attachDesktopOnly": "Attachments are uploaded from the desktop app."
+      },
+      "settingsTransfer": {
+        "desktopOnly": "Settings are exported and imported from the desktop app."
       }
     },
     "store": {
@@ -1180,6 +1190,13 @@
               "agent": {
                 "ceeeb509b5": "Agent took too long to start. The workspace is ready — paste the {{value0}} when the agent is idle."
               }
+            }
+          }
+        },
+        "worktree": {
+          "background": {
+            "terminals": {
+              "setupTitle": "Setup"
             }
           }
         }
@@ -1555,6 +1572,26 @@
         "title": "Add Windows drive folders on this computer",
         "descriptionWithPath": "{{value0}} is on a Windows drive. Git in WSL reports false line-ending changes there, misses edits made from Windows, and searches it slowly.",
         "description": "This folder is on a Windows drive. Git in WSL reports false line-ending changes there, misses edits made from Windows, and searches it slowly."
+      },
+      "gitBlame": {
+        "you": "You",
+        "uncommitted": "Uncommitted change",
+        "uncommittedDetail": "This line has changes that are not committed yet.",
+        "pullRequest": "Pull request",
+        "commit": "Commit",
+        "committedBy": "committed by",
+        "showCommit": "Show commit",
+        "copyHash": "Copy hash",
+        "showCommitFailed": "Failed to load the commit",
+        "copied": "Commit hash copied"
+      },
+      "materialIcons": {
+        "configErrors": "Icon settings problems: {{errors}}"
+      },
+      "previewDeployment": {
+        "openOf": "Open preview of {{sha}}",
+        "open": "Open preview",
+        "behind": "not the latest commit"
       }
     },
     "hooks": {
@@ -3162,6 +3199,23 @@
           "addReaction": "Add reaction",
           "removeNamedReaction": "Remove {{value0}} reaction",
           "addNamedReaction": "Add {{value0}} reaction"
+        },
+        "mentions": {
+          "app": "App",
+          "commenter": "Commenter",
+          "member": "Member",
+          "file": "File"
+        },
+        "mentionCard": {
+          "loading": "Loading…",
+          "unavailable": "Couldn't load this profile",
+          "bot": "Bot",
+          "openProfile": "Open profile on GitHub"
+        },
+        "reviewAssets": {
+          "noRepository": "This workspace has no GitHub repository to attach the file to.",
+          "uploadingLine": "Uploading {{name}}…",
+          "uploadFailed": "Could not upload {{name}}. {{reason}}"
         }
       },
       "linear": {
@@ -3759,6 +3813,20 @@
           },
           "WslHostUnavailableBanner": {
             "turnOn": "Turn on"
+          },
+          "AgentViewSubmenu": {
+            "view": "View",
+            "terminal": "Terminal",
+            "chat": "Chat UI",
+            "claudeWeb": "Claude web"
+          },
+          "ClaudeWebView": {
+            "pageLabel": "Claude Code on the web",
+            "loadFailed": "claude.ai could not be loaded.",
+            "remoteControlOff": "Remote Control is not on for this session. Run /remote-control in Claude Code, then try again.",
+            "sessionNotFound": "This Claude Code session could not be found on the machine running it.",
+            "retry": "Try again",
+            "switchToTerminal": "Switch to terminal view"
           }
         }
       },
@@ -5681,7 +5749,8 @@
           "keepDefaultBranch": "Except default branch",
           "keepDefaultBranchAria": "Keep the default branch visible while hiding sleeping workspaces",
           "otherClients": "Hide other-client workspaces",
-          "otherClientsAria": "Hide workspaces created from other Orca clients on shared remote servers"
+          "otherClientsAria": "Hide workspaces created from other Orca clients on shared remote servers",
+          "temporaryCheckouts": "Hide temporary checkouts"
         },
         "sidebarHostOptions": {
           "3e102f111c": "All hosts",
@@ -5741,7 +5810,10 @@
           "219ebf1961": "Branch name",
           "folderPathIdentity": "Branch / folder path",
           "cli": "Orca CLI",
-          "workspaceOptions": "Workspace options"
+          "workspaceOptions": "Workspace options",
+          "linearTitle": "Linear title",
+          "prAuthor": "PR author",
+          "stack": "Stack"
         },
         "SshTargetRow": {
           "4677394048": "Connecting…",
@@ -5806,7 +5878,9 @@
           "runtimeHostDisconnectedNamed": "{{hostName}} disconnected",
           "runtimeHostProject": "Project on Orca server",
           "runtimeHostProjectNamed": "Project on {{hostName}}",
-          "ef18787206": "Queued for deletion"
+          "ef18787206": "Queued for deletion",
+          "prAuthor": "Pull request by {{login}}",
+          "stackPosition": "Stack #{{stack}}, {{position}} of {{size}}"
         },
         "WorktreeCardAgents": {
           "1b0a156717": "Agents",
@@ -5867,7 +5941,8 @@
           "c89f290e25": "Copied {{value0}}",
           "d1113f4660": "Failed to open browser",
           "fed49903c9": "{{value0}} live {{value1}}",
-          "unknownProcess": "Unknown process"
+          "unknownProcess": "Unknown process",
+          "openNamed": "Open {{label}}"
         },
         "WorktreeContextMenu": {
           "c39c37676a": "Create a group and move this project into it.",
@@ -6423,7 +6498,11 @@
         },
         "MarkdownImageLightbox": {
           "image": "Image",
-          "expand": "Expand image"
+          "expand": "Expand image",
+          "expandVideo": "Play video",
+          "close": "Close",
+          "previous": "Previous",
+          "next": "Next"
         },
         "WorktreeDeveloperMenu": {
           "developer": "Developer",
@@ -9726,7 +9805,14 @@
             "command": "command",
             "confirm": "confirm",
             "close": "close",
-            "omp": "OMP"
+            "omp": "OMP",
+            "blame": "blame",
+            "author": "author",
+            "commit": "commit",
+            "pullRequest": "pull request",
+            "icons": "icons",
+            "materialIcons": "material",
+            "associations": "associations"
           }
         },
         "git": {
@@ -10245,7 +10331,13 @@
             "wsl": "wsl",
             "distro": "distro",
             "agentRuntime": "agent runtime",
-            "skillRuntime": "skill runtime"
+            "skillRuntime": "skill runtime",
+            "pythonEnvironment": "Python Environment",
+            "pythonEnvironmentDescription": "The venv pyrefly uses for go-to-definition in Python files.",
+            "python": "python",
+            "venv": "venv",
+            "pyrefly": "pyrefly",
+            "definition": "definition"
           }
         },
         "runtime": {
@@ -12463,6 +12555,144 @@
               "windowsFailureDescription": "Enable notifications for Orca in Windows Settings."
             }
           }
+        },
+        "CiTriageSection": {
+          "title": "CI Triage",
+          "description": "When a workspace PR's CI fails, an agent reads the errors: it reruns noise once, pushes a fix for clear failures like lint, type errors or a branch behind main, and leaves the rest red.",
+          "keywordCi": "ci",
+          "keywordRerun": "rerun",
+          "keywordFlaky": "flaky",
+          "keywordSentry": "sentry",
+          "toggle": "Triage failed CI with an agent",
+          "prompt": "Agent prompt",
+          "reset": "Reset to default"
+        },
+        "FileIconsSetting": {
+          "title": "File Icons",
+          "description": "Material Icon Theme icons in the explorer, tabs and diffs. Customize them with the VS Code extension's settings: files.associations, folders.associations, folders.theme and activeIconPack.",
+          "fileHint": "Saved to ~/.orca/material-icon-theme.json and applied on save.",
+          "edit": "Edit icon settings"
+        },
+        "GitBlameSetting": {
+          "title": "Git Blame",
+          "description": "Show who last changed the cursor's line, when, and in which commit and pull request.",
+          "enabled": "Show line blame",
+          "enabledDescription": "Faded text after the line; hover it for the commit, the pull request and actions.",
+          "youForMyCommits": "Show \"You\" for my commits",
+          "youForMyCommitsDescription": "Uses \"You\" instead of your name when the line's author email is your git user.email."
+        },
+        "PortLabelsCommandSection": {
+          "title": "Port Names",
+          "description": "A command that prints the URLs a workspace serves, to name its live ports.",
+          "keywordPorts": "ports",
+          "keywordUrls": "urls",
+          "keywordDevServer": "dev server",
+          "keywordFrontend": "frontend",
+          "placeholder": "mise run print-urls",
+          "hint": "Runs in the workspace. Each line of the form \"Label  http://host:port\" names that port, and the Frontend entry gets a quick open button while it is running."
+        },
+        "prRules": {
+          "projects": "Projects",
+          "projectsDescription": "The rules only touch workspaces in these projects, and only look for review requests there.",
+          "noColumn": "Do nothing",
+          "newWorkspace": "New workspaces start in",
+          "newWorkspaceDescription": "Where a workspace Orca creates in these projects goes before it has a pull request. Workspaces that already exist keep their column.",
+          "deleteOnMerge": "Delete the workspace when its pull request is merged or closed",
+          "deleteOnMergeDescription": "Runs your orca.yaml archive script first. A workspace with uncommitted work or a running agent is kept, and Orca says so. The branch itself stays on the remote.",
+          "conflictPrompt": "Conflict prompt",
+          "resolveConflicts": "Resolve conflicts with an agent",
+          "resolveConflictsDescription": "When one of your pull requests lands in the Conflicts column, starts an agent in its workspace that merges the base branch, resolves the conflicts and pushes. Never force-pushes.",
+          "conflictPromptDescription": "What the conflict agent is told. Supports {{baseRef}}, {{worktreePath}}, {{prNumber}}, {{title}}, {{author}}, {{branch}}, {{url}} and {{repo}}. Clear the box to go back to the built-in prompt.",
+          "checkName": "Merge gate check name",
+          "checkNameDescription": "The check that decides \"Merge gate passed\" above. Matches a check run or a commit status by name.",
+          "pmTeam": "PM approval team",
+          "pmTeamDescription": "As org/team-slug, for example flowbasedk/pm-approval. Leave empty to skip that column.",
+          "pmTeamPlaceholder": "org/team-slug",
+          "reviewCommand": "Run a command when your pull request enters Review",
+          "reviewCommandDescription": "Runs once in the workspace's folder each time it moves into the Review column, for example to stop its dev stack. Leave empty to run nothing.",
+          "reviewCommandPlaceholder": "mise run bd",
+          "tabGeneral": "General",
+          "enable": "Move workspaces by pull request state",
+          "enableDescription": "Checks the linked pull request every minute while Orca is open, and sets the board column to match.",
+          "reviewViewChat": "Chat UI",
+          "reviewViewTerminal": "Terminal",
+          "reviewViewClaudeWeb": "Claude web",
+          "reviewViewDefault": "Default",
+          "reviewInbox": "Open a workspace when you are asked to review",
+          "reviewInboxDescription": "Creates the workspace, points the diff at the pull request base, and starts the agent on the prompt below. Every review already waiting on you is picked up on the first check.",
+          "reviewView": "Open the review in",
+          "reviewViewDescription": "Which view the review agent's tab starts in. Default follows your default view.",
+          "prompt": "Prompt for a first review",
+          "promptDescription": "Supports {{prNumber}}, {{title}}, {{author}}, {{branch}}, {{baseRef}}, {{url}} and {{repo}}.",
+          "rereviewPrompt": "Prompt when you are asked again",
+          "rereviewPromptDescription": "Used when a pull request you already reviewed comes back to you. Same variables, plus {{sinceCommit}} — the commit you last reviewed, which the diff is pointed at.",
+          "deleteOnReviewed": "Close a review workspace once you have reviewed",
+          "deleteOnReviewedDescription": "Applies to pull requests you did not write, once you have approved or requested changes. A workspace holding unsent review comments, uncommitted work or a running agent is kept. If the author asks you again, the workspace comes back with the diff pointed at the commit you last reviewed.",
+          "merged": "Pull request is merged",
+          "mergedDescription": "Already landed on the base branch. Only used when the workspace is kept — deleting on merge takes precedence.",
+          "closed": "Pull request was closed",
+          "closedDescription": "Closed without merging. Only used when the workspace is kept.",
+          "reviewing": "You are the reviewer",
+          "reviewingDescription": "Somebody else opened the pull request. Stays here until it merges.",
+          "conflicts": "Has merge conflicts",
+          "conflictsDescription": "GitHub cannot merge the branch into its base without resolving conflicts. Leave unset to skip.",
+          "draft": "Pull request is a draft",
+          "draftDescription": "Also applies when a ready pull request is put back into draft.",
+          "changes": "Changes requested",
+          "changesDescription": "Clears as soon as you re-request review from that reviewer.",
+          "merging": "Merge gate passed",
+          "mergingDescription": "The check named below succeeded on the head commit. The pull request is open, not merged.",
+          "pmApproval": "Waiting on PM approval",
+          "pmApprovalDescription": "Every reviewer still to respond belongs to the team below.",
+          "review": "Ready for review",
+          "reviewDescription": "Open, not a draft, and none of the conditions above apply.",
+          "tabMerged": "Merged",
+          "tabClosed": "Closed",
+          "tabReviewing": "Reviewing",
+          "tabConflicts": "Conflicts",
+          "tabDraft": "Draft",
+          "tabChangesRequested": "Changes requested",
+          "tabMerging": "Merge gate",
+          "tabPmApproval": "PM approval",
+          "tabReview": "Review"
+        },
+        "PythonEnvironmentSection": {
+          "placeholder": ".venv",
+          "hint": "Relative to the worktree, or absolute. Empty finds the nearest .venv. Cmd+click in a Python file runs pyrefly from this venv, or from PATH."
+        },
+        "transfer": {
+          "summarySettings": "{{count}} settings",
+          "summaryUi": "{{count}} layout preferences",
+          "summaryRules": "automations",
+          "summaryProjects": "settings of {{count}} projects",
+          "summaryKeybindings": "keybindings",
+          "summaryThemes": "{{count}} editor themes",
+          "exported": "Settings exported to {{path}}",
+          "importFailed": "Import failed: {{reason}}",
+          "title": "Share settings",
+          "description": "Export your preferences, board columns, automations, project settings, keybindings and editor themes to a file a colleague can import. Project settings apply to the projects they have with the same git remote. Accounts, tokens, API keys and local paths are left out.",
+          "export": "Export settings…",
+          "import": "Import settings…",
+          "confirm": "This replaces your {{summary}}. Your accounts and workspaces stay as they are. Orca reloads afterwards.",
+          "cancel": "Cancel",
+          "apply": "Import and reload",
+          "search": {
+            "title": "Share settings",
+            "description": "Export settings to a file, or import a colleague’s.",
+            "export": "export",
+            "import": "import",
+            "share": "share",
+            "backup": "backup",
+            "config": "config"
+          }
+        },
+        "workspaceActions": {
+          "commitAndPush": "Commit & push",
+          "createPr": "Create PR",
+          "ready": "Ready for review",
+          "review": "Review",
+          "title": "Top bar actions",
+          "description": "Prompts for the buttons beside the right sidebar toggle. Supports {{branch}}, {{baseRef}}, {{worktreePath}}, {{prNumber}}, {{prUrl}}, {{prTitle}}, {{draftMode}}, {{templateRule}} and {{prInstructions}}. Resolve conflicts uses the Source Control conflict template. Clear a box to go back to the built-in prompt."
         }
       },
       "right": {
@@ -12521,7 +12751,8 @@
             "430f1a62d4": "Could not resolve the selected thread on the host.",
             "updateReactionFailed": "Failed to update reaction.",
             "gitlabMoreActions": "More MR actions",
-            "gitlabLinkAnother": "Link another MR"
+            "gitlabLinkAnother": "Link another MR",
+            "agentStartedCommentsOpen": "Started the agent. The comments stay open on the pull request."
           },
           "CreateHostedReviewComposer": {
             "741ff8a0d2": "Push & Create {{value0}}"
@@ -12925,7 +13156,23 @@
             "discardFailedSingular": "Failed to discard {{count}} file",
             "discardFailedPlural": "Failed to discard {{count}} files",
             "noteCountSingular": "{{count}} note",
-            "noteCountPlural": "{{count}} notes"
+            "noteCountPlural": "{{count}} notes",
+            "unresolvedThreads": "{{value0}} unresolved review thread{{value1}}",
+            "fileCategory": {
+              "allHiddenHeading": "All changed files are hidden",
+              "allHiddenSupporting": "Show more file types from the file type filter.",
+              "implementation": "Implementation",
+              "test": "Tests",
+              "documentation": "Documentation",
+              "generated": "Generated",
+              "agentGuidance": "Agent guidance",
+              "localization": "Localization",
+              "assets": "Assets",
+              "allTypes": "All file types",
+              "noTypes": "No file types",
+              "triggerLabel": "Filter changed files by type",
+              "menuLabel": "Show file types"
+            }
           },
           "SourceControlAgentActionDialog": {
             "8e856842d1": "Could not start the selected agent.",
@@ -13068,7 +13315,13 @@
                 "pendingChecks_one": "{{count}} check pending",
                 "pendingChecks_other": "{{count}} checks pending",
                 "unresolvedChecks_one": "{{count}} check unresolved",
-                "unresolvedChecks_other": "{{count}} checks unresolved"
+                "unresolvedChecks_other": "{{count}} checks unresolved",
+                "pendingBadge": "Pending",
+                "replyThread": "Reply",
+                "editedTitle": "Edited {{value0}}",
+                "edited": "(edited)",
+                "outdatedTitle": "The line this comment was left on is no longer in the diff",
+                "outdated": "Outdated"
               },
               "empty": {
                 "state": {
@@ -13205,6 +13458,9 @@
                   "title": "{{reviewLabelCap}} not supported here",
                   "body": "This repository provider does not support creating a {{reviewLabel}} from Orca."
                 }
+              },
+              "commentEditor": {
+                "placeholder": "Edit comment"
               }
             }
           },
@@ -13923,6 +14179,13 @@
                 }
               }
             }
+          },
+          "AgentNoteFileBadge": {
+            "title": "{{value0}} agent note{{value1}}"
+          },
+          "AgentNotesShelf": {
+            "clearAll": "Clear all agent notes",
+            "title": "Agent notes"
           }
         }
       },
@@ -15349,7 +15612,8 @@
           "a49800405b": "New agent",
           "03378aea75": "Send notes to",
           "bb9c69a0c9": "Notes sent.",
-          "50f7e753ea": "Sending notes..."
+          "50f7e753ea": "Sending notes...",
+          "autoPicked": "Auto-picked"
         },
         "RichMarkdownAnnotationOverlay": {
           "069b5677b8": "Selected text",
@@ -15765,6 +16029,10 @@
         },
         "useMarkdownDocuments": {
           "listFailed": "Failed to list Markdown documents."
+        },
+        "AgentNotesPill": {
+          "label": "Agent notes",
+          "heading": "Left by agents, not sent to them"
         }
       },
       "diff": {
@@ -15776,7 +16044,10 @@
             "6978871a3d": "Open",
             "cce596969e": "Delete note",
             "cad3384faa": "Edit note",
-            "508ee678a5": "Open in browser"
+            "508ee678a5": "Open in browser",
+            "expandNote": "Expand note",
+            "collapseNote": "Collapse note",
+            "agentNote": "Agent note"
           },
           "DiffCommentPopover": {
             "2b3ce6d394": "Cancel",
@@ -15785,10 +16056,46 @@
             "commentTooLarge": "Comment is too large to submit safely.",
             "f6c449191e": "Add note for the AI",
             "5fa4bfebaa": "Add note",
-            "5e9b3d0c2e": "Adding..."
+            "5e9b3d0c2e": "Adding...",
+            "modeNote": "Agent",
+            "modeReview": "Comment",
+            "modePending": "Review"
           },
           "useDiffCommentDecorator": {
             "995fa28b50": "This note"
+          },
+          "InlinePRCommentCard": {
+            "resolvedThread": "Resolved · {{author}}: {{body}}",
+            "outdatedAtLine": "Outdated · was on line {{line}}",
+            "outdated": "Outdated",
+            "thisThread": "This comment",
+            "sendHint": "Send to an agent",
+            "queued": "Queued",
+            "queue": "Queue",
+            "reply": "Reply",
+            "collapse": "Collapse"
+          },
+          "NoteThread": {
+            "thinking": "{{agent}} is thinking…",
+            "reply": "Reply",
+            "add": "Add reply",
+            "you": "You",
+            "sent": "sent",
+            "placeholder": "Ask a follow-up…"
+          },
+          "AgentNoteReplies": {
+            "delete": "Delete reply"
+          },
+          "CopyMessageButton": {
+            "copy": "Copy message",
+            "copied": "Copied"
+          },
+          "AgentNoteGitHubLink": {
+            "label": "Show the GitHub comment"
+          },
+          "useDiffReviewComment": {
+            "noPullRequest": "This diff is not part of a pull request.",
+            "lineNotInDiff": "GitHub only accepts review comments on lines the pull request changed."
           }
         }
       },
@@ -17573,6 +17880,83 @@
         "cancelled": "This plain SSH terminal was closed before it started.",
         "terminalUnavailable": "Orca couldn’t open a terminal here.",
         "openHint": "Keeps you working on the host while Orca can’t set up there."
+      },
+      "diffComments": {
+        "reviewCommentPlaceholder": "Leave a review comment on this line"
+      },
+      "pendingReview": {
+        "badgeTitle": "{{count}} review comments waiting to be submitted",
+        "sectionTitle": "Pending review",
+        "rerequestFailed": "Could not ask {{login}} to review again: {{reason}}",
+        "noPullRequest": "This workspace has no pull request to review.",
+        "submittedWithState": "Review submitted ({{state}}).",
+        "submitted": "Review submitted.",
+        "rowBadge": "{{value0}} review comment{{value1}} waiting to be submitted"
+      },
+      "pr": {
+        "comments": {
+          "UnresolvedThreadBadge": {
+            "title": "{{count}} unresolved review threads"
+          }
+        }
+      },
+      "sourceControl": {
+        "pendingReview": {
+          "reviewTag": "Review {{n}}",
+          "diffBaseLabel": "What the diff compares against",
+          "sinceReviewN": "Since your last review (Review {{n}})",
+          "sinceReview": "Since last review",
+          "rebasedAway": "Reviewed before a rebase",
+          "targetBranch": "{{branch}} · target branch",
+          "onlyComment": "Only comment",
+          "requestChanges": "Request changes",
+          "approve": "Approve",
+          "submitFailed": "Could not submit the review.",
+          "standingPending": "Your review is pending",
+          "standingChanges": "You requested changes",
+          "standingApproved": "You approved the changes",
+          "standingRequested": "Your review was requested",
+          "bodyPlaceholder": "Add review summary…",
+          "submitting": "Sending…"
+        },
+        "reviewers": {
+          "pending": "Awaiting review",
+          "reRequested": "Asked to review again",
+          "approved": "Approved",
+          "changesRequested": "Requested changes",
+          "commented": "Left comments",
+          "dismissed": "Review dismissed",
+          "title": "Reviewers",
+          "loading": "Loading reviewers",
+          "rerequest": "Re-request review from {{login}}",
+          "rerequestUncommitted": "Commit your changes before asking for another review ({{files}} uncommitted)",
+          "rerequestTip": "Re-request review"
+        }
+      },
+      "workspaceActions": {
+        "enableAutoMerge": "Enable auto-merge",
+        "disableAutoMerge": "Disable auto-merge",
+        "commitAndPush": "Commit & push",
+        "resolveConflicts": "Resolve conflicts",
+        "readyForReview": "Ready for review",
+        "createPr": "Create PR",
+        "review": "Review",
+        "reviewTab": "Review #{{number}}",
+        "commitTab": "Commit & push",
+        "conflictsTab": "Resolve conflicts",
+        "readyTab": "Ready for review",
+        "createPrTab": "Create PR",
+        "launchFailed": "Could not start the agent: {{reason}}"
+      },
+      "workspaceStatusRules": {
+        "kept": "Kept {{name}}: {{reason}}",
+        "reviewing": "Reviewing #{{number}} — {{title}}",
+        "createFailed": "Could not open a review workspace for #{{number}}: {{reason}}",
+        "noMatchingProject": "No selected project matches {{repo}}.",
+        "reviewTabTitle": "Review #{{number}}",
+        "conflictTabTitle": "Resolve conflicts #{{number}}",
+        "conflictAgentFailed": "Could not start an agent for the conflicts in {{name}}: {{reason}}",
+        "reviewCommandFailed": "\"{{command}}\" failed in {{name}}"
       }
     },
     "i18n": {
@@ -18994,6 +19378,11 @@
         "shellEnvSearchVariables": "environment variables",
         "shellEnvSearchPath": "PATH",
         "shellEnvSearchProxy": "proxy"
+      },
+      "claudeWeb": {
+        "defaultViewTitle": "Open Claude in Claude web",
+        "defaultViewCopy": "New Claude Code terminal tabs open in their claude.ai Remote Control page. The terminal keeps running underneath.",
+        "defaultViewToggleLabel": "Toggle opening Claude in Claude web"
       }
     },
     "agentChildRow": {
@@ -19275,13 +19664,27 @@
   },
   "quickOpen": {
     "moreMatchesAvailable": "More matches may be available. Refine your search to narrow the results.",
-    "recentValidationFailed": "Recent files could not be checked: {{error}}"
+    "recentValidationFailed": "Recent files could not be checked: {{error}}",
+    "placeholder": "Go to file... (% search text, : go to line)",
+    "textSearchHint": "Type text to search for in every file.",
+    "textSearching": "Searching...",
+    "textNoMatches": "No matching text.",
+    "goToLineNoFile": "Open a file to go to a line.",
+    "goToLineHint": "Type a line number to go to in the current file.",
+    "goToLine": "Go to line {{line}}",
+    "goToLineColumn": "Go to line {{line}}, column {{column}}"
   },
   "checksPanel": {
     "unlinked": {
       "title": "Pull request unlinked",
       "description": "PR #{{number}} is hidden for this workspace. Link it again to restore checks and review details.",
       "relink": "Link PR #{{number}}"
+    },
+    "reviewState": {
+      "approved": "Approved",
+      "changesRequested": "Changes requested",
+      "commented": "Commented",
+      "dismissed": "Dismissed"
     }
   },
   "sourceControl": {
@@ -19326,7 +19729,10 @@
       "creationUnconfirmed": "{{shortLabel}} creation may have completed. Refreshing branch review state...",
       "withDetail": "Create {{shortLabel}} failed: {{detail}}",
       "pushFailed": "Push failed. Resolve the push error, then try again."
-    }
+    },
+    "pullRequestUrlCopied": "Copied pull request URL",
+    "noPullRequestPreview": "No preview deployment for this pull request.",
+    "noPullRequest": "This workspace has no pull request yet."
   },
   "agentsSidebarIntro": {
     "migrated": {
@@ -19985,6 +20391,15 @@
     "attachments": {
       "updateRuntime": "Update the remote runtime to change workspace links",
       "updateRuntimeSafely": "Update the remote runtime to safely change workspace links"
+    },
+    "nextAction": {
+      "none": "This workspace has no next action."
+    },
+    "review": {
+      "none": "This workspace has no pull request to review."
+    },
+    "frontend": {
+      "notRunning": "No frontend dev server is running."
     }
   },
   "tabHoverCard": {
@@ -20695,5 +21110,75 @@
   },
   "startupFailure": {
     "title": "Orca could not start"
+  },
+  "agentTurns": {
+    "none": "No agent turns in this workspace yet.",
+    "title": "Agent turns"
+  },
+  "languageServers": {
+    "restartAction": "Restart Language Server",
+    "path": "Path",
+    "pathPlaceholder": "{{command}} from the project, else PATH",
+    "server": "Server",
+    "serverFor": "{{language}} server",
+    "docs": "Open {{server}} docs",
+    "search": {
+      "languageServer": "language server",
+      "goToDefinition": "go to definition",
+      "hover": "hover",
+      "references": "references",
+      "lsp": "lsp"
+    },
+    "title": "Language Servers",
+    "description": "Cmd+click, hover and references per language. Each runs a background process per project.",
+    "python": {
+      "label": "Python",
+      "description": "Runs in the project's venv, or the main checkout's when a worktree has none."
+    },
+    "typescript": {
+      "label": "TypeScript and JavaScript",
+      "description": "Runs from the project's node_modules. Off falls back to the editor's built-in TypeScript, which only knows open files."
+    },
+    "unavailable": "{{server}} is unavailable ({{error}}). Install it in the project, or choose another server or its path in Settings → Language Servers.",
+    "restartFailed": "Could not restart the language server.",
+    "restarted": "Language server restarted. It starts again on use."
+  },
+  "commentReactors": {
+    "withOthers": "{{names}} and {{others}} others reacted with {{emoji}}",
+    "one": "{{name}} reacted with {{emoji}}",
+    "many": "{{names}} and {{last}} reacted with {{emoji}}"
+  },
+  "prPanelSections": {
+    "pendingReview": "Pending review",
+    "attention": "Needs attention",
+    "checks": "Checks",
+    "comments": "Comments",
+    "resolved": "Resolved"
+  },
+  "queuedComments": {
+    "none": "No comments are queued.",
+    "send": "Send {{count}} queued comments",
+    "badge": "{{count}} queued"
+  },
+  "allChanges": {
+    "lineTotal": "{{added}} lines added, {{removed}} lines deleted in the listed files",
+    "title": "Changes",
+    "showAllChanges": "Show all changes",
+    "showOneList": "Show all changes in one list",
+    "groupByStatus": "Group by status",
+    "showCommitInChanges": "Show in Changes",
+    "uncommittedOnly": "Uncommitted",
+    "latestTurn": "Latest turn",
+    "historicalChanges": "Historical changes",
+    "commit": "Commit {{ref}}"
+  },
+  "sourceControlSections": {
+    "hide": "Hide section",
+    "pendingComments": "Pending review",
+    "review": "Review"
+  },
+  "notesFollowUp": {
+    "sent": "Sent to {{agent}}",
+    "noAgent": "No agent is running here and none is set up to start. Send it from the note instead."
   }
 }

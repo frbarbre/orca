@@ -1,35 +1,17 @@
 import { net } from 'electron'
 import { parse } from 'yaml'
 import { compareVersions, isPrereleaseVersion, isValidVersion } from './updater-fallback'
+import {
+  atomFeedUrl,
+  latestReleaseUrl,
+  releaseDownloadUrlPattern,
+  releasesDownloadBase,
+  releaseTagPathPattern,
+  tagHrefPattern
+} from './updater-release-repo'
 
-// Fork: every release URL here derives from one base so a fork only overrides the slug, and the
-// default stays upstream so this module and its tests behave exactly as written. Left hardcoded,
-// the atom and fallback paths would hand a fork's build a stock Orca artifact.
-//
-// Why functions and not consts: ES imports are evaluated before the importing module's body, so a
-// module-level read of this env var runs before the app entry can arm it — the fork then silently
-// resolved updates against upstream's releases. Read it per call instead.
-function repoBase(): string {
-  return process.env.ORCA_RELEASES_REPO_URL ?? 'https://github.com/stablyai/orca'
-}
-function atomFeedUrl(): string {
-  return `${repoBase()}/releases.atom`
-}
-function releasesDownloadBase(): string {
-  return `${repoBase()}/releases/download`
-}
 const FETCH_TIMEOUT_MS = 5000
 const MAX_MANIFEST_PROBE_CANDIDATES = 6
-
-// Why: GitHub's atom feed lists every release (prerelease or stable) in a
-// single flat list. Each entry has a /releases/tag/<tag> URL we can mine
-// without any channel filtering.
-function escapeForRegExp(value: string): string {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-}
-function tagHrefPattern(): RegExp {
-  return new RegExp(`href="${escapeForRegExp(repoBase())}/releases/tag/([^"]+)"`, 'g')
-}
 
 export function getReleaseDownloadUrl(tag: string): string {
   return `${releasesDownloadBase()}/${encodeURIComponent(tag)}`
@@ -177,9 +159,7 @@ async function getGitHubReleaseAssetReadiness(assetUrl: string): Promise<Release
 async function getReleaseAssetReadiness(tag: string, assetName: string): Promise<ReleaseReadiness> {
   const isRelativeAsset = !/^https?:\/\//i.test(assetName)
   const isGitHubReleaseAsset =
-    process.platform === 'win32' &&
-    (isRelativeAsset ||
-      new RegExp(`^${escapeForRegExp(releasesDownloadBase())}/`, 'i').test(assetName))
+    process.platform === 'win32' && (isRelativeAsset || releaseDownloadUrlPattern().test(assetName))
   const assetUrl = isRelativeAsset
     ? getReleaseAssetUrl(tag, assetName.split('/').findLast(Boolean) ?? assetName)
     : assetName
@@ -238,13 +218,13 @@ async function getPlatformManifestReadiness(tag: string): Promise<ReleaseReadine
 export async function fetchLatestStableReleaseTag(): Promise<string | null> {
   try {
     // Resolve only the release-page redirect; installer redirects continue on to signed storage URLs.
-    const latestUrl = 'https://github.com/stablyai/orca/releases/latest'
+    const latestUrl = latestReleaseUrl()
     const response = await requestGitHubReleaseHead(latestUrl)
     if (!response?.redirectUrl || response.statusCode < 300 || response.statusCode >= 400) {
       return null
     }
     const target = new URL(response.redirectUrl, latestUrl)
-    const match = target.pathname.match(/^\/stablyai\/orca\/releases\/tag\/([^/]+)$/)
+    const match = target.pathname.match(releaseTagPathPattern())
     if (target.origin !== 'https://github.com' || !match) {
       return null
     }

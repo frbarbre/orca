@@ -211,7 +211,7 @@ export function ClaudeWebView({
             <Button type="button" variant="ghost" size="sm" onClick={onSwitchToTerminal}>
               <SquareTerminal />
               {translate(
-                'components.tab.bar.SortableTabContextMenu.switchToTerminalView',
+                'auto.components.terminal.pane.ClaudeWebView.switchToTerminal',
                 'Switch to terminal view'
               )}
             </Button>

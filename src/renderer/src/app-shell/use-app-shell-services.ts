@@ -17,6 +17,7 @@ import { useOsc52ClipboardDefaultOnNotice } from '../components/terminal-pane/os
 import { useWebSessionTabsSync } from '../runtime/web-session-tabs-sync/use-web-session-tabs-sync'
 import { useLocalStructuredSessionTabsSync } from '../runtime/local-structured-session-tabs-sync'
 import { useHostStructuredAgentsSync } from '../runtime/host-structured-agents-sync'
+import { useLegacyChatRenameMigration } from '../runtime/legacy-chat-rename-migration'
 import { useHostModelCatalogSnapshotsSync } from '../runtime/host-model-catalog-snapshots-sync'
 import { useRemoteRuntimeRecoveryTriggers } from '../runtime/use-remote-runtime-recovery-triggers'
 import { useTerminalViewerColorPublication } from './use-terminal-viewer-color-publication'
@@ -30,11 +31,7 @@ import { useVisibleHostedReviewRefresh } from './use-visible-hosted-review-refre
 import { useCiTriageWatch } from './use-ci-triage-watch'
 import { useProfileStateSaveDelayNotice } from './use-profile-state-save-delay-notice'
 
-/**
- * App-level subscriptions that must outlive any individual surface. Each one is here because
- * the component that consumes its result unmounts (right sidebar, explorer, terminal) or is
- * absent entirely on the landing path.
- */
+/** Keep subscriptions above surfaces that unmount or never appear on Landing. */
 export function useAppShellServices(): void {
   const workspaceSessionReady = useAppStore((s) => s.workspaceSessionReady)
   const persistedUIReady = useAppStore((s) => s.persistedUIReady)
@@ -47,8 +44,8 @@ export function useAppShellServices(): void {
   useWebSessionTabsSync()
   useLocalStructuredSessionTabsSync()
   useHostStructuredAgentsSync()
+  useLegacyChatRenameMigration()
   useHostModelCatalogSnapshotsSync()
-  // Subscribe to IPC push events
   useIpcEvents()
   useProfileStateSaveDelayNotice()
   useRemoteRuntimeRecoveryTriggers()
@@ -60,7 +57,7 @@ export function useAppShellServices(): void {
   useWorkspaceStatusRulePoller()
   // Why: git polling lives at App level (RightSidebar unmounts when closed, stranding stale Rebasing/Merging badges); gate on workspaceSessionReady so it doesn't compete with first paint.
   useGitStatusPolling({ enabled: workspaceSessionReady })
-  // Why: wire file-change watching at App level so the editor keeps hearing FS changes when Explorer unmounts (right-sidebar switches to Source Control/Checks).
+  // Watch files above Explorer so editor changes still arrive on Source Control/Checks.
   useEditorExternalWatch()
   useReadOnScreenAttention()
   useAppMenuPaste()

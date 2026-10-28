@@ -17,7 +17,6 @@ import type { PendingReviewComment } from '../github/pending-review-comment'
 import type { SmartTier } from '../sidebar-list/sort-stamps'
 import type { ExternalConversationLink } from '../external-conversation-link'
 
-// ─── Worktree metadata (persisted user-authored fields only) ─────────
 export type WorktreeMeta = {
   /** Immutable per-workspace-instance ID used to reject stale lineage after path reuse. */
   instanceId?: string

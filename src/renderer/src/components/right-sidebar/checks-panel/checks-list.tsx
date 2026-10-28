@@ -15,7 +15,7 @@ import { translate } from '@/i18n/i18n'
 import { CHECK_COLOR, CHECK_ICON } from './check-presentation'
 import { CheckRunDetails } from './check-run-details'
 import { CheckRowDuration } from '@/components/github/check-row-duration'
-import { getCheckStatusLabel } from './check-details-model'
+import { getCheckStatusLabel } from '../../../../../shared/pr-check-status-label'
 import { type ChecksListProps, useChecksListState } from './use-checks-list-state'
 import { SectionHeader } from '../source-control/listing/section-header'
 

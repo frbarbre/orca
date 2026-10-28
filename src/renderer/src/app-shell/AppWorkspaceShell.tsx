@@ -88,7 +88,6 @@ function ActivePage({ layout }: { layout: AppChromeLayout }): React.JSX.Element 
   )
 }
 
-/** The left sidebar + titlebar + page/workbench content area + right sidebar. */
 export function AppWorkspaceShell(props: {
   layout: AppChromeLayout
   floatingWorkspace: FloatingWorkspacePanelState
@@ -96,13 +95,13 @@ export function AppWorkspaceShell(props: {
   const { layout, floatingWorkspace } = props
   const titlebarLeftControls = <TitlebarLeftControls layout={layout} />
   const titlebarMainStrip = <TitlebarMainStrip layout={layout} />
-  // Why: keep virtualized scroll memory above the sidebar's workspace/landing remount so the left list doesn't restart at scrollTop 0.
+  // Keep scroll memory above sidebar view remounts to preserve list position.
   const scrollOffsetRef = useRef(0)
   const scrollAnchorRef = useRef<VirtualizedScrollAnchor>(null)
   const sidebarScrollRefs = { scrollOffsetRef, scrollAnchorRef }
 
   return (
-    // Why: workspace activation is a hot path; activeWorktreeId in reset keys would remount whole surfaces during wake.
+    // Avoid active-worktree reset keys that remount whole surfaces during wake.
     <RecoverableRenderErrorBoundary
       boundaryId="app.workspace-shell"
       surface="workspace-shell"

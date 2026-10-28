@@ -17,8 +17,7 @@ type EditorShortcutContext = {
   notifyTerminalCapture: (actionId: KeybindingActionId) => void
 }
 
-// Returns true only when the chord was consumed, so unclaimed editor chords still
-// fall through to the remaining workspace shortcuts.
+// Return false for unclaimed chords so remaining workspace shortcuts can handle them.
 export function handleTerminalWorkspaceEditorShortcut({
   event,
   floatingWorkspaceFocused,

@@ -25,12 +25,7 @@ export function measureVirtualizedListScrollMargin(
   )
 }
 
-/**
- * Re-measure when the list or anything that can shift its offset inside the
- * shared scroller changes size or structure (commit area, headers, siblings).
- * Does not observe subtree mutations — virtualized row mount/unmount would
- * thrash and never change scroll margin.
- */
+/** Observe list/sibling layout shifts, excluding subtree mutations because windowed row churn cannot move the list’s origin. */
 export function observeVirtualizedListScrollMargin(
   container: HTMLElement,
   scrollElement: HTMLElement,
@@ -43,8 +38,7 @@ export function observeVirtualizedListScrollMargin(
 
   const observeScrollerChildren = (): void => {
     const currentChildren = new Set(scrollElement.children)
-    // Why: child-list churn can detach previously observed siblings; pruning
-    // targets prevents the long-lived virtual list from retaining stale DOM.
+    // Prune detached sibling targets so long-lived lists do not retain stale DOM.
     for (const child of observedChildren) {
       if (!currentChildren.has(child) && child !== container) {
         resizeObserver.unobserve(child)
@@ -57,8 +51,7 @@ export function observeVirtualizedListScrollMargin(
   }
   observeScrollerChildren()
 
-  // Why: list siblings mount/unmount as direct scroller children; re-observe so a
-  // newly inserted sibling can still shift this list's margin when it resizes.
+  // Re-observe direct scroller children when siblings change so later resizes update this list’s offset.
   const mutationObserver = new MutationObserver(() => {
     observeScrollerChildren()
     onLayout()
@@ -119,23 +112,16 @@ export function VirtualizedList<TRow>({
   rows: readonly TRow[]
   getRowKey: (row: TRow) => string
   renderRow: (row: TRow) => React.ReactNode
-  // Why: a state-held element, not a ref — ancestor host refs are not attached
-  // yet when this component's mount effects run, so a ref would leave the
-  // virtualizer unobserved until some unrelated re-render.
+  // State tracks scroller attachment; ancestor refs arrive after mount effects and alone would leave the virtualizer unobserved.
   scrollElement: HTMLDivElement | null
-  // Why: callers outside source control have their own row paddings; measureElement
-  // still corrects, but a wrong estimate makes the initial scrollbar jump.
+  // Callers supply different row padding; wrong initial estimates jump the scrollbar before measurement corrects them.
   estimateRowHeightPx?: number
   // Why: keyboard-driven lists must mount and reveal selections outside the current window.
   activeRowKey?: string
   minimumRows?: number
-  // Why: windowing hides the real row count and each row's place in it from assistive tech, so
-  // opt in to say both. Virtualized path only — below the threshold this returns a bare fragment,
-  // with no container to carry the roles, so small lists announce no list at all. Off by default:
-  // turning it on rewrites every other caller's a11y tree, and list/tree/grid is each surface's call.
+  // Expose list semantics only by opt-in on the windowed path; small fragments have no role container, and other surfaces own their a11y roles.
   announceListPosition?: boolean
-  // Why: a caller that pages in rows holds fewer than exist, and announcing the loaded count as the
-  // total is the mis-statement aria-setsize exists to prevent — ARIA spells that unknown total -1.
+  // Paged callers cannot announce loaded count as total; ARIA represents unknown totals as -1.
   hasUnloadedRows?: boolean
   // Why: a windowed row that is outside the viewport is not in the DOM, so a caller cannot scroll to
   // it itself. Naming the row lets the virtualizer scroll by index instead. Below the windowing
@@ -166,10 +152,7 @@ export function VirtualizedList<TRow>({
     [activeIndex]
   )
 
-  // Why: the list shares its scroller with headers and sibling lists, so the
-  // virtualizer needs this list's offset inside that scroller. Measure on mount
-  // / scrollElement attach and when observers report layout shifts — never during
-  // ordinary React renders.
+  // Shared scrollers need this list’s offset; measure on attachment/layout shifts, never ordinary renders.
   useLayoutEffect(() => {
     if (!virtualize) {
       return
@@ -198,12 +181,9 @@ export function VirtualizedList<TRow>({
     overscan: VIRTUALIZED_LIST_OVERSCAN,
     rangeExtractor,
     scrollMargin,
-    // Why: crossing the threshold attaches the scroller for the first time and the virtualizer
-    // writes its start offset back — from 0, scrolling the shared scroller to the top under the
-    // user, unless told where they already are.
+    // Threshold crossing first attaches the virtualizer; preserve current scroll position instead of its initial zero.
     initialOffset: () => scrollElement?.scrollTop ?? 0,
-    // Why: stable row keys let the virtualizer carry item identity across
-    // status refreshes instead of remounting the window each poll.
+    // Stable keys preserve item identity across status polls instead of remounting rows.
     getItemKey: (index) => {
       const row = rows[index]
       return row === undefined ? index : getRowKey(row)
@@ -329,8 +309,7 @@ export function VirtualizedList<TRow>({
             aria-setsize={announceListPosition ? announcedSetSize : undefined}
             aria-posinset={announceListPosition ? item.index + 1 : undefined}
             className="absolute top-0 left-0 w-full"
-            // Why: item.start includes scrollMargin (offsets are scroller-wide),
-            // but rows position inside this container, so subtract it back out.
+            // Item positions include scroller-wide scrollMargin; subtract it for container-relative placement.
             style={{ transform: `translateY(${item.start - scrollMargin}px)` }}
           >
             {renderRow(row)}

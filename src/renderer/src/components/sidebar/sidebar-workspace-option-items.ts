@@ -12,8 +12,7 @@ import {
 import { translate } from '@/i18n/i18n'
 import { withForkCardDisplayOptions } from './fork-card-property-options'
 
-// The shared Workspace options choices with the desktop's localized copy. Each table is keyed on
-// the shared ids, so a choice added in shared fails to compile here until it has a label.
+// Key localized copy by shared choice IDs so new options require desktop labels at compile time.
 
 type LocalizedChoice<Id extends string> = {
   id: Id
@@ -171,7 +170,6 @@ const CARD_DISPLAY_LABELS: Record<
       : translate('auto.components.sidebar.SidebarWorkspaceOptionsMenu.219ebf1961', 'Branch name')
 }
 
-/** "Card display" rows for the experimental card style. */
 export function getWorktreeCardDisplayOptions(
   hasProjectGroups: boolean
 ): { id: WorktreeCardProperty; readonly label: string }[] {

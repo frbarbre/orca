@@ -119,7 +119,6 @@ function resetState(overrides: Partial<Record<string, unknown>> = {}): void {
     prCache: {},
     commitMessageGenerationRecords: {},
     pullRequestGenerationRecords: {},
-    // Why: the open-file highlight reads the active editor tab for this worktree.
     openFiles: [] as OpenFileStub[],
     activeFileIdByWorktree: {},
     activeTabTypeByWorktree: {},

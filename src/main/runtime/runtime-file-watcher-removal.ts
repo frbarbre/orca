@@ -25,7 +25,7 @@ export function createRuntimeFileWatcherRemoval(fileCommands: FileExplorerWatche
     if (!connectionId) {
       stopLanguageServersForRemoval(worktreePath)
     }
-    // Why: the desktop watcher only holds local roots; an SSH path never had one to close.
+    // Desktop watchers own local roots; SSH paths have no local watcher to close.
     const results = await Promise.allSettled([
       connectionId ? undefined : getWorktreeWatcherRemoval().closeLocal(worktreePath, deadline),
       drainBeforeWatcherRemoval(
@@ -38,7 +38,7 @@ export function createRuntimeFileWatcherRemoval(fileCommands: FileExplorerWatche
       (result): result is PromiseRejectedResult => result.status === 'rejected'
     )
     if (failure) {
-      // Why: restoration must wait until every bounded teardown settles.
+      // Wait for all bounded teardowns before restoring watchers.
       throw failure.reason
     }
   }

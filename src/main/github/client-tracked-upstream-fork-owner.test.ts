@@ -100,7 +100,8 @@ describe('getPRForBranch', () => {
       3,
       [
         'api',
-        'repos/stablyai/orca/pulls?head=fork-owner%3Acontributor%2Foriginal&state=all&per_page=1'
+        'repos/stablyai/orca/pulls?head=fork-owner%3Acontributor%2Foriginal&state=all&per_page=1',
+        '--include'
       ],
       { cwd: '/repo-root' }
     )
@@ -170,7 +171,8 @@ describe('getPRForBranch', () => {
       3,
       [
         'api',
-        'repos/stablyai/orca/pulls?head=brennanb2025%3Abrennanb2025%2Fworktree-remove-fix&state=all&per_page=1'
+        'repos/stablyai/orca/pulls?head=brennanb2025%3Abrennanb2025%2Fworktree-remove-fix&state=all&per_page=1',
+        '--include'
       ],
       { cwd: '/repo-root' }
     )
@@ -198,7 +200,11 @@ describe('getPRForBranch', () => {
     expect(getOwnerRepoForRemoteMock).toHaveBeenCalledWith('/repo-root', 'origin', undefined)
     expect(ghExecFileAsyncMock).toHaveBeenCalledTimes(1)
     expect(ghExecFileAsyncMock).toHaveBeenCalledWith(
-      ['api', 'repos/acme/widgets/pulls?head=acme%3Afeature%2Fno-pr&state=all&per_page=1'],
+      [
+        'api',
+        'repos/acme/widgets/pulls?head=acme%3Afeature%2Fno-pr&state=all&per_page=1',
+        '--include'
+      ],
       { cwd: '/repo-root' }
     )
   })

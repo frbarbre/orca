@@ -20,6 +20,8 @@ export async function getRuntimeGitStatus(
     reuseLineStats?: boolean
     branchLineTotalMergeBase?: string
     signal?: AbortSignal
+    /** A user act that may start a stopped WSL distro; local status only. */
+    wakeWslDistro?: boolean
   }
 ): Promise<GitStatusResult> {
   const target = context.target
@@ -44,7 +46,8 @@ export async function getRuntimeGitStatus(
         ...includeLineStatsArgs,
         ...upstreamCacheBypassArgs,
         ...lineStatsReuseArgs,
-        ...branchLineTotalArgs
+        ...branchLineTotalArgs,
+        ...(options?.wakeWslDistro && !context.connectionId ? { wakeWslDistro: true } : {})
       },
       options?.signal
     )

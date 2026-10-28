@@ -44,8 +44,7 @@ export default function HostedReviewActions({
   })
 
   const handleDeleteWorktree = useCallback(() => {
-    // Why: route every UI delete entry point through the shared funnel so
-    // skip-confirm, main-worktree, and child-workspace safeguards cannot drift.
+    // Share the delete funnel so skip-confirm, main-worktree, and child-workspace safeguards cannot drift.
     runWorktreeDelete(worktree.id, worktree.hostId ? { expectedHostId: worktree.hostId } : {})
   }, [worktree.hostId, worktree.id])
 

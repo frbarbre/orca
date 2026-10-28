@@ -71,6 +71,7 @@ async function refreshAutomatically(options: {
 }): Promise<void> {
   await refreshGitStatusForWorktree({
     target: runtimeTargetForOwnerEnvironment(options.runtimeEnvironmentId ?? null),
+    ownerHostId: null,
     worktreeId: 'wt-1',
     worktreePath: '/repo',
     connectionId: options.connectionId,
@@ -246,6 +247,7 @@ describe('push-target upstream refresh cache', () => {
     await refreshAutomatically({ deps })
     await refreshGitStatusForWorktreeStrict({
       target: { kind: 'local' },
+      ownerHostId: null,
       worktreeId: 'wt-1',
       worktreePath: '/repo',
       pushTarget,

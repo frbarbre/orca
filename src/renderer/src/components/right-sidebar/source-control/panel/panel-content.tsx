@@ -53,6 +53,7 @@ export function SourceControlPanelContent(props: SourceControlPanelReadyProps) {
     handleUnstagePaths,
     hasUncommittedEntries,
     hiddenFileCategories,
+    isResolvingConflictsWithAI,
     isAbortingOperation,
     isCategoryFilterActive,
     isCheckingRecoveryAdmission,
@@ -99,7 +100,7 @@ export function SourceControlPanelContent(props: SourceControlPanelReadyProps) {
         unresolvedConflictCount={unresolvedConflictReviewEntries.length}
         conflictOperation={conflictOperation}
         sourceControlAiActionsVisible={sourceControlAiActionsVisible}
-        isRecoveryBusy={isCheckingRecoveryAdmission}
+        isRecoveryBusy={isCheckingRecoveryAdmission || isResolvingConflictsWithAI}
         isAbortingOperation={isAbortingOperation}
         onAbortOperation={handleAbortOperationForConflict}
         onResolveWithAi={() => void handleResolveConflictsWithAI()}

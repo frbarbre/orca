@@ -4,14 +4,10 @@ import {
   resolveSourceControlBaseRef,
   resolveSourceControlCompareBaseRef,
   resolveSourceControlPickerBaseRef
-} from './base-ref-resolution'
+} from '../../../../../../shared/source-control-base-ref-resolution'
 import { useSourceControlBaseRefDefault } from './use-base-ref-default'
 import { useIsReviewedCommit } from '@/lib/reviewed-commit-bases'
 
-/**
- * Resolves the base refs the panel works against: the worktree/repo pins, the repo default, and the
- * separate refs used for the merge target, the compare view and the base-ref picker.
- */
 export function useSourceControlBaseRefs({
   activeRepoConnectionId,
   activeRepoExecutionHostId,

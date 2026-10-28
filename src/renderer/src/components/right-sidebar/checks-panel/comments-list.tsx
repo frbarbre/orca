@@ -296,7 +296,6 @@ export function PRCommentsList(listProps: PRCommentsListProps): React.JSX.Elemen
       {/* Fork: in the PR panel, pending review is a section of its own. */}
       {sectionHeader ? null : <PendingReviewPanelSection />}
 
-      {/* List */}
       {commentsLoading && comments.length === 0 ? (
         <div className="flex items-center justify-center py-6">
           <LoaderCircle className="size-4 animate-spin text-muted-foreground" />

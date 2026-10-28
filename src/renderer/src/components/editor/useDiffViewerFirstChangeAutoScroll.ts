@@ -13,12 +13,7 @@ type DiffViewerFirstChangeAutoScrollInput = {
   hasPendingReveal?: boolean
 }
 
-/**
- * Centers the viewport on a diff's first change, once per modelKey.
- *
- * Why: lives outside handleMount so it sequences after the comment decorator's
- * view zones, which would otherwise shift the measured content downward.
- */
+/** Center once per model after comment view zones settle, avoiding later geometry shifts. */
 export function useDiffViewerFirstChangeAutoScroll({
   diffEditorRef,
   modifiedEditor,
@@ -31,7 +26,6 @@ export function useDiffViewerFirstChangeAutoScroll({
   useEffect(() => {
     if (didAutoScrollModelKeyRef.current !== modelKey) {
       didAutoScrollModelKeyRef.current = modelKey
-      // Why: reset the per-modelKey one-shot here before the first-diff guard runs for the new file.
       didAutoScrollFirstDiffRef.current = false
     }
     // Fork. Why before the editor check: a slow diff can apply and clear the reveal before its
@@ -95,7 +89,6 @@ export function useDiffViewerFirstChangeAutoScroll({
         centerOn(line)
       })
     }
-    // Run now if the diff is ready; otherwise onDidUpdateDiff fires once the computation lands.
     if (diffEditor.getLineChanges()) {
       run()
     }

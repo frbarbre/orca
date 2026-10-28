@@ -1,9 +1,9 @@
 import { readFileSync } from 'node:fs'
 import type { BrowserCookieImportResult } from '../../../../shared/browser-workspace-types'
 import { decodeSafariBinaryCookies } from './browser-cookie-safari-parser'
-import { importValidatedCookies, cookieImportTarget } from '../../browser-cookie-import-pipeline'
+import { importValidatedCookies, cookieImportTarget } from '../browser-cookie-import-pipeline'
 import type { DetectedBrowser } from './browser-cookie-detection-types'
-import { diag } from '../../browser-cookie-import-diagnostics'
+import { diag } from '../browser-cookie-import-diagnostics'
 
 export async function importCookiesFromSafari(
   browser: DetectedBrowser,
@@ -44,12 +44,7 @@ export async function importCookiesFromSafari(
       return { ok: false, reason: 'All Safari cookies are expired.' }
     }
 
-    return importValidatedCookies(
-      valid,
-      cookies.length,
-      cookieImportTarget(targetPartition),
-      'replace-imported-domains'
-    )
+    return importValidatedCookies(valid, cookies.length, cookieImportTarget(targetPartition))
   } catch (err) {
     diag(`  Safari import failed: ${String(err)}`)
     return { ok: false, reason: 'Could not import cookies from Safari.' }

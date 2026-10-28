@@ -116,7 +116,11 @@ function WorktreePortRow({
   const runtimeTarget = useWorktreeRuntimeTarget(
     port.kind === 'workspace' ? port.owner.worktreeId : null
   )
-  const processLabel = port.processName ?? (port.pid ? `PID ${port.pid}` : 'Unknown process')
+  const processLabel =
+    port.processName ??
+    (port.pid
+      ? `PID ${port.pid}`
+      : translate('auto.components.sidebar.WorktreeCardPorts.unknownProcess', 'Unknown process'))
   const address = addressForPort(port)
   const canStop = canStopWorkspacePort(port)
   const openBrowserLabel = translate(
@@ -130,8 +134,7 @@ function WorktreePortRow({
       recordFeatureInteraction('ports')
       const openInOrcaBrowser = resolvePortOpenInOrcaBrowser({
         settings,
-        // Why: keyboard activations have detail=0; only pointer clicks carry
-        // the modifier intent for the system-browser escape hatch.
+        // Only pointer clicks carry system-browser modifier intent; keyboard activation has detail zero.
         event: event.detail > 0 ? event : null,
         isMac: navigator.userAgent.includes('Mac')
       })
@@ -307,8 +310,6 @@ export function WorktreeCardPortsDetails({
 
   return (
     <WorktreeCardDetailSection>
-      {/* Count lives inline after the label (not on the right, which is the action zone);
-          the "Go to Worktree" action is omitted here since the card is already scoped to its worktree. */}
       <div className="flex items-center gap-1.5 px-1 text-[11px] font-semibold uppercase tracking-[0.05em] text-muted-foreground">
         <Plug className="size-3" />
         <span>

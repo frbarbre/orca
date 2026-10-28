@@ -94,7 +94,6 @@ export function EditorPanelHeader({
   const activeGroupId = useAppStore((s) => s.activeGroupIdByWorktree[activeFile.worktreeId])
   const diffWordWrap = useAppStore((s) => s.settings?.diffWordWrap === true)
   const diffShowWhitespace = useAppStore((s) => s.settings?.diffShowWhitespace === true)
-  // Why: undefined/true mean wrap on; only explicit false turns wrap off (#9974).
   const editorWordWrap = useAppStore((s) => s.settings?.editorWordWrap !== false)
   const updateSettings = useAppStore((s) => s.updateSettings)
   const fileDiffComments = useMemo(
@@ -193,8 +192,6 @@ export function EditorPanelHeader({
         <AgentNotesPill worktreeId={activeFile.worktreeId} filePath={activeFile.relativePath} />
       )}
       {isDiffSurface && (
-        // Why: the adjacent diff controls use the same tooltip timing, so they
-        // share one provider instead of creating redundant Radix contexts.
         <TooltipProvider delayDuration={300}>
           <Tooltip>
             <TooltipTrigger asChild>

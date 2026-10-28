@@ -20,14 +20,13 @@ import {
   buildCopyText,
   CommentMoreMenu,
   CopyButton,
-  isMutablePRConversationComment,
   PRCommentActionBadge,
   QueueForAgentButton,
   ResolveButton,
   formatLineRange
 } from './comment-controls'
+import { isMutablePRConversationComment } from '../../../../../shared/github/pr-comment-mutability'
 
-/** A single comment row — used for both root and reply comments. */
 export function CommentRow({
   comment,
   botAuthorOverrides,

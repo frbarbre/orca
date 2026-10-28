@@ -14,7 +14,7 @@ import type { ChecksPanelCommentResolutionState } from './use-checks-panel-comme
 import type { ChecksPanelComposerState } from './use-checks-panel-composer-state'
 import type { ChecksPanelContextState } from './use-checks-panel-context-state'
 import { checksPanelAsyncResultKey } from '../checks-panel-async-result-key'
-import { isMutablePRConversationComment } from './comment-controls'
+import { isMutablePRConversationComment } from '../../../../../shared/github/pr-comment-mutability'
 import {
   isEditablePublishedReviewComment,
   isEditablePublishedReviewSummary
@@ -245,9 +245,7 @@ export function useChecksPanelCommentMutations(model: ChecksPanelCommentMutation
         pr.prRepo,
         pr.headSha
       )
-      // Why: review-thread replies nest under the parent on GitHub; conversation
-      // comments are top-level only. Prefer thread replies whenever path/threadId/url
-      // indicate a review comment.
+      // Prefer nested replies for review comments; GitHub conversation comments support only top-level posts.
       const parentThreadId =
         resolvePRReviewReplyThreadId({
           parent: comment,
@@ -279,8 +277,7 @@ export function useChecksPanelCommentMutations(model: ChecksPanelCommentMutation
         }
         return result
       }
-      // Why: keep review replies under the parent thread in the sidebar even when the
-      // host payload omits threadId/path (conversation posts stay standalone).
+      // Restore omitted threadId/path on review replies so the sidebar retains parent grouping.
       const mergedComment = canPostPRReviewThreadReply(comment)
         ? attachPRReviewReplyParent(result.comment, {
             ...comment,

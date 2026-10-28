@@ -1,7 +1,6 @@
 import type { AriaAttributes, ComponentType } from 'react'
 import { Badge } from '@/components/ui/badge'
 
-/** The inline chip an atomic prompt node renders as: a skill, or a referenced file. */
 export function NativeChatPromptPill({
   icon: Icon,
   label,

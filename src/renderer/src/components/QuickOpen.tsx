@@ -57,7 +57,7 @@ export default function QuickOpen(): React.JSX.Element | null {
       setLingering(true)
       return
     }
-    // Why: keep scan cancellation and the dialog exit animation mounted before releasing remote file state.
+    // Retain scan cancellation/exit animation before releasing remote file state.
     const timer = window.setTimeout(() => setLingering(false), QUICK_OPEN_CLOSE_LINGER_MS)
     return () => window.clearTimeout(timer)
   }, [visible])
@@ -106,14 +106,10 @@ function QuickOpenContent({ visible }: { visible: boolean }): React.JSX.Element 
     recentPaths: history
   })
 
-  // Why: Radix's onCloseAutoFocus restore is suppressed below, so dismissing
-  // the dialog (Esc / click-away) would otherwise leave the active panel
-  // unfocused. This returns focus to the surface that was active on open.
+  // Restore the opening surface because Radix trigger restoration is suppressed.
   const { captureReturnFocus, skipReturnFocus } = useModalReturnFocus(visible)
 
-  // Why: reset input only on open. Keeping this out of the file-load effect
-  // prevents unrelated store updates (which can produce a new excludePaths
-  // array reference) from wiping a query the user is currently typing.
+  // Reset only on open; file-load/exclusion identity changes must not erase a typed query.
   const [previousVisible, setPreviousVisible] = useState(visible)
   if (visible !== previousVisible) {
     setPreviousVisible(visible)
@@ -371,7 +367,7 @@ function QuickOpenContent({ visible }: { visible: boolean }): React.JSX.Element 
           <span>{translate('auto.components.QuickOpen.1dbd3f59ff', 'Move')}</span>
         </div>
       </div>
-      {/* Accessibility: announce result count changes */}
+      {/* Announce result count changes to assistive technology. */}
       <div aria-live="polite" className="sr-only">
         {deferredQuery.trim()
           ? translate('auto.components.QuickOpen.b227d88520', '{{value0}} files found', {

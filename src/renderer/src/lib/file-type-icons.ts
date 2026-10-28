@@ -80,7 +80,6 @@ export function getLucideFileTypeIcon(filePath: string | undefined | null): Luci
     return FileTerminal
   }
 
-  // Why: filename/extension matching keeps icons deterministic for SSH worktrees
-  // where OS-native file associations are not available.
+  // Match names/extensions deterministically; SSH worktrees have no local OS file associations.
   return FILE_ICON_BY_EXTENSION[getExtension(filename)] ?? File
 }

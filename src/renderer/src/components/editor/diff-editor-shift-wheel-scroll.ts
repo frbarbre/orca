@@ -36,7 +36,7 @@ function installPaneShiftWheelScroll(editor: HorizontalScrollEditor): () => void
       return
     }
 
-    // Why: a word-wrapped pane never overflows sideways, so leave the gesture to the outer list.
+    // Wrapped panes have no horizontal overflow; yield their gesture to the outer list.
     if (!canScrollHorizontally(editor)) {
       return
     }
@@ -46,7 +46,7 @@ function installPaneShiftWheelScroll(editor: HorizontalScrollEditor): () => void
       return
     }
 
-    // Why: combined diffs disable Monaco wheel handling so vertical input can reach the outer list.
+    // Combined diffs disable Monaco wheel handling so vertical input reaches the outer list.
     event.preventDefault()
     event.stopPropagation()
     editor.setScrollLeft(editor.getScrollLeft() + delta)

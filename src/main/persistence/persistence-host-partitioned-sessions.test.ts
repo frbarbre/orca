@@ -7,13 +7,15 @@ import {
   dataFile,
   writeDataFile,
   readDataFile,
+  readPersistedStateJson,
   makeRepo,
   makeWorktreeLineage,
   makeWorkspaceLineage
 } from './persistence-test-harness'
 import { makeTerminalTab } from './persistence-session-fixtures'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { readFileSync, rmSync, mkdtempSync } from 'node:fs'
+import { rmSync, mkdtempSync } from 'node:fs'
+import { ProfileStateSqliteAuthority } from './profile-state/profile-state-sqlite-authority'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import type { WorkspaceSessionState } from '../../shared/workspace-session-state-types'
@@ -473,6 +475,7 @@ describe('Store host-partitioned workspace sessions', () => {
     const makeSession = (): ReturnType<typeof makeHostSession> => ({
       ...makeHostSession('repo-ssh'),
       activeWorktreeId: worktreeId,
+      activeWorkspaceKey: worktreeWorkspaceKey(worktreeId),
       lastVisitedAtByWorktreeId: { [worktreeId]: 123 },
       tabsByWorktree: {
         [worktreeId]: [makeTerminalTab({ id: 'stale-tab', worktreeId })]
@@ -491,6 +494,7 @@ describe('Store host-partitioned workspace sessions', () => {
       expect(store.getWorkspaceSession(hostId)).toMatchObject({
         tabsByWorktree: {},
         activeWorktreeId: null,
+        activeWorkspaceKey: null,
         lastVisitedAtByWorktreeId: {},
         terminalTopologyRevisionByRepoId: { 'repo-ssh': 1 }
       })
@@ -739,10 +743,22 @@ describe('Store host-partitioned workspace sessions', () => {
   async function canonicalize(fixture: Record<string, unknown>): Promise<PersistedSessionsFile> {
     writeDataFile(fixture)
     await loadAndAwaitScheduledSave()
-    const canonical = readFileSync(dataFile(), 'utf-8')
+    const canonical = readPersistedStateJson(dataFile())
     // Prove clean loads do not rewrite, or unrelated migration writes could mask missing salvage saves.
-    await loadAndAwaitScheduledSave()
-    expect(readFileSync(dataFile(), 'utf-8')).toBe(canonical)
+    const completeWrite = vi.spyOn(
+      ProfileStateSqliteAuthority.prototype,
+      'writeCompleteSerializedDomains'
+    )
+    const selectiveWrite = vi.spyOn(ProfileStateSqliteAuthority.prototype, 'writeSerializedDomains')
+    try {
+      await loadAndAwaitScheduledSave()
+      expect(readPersistedStateJson(dataFile())).toBe(canonical)
+      expect(completeWrite).not.toHaveBeenCalled()
+      expect(selectiveWrite).not.toHaveBeenCalled()
+    } finally {
+      completeWrite.mockRestore()
+      selectiveWrite.mockRestore()
+    }
     return JSON.parse(canonical) as PersistedSessionsFile
   }
 

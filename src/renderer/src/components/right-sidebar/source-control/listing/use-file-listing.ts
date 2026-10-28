@@ -20,11 +20,6 @@ import type { SourceControlWorktreeContext } from './use-worktree-context'
 import { usePendingReviewCountByPath } from '@/components/pending-review/pending-review-count'
 import { useAllChangesProjection } from './use-all-changes-projection'
 
-/**
- * Projects git status and branch compare into the rows the panel renders, and layers the
- * interactions that operate on those rows: submodule expansion, diff opening, selection, bulk
- * staging and the git history feed.
- */
 export function useSourceControlFileListing({
   activeRemoteActionSequence,
   activeRepoTarget,
@@ -190,12 +185,10 @@ export function useSourceControlFileListing({
       containerRef: sourceControlRef
     })
 
-  // clear selection on list/tree presentation change
   useEffect(() => {
     clearSelection()
   }, [sourceControlViewMode, clearSelection])
 
-  // Clear selection on worktree or tab change
   useEffect(() => {
     clearSelection()
   }, [activeWorktreeId, rightSidebarTab, clearSelection])

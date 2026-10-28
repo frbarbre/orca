@@ -9,9 +9,7 @@ export type PRCheckDetail = {
     | 'neutral'
     | 'skipped'
     | 'pending'
-    // Why: a check suite needing manual action (e.g. a workflow awaiting "Approve
-    // and run") has no check run and is absent from statusCheckRollup, yet blocks
-    // auto-merge (GitHub returns "unstable status"). Surface it as its own state.
+    // Manual-approval suites may have no check run/rollup row yet block auto-merge as unstable; expose them separately.
     | 'action_required'
     | null
   url: string | null

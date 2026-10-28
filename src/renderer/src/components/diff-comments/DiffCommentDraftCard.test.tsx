@@ -86,8 +86,7 @@ describe('DiffCommentDraftCard', () => {
     expect(document.activeElement).toBe(submitBtn)
     fireEvent.click(submitBtn)
 
-    // Chromium moves focus to <body> when a focused button turns disabled, which would stop the
-    // draft zone from handing focus back to the editor once the save lands.
+    // Disabled buttons drop Chromium focus to body; preserve card focus so successful saves can return it to Monaco.
     expect(onSubmit).toHaveBeenCalledTimes(1)
     expect(submitBtn.hasAttribute('disabled')).toBe(true)
     expect(document.activeElement).toBe(textarea)
@@ -211,7 +210,6 @@ describe('DiffCommentDraftCard', () => {
     const textarea = view.getByRole('textbox')
     fireEvent.change(textarea, { target: { value: 'nihon' } })
 
-    // IME composition
     fireEvent.keyDown(textarea, { key: 'Enter', isComposing: true })
     expect(onSubmit).not.toHaveBeenCalled()
   })

@@ -29,6 +29,7 @@ import {
   TerminalPaneSshReconnectPortals
 } from './TerminalPaneRuntimePortals'
 import type { TerminalPaneController } from './use-terminal-pane-controller'
+import { canCloseTerminalPane, terminalPaneCloseLabel } from './terminal-pane-close-affordance'
 import { useAppStore } from '@/store'
 import { getKnownExecutionHostIdForWorktree } from '@/lib/worktree-runtime-owner'
 import { LOCAL_EXECUTION_HOST_ID } from '../../../../shared/execution-host'
@@ -197,8 +198,7 @@ export function TerminalPaneSurface({
         pane={activePane}
         tabId={tabId}
       />
-      {/* Why: the reconnect banner already owns SSH recovery UX; the z-50 error
-          toast was painting over it (same bottom strip) with the raw ssh:connect failure. */}
+      {/* Let SSH recovery own its strip instead of covering it with the raw connection-error toast. */}
       {visibleTerminalError && isActive && !showSshReconnectOverlay && activePane
         ? createPortal(
             <TerminalErrorToast
@@ -218,6 +218,7 @@ export function TerminalPaneSurface({
               onOpenNewTerminal={() => {
                 openTerminalBesideTab(tabId)
               }}
+              onClosePane={() => handleRequestClosePane(activePane.id)}
             />,
             activePane.container,
             `terminal-error-${activePane.id}`
@@ -256,7 +257,12 @@ export function TerminalPaneSurface({
         onOpenChange={contextMenu.setOpen}
         menuPoint={contextMenu.point}
         menuOpenedAtRef={contextMenu.menuOpenedAtRef}
-        canClosePane={contextMenu.paneCount > 1}
+        canClosePane={canCloseTerminalPane({
+          paneCount: contextMenu.paneCount,
+          showSplitButton,
+          isTabPinned
+        })}
+        closePaneLabel={terminalPaneCloseLabel(contextMenu.paneCount)}
         canExpandPane={contextMenu.paneCount > 1}
         canEqualizePaneSizes={contextMenu.paneCount > 1 && expandedPaneId === null}
         menuPaneIsExpanded={

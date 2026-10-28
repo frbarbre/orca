@@ -88,8 +88,7 @@ export function PRCommentGroupView({
       <div
         className={cn(
           'px-3 pb-2',
-          // Why: nest the composer under the parent the same way GitHub nests thread replies —
-          // the replies container already draws that rail, so only the root composer adds one.
+          // Nested replies already have a rail; only the root composer adds one.
           group.kind === 'thread' && !nested && 'ml-3 border-l-2 border-border/50 pl-3'
         )}
       >

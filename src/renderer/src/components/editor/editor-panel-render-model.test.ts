@@ -156,6 +156,49 @@ describe('getEditorPanelRenderModel shebang language fallback', () => {
   })
 })
 
+describe('getEditorPanelRenderModel edit/diff toggle', () => {
+  const codeDiff = (diffSource: OpenFile['diffSource']): OpenFile =>
+    htmlFile({
+      id: `wt-1::diff::${diffSource}::src/a.ts`,
+      filePath: '/repo/src/a.ts',
+      relativePath: 'src/a.ts',
+      mode: 'diff',
+      diffSource
+    } as Partial<OpenFile>)
+
+  it('shows a working diff as the Changes side of the toggle', () => {
+    const model = renderModel({ activeFile: codeDiff('unstaged'), fileContents: {} })
+
+    expect(model.hasEditorToggle).toBe(true)
+    expect(model.availableEditorToggleModes).toEqual(['edit', 'changes'])
+    expect(model.effectiveToggleValue).toBe('changes')
+  })
+
+  it('selects Changes for a markdown diff too', () => {
+    const model = renderModel({
+      activeFile: markdownFile({ mode: 'diff', diffSource: 'branch' } as Partial<OpenFile>),
+      fileContents: {}
+    })
+
+    expect(model.availableEditorToggleModes).toEqual(['source', 'rich', 'changes'])
+    expect(model.effectiveToggleValue).toBe('changes')
+  })
+
+  it('gives no toggle where there is no file to edit', () => {
+    const deleted = renderModel({
+      activeFile: codeDiff('unstaged'),
+      fileContents: {},
+      gitStatusByWorktree: {
+        'wt-1': [{ path: 'src/a.ts', status: 'deleted', area: 'unstaged' }]
+      }
+    })
+    const commit = renderModel({ activeFile: codeDiff('commit'), fileContents: {} })
+
+    expect(deleted.hasEditorToggle).toBe(false)
+    expect(commit.hasEditorToggle).toBe(false)
+  })
+})
+
 describe('getEditorPanelRenderModel read-only raw rendering (AI Vault View Log)', () => {
   it('renders a read-only markdown log as raw source with no markdown viewer or chrome', () => {
     const model = renderModel({ activeFile: markdownFile({ readOnly: true }) })

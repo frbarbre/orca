@@ -114,7 +114,7 @@ describe('handleDiffShortcutOutsideEditor', () => {
     expect(event.defaultPrevented).toBe(true)
   })
 
-  it('hands the open-file shortcut to the open diff editor too', () => {
+  it('hands the show-edit shortcut to the open diff editor too', () => {
     const container = document.createElement('div')
     document.body.append(container)
     const received: string[] = []
@@ -131,9 +131,9 @@ describe('handleDiffShortcutOutsideEditor', () => {
       focus: vi.fn()
     })
 
-    const event = press(document.body, 'F4')
-    expect(handleDiffShortcutOutsideEditor(event, matching('editor.openFileFromDiff'))).toBe(true)
-    expect(received).toEqual(['F4'])
+    const event = press(document.body, 'e')
+    expect(handleDiffShortcutOutsideEditor(event, matching('editor.showEdit'))).toBe(true)
+    expect(received).toEqual(['e'])
   })
 
   it('leaves a press inside the diff editor to the editor', () => {

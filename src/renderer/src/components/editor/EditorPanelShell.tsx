@@ -35,11 +35,10 @@ type EditorPanelShellProps = {
   renameError: string | null
   disableRenameBrowse: boolean
   onCopyPath: () => void
-  onOpenDiffTargetFile: (preferredMarkdownViewMode?: 'rich') => void
   onOpenPreviewToSide: () => void
   onOpenMarkdownPreview: () => void
   onToggleSideBySide: () => void
-  onEditorToggleChange: (next: EditorToggleValue) => void
+  onEditorToggleChange: (next: EditorToggleValue, line: number | null) => void
   onToggleMarkdownTableOfContents: () => void
   onToggleMarkdownFrontmatter: () => void
   onExportMarkdownToPdf: () => void
@@ -75,7 +74,6 @@ export function EditorPanelShell({
   renameError,
   disableRenameBrowse,
   onCopyPath,
-  onOpenDiffTargetFile,
   onOpenPreviewToSide,
   onOpenMarkdownPreview,
   onToggleSideBySide,
@@ -103,7 +101,6 @@ export function EditorPanelShell({
           copiedPathVisible={copiedPathVisible}
           isSingleDiff={model.isSingleDiff}
           isDiffSurface={model.isDiffSurface}
-          isMarkdown={model.isMarkdown}
           isCsv={model.isCsv}
           isNotebook={model.isNotebook}
           hasEditorToggle={model.hasEditorToggle}
@@ -121,7 +118,6 @@ export function EditorPanelShell({
           sideBySide={sideBySide}
           openFileState={model.openFileState}
           onCopyPath={onCopyPath}
-          onOpenDiffTargetFile={onOpenDiffTargetFile}
           onOpenPreviewToSide={onOpenPreviewToSide}
           onOpenMarkdownPreview={onOpenMarkdownPreview}
           onToggleSideBySide={onToggleSideBySide}

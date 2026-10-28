@@ -112,15 +112,15 @@ export function getEditorPanelRenderModel({
   })
   const isBinaryEditSurface =
     activeFile.mode === 'edit' && fileContents[activeFile.id]?.isBinary === true
-  const availableEditorToggleModes =
-    isBinaryEditSurface || !canUseChangesModeForFile(activeFile)
+  const availableEditorToggleModes = isSingleDiff
+    ? openFileState.canOpen
+      ? editorToggleModes
+      : []
+    : isBinaryEditSurface || !canUseChangesModeForFile(activeFile)
       ? editorToggleModes.filter((mode) => mode !== 'changes')
       : editorToggleModes
-  const effectiveToggleValue: EditorToggleValue = isChangesMode
-    ? 'changes'
-    : hasViewModeToggle
-      ? mdViewMode
-      : 'edit'
+  const effectiveToggleValue: EditorToggleValue =
+    isChangesMode || isSingleDiff ? 'changes' : hasViewModeToggle ? mdViewMode : 'edit'
   const inlineMarkdownContent =
     activeFile.mode === 'edit'
       ? (editorDrafts[activeFile.id] ?? fileContents[activeFile.id]?.content ?? null)

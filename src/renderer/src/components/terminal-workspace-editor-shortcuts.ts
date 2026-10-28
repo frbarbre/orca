@@ -9,6 +9,7 @@ import { isEventTargetInsideFloatingWorkspacePanel } from '@/lib/floating-worksp
 import { getOpenInSelection, resolveOpenInPath } from '@/lib/open-in-selection'
 import { openWorktreePath } from '../components/sidebar/WorktreeOpenInMenu'
 import { handleDiffShortcutOutsideEditor } from './editor/diff-shortcuts-outside-editor'
+import { showFileDiff } from './editor/file-tab-view-switch'
 
 type EditorShortcutContext = {
   event: KeyboardEvent
@@ -72,6 +73,19 @@ export function handleTerminalWorkspaceEditorShortcut({
         connectionId: state.repos.find((repo) => repo.id === worktree.repoId)?.connectionId ?? null,
         command: preferred.command
       })
+      return true
+    }
+  }
+  if (!event.repeat && matchShortcut('editor.showDiff')) {
+    const state = useAppStore.getState()
+    const activeFile =
+      state.activeTabType === 'editor'
+        ? state.openFiles.find((file) => file.id === state.activeFileId)
+        : undefined
+    if (activeFile?.mode === 'edit') {
+      event.preventDefault()
+      notifyTerminalCapture('editor.showDiff')
+      void showFileDiff(activeFile.id)
       return true
     }
   }

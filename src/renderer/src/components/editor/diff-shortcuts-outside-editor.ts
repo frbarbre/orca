@@ -21,7 +21,7 @@ const REVIEW_SHORTCUTS = [
   'editor.nextFile',
   'editor.previousFile',
   'editor.addReviewNote',
-  'editor.openFileFromDiff'
+  'editor.showEdit'
 ] as const satisfies readonly KeybindingActionId[]
 
 let mounted: MountedDiffEditor | null = null

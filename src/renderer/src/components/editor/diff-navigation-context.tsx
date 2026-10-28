@@ -3,7 +3,7 @@ import type { editor } from 'monaco-editor'
 import {
   installChangedFileNavigationShortcut,
   installMonacoDiffChangeNavigationShortcut,
-  installOpenFileFromDiffShortcut
+  installShowEditShortcut
 } from './editor-shortcuts'
 import { goToDiffWithoutWrap } from './diff-change-step'
 import { registerDiffEditorForOutsideShortcuts } from './diff-shortcuts-outside-editor'
@@ -18,6 +18,7 @@ export type DiffNavigationContextValue = {
   goToPreviousDiff: () => void
   goToNextDiff: () => void
   changeCount: number
+  cursorLine: () => number | null
 }
 
 const noop = (): void => {}
@@ -31,24 +32,29 @@ const DiffEditorRegistrationContext = createContext<DiffEditorRegistrationContex
 const DiffNavigationContext = createContext<DiffNavigationContextValue>({
   goToPreviousDiff: noop,
   goToNextDiff: noop,
-  changeCount: 0
+  changeCount: 0,
+  cursorLine: () => null
 })
 
 function countChanges(diffEditor: editor.IStandaloneDiffEditor): number {
   return diffEditor.getLineChanges()?.length ?? 0
 }
 
+function cursorLineOf(diffEditor: editor.IStandaloneDiffEditor | null): number | null {
+  return diffEditor?.getModifiedEditor().getPosition()?.lineNumber ?? null
+}
+
 export function DiffNavigationProvider({
   children,
-  onOpenFile
+  onShowEdit
 }: {
   children: React.ReactNode
-  /** The header's "Open file tab", for its shortcut inside the diff. */
-  onOpenFile?: () => void
+  /** The header toggle's Edit side, for its shortcut inside the diff. */
+  onShowEdit?: (line: number | null) => void
 }): React.JSX.Element {
-  const onOpenFileRef = useRef(onOpenFile)
-  onOpenFileRef.current = onOpenFile
-  const openFileShortcutCleanupRef = useRef<(() => void) | null>(null)
+  const onShowEditRef = useRef(onShowEdit)
+  onShowEditRef.current = onShowEdit
+  const showEditShortcutCleanupRef = useRef<(() => void) | null>(null)
   const editorRef = useRef<editor.IStandaloneDiffEditor | null>(null)
   const updateSubRef = useRef<{ dispose: () => void } | null>(null)
   // Share the registered editor across header buttons and F7/Shift+F7 shortcuts.
@@ -85,9 +91,9 @@ export function DiffNavigationProvider({
       diffEditor,
       (direction, options) => stepToChangedFileRef.current(direction, options)
     )
-    openFileShortcutCleanupRef.current?.()
-    openFileShortcutCleanupRef.current = installOpenFileFromDiffShortcut(diffEditor, () =>
-      onOpenFileRef.current?.()
+    showEditShortcutCleanupRef.current?.()
+    showEditShortcutCleanupRef.current = installShowEditShortcut(diffEditor, () =>
+      onShowEditRef.current?.(cursorLineOf(diffEditor))
     )
     outsideShortcutCleanupRef.current?.()
     outsideShortcutCleanupRef.current = registerDiffEditorForOutsideShortcuts({
@@ -108,8 +114,8 @@ export function DiffNavigationProvider({
     shortcutCleanupRef.current = null
     fileShortcutCleanupRef.current?.()
     fileShortcutCleanupRef.current = null
-    openFileShortcutCleanupRef.current?.()
-    openFileShortcutCleanupRef.current = null
+    showEditShortcutCleanupRef.current?.()
+    showEditShortcutCleanupRef.current = null
     outsideShortcutCleanupRef.current?.()
     outsideShortcutCleanupRef.current = null
     editorRef.current = null
@@ -128,6 +134,8 @@ export function DiffNavigationProvider({
       goToDiffWithoutWrap(editorRef.current, 'next')
     }
   }, [])
+
+  const cursorLine = useCallback(() => cursorLineOf(editorRef.current), [])
 
   useEffect(() => {
     return () => {
@@ -150,9 +158,10 @@ export function DiffNavigationProvider({
     () => ({
       goToPreviousDiff,
       goToNextDiff,
-      changeCount
+      changeCount,
+      cursorLine
     }),
-    [goToPreviousDiff, goToNextDiff, changeCount]
+    [goToPreviousDiff, goToNextDiff, changeCount, cursorLine]
   )
 
   return (

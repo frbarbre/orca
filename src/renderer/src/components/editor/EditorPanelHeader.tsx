@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { ArrowDown, ArrowUp, Columns2, Eye, FileText, ListTree, Rows2 } from 'lucide-react'
+import { ArrowDown, ArrowUp, Columns2, Eye, ListTree, Rows2 } from 'lucide-react'
 import { useAppStore } from '@/store'
 import { useVisibleWorktreeDiffComments } from '../diff-comments/use-visible-worktree-diff-comments'
 import type { OpenFile } from '@/store/slices/editor'
@@ -28,7 +28,6 @@ type EditorPanelHeaderProps = {
   copiedPathVisible: boolean
   isSingleDiff: boolean
   isDiffSurface: boolean
-  isMarkdown: boolean
   isCsv: boolean
   isNotebook: boolean
   hasEditorToggle: boolean
@@ -46,11 +45,10 @@ type EditorPanelHeaderProps = {
   sideBySide: boolean
   openFileState: EditorHeaderOpenFileState
   onCopyPath: () => void
-  onOpenDiffTargetFile: (preferredMarkdownViewMode?: 'rich') => void
   onOpenPreviewToSide: () => void
   onOpenMarkdownPreview: () => void
   onToggleSideBySide: () => void
-  onEditorToggleChange: (next: EditorToggleValue) => void
+  onEditorToggleChange: (next: EditorToggleValue, line: number | null) => void
   onToggleMarkdownTableOfContents: () => void
   onToggleMarkdownFrontmatter: () => void
   onExportMarkdownToPdf: () => void
@@ -62,7 +60,6 @@ export function EditorPanelHeader({
   copiedPathVisible,
   isSingleDiff,
   isDiffSurface,
-  isMarkdown,
   isCsv,
   isNotebook,
   hasEditorToggle,
@@ -80,7 +77,6 @@ export function EditorPanelHeader({
   sideBySide,
   openFileState,
   onCopyPath,
-  onOpenDiffTargetFile,
   onOpenPreviewToSide,
   onOpenMarkdownPreview,
   onToggleSideBySide,
@@ -100,10 +96,9 @@ export function EditorPanelHeader({
     () => diffComments.filter((comment) => comment.filePath === activeFile.relativePath),
     [activeFile.relativePath, diffComments]
   )
-  const { changeCount, goToPreviousDiff, goToNextDiff } = useDiffNavigation()
+  const { changeCount, goToPreviousDiff, goToNextDiff, cursorLine } = useDiffNavigation()
   const previousChangeShortcut = useShortcutKeyDetails('editor.previousChange')
   const nextChangeShortcut = useShortcutKeyDetails('editor.nextChange')
-  const openFileShortcut = useShortcutKeyDetails('editor.openFileFromDiff')
 
   return (
     <div className="editor-header">
@@ -134,49 +129,6 @@ export function EditorPanelHeader({
               {translate(
                 'auto.components.editor.EditorPanelHeader.fb8331694e',
                 'Open Preview to the Side'
-              )}
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      )}
-      {isSingleDiff && (
-        <TooltipProvider delayDuration={300}>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                type="button"
-                className="p-1 rounded hover:bg-accent text-muted-foreground hover:text-foreground transition-colors flex-shrink-0 disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-muted-foreground"
-                onClick={() => onOpenDiffTargetFile(isMarkdown ? 'rich' : undefined)}
-                aria-label={translate(
-                  'auto.components.editor.EditorPanelHeader.a10d9b8337',
-                  'Open file'
-                )}
-                disabled={!openFileState.canOpen}
-              >
-                <FileText size={14} />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent side="bottom" sideOffset={4}>
-              {openFileState.canOpen
-                ? isMarkdown
-                  ? translate(
-                      'auto.components.editor.EditorPanelHeader.f0fd4174b5',
-                      'Open file tab to use rich markdown editing'
-                    )
-                  : translate(
-                      'auto.components.editor.EditorPanelHeader.9b80bbe1de',
-                      'Open file tab'
-                    )
-                : translate(
-                    'auto.components.editor.EditorPanelHeader.c98ce191da',
-                    'This diff has no modified-side file to open'
-                  )}
-              {openFileState.canOpen && openFileShortcut.keys.length > 0 && (
-                <ShortcutKeyCombo
-                  keys={openFileShortcut.keys}
-                  doubleTap={openFileShortcut.doubleTap}
-                  className="ml-1.5"
-                />
               )}
             </TooltipContent>
           </Tooltip>
@@ -281,7 +233,7 @@ export function EditorPanelHeader({
         <EditorViewToggle
           value={effectiveToggleValue}
           modes={availableEditorToggleModes}
-          onChange={onEditorToggleChange}
+          onChange={(next) => onEditorToggleChange(next, cursorLine())}
           metadataOverride={
             isCsv ? CSV_VIEW_MODE_METADATA : isNotebook ? NOTEBOOK_VIEW_MODE_METADATA : undefined
           }

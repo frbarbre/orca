@@ -46,6 +46,26 @@ describe('getMarkdownViewModes', () => {
   })
 })
 
+describe('getEditorToggleModes', () => {
+  it("gives a single-file diff the edit tab's toggle, so either view switches to the other", () => {
+    expect(
+      getEditorToggleModes({ language: 'typescript', mode: 'diff', diffSource: 'unstaged' })
+    ).toEqual(['edit', 'changes'])
+    expect(
+      getEditorToggleModes({ language: 'typescript', mode: 'diff', diffSource: 'branch-worktree' })
+    ).toEqual(['edit', 'changes'])
+    expect(
+      getEditorToggleModes({ language: 'markdown', mode: 'diff', diffSource: 'staged' })
+    ).toEqual(['source', 'rich', 'changes'])
+  })
+
+  it('gives a combined diff no toggle', () => {
+    expect(
+      getEditorToggleModes({ language: 'typescript', mode: 'diff', diffSource: 'combined-all' })
+    ).toEqual([])
+  })
+})
+
 describe('markdown preview helpers', () => {
   it('defaults markdown edit tabs to rich mode', () => {
     expect(

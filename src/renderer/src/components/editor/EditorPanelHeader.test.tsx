@@ -8,6 +8,7 @@ vi.mock('@/store', () => ({
   useAppStore: (selector: (state: Record<string, unknown>) => unknown) =>
     selector({
       activeGroupIdByWorktree: {},
+      worktreesByRepo: {},
       settings: {},
       updateSettings: vi.fn()
     })
@@ -74,7 +75,6 @@ const baseProps = {
   copiedPathVisible: false,
   isSingleDiff: false,
   isDiffSurface: true,
-  isMarkdown: false,
   isCsv: false,
   isNotebook: false,
   hasEditorToggle: false,
@@ -92,7 +92,6 @@ const baseProps = {
   sideBySide: false,
   openFileState: { canOpen: false },
   onCopyPath: vi.fn(),
-  onOpenDiffTargetFile: vi.fn(),
   onOpenPreviewToSide: vi.fn(),
   onOpenMarkdownPreview: vi.fn(),
   onToggleSideBySide: vi.fn(),
@@ -147,21 +146,18 @@ describe('EditorPanelHeader', () => {
     expect(
       renderHeader({
         isDiffSurface: false,
-        isMarkdown: false,
         createArtifactRequest: createRequest
       })
     ).toContain('data-artifact-publish="true"')
     expect(
       renderHeader({
         isDiffSurface: true,
-        isMarkdown: true,
         createArtifactRequest: createRequest
       })
     ).not.toContain('data-artifact-publish')
     expect(
       renderHeader({
-        isDiffSurface: false,
-        isMarkdown: true
+        isDiffSurface: false
       })
     ).not.toContain('data-artifact-publish')
   })

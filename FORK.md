@@ -1337,7 +1337,7 @@ upstream's sections, and that choice is saved.
 A row opens a `branch-worktree` diff (`actions/open-branch-worktree-diff.ts`): the base side is read
 at the merge base through the branch diff, and the other side is the file on disk through the
 working-tree diff (`editor/branch-worktree-diff.ts`). The tab is treated like an unstaged diff:
-editable, autosaved, reloaded by the file watcher and on every status change. A new compare (a
+read-only (§58), reloaded by the file watcher and on every status change. A new compare (a
 commit, a new base) retargets it (`retarget-branch-diff-files.ts`). A conflicted file opens its
 resolver instead, and with no base yet the row falls back to the uncommitted diff. Any tab of a path
 highlights its one row, and file stepping walks these rows (`ChangedFileArea` `'branch-worktree'`,
@@ -1732,6 +1732,31 @@ comment. The Comments list no longer heads open threads with "Needs review · N"
 
 Upstream shipped the same flags (#28240), so the fork's copy was dropped in the 1.4.214 sync of
 October 2026. The number is kept so later entries keep theirs.
+
+### 58. A file's editor and diff are one tab's two views
+
+A file's working diff (unstaged, staged, branch, all-changes) and its editor are two views of one
+tab. The header toggle shows Edit (Source / Rich for markdown) and Changes on both; switching
+replaces the tab with the other view at the cursor's line. Changes opens the diff the Source Control
+filter would (`openDiffAtLocation`, area `'branch-worktree'`), saving unsaved edits first, and does
+nothing while a commit or turn is previewed or when the filter lists no change for the file.
+Upstream's in-place Changes view (`ChangesModeView`) is retired: a tab still asking for it is handed
+the diff tab. Diffs are read-only; editing happens in the editor, where completions and diagnostics
+run. Opening one view in a group closes the other there, unless it holds unsaved edits or is also
+open in another group. ⌥⌘E (`editor.showEdit`) and ⌥⌘D (`editor.showDiff`) switch views, macOS
+only and rebindable; ⌥⌘E replaced F4's "Open File from Diff", and the header's "Open file tab"
+button is gone.
+
+| File                                                                                            | What is ours                                             |
+| ----------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
+| `src/renderer/src/components/editor/file-tab-view-switch.ts`, `reveal-line-after-open.ts`       | Switching views at the cursor's line.                    |
+| `editor/one-view-per-file.ts`, `use-retired-changes-mode.ts`                                    | One view per file in a group; the retired in-place view. |
+| `editor/markdown-preview-controls.ts`, `editor-panel-render-model.ts`                           | The toggle on single-file diffs, Changes selected.       |
+| `editor/EditorPanel.tsx`, `EditorPanelHeader.tsx`, `EditorPanelShell.tsx`                       | Toggle routing; the "Open file tab" button removed.      |
+| `editor/diff-navigation-context.tsx`, `editor-shortcuts.ts`, `diff-shortcuts-outside-editor.ts` | ⌥⌘E inside and outside a diff, at its cursor line.       |
+| `components/terminal-workspace-editor-shortcuts.ts`                                             | ⌥⌘D from an editor.                                      |
+| `editor/EditorDiffFileSurface.tsx`, `EditorContent.tsx`                                         | Read-only diffs.                                         |
+| `src/shared/keybindings/definitions-core-4.ts`, `types.ts`                                      | The bindings.                                            |
 
 ## Verify
 

@@ -13,10 +13,26 @@ const CSV_VIEW_MODES = ['source', 'rich'] as const satisfies readonly MarkdownVi
 const NOTEBOOK_VIEW_MODES = ['source', 'rich'] as const satisfies readonly MarkdownViewMode[]
 const NO_VIEW_MODES = [] as const satisfies readonly MarkdownViewMode[]
 
-// Expose Changes alongside language modes in one control; diff/conflict tabs already provide review surfaces.
+// Every editable file gets Changes alongside its language modes, so each pane has one control.
 const CODE_EDIT_TOGGLE_MODES = ['edit', 'changes'] as const satisfies readonly EditorToggleValue[]
 
+const COMBINED_DIFF_SOURCES = new Set([
+  'combined-all',
+  'combined-uncommitted',
+  'combined-branch',
+  'combined-commit'
+])
+
 export function getEditorToggleModes(target: MarkdownPreviewTarget): readonly EditorToggleValue[] {
+  // Fork: a file's diff and its editor are one tab's two views, switched by this toggle.
+  if (
+    target.mode === 'diff' &&
+    target.diffSource !== undefined &&
+    !COMBINED_DIFF_SOURCES.has(target.diffSource) &&
+    target.language !== 'notebook'
+  ) {
+    return getEditorToggleModes({ ...target, mode: 'edit' })
+  }
   if (target.mode !== 'edit') {
     return getMarkdownViewModes(target)
   }

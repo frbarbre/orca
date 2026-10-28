@@ -17,7 +17,7 @@ vi.mock('@/store', () => ({
   }
 }))
 
-import { installOpenFileFromDiffShortcut } from './editor-shortcuts'
+import { installShowEditShortcut } from './editor-shortcuts'
 
 function press(target: EventTarget, init: KeyboardEventInit): KeyboardEvent {
   const event = new KeyboardEvent('keydown', { ...init, bubbles: true, cancelable: true })
@@ -25,18 +25,19 @@ function press(target: EventTarget, init: KeyboardEventInit): KeyboardEvent {
   return event
 }
 
-const F4 = { key: 'F4', code: 'F4' }
+// Why ´: macOS types a dead key for Option+E, so the chord is matched by its physical key.
+const MOD_ALT_E = { key: '´', code: 'KeyE', metaKey: true, altKey: true }
 
-describe('installOpenFileFromDiffShortcut', () => {
+describe('installShowEditShortcut', () => {
   let container: HTMLDivElement
-  let open: ReturnType<typeof vi.fn<() => void>>
+  let show: ReturnType<typeof vi.fn<() => void>>
   let dispose: () => void
 
   beforeEach(() => {
     container = document.createElement('div')
     document.body.appendChild(container)
-    open = vi.fn()
-    dispose = installOpenFileFromDiffShortcut({ getContainerDomNode: () => container }, open)
+    show = vi.fn()
+    dispose = installShowEditShortcut({ getContainerDomNode: () => container }, show)
   })
 
   afterEach(() => {
@@ -45,21 +46,27 @@ describe('installOpenFileFromDiffShortcut', () => {
     shortcutState.keybindings = {}
   })
 
-  it('opens the file tab once per F4 press and keeps the key from Monaco', () => {
-    const first = press(container, F4)
-    press(container, { ...F4, repeat: true })
+  it('switches to the editor once per Mod+Alt+E press and keeps the key from Monaco', () => {
+    const first = press(container, MOD_ALT_E)
+    press(container, { ...MOD_ALT_E, repeat: true })
 
-    expect(open).toHaveBeenCalledOnce()
+    expect(show).toHaveBeenCalledOnce()
     expect(first.defaultPrevented).toBe(true)
   })
 
-  it('follows a rebinding from Settings', () => {
-    shortcutState.keybindings = { 'editor.openFileFromDiff': ['Mod+Shift+O'] }
+  it('no longer answers to F4', () => {
+    press(container, { key: 'F4', code: 'F4' })
 
-    press(container, F4)
+    expect(show).not.toHaveBeenCalled()
+  })
+
+  it('follows a rebinding from Settings', () => {
+    shortcutState.keybindings = { 'editor.showEdit': ['Mod+Shift+O'] }
+
+    press(container, MOD_ALT_E)
     press(container, { key: 'o', code: 'KeyO', metaKey: true, shiftKey: true })
 
-    expect(open).toHaveBeenCalledOnce()
+    expect(show).toHaveBeenCalledOnce()
   })
 
   it('leaves the key alone while typing in a review comment', () => {
@@ -69,17 +76,17 @@ describe('installOpenFileFromDiffShortcut', () => {
     card.appendChild(textarea)
     container.appendChild(card)
 
-    const event = press(textarea, F4)
+    const event = press(textarea, MOD_ALT_E)
 
-    expect(open).not.toHaveBeenCalled()
+    expect(show).not.toHaveBeenCalled()
     expect(event.defaultPrevented).toBe(false)
   })
 
   it('stops listening once removed', () => {
     dispose()
-    press(container, F4)
+    press(container, MOD_ALT_E)
     dispose = () => undefined
 
-    expect(open).not.toHaveBeenCalled()
+    expect(show).not.toHaveBeenCalled()
   })
 })

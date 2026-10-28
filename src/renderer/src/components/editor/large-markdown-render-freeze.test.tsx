@@ -172,8 +172,6 @@ function renderDiffPreview(content: string) {
     onCloseMarkdownTableOfContents: vi.fn(),
     markdownAnnotationsEnabled: false,
     markdownDocuments: markdownDocumentsStub,
-    onContentChange: vi.fn(),
-    onSave: vi.fn(),
     reloadContent: vi.fn()
   }
   const view = render(<EditorDiffFileSurface {...props} />)

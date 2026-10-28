@@ -11,6 +11,8 @@ import {
   type DiffNavigationContextValue
 } from './diff-navigation-context'
 
+vi.mock('@/lib/shortcut-platform', () => ({ getShortcutPlatform: () => 'darwin' }))
+
 type FakeDiffEditor = editor.IStandaloneDiffEditor & {
   setLineChanges: (count: number) => void
   setCursorLine: (line: number) => void
@@ -85,13 +87,13 @@ describe('DiffNavigationProvider', () => {
   let container: HTMLDivElement | null = null
   let root: Root | null = null
 
-  function mount(onOpenFile?: () => void): void {
+  function mount(onShowEdit?: (line: number | null) => void): void {
     container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)
     act(() => {
       root?.render(
-        <DiffNavigationProvider onOpenFile={onOpenFile}>
+        <DiffNavigationProvider onShowEdit={onShowEdit}>
           <Probe />
           <RegistrationProbe />
         </DiffNavigationProvider>
@@ -111,21 +113,38 @@ describe('DiffNavigationProvider', () => {
     registrationRenderCount = 0
   })
 
-  it("opens the diffed file's tab when F4 is pressed in the registered diff", () => {
-    const onOpenFile = vi.fn()
-    mount(onOpenFile)
+  it("switches to the editor at the diff's cursor line on Mod+Alt+E", () => {
+    const onShowEdit = vi.fn()
+    mount(onShowEdit)
     const editor = createFakeEditor(1)
     act(() => registration?.registerDiffEditor(editor))
+    editor.setCursorLine(42)
+    const modAltE = (): KeyboardEvent =>
+      new KeyboardEvent('keydown', {
+        key: '´',
+        code: 'KeyE',
+        metaKey: true,
+        altKey: true,
+        bubbles: true,
+        cancelable: true
+      })
 
-    editor.containerNode.dispatchEvent(
-      new KeyboardEvent('keydown', { key: 'F4', code: 'F4', bubbles: true, cancelable: true })
-    )
+    editor.containerNode.dispatchEvent(modAltE())
     act(() => registration?.unregisterDiffEditor(editor))
-    editor.containerNode.dispatchEvent(
-      new KeyboardEvent('keydown', { key: 'F4', code: 'F4', bubbles: true, cancelable: true })
-    )
+    editor.containerNode.dispatchEvent(modAltE())
 
-    expect(onOpenFile).toHaveBeenCalledOnce()
+    expect(onShowEdit).toHaveBeenCalledOnce()
+    expect(onShowEdit).toHaveBeenCalledWith(42)
+  })
+
+  it("reads the registered diff's cursor line, and none without a diff", () => {
+    mount()
+    expect(captured?.cursorLine()).toBeNull()
+    const editor = createFakeEditor(1)
+    act(() => registration?.registerDiffEditor(editor))
+    editor.setCursorLine(7)
+
+    expect(captured?.cursorLine()).toBe(7)
   })
 
   it('exposes the change count and routes nav actions to the registered editor', () => {

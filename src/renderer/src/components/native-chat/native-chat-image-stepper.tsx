@@ -40,7 +40,7 @@ export function NativeChatImageStepperProvider({
           .filter(([key, entry]) => key === id || entry.element?.isConnected)
           .sort(([, a], [, b]) => documentOrder(a, b))
         const index = ordered.findIndex(([key]) => key === id)
-        if (index < 0 || ordered.length < 2) {
+        if (index === -1 || ordered.length < 2) {
           return false
         }
         ordered[(index + delta + ordered.length) % ordered.length][1].open()

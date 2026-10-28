@@ -1863,6 +1863,7 @@ sync hit exactly that (#23062 landed two commits later) and was fixed by merging
   video node used upstream's deleted `safe-react-node-view-renderer` and now uses the stock
   renderer; main's stepper test moved to `native-chat-image-stepper.test.tsx` to keep the
   image-preview test under its cap.
+- Verify on that merge: main's new `editor.openFileFromDiff` (F4) needed a shortcut title.
 
 **1.4.214 → 1.4.214** (`88aa3f27ce..293bfe795d`, 604 upstream commits, thirty-five conflicts)
 

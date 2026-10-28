@@ -27,7 +27,7 @@ function model(filePath: string, text = 'x') {
 }
 
 function setup(enabled: Partial<Record<DiagnosticSource, boolean>> = { oxlint: true }) {
-  const sync = vi.fn(async () => undefined)
+  const sync = vi.fn(async (_source: DiagnosticSource, _file: unknown) => undefined)
   const close = vi.fn()
   const settings = { current: enabled }
   const controller = createDiagnosticsController({

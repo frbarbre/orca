@@ -1,10 +1,8 @@
 /**
  * The lines of the modified side that GitHub will accept a review comment on.
  *
- * Why this is narrower than "any line in the file": GitHub rejects a review comment whose line is
- * not part of the pull request's diff. Offering the choice on an untouched line would mean the user
- * writes the comment first and only then learns it cannot be posted, so the toggle is disabled
- * ahead of time instead.
+ * Fork: a comment on any other line is still offered, posted as a comment on the file that
+ * quotes the line, since GitHub rejects a line comment outside the pull request's diff.
  *
  * Why only changed lines, when GitHub also allows context lines inside a hunk: the context a hunk
  * carries is not derivable from Monaco's line changes, and a comment that is certainly postable
@@ -34,4 +32,38 @@ export function collectReviewCommentableLines(
     }
   }
   return lines
+}
+
+export function isRangeInDiff(
+  commentableLines: ReadonlySet<number> | null,
+  line: number,
+  startLine: number | undefined
+): boolean {
+  if (commentableLines === null) {
+    return true
+  }
+  for (let current = startLine ?? line; current <= line; current += 1) {
+    if (!commentableLines.has(current)) {
+      return false
+    }
+  }
+  return true
+}
+
+export function quoteLinesOutsideDiff({
+  line,
+  startLine,
+  code,
+  body
+}: {
+  line: number
+  startLine?: number
+  code: string
+  body: string
+}): string {
+  const label =
+    startLine !== undefined && startLine !== line ? `Lines ${startLine}–${line}` : `Line ${line}`
+  const longestRun = Math.max(0, ...(code.match(/`+/g) ?? []).map((run) => run.length))
+  const fence = '`'.repeat(Math.max(3, longestRun + 1))
+  return `${label}:\n${fence}\n${code}\n${fence}\n\n${body}`
 }

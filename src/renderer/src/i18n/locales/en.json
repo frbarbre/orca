@@ -17234,8 +17234,7 @@
             "label": "Show the GitHub comment"
           },
           "useDiffReviewComment": {
-            "noPullRequest": "This diff is not part of a pull request.",
-            "lineNotInDiff": "GitHub only accepts review comments on lines the pull request changed."
+            "noPullRequest": "This diff is not part of a pull request."
           }
         }
       },
@@ -19080,7 +19079,8 @@
         "openHint": "Keeps you working on the host while Orca can’t set up there."
       },
       "diffComments": {
-        "reviewCommentPlaceholder": "Leave a review comment on this line"
+        "reviewCommentPlaceholder": "Leave a review comment on this line",
+        "outsideDiffPlaceholder": "Not in the diff, so it posts as a file comment quoting this line"
       },
       "pendingReview": {
         "badgeTitle": "{{count}} review comments waiting to be submitted",

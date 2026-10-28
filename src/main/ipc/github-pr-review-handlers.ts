@@ -125,6 +125,7 @@ export function registerGitHubPRReviewHandlers(store: Store): void {
         line: number
         startLine?: number
         body: string
+        subjectType?: 'file'
       }
     ) => {
       const repo = assertRegisteredGitHubRepo(args, store)
@@ -165,6 +166,7 @@ export function registerGitHubPRReviewHandlers(store: Store): void {
         line: args.line,
         startLine: args.startLine,
         body: args.body.trim(),
+        ...(args.subjectType === 'file' ? { subjectType: 'file' as const } : {}),
         connectionId: getGitHubRepoConnectionId(repo),
         localGitOptions: getGitHubLocalGitOptionArgs(store, repo)[0]
       })

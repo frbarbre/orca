@@ -49,7 +49,12 @@ export function DiffLineCommentPopoverHost({
   onSubmitNote: (body: string) => Promise<void>
   onReviewPosted: (comment: PRComment) => void
   /** Queue the comment for the review instead of posting it now. */
-  onQueueForReview: (body: string, line: number, startLine: number | undefined) => void
+  onQueueForReview: (
+    body: string,
+    line: number,
+    startLine: number | undefined,
+    subjectType?: 'file'
+  ) => void
 }): React.JSX.Element {
   const review = useDiffReviewComment({
     diffEditor,
@@ -64,8 +69,8 @@ export function DiffLineCommentPopoverHost({
     lineNumber: anchor.lineNumber,
     height: popoverHeight
   })
-  const effectiveMode = review.resolveMode(anchor.lineNumber)
-  const disabledReason = review.reviewDisabledReason(anchor.lineNumber)
+  const effectiveMode = review.resolvedMode
+  const disabledReason = review.reviewDisabledReason
 
   return (
     <DiffCommentPopover
@@ -81,10 +86,15 @@ export function DiffLineCommentPopoverHost({
       placeholder={
         effectiveMode === 'note'
           ? placeholder
-          : translate(
-              'auto.components.diffComments.reviewCommentPlaceholder',
-              'Leave a review comment on this line'
-            )
+          : review.isOutsideDiff(anchor.lineNumber, anchor.startLine)
+            ? translate(
+                'auto.components.diffComments.outsideDiffPlaceholder',
+                'Not in the diff, so it posts as a file comment quoting this line'
+              )
+            : translate(
+                'auto.components.diffComments.reviewCommentPlaceholder',
+                'Leave a review comment on this line'
+              )
       }
       submitLabel={
         effectiveMode === 'note'
@@ -108,7 +118,8 @@ export function DiffLineCommentPopoverHost({
           return
         }
         if (effectiveMode === 'pending') {
-          onQueueForReview(body, anchor.lineNumber, anchor.startLine)
+          const prepared = review.prepareReviewComment(anchor.lineNumber, anchor.startLine, body)
+          onQueueForReview(prepared.body, anchor.lineNumber, anchor.startLine, prepared.subjectType)
           // Why dismiss here rather than in the caller: queueing has no response to wait
           // for, so the popover would otherwise stay open over the comment it just made.
           onCancel()

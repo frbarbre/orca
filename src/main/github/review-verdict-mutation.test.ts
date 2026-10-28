@@ -53,6 +53,16 @@ describe('buildReviewVerdictMutation', () => {
     expect(ranged).toContain('startLine: 9, startSide: RIGHT')
   })
 
+  it('attaches a comment on a line outside the diff to the file instead', () => {
+    const mutation = buildReviewVerdictMutation({
+      ...base,
+      verdict: 'comment',
+      comments: [draft({ startLine: 9, subjectType: 'file' })]
+    })
+
+    expect(mutation).toContain('{ path: "src/app.ts", subjectType: FILE, body: "this leaks" }')
+  })
+
   it('escapes a body that would otherwise break the document', () => {
     const mutation = buildReviewVerdictMutation({
       pullRequestId: 'PR_abc',

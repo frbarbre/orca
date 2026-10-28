@@ -1889,6 +1889,9 @@ sync hit exactly that (#23062 landed two commits later) and was fixed by merging
   renderer; main's stepper test moved to `native-chat-image-stepper.test.tsx` to keep the
   image-preview test under its cap.
 - Verify on that merge: main's new `editor.openFileFromDiff` (F4) needed a shortcut title.
+- Main gained four more commits (a file's editor and diff become one tab's two views) before that
+  Verify finished, so it was merged again: three conflicts beside upstream's comment rewrites, and
+  F4's action is gone, so its title is too.
 
 **1.4.214 → 1.4.214** (`88aa3f27ce..293bfe795d`, 604 upstream commits, thirty-five conflicts)
 

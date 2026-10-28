@@ -14,6 +14,8 @@ export const FORK_KEYBINDING_TITLE_COPY = {
   'editor.previousFile': () =>
     translate('keybindings.title.editorPreviousFile', 'Go to Previous Changed File'),
   'editor.nextFile': () => translate('keybindings.title.editorNextFile', 'Go to Next Changed File'),
+  'editor.showEdit': () => translate('keybindings.title.editorShowEdit', 'Show File Editor'),
+  'editor.showDiff': () => translate('keybindings.title.editorShowDiff', 'Show File Diff'),
   'editor.openInExternalApp': () =>
     translate('keybindings.title.editorOpenInExternalApp', 'Open in External App'),
   'sourceControl.openLatestAgentTurn': () =>

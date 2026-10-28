@@ -1892,6 +1892,8 @@ sync hit exactly that (#23062 landed two commits later) and was fixed by merging
 - Main gained four more commits (a file's editor and diff become one tab's two views) before that
   Verify finished, so it was merged again: three conflicts beside upstream's comment rewrites, and
   F4's action is gone, so its title is too.
+- Verify on that merge: main's new `editor.showEdit`/`editor.showDiff` needed shortcut titles, and
+  main's removal of the old Open file strings missed `ru`, `tr` and `zh-Hant`.
 
 **1.4.214 → 1.4.214** (`88aa3f27ce..293bfe795d`, 604 upstream commits, thirty-five conflicts)
 

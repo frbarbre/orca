@@ -290,8 +290,6 @@ export function EditorContent({
       onCloseMarkdownTableOfContents={onCloseMarkdownTableOfContents}
       markdownAnnotationsEnabled={markdownAnnotationsEnabled}
       markdownDocuments={markdownDocuments}
-      onContentChange={handleContentChange}
-      onSave={handleSave}
       reloadContent={reloadContent}
     />
   )

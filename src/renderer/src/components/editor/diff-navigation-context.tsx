@@ -3,7 +3,7 @@ import type { editor } from 'monaco-editor'
 import {
   installChangedFileNavigationShortcut,
   installMonacoDiffChangeNavigationShortcut,
-  installOpenFileFromDiffShortcut
+  installShowEditShortcut
 } from './editor-shortcuts'
 import { goToDiffWithoutWrap } from './diff-change-step'
 import { registerDiffEditorForOutsideShortcuts } from './diff-shortcuts-outside-editor'
@@ -47,15 +47,15 @@ function cursorLineOf(diffEditor: editor.IStandaloneDiffEditor | null): number |
 
 export function DiffNavigationProvider({
   children,
-  onOpenFile
+  onShowEdit
 }: {
   children: React.ReactNode
-  /** The header's "Open file tab", for its shortcut inside the diff. */
-  onOpenFile?: (line: number | null) => void
+  /** The header toggle's Edit side, for its shortcut inside the diff. */
+  onShowEdit?: (line: number | null) => void
 }): React.JSX.Element {
-  const onOpenFileRef = useRef(onOpenFile)
-  onOpenFileRef.current = onOpenFile
-  const openFileShortcutCleanupRef = useRef<(() => void) | null>(null)
+  const onShowEditRef = useRef(onShowEdit)
+  onShowEditRef.current = onShowEdit
+  const showEditShortcutCleanupRef = useRef<(() => void) | null>(null)
   const editorRef = useRef<editor.IStandaloneDiffEditor | null>(null)
   const updateSubRef = useRef<{ dispose: () => void } | null>(null)
   // Why: F7/Shift+F7 change navigation shares the registered editor with the
@@ -96,9 +96,9 @@ export function DiffNavigationProvider({
       diffEditor,
       (direction, options) => stepToChangedFileRef.current(direction, options)
     )
-    openFileShortcutCleanupRef.current?.()
-    openFileShortcutCleanupRef.current = installOpenFileFromDiffShortcut(diffEditor, () =>
-      onOpenFileRef.current?.(cursorLineOf(diffEditor))
+    showEditShortcutCleanupRef.current?.()
+    showEditShortcutCleanupRef.current = installShowEditShortcut(diffEditor, () =>
+      onShowEditRef.current?.(cursorLineOf(diffEditor))
     )
     outsideShortcutCleanupRef.current?.()
     outsideShortcutCleanupRef.current = registerDiffEditorForOutsideShortcuts({
@@ -120,8 +120,8 @@ export function DiffNavigationProvider({
     shortcutCleanupRef.current = null
     fileShortcutCleanupRef.current?.()
     fileShortcutCleanupRef.current = null
-    openFileShortcutCleanupRef.current?.()
-    openFileShortcutCleanupRef.current = null
+    showEditShortcutCleanupRef.current?.()
+    showEditShortcutCleanupRef.current = null
     outsideShortcutCleanupRef.current?.()
     outsideShortcutCleanupRef.current = null
     editorRef.current = null

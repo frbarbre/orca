@@ -23,8 +23,6 @@ export function EditorDiffFileSurface({
   onCloseMarkdownTableOfContents,
   markdownAnnotationsEnabled,
   markdownDocuments,
-  onContentChange,
-  onSave,
   reloadContent
 }: {
   activeFile: OpenFile
@@ -40,8 +38,6 @@ export function EditorDiffFileSurface({
   onCloseMarkdownTableOfContents: () => void
   markdownAnnotationsEnabled: boolean
   markdownDocuments: MarkdownDocumentsController
-  onContentChange: (content: string) => void
-  onSave: (content: string) => Promise<boolean>
   reloadContent: (file: OpenFile) => void
 }): React.JSX.Element {
   if (!diffContent) {
@@ -52,8 +48,6 @@ export function EditorDiffFileSurface({
     )
   }
 
-  const isEditable =
-    activeFile.diffSource === 'unstaged' || activeFile.diffSource === 'branch-worktree'
   if (diffContent.kind === 'binary') {
     if (diffContent.isImage) {
       return (
@@ -157,10 +151,9 @@ export function EditorDiffFileSurface({
       filePath={activeFile.filePath}
       relativePath={activeFile.relativePath}
       sideBySide={sideBySide}
-      editable={isEditable}
+      // Fork: a diff is read-only; its toggle's Edit side is where the file changes.
+      editable={false}
       worktreeId={activeFile.worktreeId}
-      onContentChange={isEditable ? onContentChange : undefined}
-      onSave={isEditable ? (isMarkdown ? markdownDocuments.mdSave : onSave) : undefined}
     />
   )
   if (activeFile.externalMutation !== 'changed') {

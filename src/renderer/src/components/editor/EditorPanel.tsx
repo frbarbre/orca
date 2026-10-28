@@ -1,7 +1,6 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react'
 import { useAppStore } from '@/store'
 import { getConnectionId } from '@/lib/connection-context'
-import { detectLanguage } from '@/lib/language-detect'
 import { canShowWorkspaceFileBrowserAction, openFilePreviewToSide } from '@/lib/file-preview'
 import { getEditorHeaderCopyState } from './editor-header'
 import { getRuntimeTargetForFileOwner } from '@/lib/file-owner-runtime-target'
@@ -28,7 +27,9 @@ import {
   editorArtifactContentType
 } from './editor-artifact-upload'
 import { useEditorPanelSave } from './useEditorPanelSave'
-import { revealLineAfterOpen } from './reveal-line-after-open'
+import { showFileDiff, showFileEdit } from './file-tab-view-switch'
+import { useRetiredChangesMode } from './use-retired-changes-mode'
+import { useOneViewPerFile } from './one-view-per-file'
 import { isMarkdownReviewNotesEnabled } from '@/lib/markdown-review-notes-setting'
 
 function EditorPanelInner({
@@ -72,7 +73,6 @@ function EditorPanelInner({
   )
   const editorViewMode = useAppStore((s) => s.editorViewMode)
   const setEditorViewMode = useAppStore((s) => s.setEditorViewMode)
-  const openFile = useAppStore((s) => s.openFile)
   const openMarkdownPreview = useAppStore((s) => s.openMarkdownPreview)
   const markdownFrontmatterVisible = useAppStore((s) => s.markdownFrontmatterVisible)
   const setMarkdownFrontmatterVisible = useAppStore((s) => s.setMarkdownFrontmatterVisible)
@@ -121,24 +121,29 @@ function EditorPanelInner({
     }
   }
 
-  const requestedChangesMode =
-    !!activeFile &&
-    activeFile.mode === 'edit' &&
-    canUseChangesModeForFile(activeFile) &&
-    editorViewMode[activeFile.id] === 'changes'
+  const activeGroupId = useAppStore((s) =>
+    activeFile && activeViewStateId
+      ? ((s.unifiedTabsByWorktree[activeFile.worktreeId] ?? []).find(
+          (t) => t.id === activeViewStateId
+        )?.groupId ?? null)
+      : null
+  )
+  useOneViewPerFile(activeFile?.id ?? null, activeGroupId)
+  useRetiredChangesMode(
+    activeFile?.mode === 'edit' &&
+      canUseChangesModeForFile(activeFile) &&
+      editorViewMode[activeFile.id] === 'changes'
+      ? activeFile.id
+      : null
+  )
   const { fileContents, diffContents, reloadContent } = useEditorPanelContentState({
     activeFile,
-    isChangesMode: requestedChangesMode,
+    isChangesMode: false,
     openFiles,
     gitStatusEntries,
     editorViewMode,
     isVisible
   })
-  const isChangesMode =
-    requestedChangesMode &&
-    !!activeFile &&
-    !fileContents[activeFile.id]?.isBinary &&
-    !fileContents[activeFile.id]?.loadError
   const {
     renameDialogFile,
     renameError,
@@ -230,55 +235,28 @@ function EditorPanelInner({
     gitBranchEntries,
     markdownViewMode,
     markdownRichModeSizeOverridden,
-    isChangesMode,
+    isChangesMode: false,
     canOpenWorkspaceFileBrowser
   })
 
   const handleOpenPreviewToSide = (): void => {
-    const state = useAppStore.getState()
-    const sourceGroupId = activeViewStateId
-      ? ((state.unifiedTabsByWorktree[activeFile.worktreeId] ?? []).find(
-          (t) => t.id === activeViewStateId
-        )?.groupId ?? null)
-      : null
     openFilePreviewToSide({
       language: model.resolvedLanguage,
       filePath: activeFile.filePath,
       worktreeId: activeFile.worktreeId,
-      sourceGroupId
+      sourceGroupId: activeGroupId
     })
   }
-  const handleOpenDiffTargetFile = (
-    preferredMarkdownViewMode?: 'rich',
-    line?: number | null
-  ): void => {
-    if (!model.openFileState.canOpen) {
-      return
-    }
-    openFile({
-      filePath: activeFile.filePath,
-      relativePath: activeFile.relativePath,
-      worktreeId: activeFile.worktreeId,
-      runtimeEnvironmentId: activeFile.runtimeEnvironmentId,
-      language: detectLanguage(activeFile.relativePath),
-      mode: 'edit'
-    })
-    if (preferredMarkdownViewMode) {
-      setEditorViewMode(activeFile.filePath, 'edit')
-      setMarkdownViewMode(activeFile.filePath, preferredMarkdownViewMode)
-    }
-    if (line) {
-      revealLineAfterOpen(activeFile.filePath, line)
-    }
-  }
-  const handleEditorToggleChange = (next: EditorToggleValue): void => {
+  const handleEditorToggleChange = (next: EditorToggleValue, line?: number | null): void => {
     const fileId = activeFile.id
-    if (activeFile.mode === 'diff' && model.isMarkdown && next === 'rich') {
-      handleOpenDiffTargetFile('rich')
+    if (activeFile.mode === 'diff') {
+      if (next !== 'changes' && model.openFileState.canOpen) {
+        showFileEdit(fileId, line ?? null, next === 'edit' ? undefined : next)
+      }
       return
     }
     if (next === 'changes') {
-      setEditorViewMode(fileId, 'changes')
+      void showFileDiff(fileId)
       return
     }
     setEditorViewMode(fileId, 'edit')
@@ -342,9 +320,7 @@ function EditorPanelInner({
   return (
     <EditorCommandOwnerContext value={isCmdSaveOwner}>
       {/* Why: each split pane needs an isolated bridge between its diff editor and header controls. */}
-      <DiffNavigationProvider
-        onOpenFile={(line) => handleOpenDiffTargetFile(model.isMarkdown ? 'rich' : undefined, line)}
-      >
+      <DiffNavigationProvider onShowEdit={(line) => handleEditorToggleChange('edit', line)}>
         <EditorPanelShell
           panelRef={setPanelRef}
           activeFile={activeFile}
@@ -364,7 +340,6 @@ function EditorPanelInner({
           renameError={renameError}
           disableRenameBrowse={disableRenameBrowse}
           onCopyPath={() => void handleCopyPath()}
-          onOpenDiffTargetFile={handleOpenDiffTargetFile}
           onOpenPreviewToSide={handleOpenPreviewToSide}
           onOpenMarkdownPreview={handleOpenMarkdownPreview}
           onToggleSideBySide={() => setSideBySide((prev) => !prev)}

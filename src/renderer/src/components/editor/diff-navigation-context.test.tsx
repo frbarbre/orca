@@ -85,13 +85,13 @@ describe('DiffNavigationProvider', () => {
   let container: HTMLDivElement | null = null
   let root: Root | null = null
 
-  function mount(): void {
+  function mount(onOpenFile?: () => void): void {
     container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)
     act(() => {
       root?.render(
-        <DiffNavigationProvider>
+        <DiffNavigationProvider onOpenFile={onOpenFile}>
           <Probe />
           <RegistrationProbe />
         </DiffNavigationProvider>
@@ -109,6 +109,23 @@ describe('DiffNavigationProvider', () => {
     captured = null
     registration = null
     registrationRenderCount = 0
+  })
+
+  it("opens the diffed file's tab when F4 is pressed in the registered diff", () => {
+    const onOpenFile = vi.fn()
+    mount(onOpenFile)
+    const editor = createFakeEditor(1)
+    act(() => registration?.registerDiffEditor(editor))
+
+    editor.containerNode.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'F4', code: 'F4', bubbles: true, cancelable: true })
+    )
+    act(() => registration?.unregisterDiffEditor(editor))
+    editor.containerNode.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'F4', code: 'F4', bubbles: true, cancelable: true })
+    )
+
+    expect(onOpenFile).toHaveBeenCalledOnce()
   })
 
   it('exposes the change count and routes nav actions to the registered editor', () => {

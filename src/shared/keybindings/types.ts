@@ -102,6 +102,7 @@ export type KeybindingActionId =
   | 'editor.copyContext'
   | 'editor.previousChange'
   | 'editor.nextChange'
+  | 'editor.openFileFromDiff'
   | 'editor.previousFile'
   | 'editor.nextFile'
   | 'editor.openInExternalApp'

@@ -26,6 +26,16 @@ export const KEYBINDING_DEFINITION_CORE_4: readonly KeybindingDefinition[] = [
     allowBareKeybindings: true,
     allowShiftOnlyKeybindings: true
   },
+  // Why F4: JetBrains' Jump to Source from a diff, a function key like F7's change steps.
+  {
+    id: 'editor.openFileFromDiff',
+    title: 'Open File from Diff',
+    group: 'Editors',
+    scope: 'editor',
+    searchKeywords: ['shortcut', 'editor', 'diff', 'open', 'file', 'tab', 'source', 'jump'],
+    defaultBindings: platformBindings(['F4']),
+    allowBareKeybindings: true
+  },
   // Why global scope: the chord has to work from the Explorer and the Source Control listing as
   // well as the editor, because which of those is on screen is what decides the path it opens.
   {

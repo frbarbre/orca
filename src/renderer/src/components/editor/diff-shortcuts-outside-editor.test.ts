@@ -114,6 +114,28 @@ describe('handleDiffShortcutOutsideEditor', () => {
     expect(event.defaultPrevented).toBe(true)
   })
 
+  it('hands the open-file shortcut to the open diff editor too', () => {
+    const container = document.createElement('div')
+    document.body.append(container)
+    const received: string[] = []
+    container.addEventListener(
+      'keydown',
+      (event) => {
+        received.push(event.key)
+        event.preventDefault()
+      },
+      true
+    )
+    unregister = registerDiffEditorForOutsideShortcuts({
+      getShortcutTarget: () => container,
+      focus: vi.fn()
+    })
+
+    const event = press(document.body, 'F4')
+    expect(handleDiffShortcutOutsideEditor(event, matching('editor.openFileFromDiff'))).toBe(true)
+    expect(received).toEqual(['F4'])
+  })
+
   it('leaves a press inside the diff editor to the editor', () => {
     const editor = document.createElement('div')
     editor.className = 'monaco-editor'

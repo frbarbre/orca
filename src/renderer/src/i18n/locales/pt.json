@@ -8570,13 +8570,11 @@
       "right": {
         "sidebar": {
           "SourceControl": {
-            "1406954883": "Limpar todas as notas...",
             "conflictsSection": "Conflitos",
             "cc05b2d088": "Abrir no Explorador de Arquivos",
             "03194cfff4": "Estado de sessão local derivado de um conflito que você abriu aqui.",
             "27a50fe970": "Revisar conflitos",
             "f6cb48b6fe": "Resolver com IA",
-            "3eeccbb221": "Arquivos resolvidos voltam para alterações normais depois de saírem do estado de conflito ativo.",
             "c321542ee2": "Excluir nota na linha {{value0}}",
             "b656381c18": "Excluir nota",
             "c085946bda": "Copiar nota na linha {{value0}}",
@@ -8638,9 +8636,6 @@
             "78ce2d37ac": "Envia (push) para o fork",
             "c05fe04839": "Envia (push) para o fork em {{value0}} (não o origin)",
             "c35baf2f1e": "Filtrar arquivos…",
-            "2fe2a67580": "Mais ações de nota",
-            "eae2d051af": "Copiar todas as notas",
-            "cc474e0b8c": "Notas",
             "e131cd7128": "O Controle de Versão está disponível somente para repositórios Git",
             "c07b236287": "Selecione um espaço de trabalho para ver as alterações",
             "dc5a6465fc": "{{value0}} (e.g. {{value1}}{{value2}})",
@@ -8685,9 +8680,6 @@
             "9339382454": "Remover tudo do stage",
             "24d2598eff": "Adicionar tudo ao stage",
             "ce41708855": "Descartar tudo",
-            "3baf6c77b4": "Copiar todas as notas para a área de transferência",
-            "72f2bea3f4": "Expandir notas",
-            "d13edef890": "Recolher notas",
             "d6fb1df5fe": "{{value0}} já está aberto",
             "05838cfdeb": "{{value0}} conflito",
             "d206117f90": "{{value0}} conflito ({{value1}})",
@@ -8856,7 +8848,6 @@
                 "f8a2c91d04": "Colocar na fila para o agente",
                 "b4e8a1c902": "Na fila",
                 "e8b4c1a903": "Resolvido · {{value0}}",
-                "c3a8e5d710": "Precisa de revisão · {{value0}}",
                 "a7f0c7e8d1": "Fila",
                 "8a621a2c4f": "Agrupado",
                 "b13f85d75c": "Linha do tempo",
@@ -9627,8 +9618,6 @@
           },
           "HostedReviewActions": {
             "4d5fb5a284": "Fechar",
-            "9845a71e17": "Mais ações",
-            "2bfaf4379c": "Mais ações de {{value0}}",
             "377269db6f": "{{value0}} reaberto",
             "closedToast": "{{value0}} fechado",
             "78f5ff294c": "Isso vai reabrir o(a) {{value0}}.",
@@ -9637,17 +9626,6 @@
             "eefd50457e": "Excluindo...",
             "3ce211ece6": "Reabrir {{value0}}",
             "6645ac7dd1": "Reabrindo...",
-            "d2ca293f3d": "Processando...",
-            "9a41a687b7": "Fila até #{{pr}} · {{count}} PR",
-            "38a1bccb14": "Fila até #{{pr}} · {{count}} PRs",
-            "3de88351c5": "O GitHub vai adicionar este pull request e todos os pull requests abaixo dele à fila de merge.",
-            "a32fe6dba6": "O GitHub vai mergear este pull request e todos os pull requests abaixo dele na pilha.",
-            "73e0e1819d": "Colocando a pilha na fila...",
-            "e555a41d32": "Mergeando a pilha...",
-            "markingReady": "Marcando como pronto...",
-            "markReady": "Marcar como pronto para review",
-            "draftMoreActions": "Mais ações de {{value0}}",
-            "closeDraft": "Fechar",
             "readyToast": "{{value0}} marcado como pronto para review"
           },
           "SourceControlAgentActionDialogForm": {
@@ -9672,12 +9650,10 @@
             "70893f017b": "Lado",
             "7b415c39e9": "Topo",
             "864111caa2": "Posição da Barra de Atividades",
-            "e8e2e4ce74": "Alternar barra lateral direita",
             "441733b630": "Portas",
             "83a10e3c44": "Checks",
             "0314901467": "Controle de Código-Fonte",
             "8bc2bbc3a0": "Explorador",
-            "9fffaf17c1": "Alternar barra lateral direita ({{value0}})",
             "aiVaultSessionHistory": "Agentes",
             "folderWorkspaces": "Worktrees anexadas",
             "parentPrChecks": "Checks de PR"
@@ -9782,11 +9758,6 @@
               "comment": {
                 "composer": {
                   "9bca633dee": "Cancelar",
-                  "cf5a7aba6f": "Lista",
-                  "d6d9c3c947": "Citação",
-                  "f49e0a21e0": "Código",
-                  "542bf6a7e2": "Itálico",
-                  "256300f8ea": "Negrito",
                   "87aff03d63": "Enviando...",
                   "commentTooLarge": "O comentário é muito grande para ser enviado com segurança."
                 }
@@ -9907,8 +9878,7 @@
           },
           "GitHistoryCommitFiles": {
             "a1b2c3d4e5": "Carregando arquivos…",
-            "b2c3d4e5f6": "Nenhuma alteração de arquivo neste commit",
-            "c3d4e5f6a7": "Abrir todas as alterações juntas"
+            "b2c3d4e5f6": "Nenhuma alteração de arquivo neste commit"
           },
           "AiVaultSessionSubagents": {
             "subagentsCount": "Subagentes ({{value0}})",
@@ -17149,7 +17119,6 @@
         "250e5b2dfb": "Enter",
         "74e2e1b3e4": "Nenhum arquivo correspondente.",
         "722a21e1a8": "Carregando arquivos...",
-        "1cb6ef47b7": "Ir para o arquivo...",
         "9e97f08d0f": "Busque um arquivo para abrir",
         "ec31e058f7": "Ir para o arquivo",
         "73b44e7bde": "Copiar comando de instalação",

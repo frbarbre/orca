@@ -107,7 +107,8 @@ const REPO_FIELDS = {
   projectGroupId: null,
   projectGroupOrder: null,
   sourceControlAi: normalizeRepoSourceControlAiOverrides,
-  projectHostSetupMethod: null
+  projectHostSetupMethod: null,
+  orcadRetained: null
 } satisfies { [K in keyof Repo]-?: ((value: unknown) => Repo[K] | undefined) | null }
 
 type PortableRepoField = {

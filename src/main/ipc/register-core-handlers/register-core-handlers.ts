@@ -36,10 +36,6 @@ import { registerAiVaultSearchHandlers } from '../ai-vault-search'
 import { registerNativeChatHandlers } from '../native-chat'
 import { registerNotificationHandlers } from '../notifications'
 import { registerNotebookHandlers } from '../notebook'
-import { registerLanguageServerHandlers } from '../language-server'
-import { registerGitBlameHandlers } from '../git-blame'
-import { registerMaterialIconHandlers } from '../material-icons'
-import { registerAgentTurnHandlers } from '../agent-turns'
 import { registerOnboardingHandlers } from '../onboarding'
 import { registerDashboardPopoutHandlers } from '../dashboard-popout'
 import { registerWorkspaceSpaceWindowHandlers } from '../workspace-space-window'
@@ -111,7 +107,7 @@ import { configureRuntimeAiVaultSessionDelete } from '../ai-vault-delete'
 import { ensureStructuredAgentSessionHostUnlessRefused } from '../../runtime/structured-agent-session-host-refusal'
 import { getAgentSessionAttachmentStore } from '../../native-chat/agent-session-attachments/agent-session-attachment-store-registry'
 import type { PluginService } from '../../plugins/plugin-service'
-import { registerClaudeRemoteSessionHandlers } from '../claude-remote-session'
+import { registerForkCoreHandlers } from './register-fork-core-handlers'
 import type { PluginMarketplaceHandlerServices } from '../plugin-marketplaces'
 import { settleWithinMs } from '../../quit-teardown-deadline'
 
@@ -192,7 +188,7 @@ export function registerCoreHandlers(
   registerAgentHookHandlers(runtime, { getPtyIdForPaneKey })
   registerCodexConfigSyncHandlers(codexAccounts.runtimeHomeService)
   registerClaudeAccountHandlers(claudeAccounts)
-  registerClaudeRemoteSessionHandlers(() => keybindings?.getOverrides())
+  registerForkCoreHandlers(() => keybindings?.getOverrides())
   registerOpenCodeGoCredentialsHandlers(rateLimits)
   registerMiniMaxCredentialsHandlers(rateLimits)
   registerZcodePlanCredentialsHandlers(rateLimits)
@@ -215,10 +211,6 @@ export function registerCoreHandlers(
   registerMemoryHandlers(store)
   registerNotificationHandlers(store, runtime)
   registerNotebookHandlers(store)
-  registerLanguageServerHandlers()
-  registerGitBlameHandlers()
-  registerMaterialIconHandlers()
-  registerAgentTurnHandlers()
   registerOnboardingHandlers(store)
   registerDashboardPopoutHandlers(store, keybindings)
   registerWorkspaceSpaceWindowHandlers(store)

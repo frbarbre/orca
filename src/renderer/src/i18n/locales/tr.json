@@ -2348,7 +2348,6 @@
         "250e5b2dfb": "Enter",
         "74e2e1b3e4": "Eşleşen dosya yok.",
         "722a21e1a8": "Dosyalar yükleniyor...",
-        "1cb6ef47b7": "Dosyaya git...",
         "9e97f08d0f": "Açmak için bir dosya arayın",
         "ec31e058f7": "Dosyaya git",
         "73b44e7bde": "Kurulum komutunu kopyala",
@@ -12544,8 +12543,6 @@
           },
           "HostedReviewActions": {
             "4d5fb5a284": "Kapat",
-            "9845a71e17": "Diğer işlemler",
-            "2bfaf4379c": "Diğer {{value0}} işlemleri",
             "377269db6f": "{{value0}} yeniden açıldı",
             "closedToast": "{{value0}} kapatıldı",
             "78f5ff294c": "Bu, {{value0}} öğesini yeniden açacak.",
@@ -12554,17 +12551,6 @@
             "eefd50457e": "Siliniyor...",
             "3ce211ece6": "{{value0}} öğesini yeniden aç",
             "6645ac7dd1": "Yeniden açılıyor...",
-            "d2ca293f3d": "Çalışılıyor...",
-            "9a41a687b7": "#{{pr}} ve altındaki PR'ları sıraya al · {{count}} PR",
-            "38a1bccb14": "#{{pr}} ve altındaki PR'ları sıraya al · {{count}} PR",
-            "3de88351c5": "GitHub bu pull request'i ve altındaki tüm pull request'leri merge sırasına ekleyecek.",
-            "a32fe6dba6": "GitHub bu pull request'i ve yığında onun altındaki tüm pull request'leri merge edecek.",
-            "73e0e1819d": "Yığın sıraya alınıyor...",
-            "e555a41d32": "Yığın merge ediliyor...",
-            "markingReady": "İncelemeye hazır olarak işaretleniyor...",
-            "markReady": "İncelemeye hazır olarak işaretle",
-            "draftMoreActions": "Diğer {{value0}} işlemleri",
-            "closeDraft": "Kapat",
             "readyToast": "{{value0}} incelemeye hazır olarak işaretlendi"
           },
           "PortsPanel": {
@@ -12667,13 +12653,11 @@
             "a1f2c8d901": "Görüntüle"
           },
           "SourceControl": {
-            "1406954883": "Tüm notları temizle...",
             "conflictsSection": "Conflict'ler",
             "cc05b2d088": "Dosya Gezgini'nde Aç",
             "03194cfff4": "Burada açtığınız bir conflict'ten türetilen yerel oturum durumu.",
             "27a50fe970": "Conflict'leri incele",
             "f6cb48b6fe": "AI ile çöz",
-            "3eeccbb221": "Çözülen dosyalar, canlı conflict durumundan çıktıktan sonra normal değişikliklere geri döner.",
             "c321542ee2": "{{value0}}. satırdaki notu sil",
             "b656381c18": "Notu sil",
             "c085946bda": "{{value0}}. satırdaki notu kopyala",
@@ -12735,9 +12719,6 @@
             "78ce2d37ac": "Fork'a push yapar",
             "c05fe04839": "{{value0}} adresindeki fork'a push yapar (origin'e değil)",
             "c35baf2f1e": "Dosyaları filtrele…",
-            "2fe2a67580": "Diğer not işlemleri",
-            "eae2d051af": "Tüm notları kopyala",
-            "cc474e0b8c": "Notlar",
             "e131cd7128": "Source Control yalnızca Git repository'leri için kullanılabilir",
             "c07b236287": "Değişiklikleri görüntülemek için bir çalışma alanı seçin",
             "dc5a6465fc": "{{value0}} (ör. {{value1}}{{value2}})",
@@ -12782,9 +12763,6 @@
             "9339382454": "Tümünü stage'den çıkar",
             "24d2598eff": "Tümünü stage'e ekle",
             "ce41708855": "Tümünü at",
-            "3baf6c77b4": "Tüm notları panoya kopyala",
-            "72f2bea3f4": "Notları genişlet",
-            "d13edef890": "Notları daralt",
             "d6fb1df5fe": "{{value0}} zaten açık",
             "05838cfdeb": "{{value0}} conflict",
             "d206117f90": "{{value0}} conflict ({{value1}})",
@@ -13002,7 +12980,6 @@
                 "f8a2c91d04": "Ajan için kuyruğa al",
                 "b4e8a1c902": "Kuyrukta",
                 "e8b4c1a903": "Çözüldü · {{value0}}",
-                "c3a8e5d710": "İnceleme gerekiyor · {{value0}}",
                 "a7f0c7e8d1": "Kuyruk",
                 "8a621a2c4f": "Gruplandırılmış",
                 "b13f85d75c": "Zaman çizelgesi",
@@ -13202,12 +13179,10 @@
             "70893f017b": "Yan",
             "7b415c39e9": "Üst",
             "864111caa2": "Etkinlik Çubuğu Konumu",
-            "e8e2e4ce74": "Sağ kenar çubuğunu aç/kapat",
             "441733b630": "Portlar",
             "83a10e3c44": "Kontroller",
             "0314901467": "Source Control",
             "8bc2bbc3a0": "Gezgin",
-            "9fffaf17c1": "Sağ kenar çubuğunu aç/kapat ({{value0}})",
             "aiVaultSessionHistory": "Ajanlar",
             "folderWorkspaces": "Eklenmiş worktree'ler",
             "parentPrChecks": "PR Kontrolleri"
@@ -13217,11 +13192,6 @@
               "comment": {
                 "composer": {
                   "9bca633dee": "İptal",
-                  "cf5a7aba6f": "Liste",
-                  "d6d9c3c947": "Alıntı",
-                  "f49e0a21e0": "Kod",
-                  "542bf6a7e2": "İtalik",
-                  "256300f8ea": "Kalın",
                   "87aff03d63": "Gönderiliyor...",
                   "commentTooLarge": "Yorum, güvenli şekilde gönderilemeyecek kadar büyük."
                 }
@@ -13685,8 +13655,7 @@
           },
           "GitHistoryCommitFiles": {
             "a1b2c3d4e5": "Dosyalar yükleniyor…",
-            "b2c3d4e5f6": "Bu commit'te dosya değişikliği yok",
-            "c3d4e5f6a7": "Tüm değişiklikleri birlikte aç"
+            "b2c3d4e5f6": "Bu commit'te dosya değişikliği yok"
           },
           "GitHistoryRow": {
             "2f9c41ab07": "{{value0}} commit'indeki dosyaları göster: {{value1}}",

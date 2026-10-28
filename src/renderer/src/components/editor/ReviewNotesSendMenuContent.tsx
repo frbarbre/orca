@@ -273,7 +273,8 @@ function resolveCurrentSendTargetEligibility(
   return { status: 'disabled', disabledReason: goneReason }
 }
 
-function AutoPickedMenuItem({
+// Memoized: the row re-renders only when its target or prompt state changes.
+const AutoPickedMenuItem = React.memo(function AutoPickedMenuItem({
   target,
   disabled,
   onSend
@@ -302,7 +303,7 @@ function AutoPickedMenuItem({
       </span>
     </DropdownMenuItem>
   )
-}
+})
 
 function AgentTargetMenuItem({
   target,

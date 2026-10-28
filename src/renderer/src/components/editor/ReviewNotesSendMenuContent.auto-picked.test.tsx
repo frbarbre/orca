@@ -15,7 +15,7 @@ const harness = vi.hoisted(() => {
 vi.mock('@/store', () => ({
   useAppStore: Object.assign(
     (selector: (state: Record<string, unknown>) => unknown) => selector(harness.state),
-    { getState: () => harness.state }
+    { getState: () => harness.state, subscribe: () => () => {} }
   )
 }))
 vi.mock('zustand/react/shallow', () => ({ useShallow: (selector: unknown) => selector }))

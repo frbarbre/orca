@@ -2427,7 +2427,6 @@
         "250e5b2dfb": "Enter",
         "74e2e1b3e4": "No matching files.",
         "722a21e1a8": "Loading files...",
-        "1cb6ef47b7": "Go to file...",
         "9e97f08d0f": "Search for a file to open",
         "ec31e058f7": "Go to file",
         "73b44e7bde": "Copy install command",
@@ -12823,8 +12822,6 @@
           },
           "HostedReviewActions": {
             "4d5fb5a284": "Close",
-            "9845a71e17": "More actions",
-            "2bfaf4379c": "More {{value0}} actions",
             "377269db6f": "{{value0}} reopened",
             "closedToast": "{{value0}} closed",
             "78f5ff294c": "This will reopen the {{value0}}.",
@@ -12833,17 +12830,6 @@
             "eefd50457e": "Deleting...",
             "3ce211ece6": "Reopen {{value0}}",
             "6645ac7dd1": "Reopening...",
-            "d2ca293f3d": "Working...",
-            "9a41a687b7": "Queue through #{{pr}} · {{count}} PR",
-            "38a1bccb14": "Queue through #{{pr}} · {{count}} PRs",
-            "3de88351c5": "GitHub will add this pull request and every pull request below it to the merge queue.",
-            "a32fe6dba6": "GitHub will merge this pull request and every pull request below it in the stack.",
-            "73e0e1819d": "Queueing stack...",
-            "e555a41d32": "Merging stack...",
-            "markingReady": "Marking ready...",
-            "markReady": "Mark ready for review",
-            "draftMoreActions": "More {{value0}} actions",
-            "closeDraft": "Close",
             "readyToast": "{{value0}} marked ready for review"
           },
           "PortsPanel": {
@@ -12946,13 +12932,11 @@
             "a1f2c8d901": "View"
           },
           "SourceControl": {
-            "1406954883": "Clear all notes...",
             "conflictsSection": "Conflicts",
             "cc05b2d088": "Open in File Explorer",
             "03194cfff4": "Local session state derived from a conflict you opened here.",
             "27a50fe970": "Review conflicts",
             "f6cb48b6fe": "Resolve with AI",
-            "3eeccbb221": "Resolved files move back to normal changes after they leave the live conflict state.",
             "c321542ee2": "Delete note on line {{value0}}",
             "b656381c18": "Delete note",
             "c085946bda": "Copy note on line {{value0}}",
@@ -13014,9 +12998,6 @@
             "78ce2d37ac": "Pushes to fork",
             "c05fe04839": "Pushes to the fork at {{value0}} (not origin)",
             "c35baf2f1e": "Filter files…",
-            "2fe2a67580": "More note actions",
-            "eae2d051af": "Copy all notes",
-            "cc474e0b8c": "Notes",
             "e131cd7128": "Source Control is only available for Git repositories",
             "c07b236287": "Select a workspace to view changes",
             "dc5a6465fc": "{{value0}} (e.g. {{value1}}{{value2}})",
@@ -13061,9 +13042,6 @@
             "9339382454": "Unstage all",
             "24d2598eff": "Stage all",
             "ce41708855": "Discard all",
-            "3baf6c77b4": "Copy all notes to clipboard",
-            "72f2bea3f4": "Expand notes",
-            "d13edef890": "Collapse notes",
             "d6fb1df5fe": "{{value0}} is already open",
             "05838cfdeb": "{{value0}} conflict",
             "d206117f90": "{{value0}} conflict ({{value1}})",
@@ -13297,7 +13275,6 @@
                 "f8a2c91d04": "Queue for agent",
                 "b4e8a1c902": "Queued",
                 "e8b4c1a903": "Resolved · {{value0}}",
-                "c3a8e5d710": "Needs review · {{value0}}",
                 "a7f0c7e8d1": "Queue",
                 "8a621a2c4f": "Grouped",
                 "b13f85d75c": "Timeline",
@@ -13506,12 +13483,10 @@
             "70893f017b": "Side",
             "7b415c39e9": "Top",
             "864111caa2": "Activity Bar Position",
-            "e8e2e4ce74": "Toggle right sidebar",
             "441733b630": "Ports",
             "83a10e3c44": "Checks",
             "0314901467": "Source Control",
             "8bc2bbc3a0": "Explorer",
-            "9fffaf17c1": "Toggle right sidebar ({{value0}})",
             "aiVaultSessionHistory": "Agents",
             "folderWorkspaces": "Attached worktrees",
             "parentPrChecks": "PR Checks"
@@ -13521,11 +13496,6 @@
               "comment": {
                 "composer": {
                   "9bca633dee": "Cancel",
-                  "cf5a7aba6f": "List",
-                  "d6d9c3c947": "Quote",
-                  "f49e0a21e0": "Code",
-                  "542bf6a7e2": "Italic",
-                  "256300f8ea": "Bold",
                   "87aff03d63": "Sending...",
                   "commentTooLarge": "Comment is too large to submit safely."
                 }
@@ -13989,8 +13959,7 @@
           },
           "GitHistoryCommitFiles": {
             "a1b2c3d4e5": "Loading files…",
-            "b2c3d4e5f6": "No file changes in this commit",
-            "c3d4e5f6a7": "Open all changes together"
+            "b2c3d4e5f6": "No file changes in this commit"
           },
           "GitHistoryRow": {
             "2f9c41ab07": "Show files in commit {{value0}}: {{value1}}",
@@ -21000,7 +20969,26 @@
       "terminalSplitRight": "Split terminal right",
       "terminalSplitDown": "Split terminal down",
       "terminalSwitchInputSource": "Switch input source / language (native)",
-      "newAgentTab": "New {{agent}} tab"
+      "newAgentTab": "New {{agent}} tab",
+      "tabRunQuickCommand": "Run the selected quick command",
+      "tabCloseOthers": "Close other tabs",
+      "tabGroupFocusLeft": "Focus group to the left",
+      "tabGroupFocusRight": "Focus group to the right",
+      "tabGroupFocusUp": "Focus group above",
+      "tabGroupFocusDown": "Focus group below",
+      "editorPreviousFile": "Go to Previous Changed File",
+      "editorNextFile": "Go to Next Changed File",
+      "editorOpenInExternalApp": "Open in External App",
+      "sourceControlOpenLatestAgentTurn": "Open Latest Agent Turn",
+      "sourceControlToggleUncommittedOnly": "Show Only Uncommitted Changes",
+      "sourceControlSendQueuedComments": "Send Queued Comments",
+      "sourceControlFocusReviewSummary": "Focus Review Summary",
+      "sourceControlOpenPullRequest": "Open Pull Request on GitHub",
+      "sourceControlCopyPullRequestUrl": "Copy Pull Request URL",
+      "sourceControlOpenPullRequestPreview": "Open Pull Request Preview Deployment",
+      "workspaceOpenFrontend": "Open Frontend Dev Server",
+      "workspaceRunNextAction": "Run Next Workspace Action",
+      "workspaceReview": "Review Pull Request"
     },
     "group": {
       "global": "Global",

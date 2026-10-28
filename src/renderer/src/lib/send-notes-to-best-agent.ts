@@ -2,6 +2,7 @@ import { toast } from 'sonner'
 import { translate } from '@/i18n/i18n'
 import { useAppStore } from '@/store'
 import { getConnectionId } from '@/lib/connection-context'
+import { getStructuredChatTabNames } from '@/runtime/structured-chat-name-observation'
 import type { DiffComment } from '../../../shared/diff-comment-types'
 import type { TuiAgent } from '../../../shared/tui-agent'
 import { formatDiffCommentsForAgent } from '../../../shared/agent-note-prompt'
@@ -34,7 +35,8 @@ export type SendNotesToBestAgentDeps = {
 const defaultDeps: SendNotesToBestAgentDeps = {
   pickTarget: (worktreeId) => {
     const state = useAppStore.getState()
-    return pickAutoSendTarget(deriveNotesSendAgentTargets(state, worktreeId), state, worktreeId)
+    const targets = deriveNotesSendAgentTargets(state, worktreeId, getStructuredChatTabNames())
+    return pickAutoSendTarget(targets, state, worktreeId)
   },
   sendMessage: sendMessageToAgent,
   defaultAgent: (worktreeId) => {

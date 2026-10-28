@@ -34,11 +34,11 @@ export function pickAutoSendTarget(
   state: AutoSendTargetState,
   worktreeId: string
 ): NotesSendAgentTarget | null {
-  const tabs = state.unifiedTabsByWorktree[worktreeId] ?? []
-  const layout = state.layoutByWorktree[worktreeId]
+  const tabs = state.unifiedTabsByWorktree?.[worktreeId] ?? []
+  const layout = state.layoutByWorktree?.[worktreeId]
   const visibleGroupIds = layout ? collectLayoutGroupIds(layout) : null
   const openTabIds = new Set(
-    (state.groupsByWorktree[worktreeId] ?? [])
+    (state.groupsByWorktree?.[worktreeId] ?? [])
       .filter((group) => visibleGroupIds === null || visibleGroupIds.has(group.id))
       .flatMap((group) => (group.activeTabId ? [group.activeTabId] : []))
   )

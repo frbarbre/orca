@@ -8,6 +8,7 @@ import type { WorkspaceActionKind } from '../../../../../shared/workspace-action
 import type { PRInfo } from '../../../../../shared/github/pull-request-types'
 import { resolveGitHubPRMergeMethods } from '../../../../../shared/github/pull-request-merge-methods'
 import { presentGitHubPRMergeState } from '@/components/github-pr-merge-state'
+import { getPullRequestMergeMethodLabel } from '@/components/github/pull-request-confirmation-copy'
 import { selectWorkspaceActionContext } from './workspace-action-context'
 import { launchWorkspaceAction, type WorkspaceActionLaunch } from './launch-workspace-action'
 
@@ -18,7 +19,9 @@ function primaryCopy(
   switch (action) {
     case 'merge':
       return {
-        label: resolveGitHubPRMergeMethods(pr?.mergeMethodSettings ?? null).defaultLabel,
+        label: getPullRequestMergeMethodLabel(
+          resolveGitHubPRMergeMethods(pr?.mergeMethodSettings ?? null).defaultMethod
+        ),
         icon: <GitMerge className="size-3.5" />
       }
     case 'enable-auto-merge':

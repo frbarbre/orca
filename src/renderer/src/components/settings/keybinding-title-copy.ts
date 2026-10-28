@@ -8,6 +8,7 @@ import {
 import { ALL_TUI_AGENTS, TUI_AGENT_DISPLAY_NAMES } from '../../../../shared/tui-agent-display-names'
 import { translate } from '@/i18n/i18n'
 import { uniqueKeywords } from './settings-search-keywords'
+import { FORK_KEYBINDING_TITLE_COPY } from './fork-keybinding-title-copy'
 
 type StaticKeybindingActionId = Exclude<
   KeybindingActionId,
@@ -16,6 +17,7 @@ type StaticKeybindingActionId = Exclude<
 
 // Literal keys keep extraction and coverage gates aware of every shortcut title.
 const STATIC_TITLE_COPY = {
+  ...FORK_KEYBINDING_TITLE_COPY,
   'worktree.quickOpen': () => translate('keybindings.title.worktreeQuickOpen', 'Go to File'),
   'app.settings': () => translate('keybindings.title.appSettings', 'Open Settings'),
   'app.forceReload': () => translate('keybindings.title.appForceReload', 'Force Reload'),

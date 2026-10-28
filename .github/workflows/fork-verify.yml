@@ -49,7 +49,14 @@ jobs:
         with:
           bun-version-file: config/bun-version
 
+      # Why: upstream's changed-file ratchets diff against origin/main, and a sync's thousand upstream
+      # commits overflow their git output buffer. Scope them to the fork's own changes instead.
+      - name: Fetch upstream main
+        run: git fetch --no-tags https://github.com/stablyai/orca.git +main:refs/remotes/upstream/main
+
       - run: pnpm lint
+        env:
+          ORCA_CODE_QUALITY_BASE: upstream/main
 
   typecheck:
     name: typecheck

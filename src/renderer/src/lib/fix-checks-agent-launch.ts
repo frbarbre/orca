@@ -25,7 +25,7 @@ import { newAgentLaunchRequestId } from '@/lib/agent-launch-request-id'
 import { launchWorkItemDirect } from '@/lib/launch-work-item-direct'
 import { readSourceControlLaunchRecipeAgentId } from '../../../shared/source-control-launch-agent-selection'
 import { resolveRepoWorktreeLaunchPlatform } from '@/lib/execution-host-facts'
-import { activateAndRevealWorktree } from '@/lib/worktree-activation'
+import { fixChecksAgentSurface } from './fix-checks-agent-surface'
 import { useAppStore } from '@/store'
 import { resolveSourceControlActionRecipe } from '../../../shared/source-control-ai'
 import {
@@ -235,18 +235,9 @@ async function launchFixChecksAgent(args: StartFixChecksAgentArgs): Promise<bool
       promptDelivery: 'submit-after-ready',
       launchPlatform,
       launchSource: args.launchSource,
-      ...(args.background
-        ? { activate: false }
-        : {
-            beforeSurfaceOpen: () => {
-              // Why: the launcher owns the initial surface, so revealing must not seed a sibling shell.
-              const revealed = activateAndRevealWorktree(targetWorktreeId, {
-                providesInitialSurface: true
-              })
-              revealFailed = revealed === false
-              return !revealFailed
-            }
-          })
+      ...fixChecksAgentSurface(targetWorktreeId, args.background, () => {
+        revealFailed = true
+      })
     })
     if (!result) {
       toast.error(

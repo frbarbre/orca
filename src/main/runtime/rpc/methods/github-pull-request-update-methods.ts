@@ -102,7 +102,8 @@ export const GITHUB_PULL_REQUEST_UPDATE_METHODS = [
         path: params.path,
         line: params.line,
         startLine: params.startLine,
-        body: params.body
+        body: params.body,
+        subjectType: params.subjectType
       })
   }),
   defineMethod({

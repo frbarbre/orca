@@ -3,7 +3,11 @@ import type { editor as monacoEditor } from 'monaco-editor'
 import { toast } from 'sonner'
 import { useAppStore } from '@/store'
 import { translate } from '@/i18n/i18n'
-import { collectReviewCommentableLines } from './review-commentable-lines'
+import {
+  collectReviewCommentableLines,
+  isRangeInDiff,
+  quoteLinesOutsideDiff
+} from './review-commentable-lines'
 import { getDiffCommentMode, setDiffCommentMode } from './diff-comment-mode-memory'
 import type { DiffCommentMode } from './DiffCommentPopover'
 import type { PRComment } from '../../../../shared/github/comment-types'
@@ -53,7 +57,7 @@ export function useDiffReviewComment({
   //
   // Why null rather than an empty set until it is known, and why seeded synchronously: an empty
   // set reads as "no line takes a comment", so the first paint disabled the review destinations
-  // and `resolveMode` fell back to the agent tab -- the popover opened on the wrong tab and
+  // and the resolved mode fell back to the agent tab -- the popover opened on the wrong tab and
   // visibly switched a frame later, once this effect had run.
   const [commentableLines, setCommentableLines] = useState<ReadonlySet<number> | null>(() =>
     diffEditor ? collectReviewCommentableLines(diffEditor.getLineChanges()) : null
@@ -69,27 +73,42 @@ export function useDiffReviewComment({
     return () => sub.dispose()
   }, [diffEditor, modelKey])
 
-  const reviewDisabledReason = useCallback(
-    (lineNumber: number): string | undefined => {
-      if (!target) {
-        return translate(
-          'auto.components.diff.comments.useDiffReviewComment.noPullRequest',
-          'This diff is not part of a pull request.'
-        )
+  const reviewDisabledReason = target
+    ? undefined
+    : translate(
+        'auto.components.diff.comments.useDiffReviewComment.noPullRequest',
+        'This diff is not part of a pull request.'
+      )
+
+  const isOutsideDiff = useCallback(
+    (lineNumber: number, startLine: number | undefined): boolean =>
+      !isRangeInDiff(commentableLines, lineNumber, startLine),
+    [commentableLines]
+  )
+
+  const prepareReviewComment = useCallback(
+    (
+      lineNumber: number,
+      startLine: number | undefined,
+      body: string
+    ): { body: string; subjectType?: 'file' } => {
+      const model = diffEditor?.getModifiedEditor().getModel()
+      if (!model || !isOutsideDiff(lineNumber, startLine)) {
+        return { body }
       }
-      // Why unknown never disables: see the note on the state above.
-      if (commentableLines === null) {
-        return undefined
+      const first = startLine ?? lineNumber
+      const code = model.getValueInRange({
+        startLineNumber: first,
+        startColumn: 1,
+        endLineNumber: lineNumber,
+        endColumn: model.getLineMaxColumn(lineNumber)
+      })
+      return {
+        body: quoteLinesOutsideDiff({ line: lineNumber, startLine, code, body }),
+        subjectType: 'file'
       }
-      if (!commentableLines.has(lineNumber)) {
-        return translate(
-          'auto.components.diff.comments.useDiffReviewComment.lineNotInDiff',
-          'GitHub only accepts review comments on lines the pull request changed.'
-        )
-      }
-      return undefined
     },
-    [commentableLines, target]
+    [diffEditor, isOutsideDiff]
   )
 
   const submitReviewComment = useCallback(
@@ -101,13 +120,15 @@ export function useDiffReviewComment({
       if (!target) {
         return null
       }
-      const result = await addPRReviewComment(target.repoPath, target.prNumber, body, {
+      const prepared = prepareReviewComment(lineNumber, startLine, body)
+      const result = await addPRReviewComment(target.repoPath, target.prNumber, prepared.body, {
         repoId: target.repoId,
         prRepo: target.prRepo as never,
         commitId: target.headSha,
         path: relativePath,
         line: lineNumber,
-        startLine: startLine === lineNumber ? undefined : startLine
+        startLine: startLine === lineNumber ? undefined : startLine,
+        ...(prepared.subjectType ? { subjectType: prepared.subjectType } : {})
       })
       if (!result.ok) {
         toast.error(result.error)
@@ -115,19 +136,30 @@ export function useDiffReviewComment({
       }
       return result.comment
     },
-    [addPRReviewComment, relativePath, target]
+    [addPRReviewComment, prepareReviewComment, relativePath, target]
   )
 
-  // Why forced back to notes: the toggle must never be left showing a destination this line cannot
-  // reach, which happens when the diff updates under an open popover.
-  const resolveMode = useCallback(
-    (lineNumber: number): DiffCommentMode =>
-      mode !== 'note' && reviewDisabledReason(lineNumber) ? 'note' : mode,
-    [mode, reviewDisabledReason]
-  )
+  // Why forced back to notes: the toggle must never be left showing a destination this diff cannot reach.
+  const resolvedMode: DiffCommentMode = mode !== 'note' && reviewDisabledReason ? 'note' : mode
 
   return useMemo(
-    () => ({ mode, setMode, resolveMode, reviewDisabledReason, submitReviewComment }),
-    [mode, resolveMode, reviewDisabledReason, setMode, submitReviewComment]
+    () => ({
+      mode,
+      setMode,
+      resolvedMode,
+      reviewDisabledReason,
+      isOutsideDiff,
+      prepareReviewComment,
+      submitReviewComment
+    }),
+    [
+      isOutsideDiff,
+      mode,
+      prepareReviewComment,
+      resolvedMode,
+      reviewDisabledReason,
+      setMode,
+      submitReviewComment
+    ]
   )
 }

@@ -112,4 +112,6 @@ export type GitHubPRReviewCommentInput = {
   line: number
   startLine?: number
   body: string
+  /** Fork: posts as a comment on the file, for a line outside the pull request's diff. */
+  subjectType?: 'file'
 }

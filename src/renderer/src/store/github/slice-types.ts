@@ -111,6 +111,7 @@ export type GitHubSlice = {
       path: string
       line: number
       startLine?: number
+      subjectType?: 'file'
     }
   ) => Promise<GitHubCommentResult>
   addPRReviewCommentReply: (

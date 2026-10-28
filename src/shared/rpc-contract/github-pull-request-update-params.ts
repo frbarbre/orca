@@ -62,7 +62,8 @@ export const PRReviewComment = RepoSelector.extend({
   path: requiredString('File path required'),
   line: z.number().int().positive(),
   startLine: z.number().int().positive().optional(),
-  body: requiredString('Comment body required')
+  body: requiredString('Comment body required'),
+  subjectType: z.literal('file').optional()
 })
 
 export const PRReviewCommentReply = RepoSelector.extend({

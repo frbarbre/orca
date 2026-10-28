@@ -9,6 +9,8 @@ export type PendingReviewComment = {
   startLine?: number
   body: string
   createdAt: number
+  /** Fork: set when the line is outside the pull request's diff, which GitHub only takes as a file comment. */
+  subjectType?: 'file'
 }
 
 export type ReviewVerdict = 'comment' | 'approve' | 'request-changes'

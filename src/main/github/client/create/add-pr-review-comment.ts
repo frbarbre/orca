@@ -39,12 +39,15 @@ export async function addPRReviewComment(
       `commit_id=${args.commitId}`,
       '--raw-field',
       `path=${args.path}`,
-      '--field',
-      `line=${String(args.line)}`,
-      '--raw-field',
-      'side=RIGHT'
+      ...(args.subjectType === 'file'
+        ? ['--raw-field', 'subject_type=file']
+        : ['--field', `line=${String(args.line)}`, '--raw-field', 'side=RIGHT'])
     ]
-    if (typeof args.startLine === 'number' && args.startLine !== args.line) {
+    if (
+      args.subjectType !== 'file' &&
+      typeof args.startLine === 'number' &&
+      args.startLine !== args.line
+    ) {
       fields.push(
         '--field',
         `start_line=${String(args.startLine)}`,

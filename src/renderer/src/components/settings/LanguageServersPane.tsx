@@ -26,7 +26,32 @@ type Props = {
   updateSettings: (updates: Partial<GlobalSettings>) => void
 }
 
-type Choice = { enabled: boolean; server: string; command: string | null; diagnostics: boolean }
+type Choice = {
+  enabled: boolean
+  server: string
+  command: string | null
+  diagnostics: boolean
+  completions: boolean
+}
+
+function FeatureSwitch({
+  label,
+  ariaLabel,
+  checked,
+  onChange
+}: {
+  label: string
+  ariaLabel: string
+  checked: boolean
+  onChange: () => void
+}): React.JSX.Element {
+  return (
+    <div className="flex items-center justify-between gap-4">
+      <Label className="shrink-0 text-xs text-muted-foreground">{label}</Label>
+      <SettingsSwitch checked={checked} ariaLabel={ariaLabel} onChange={onChange} />
+    </div>
+  )
+}
 
 function CommandField({
   command,
@@ -151,18 +176,22 @@ function LanguageServerCard({
             defaultCommand={servers[choice.server].command}
             onCommit={(command) => onChange({ ...choice, command })}
           />
-          <div className="flex items-center justify-between gap-4">
-            <Label className="shrink-0 text-xs text-muted-foreground">
-              {translate('languageServers.typeErrors', 'Type errors')}
-            </Label>
-            <SettingsSwitch
-              checked={choice.diagnostics}
-              ariaLabel={translate('languageServers.typeErrorsFor', '{{language}} type errors', {
-                language: label
-              })}
-              onChange={() => onChange({ ...choice, diagnostics: !choice.diagnostics })}
-            />
-          </div>
+          <FeatureSwitch
+            label={translate('languageServers.typeErrors', 'Type errors')}
+            ariaLabel={translate('languageServers.typeErrorsFor', '{{language}} type errors', {
+              language: label
+            })}
+            checked={choice.diagnostics}
+            onChange={() => onChange({ ...choice, diagnostics: !choice.diagnostics })}
+          />
+          <FeatureSwitch
+            label={translate('languageServers.suggestions', 'Suggestions')}
+            ariaLabel={translate('languageServers.suggestionsFor', '{{language}} suggestions', {
+              language: label
+            })}
+            checked={choice.completions}
+            onChange={() => onChange({ ...choice, completions: !choice.completions })}
+          />
         </div>
       ) : null}
     </div>
@@ -224,7 +253,7 @@ export function LanguageServersPane({ settings, updateSettings }: Props): React.
   const searchEntries = getLanguageServersSearchEntries()
   const save = (
     language: LanguageServerLanguage,
-    { enabled, server, command, diagnostics }: Choice
+    { enabled, server, command, diagnostics, completions }: Choice
   ): void =>
     updateSettings({
       languageServers: {
@@ -233,7 +262,8 @@ export function LanguageServersPane({ settings, updateSettings }: Props): React.
           enabled,
           server,
           ...(command ? { command } : {}),
-          ...(diagnostics ? {} : { diagnostics: false })
+          ...(diagnostics ? {} : { diagnostics: false }),
+          ...(completions ? {} : { completions: false })
         }
       }
     })

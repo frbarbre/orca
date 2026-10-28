@@ -12,7 +12,8 @@ function fakeServer(
   definitionResult: unknown,
   hoverResult: unknown = null,
   referencesResult: unknown = null,
-  pulledDiagnostics?: unknown[]
+  pulledDiagnostics?: unknown[],
+  completionResult: unknown = null
 ) {
   const received: Message[] = []
   let deliver: (chunk: Buffer) => void = () => {}
@@ -27,6 +28,8 @@ function fakeServer(
         : { definitionProvider: true }
       reply({ id: message.id, result: { capabilities } })
       reply({ id: 900, method: 'workspace/configuration', params: { items: [{}] } })
+    } else if (message.method === 'textDocument/completion') {
+      reply({ id: message.id, result: completionResult })
     } else if (message.method === 'textDocument/diagnostic') {
       reply({ id: message.id, result: { kind: 'full', items: pulledDiagnostics ?? [] } })
     } else if (message.method === 'textDocument/definition') {
@@ -348,6 +351,38 @@ describe('LSP session', () => {
         (m) => m.method === 'textDocument/diagnostic'
       )
     ).toEqual([])
+  })
+
+  it('asks for completions at a position with the character that opened the list', async () => {
+    const server = fakeServer(null, null, null, undefined, [{ label: 'append', kind: 2 }])
+    const session = createLspSession({ transport: server.transport, rootPath: '/repo' })
+
+    await expect(
+      session.completion({ ...request('items.'), triggerCharacter: '.' })
+    ).resolves.toEqual({
+      incomplete: false,
+      items: [{ label: 'append', kind: 2, insertText: 'append' }]
+    })
+    await session.completion(request('items.ap'))
+
+    const asked = server.received.filter((m) => m.method === 'textDocument/completion')
+    expect(asked.map((m) => m.params)).toEqual([
+      {
+        textDocument: { uri: 'file:///repo/apps/backend/a.py' },
+        position: { line: 3, character: 8 },
+        context: { triggerKind: 2, triggerCharacter: '.' }
+      },
+      {
+        textDocument: { uri: 'file:///repo/apps/backend/a.py' },
+        position: { line: 3, character: 8 },
+        context: { triggerKind: 1 }
+      }
+    ])
+    expect(
+      server.received.find((m) => m.method === 'initialize')?.params?.capabilities
+    ).toMatchObject({
+      textDocument: { completion: { completionItem: { snippetSupport: true } } }
+    })
   })
 
   it('closes a file it opened', async () => {

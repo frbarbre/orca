@@ -161,6 +161,18 @@ export function registerLanguageServerHandlers(): void {
       ? service.references(request)
       : { ok: false, error: 'Invalid language server request.' }
   })
+  ipcMain.handle('languageServer:completion', async (_event, args: unknown) => {
+    const request = readRequest(args)
+    const trigger = (args as { triggerCharacter?: unknown } | null)?.triggerCharacter
+    return request
+      ? service.completion({
+          ...request,
+          ...(typeof trigger === 'string' && trigger.length === 1
+            ? { triggerCharacter: trigger }
+            : {})
+        })
+      : { ok: false, error: 'Invalid language server request.' }
+  })
   ipcMain.handle('languageServer:sync', async (_event, args: unknown) => {
     const request = readRequest({ ...(args as object), line: 0, character: 0 })
     return request

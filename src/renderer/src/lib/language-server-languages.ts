@@ -5,7 +5,8 @@ import { translate } from '@/i18n/i18n'
 import {
   builtInTypeScriptDefinition,
   builtInTypeScriptHover,
-  builtInTypeScriptReferences
+  builtInTypeScriptReferences,
+  builtInTypeScriptCompletions
 } from './built-in-typescript-fallback'
 
 type Model = Monaco.editor.ITextModel
@@ -16,6 +17,7 @@ export type LanguageServerFallback = {
   definition: (model: Model, position: Position) => Promise<Monaco.languages.Location[] | null>
   hover: (model: Model, position: Position) => Promise<Monaco.languages.Hover | null>
   references: (model: Model, position: Position) => Promise<Monaco.languages.Location[] | null>
+  completion: (model: Model, position: Position) => Promise<Monaco.languages.CompletionList>
 }
 
 type RendererLanguage = {
@@ -46,7 +48,9 @@ export const RENDERER_LANGUAGE_SERVERS: Record<LanguageServerLanguage, RendererL
         builtInTypeScriptDefinition(monaco, monacoTS, model, position),
       hover: (model, position) => builtInTypeScriptHover(monaco, monacoTS, model, position),
       references: (model, position) =>
-        builtInTypeScriptReferences(monaco, monacoTS, model, position)
+        builtInTypeScriptReferences(monaco, monacoTS, model, position),
+      completion: (model, position) =>
+        builtInTypeScriptCompletions(monaco, monacoTS, model, position)
     })
   }
 }

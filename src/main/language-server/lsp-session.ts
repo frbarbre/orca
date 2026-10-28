@@ -1,8 +1,13 @@
 import { pathToFileURL } from 'node:url'
-import { languageServerForFile, type LanguageServerLocation } from '../../shared/language-server'
+import {
+  languageServerForFile,
+  type LanguageServerCompletions,
+  type LanguageServerLocation
+} from '../../shared/language-server'
 import type { EditorDiagnostic } from '../../shared/editor-diagnostics'
 import { readDiagnosticList, readPublishDiagnostics } from './lsp-diagnostics'
 import { createLspMessageReader, encodeLspMessage, type LspMessage } from './lsp-message-framing'
+import { readCompletions } from './lsp-completions'
 import { readDefinitionLocations, readHoverMarkdown } from './lsp-results'
 
 export type LspTransport = {
@@ -21,6 +26,9 @@ export type LspSession = {
   definition: (request: DefinitionRequest) => Promise<LanguageServerLocation[]>
   hover: (request: DefinitionRequest) => Promise<string | null>
   references: (request: DefinitionRequest) => Promise<LanguageServerLocation[]>
+  completion: (
+    request: DefinitionRequest & { triggerCharacter?: string }
+  ) => Promise<LanguageServerCompletions>
   /** Fork: what changed on disk, so the server's view of the project stays current. */
   filesChanged: (changes: readonly WatchedFileChange[]) => void
   /** Fork: hands the server the editor's text so it publishes diagnostics for it. */
@@ -156,6 +164,13 @@ export function createLspSession({
             definition: { linkSupport: true },
             hover: { contentFormat: ['markdown', 'plaintext'] },
             references: {},
+            completion: {
+              completionItem: {
+                snippetSupport: true,
+                documentationFormat: ['markdown', 'plaintext']
+              },
+              contextSupport: true
+            },
             publishDiagnostics: { tagSupport: { valueSet: [1, 2] } },
             diagnostic: { dynamicRegistration: false }
           }
@@ -219,6 +234,17 @@ export function createLspSession({
         position: { line, character }
       })
       return readHoverMarkdown(result)
+    },
+    completion: async ({ filePath, text, line, character, triggerCharacter }) => {
+      await ensureInitialized()
+      const uri = syncDocument(filePath, text)
+      const result = await request('textDocument/completion', {
+        textDocument: { uri },
+        position: { line, character },
+        // LSP CompletionTriggerKind: Invoked = 1, TriggerCharacter = 2.
+        context: triggerCharacter ? { triggerKind: 2, triggerCharacter } : { triggerKind: 1 }
+      })
+      return readCompletions(result)
     },
     references: async ({ filePath, text, line, character }) => {
       await ensureInitialized()

@@ -15,6 +15,76 @@ export function quickInfoToMarkdown(info: QuickInfo | undefined): string | null 
     : `\`\`\`typescript\n${signature}\n\`\`\``
 }
 
+type CompletionEntry = { name: string; kind: string; sortText: string; insertText?: string }
+
+type MonacoKind = keyof typeof Monaco.languages.CompletionItemKind
+
+// TypeScript's ScriptElementKind names, by the kind Monaco draws them as.
+const KIND_BY_ELEMENT: Record<string, MonacoKind> = {
+  method: 'Method',
+  function: 'Function',
+  'local function': 'Function',
+  constructor: 'Constructor',
+  property: 'Property',
+  getter: 'Property',
+  setter: 'Property',
+  var: 'Variable',
+  let: 'Variable',
+  const: 'Variable',
+  'local var': 'Variable',
+  parameter: 'Variable',
+  class: 'Class',
+  interface: 'Interface',
+  type: 'TypeParameter',
+  'type parameter': 'TypeParameter',
+  enum: 'Enum',
+  'enum member': 'EnumMember',
+  module: 'Module',
+  keyword: 'Keyword'
+}
+
+export function completionEntriesToSuggestions(
+  entries: readonly CompletionEntry[],
+  kinds: Partial<Record<MonacoKind, number>>,
+  wordRange: Monaco.IRange
+): Monaco.languages.CompletionItem[] {
+  return entries.map((entry) => ({
+    label: entry.name,
+    kind: kinds[KIND_BY_ELEMENT[entry.kind] ?? 'Property'] ?? 0,
+    sortText: entry.sortText,
+    insertText: entry.insertText ?? entry.name,
+    range: wordRange
+  }))
+}
+
+export async function builtInTypeScriptCompletions(
+  monaco: typeof Monaco,
+  monacoTS: typeof Monaco.typescript,
+  model: Monaco.editor.ITextModel,
+  position: Monaco.Position
+): Promise<Monaco.languages.CompletionList> {
+  const worker = await workerFor(monacoTS, model)
+  const info: { entries?: readonly CompletionEntry[] } | undefined =
+    await worker.getCompletionsAtPosition(model.uri.toString(), model.getOffsetAt(position))
+  if (!info?.entries || model.isDisposed()) {
+    return { suggestions: [] }
+  }
+  const word = model.getWordUntilPosition(position)
+  const wordRange = new monaco.Range(
+    position.lineNumber,
+    word.startColumn,
+    position.lineNumber,
+    word.endColumn
+  )
+  return {
+    suggestions: completionEntriesToSuggestions(
+      info.entries,
+      monaco.languages.CompletionItemKind,
+      wordRange
+    )
+  }
+}
+
 async function workerFor(monacoTS: typeof Monaco.typescript, model: Monaco.editor.ITextModel) {
   const getWorker =
     model.getLanguageId() === 'javascript'

@@ -14,6 +14,7 @@ import { translate } from '@/i18n/i18n'
 import { useAppStore } from '@/store'
 import { definitionOpenTarget, toEditorPosition } from './language-server-editor'
 import { fileSource } from './language-server-file-source'
+import { toMonacoCompletion } from './language-server-completions'
 import { RENDERER_LANGUAGE_SERVERS, type LanguageServerFallback } from './language-server-languages'
 import {
   definitionModelUri,
@@ -22,6 +23,9 @@ import {
 } from './language-server-preview-models'
 
 type SourcedRequest = LanguageServerRequest & NonNullable<ReturnType<typeof fileSource>>
+
+// Why these: the characters tsgo and pyrefly open a list on; a typed word asks on its own.
+const COMPLETION_TRIGGER_CHARACTERS = ['.', '"', "'", '`', '/', '@', '<', '#']
 
 function serverRequest(
   model: Monaco.editor.ITextModel,
@@ -162,10 +166,56 @@ function installLanguageProviders(
       return fallback ? fallback.references(model, position) : null
     }
   })
+
+  monaco.languages.registerCompletionItemProvider(languageId, {
+    triggerCharacters: COMPLETION_TRIGGER_CHARACTERS,
+    provideCompletionItems: async (model, position, context) => {
+      const language = languageServerForMonacoLanguage(model.getLanguageId())
+      if (
+        language &&
+        !languageServerSettings(useAppStore.getState().settings, language).completions
+      ) {
+        return { suggestions: [] }
+      }
+      const request = serverRequest(model, position)
+      if (request) {
+        const { triggerCharacter } = context
+        const result = await window.api.languageServer.completion(
+          triggerCharacter ? { ...request, triggerCharacter } : request
+        )
+        if (result.ok) {
+          const word = model.getWordUntilPosition(position)
+          const wordRange = new monaco.Range(
+            position.lineNumber,
+            word.startColumn,
+            position.lineNumber,
+            word.endColumn
+          )
+          return {
+            incomplete: result.incomplete,
+            suggestions: result.items.map((item) =>
+              toMonacoCompletion(item, {
+                kinds: monaco.languages.CompletionItemKind,
+                insertAsSnippet: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+                wordRange
+              })
+            )
+          }
+        }
+        reportServerFailure(request, result.error)
+      }
+      return fallback ? fallback.completion(model, position) : { suggestions: [] }
+    }
+  })
 }
 
+// Why only what starts the server: the type-error and suggestion switches need no restart.
 function settingsKey(language: LanguageServerLanguage): string {
-  return JSON.stringify(languageServerSettings(useAppStore.getState().settings, language))
+  const { enabled, server, command } = languageServerSettings(
+    useAppStore.getState().settings,
+    language
+  )
+  return JSON.stringify({ enabled, server, command })
 }
 
 // Fork: hover, Cmd+click and references for every language in the registry, the same in a tab, a

@@ -1,6 +1,8 @@
 import { isAbsolute, relative } from 'node:path'
 import {
   languageServerForFile,
+  type LanguageServerCompletionRequest,
+  type LanguageServerCompletionResult,
   type LanguageServerDefinitionResult,
   type LanguageServerDocument,
   type LanguageServerHoverResult,
@@ -28,6 +30,7 @@ type Session = Pick<
   | 'definition'
   | 'hover'
   | 'references'
+  | 'completion'
   | 'filesChanged'
   | 'dispose'
   | 'open'
@@ -85,6 +88,7 @@ export function createLanguageServerService({
   definition: (request: LanguageServerRequest) => Promise<LanguageServerDefinitionResult>
   hover: (request: LanguageServerRequest) => Promise<LanguageServerHoverResult>
   references: (request: LanguageServerRequest) => Promise<LanguageServerReferencesResult>
+  completion: (request: LanguageServerCompletionRequest) => Promise<LanguageServerCompletionResult>
   /** Fork: hands the server an editor's text; its errors arrive through `onDiagnostics`. */
   sync: (document: LanguageServerDocument) => Promise<DiagnosticsSyncResult>
   closeDocument: (args: { language: LanguageServerLanguage; filePath: string }) => void
@@ -163,6 +167,7 @@ export function createLanguageServerService({
         definition: (request) => session.definition(request),
         hover: (request) => session.hover(request),
         references: (request) => session.references(request),
+        completion: (request) => session.completion(request),
         filesChanged: (changes) => session.filesChanged(changes),
         open: (filePath, text) => session.open(filePath, text),
         close: (filePath) => session.close(filePath),
@@ -246,6 +251,19 @@ export function createLanguageServerService({
           return preview === null ? location : { ...location, preview }
         })
       }
+    },
+    completion: async (request) => {
+      const { filePath, text, line, character, triggerCharacter } = request
+      const result = await withSession(request, (session) =>
+        session.completion({
+          filePath,
+          text,
+          line,
+          character,
+          ...(triggerCharacter ? { triggerCharacter } : {})
+        })
+      )
+      return result.ok ? { ok: true, ...result.value } : result
     },
     hover: async (request) => {
       const { filePath, text, line, character } = request

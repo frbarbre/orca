@@ -77,6 +77,8 @@ import type {
 } from '../shared/claude-remote-session'
 import type { ExecutionHostId } from '../shared/execution-host'
 import type {
+  LanguageServerCompletionRequest,
+  LanguageServerCompletionResult,
   LanguageServerDefinitionResult,
   LanguageServerDocument,
   LanguageServerHoverResult,
@@ -174,6 +176,7 @@ export type PreloadApi = {
     definition: (args: LanguageServerRequest) => Promise<LanguageServerDefinitionResult>
     hover: (args: LanguageServerRequest) => Promise<LanguageServerHoverResult>
     references: (args: LanguageServerRequest) => Promise<LanguageServerReferencesResult>
+    completion: (args: LanguageServerCompletionRequest) => Promise<LanguageServerCompletionResult>
     stop: (args: { language: LanguageServerLanguage }) => Promise<void>
     sync: (args: LanguageServerDocument) => Promise<DiagnosticsSyncResult>
     closeDocument: (args: { language: LanguageServerLanguage; filePath: string }) => Promise<void>

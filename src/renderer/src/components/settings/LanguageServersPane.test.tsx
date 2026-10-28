@@ -127,6 +127,31 @@ describe('LanguageServersPane', () => {
     })
   })
 
+  it("turns a language's suggestions off and keeps its type errors", () => {
+    const updateSettings = render({ typescript: { diagnostics: false } })
+
+    act(() =>
+      card('typescript')
+        ?.querySelector<HTMLElement>(
+          '[role="switch"][aria-label="TypeScript and JavaScript suggestions"]'
+        )
+        ?.click()
+    )
+
+    expect(updateSettings).toHaveBeenCalledWith({
+      languageServers: {
+        typescript: { enabled: true, server: 'tsgo', diagnostics: false, completions: false }
+      }
+    })
+  })
+
+  it.each(['autocomplete', 'suggestions', 'completion'])(
+    'finds the suggestion switches by searching "%s"',
+    (query) => {
+      expect(matchesSettingsSearch(query, getLanguageServersSearchEntries())).toBe(true)
+    }
+  )
+
   it('shows type errors as on until turned off', () => {
     render({ typescript: { diagnostics: false } })
     const typeErrors = (language: string, label: string) =>

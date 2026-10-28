@@ -21667,6 +21667,8 @@
     "docs": "Open {{server}} docs",
     "typeErrors": "Type errors",
     "typeErrorsFor": "{{language}} type errors",
+    "suggestions": "Suggestions",
+    "suggestionsFor": "{{language}} suggestions",
     "search": {
       "languageServer": "language server",
       "goToDefinition": "go to definition",
@@ -21675,6 +21677,9 @@
       "lsp": "lsp",
       "typeErrors": "type errors",
       "errors": "errors",
+      "suggestions": "suggestions",
+      "autocomplete": "autocomplete",
+      "completion": "completion",
       "lint": "lint",
       "linter": "linter",
       "squiggles": "squiggles",

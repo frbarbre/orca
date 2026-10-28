@@ -69,6 +69,7 @@ function setup() {
         definition: vi.fn(),
         hover: vi.fn(),
         references: vi.fn(),
+        completion: vi.fn(),
         publish,
         open: vi.fn(async (filePath: string) => {
           opened.add(filePath)

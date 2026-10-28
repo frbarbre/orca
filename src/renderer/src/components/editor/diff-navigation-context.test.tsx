@@ -85,7 +85,7 @@ describe('DiffNavigationProvider', () => {
   let container: HTMLDivElement | null = null
   let root: Root | null = null
 
-  function mount(onOpenFile?: () => void): void {
+  function mount(onOpenFile?: (line: number | null) => void): void {
     container = document.createElement('div')
     document.body.appendChild(container)
     root = createRoot(container)
@@ -111,11 +111,12 @@ describe('DiffNavigationProvider', () => {
     registrationRenderCount = 0
   })
 
-  it("opens the diffed file's tab when F4 is pressed in the registered diff", () => {
+  it("opens the diffed file's tab at the diff's cursor line when F4 is pressed", () => {
     const onOpenFile = vi.fn()
     mount(onOpenFile)
     const editor = createFakeEditor(1)
     act(() => registration?.registerDiffEditor(editor))
+    editor.setCursorLine(42)
 
     editor.containerNode.dispatchEvent(
       new KeyboardEvent('keydown', { key: 'F4', code: 'F4', bubbles: true, cancelable: true })
@@ -126,6 +127,17 @@ describe('DiffNavigationProvider', () => {
     )
 
     expect(onOpenFile).toHaveBeenCalledOnce()
+    expect(onOpenFile).toHaveBeenCalledWith(42)
+  })
+
+  it("reads the registered diff's cursor line, and none without a diff", () => {
+    mount()
+    expect(captured?.cursorLine()).toBeNull()
+    const editor = createFakeEditor(1)
+    act(() => registration?.registerDiffEditor(editor))
+    editor.setCursorLine(7)
+
+    expect(captured?.cursorLine()).toBe(7)
   })
 
   it('exposes the change count and routes nav actions to the registered editor', () => {

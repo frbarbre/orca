@@ -28,6 +28,7 @@ import {
   editorArtifactContentType
 } from './editor-artifact-upload'
 import { useEditorPanelSave } from './useEditorPanelSave'
+import { revealLineAfterOpen } from './reveal-line-after-open'
 import { isMarkdownReviewNotesEnabled } from '@/lib/markdown-review-notes-setting'
 
 function EditorPanelInner({
@@ -247,7 +248,10 @@ function EditorPanelInner({
       sourceGroupId
     })
   }
-  const handleOpenDiffTargetFile = (preferredMarkdownViewMode?: 'rich'): void => {
+  const handleOpenDiffTargetFile = (
+    preferredMarkdownViewMode?: 'rich',
+    line?: number | null
+  ): void => {
     if (!model.openFileState.canOpen) {
       return
     }
@@ -262,6 +266,9 @@ function EditorPanelInner({
     if (preferredMarkdownViewMode) {
       setEditorViewMode(activeFile.filePath, 'edit')
       setMarkdownViewMode(activeFile.filePath, preferredMarkdownViewMode)
+    }
+    if (line) {
+      revealLineAfterOpen(activeFile.filePath, line)
     }
   }
   const handleEditorToggleChange = (next: EditorToggleValue): void => {
@@ -336,7 +343,7 @@ function EditorPanelInner({
     <EditorCommandOwnerContext value={isCmdSaveOwner}>
       {/* Why: each split pane needs an isolated bridge between its diff editor and header controls. */}
       <DiffNavigationProvider
-        onOpenFile={() => handleOpenDiffTargetFile(model.isMarkdown ? 'rich' : undefined)}
+        onOpenFile={(line) => handleOpenDiffTargetFile(model.isMarkdown ? 'rich' : undefined, line)}
       >
         <EditorPanelShell
           panelRef={setPanelRef}

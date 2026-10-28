@@ -104,6 +104,7 @@ export function EditorPanelHeader({
   const { changeCount, goToPreviousDiff, goToNextDiff } = useDiffNavigation()
   const previousChangeShortcut = useShortcutKeyDetails('editor.previousChange')
   const nextChangeShortcut = useShortcutKeyDetails('editor.nextChange')
+  const openFileShortcut = useShortcutKeyDetails('editor.openFileFromDiff')
 
   return (
     <div className="editor-header">
@@ -171,6 +172,13 @@ export function EditorPanelHeader({
                     'auto.components.editor.EditorPanelHeader.c98ce191da',
                     'This diff has no modified-side file to open'
                   )}
+              {openFileState.canOpen && openFileShortcut.keys.length > 0 && (
+                <ShortcutKeyCombo
+                  keys={openFileShortcut.keys}
+                  doubleTap={openFileShortcut.doubleTap}
+                  className="ml-1.5"
+                />
+              )}
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>

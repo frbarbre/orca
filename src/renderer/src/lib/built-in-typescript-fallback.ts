@@ -20,28 +20,28 @@ type CompletionEntry = { name: string; kind: string; sortText: string; insertTex
 type MonacoKind = keyof typeof Monaco.languages.CompletionItemKind
 
 // TypeScript's ScriptElementKind names, by the kind Monaco draws them as.
-const KIND_BY_ELEMENT: Record<string, MonacoKind> = {
-  method: 'Method',
-  function: 'Function',
-  'local function': 'Function',
-  constructor: 'Constructor',
-  property: 'Property',
-  getter: 'Property',
-  setter: 'Property',
-  var: 'Variable',
-  let: 'Variable',
-  const: 'Variable',
-  'local var': 'Variable',
-  parameter: 'Variable',
-  class: 'Class',
-  interface: 'Interface',
-  type: 'TypeParameter',
-  'type parameter': 'TypeParameter',
-  enum: 'Enum',
-  'enum member': 'EnumMember',
-  module: 'Module',
-  keyword: 'Keyword'
-}
+const KIND_BY_ELEMENT = new Map<string, MonacoKind>([
+  ['method', 'Method'],
+  ['function', 'Function'],
+  ['local function', 'Function'],
+  ['constructor', 'Constructor'],
+  ['property', 'Property'],
+  ['getter', 'Property'],
+  ['setter', 'Property'],
+  ['var', 'Variable'],
+  ['let', 'Variable'],
+  ['const', 'Variable'],
+  ['local var', 'Variable'],
+  ['parameter', 'Variable'],
+  ['class', 'Class'],
+  ['interface', 'Interface'],
+  ['type', 'TypeParameter'],
+  ['type parameter', 'TypeParameter'],
+  ['enum', 'Enum'],
+  ['enum member', 'EnumMember'],
+  ['module', 'Module'],
+  ['keyword', 'Keyword']
+])
 
 export function completionEntriesToSuggestions(
   entries: readonly CompletionEntry[],
@@ -50,7 +50,7 @@ export function completionEntriesToSuggestions(
 ): Monaco.languages.CompletionItem[] {
   return entries.map((entry) => ({
     label: entry.name,
-    kind: kinds[KIND_BY_ELEMENT[entry.kind] ?? 'Property'] ?? 0,
+    kind: kinds[KIND_BY_ELEMENT.get(entry.kind) ?? 'Property'] ?? 0,
     sortText: entry.sortText,
     insertText: entry.insertText ?? entry.name,
     range: wordRange

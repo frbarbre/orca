@@ -50,4 +50,14 @@ describe('completionEntriesToSuggestions', () => {
       { label: 'odd', kind: 9, sortText: '16', insertText: 'odd', range: wordRange }
     ])
   })
+
+  it('reads a kind named like an object built-in as unknown', () => {
+    expect(
+      completionEntriesToSuggestions(
+        [{ name: 'x', kind: 'toString', sortText: '1' }],
+        kinds,
+        wordRange
+      )
+    ).toEqual([{ label: 'x', kind: 9, sortText: '1', insertText: 'x', range: wordRange }])
+  })
 })

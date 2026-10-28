@@ -17184,7 +17184,9 @@
             "cce596969e": "Delete note",
             "cad3384faa": "Edit note",
             "508ee678a5": "Open in browser",
-            "agentNote": "Agent note"
+            "agentNote": "Agent note",
+            "collapseNote": "Collapse note",
+            "expandNote": "Expand note"
           },
           "DiffCommentPopover": {
             "2b3ce6d394": "Cancel",

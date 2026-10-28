@@ -152,6 +152,8 @@ export function renderDiffCommentZoneCard(
         }
         onContentResize={() => resizeZone(comment.id)}
         observeRenderedSize
+        collapseId={comment.id}
+        replyCount={comment.threadReplies?.length ?? 0}
         footer={
           worktreeId && comment.author === undefined ? (
             <NoteThread

@@ -1,7 +1,15 @@
-import { CornerDownLeft, Pencil, Trash } from 'lucide-react'
+import {
+  ChevronDown,
+  ChevronRight,
+  CornerDownLeft,
+  MessageSquare,
+  Pencil,
+  Trash
+} from 'lucide-react'
 import { Composer } from '@/components/composer/Composer'
 import { CopyMessageButton } from './copy-message-button'
 import { AgentNoteIcon } from './agent-note-icon'
+import { isDiffNoteCollapsed, setDiffNoteCollapsed } from './collapsed-diff-notes'
 import { useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import { Button } from '@/components/ui/button'
 import { getDiffCommentLineLabel } from '@/lib/diff-comment-compat'
@@ -40,6 +48,8 @@ type Props = {
   onSubmitEdit?: (body: string) => Promise<boolean>
   headerActions?: ReactNode
   footer?: ReactNode
+  collapseId?: string
+  replyCount?: number
 }
 
 export function DiffCommentCard({
@@ -58,9 +68,14 @@ export function DiffCommentCard({
   observeRenderedSize,
   onSubmitEdit,
   headerActions,
-  footer
+  footer,
+  collapseId,
+  replyCount = 0
 }: Props): React.JSX.Element {
   const [editing, setEditing] = useState(false)
+  const [collapsed, setCollapsed] = useState(() =>
+    collapseId ? isDiffNoteCollapsed(collapseId) : false
+  )
   const [draft, setDraft] = useState(body)
   const [submitting, setSubmitting] = useState(false)
   const mountedRef = useMountedRef()
@@ -140,6 +155,14 @@ export function DiffCommentCard({
     setDraft(body)
   }
 
+  const handleToggleCollapsed = (): void => {
+    if (!collapseId) {
+      return
+    }
+    setDiffNoteCollapsed(collapseId, !collapsed)
+    setCollapsed(!collapsed)
+  }
+
   const trimmedDraft = draft.trim()
   const canSubmit = !submitting && trimmedDraft.length > 0 && trimmedDraft !== body
   const lineLabel =
@@ -186,6 +209,36 @@ export function DiffCommentCard({
         {/* Header Row */}
         <div className="orca-diff-comment-header">
           <div className="orca-diff-comment-meta-group">
+            {collapseId && !editing && (
+              <button
+                type="button"
+                className="orca-diff-comment-pill-btn"
+                aria-expanded={!collapsed}
+                aria-label={
+                  collapsed
+                    ? translate(
+                        'auto.components.diff.comments.DiffCommentCard.expandNote',
+                        'Expand note'
+                      )
+                    : translate(
+                        'auto.components.diff.comments.DiffCommentCard.collapseNote',
+                        'Collapse note'
+                      )
+                }
+                onMouseDown={(ev) => ev.stopPropagation()}
+                onClick={(ev) => {
+                  ev.preventDefault()
+                  ev.stopPropagation()
+                  handleToggleCollapsed()
+                }}
+              >
+                {collapsed ? (
+                  <ChevronRight className="size-3" />
+                ) : (
+                  <ChevronDown className="size-3" />
+                )}
+              </button>
+            )}
             {agentName && (
               <>
                 <AgentNoteIcon name={agentName} />
@@ -288,8 +341,26 @@ export function DiffCommentCard({
           )}
         </div>
 
+        {collapsed && !editing ? (
+          <button
+            type="button"
+            data-note-collapsed-summary=""
+            className="flex w-full min-w-0 items-center gap-2 text-left text-[11px] text-muted-foreground hover:text-foreground"
+            onMouseDown={(ev) => ev.stopPropagation()}
+            onClick={handleToggleCollapsed}
+          >
+            <span className="min-w-0 truncate">{body}</span>
+            {replyCount > 0 ? (
+              <span className="ml-auto flex shrink-0 items-center gap-1 tabular-nums">
+                <MessageSquare className="size-3" />
+                {replyCount}
+              </span>
+            ) : null}
+          </button>
+        ) : null}
+
         {/* Quote Block */}
-        {quote ? (
+        {quote && !collapsed ? (
           <div className="orca-diff-comment-quote">
             <div className="orca-diff-comment-quote-text">{quote}</div>
           </div>
@@ -343,7 +414,7 @@ export function DiffCommentCard({
               </Button>
             </div>
           </div>
-        ) : agentName ? (
+        ) : collapsed ? null : agentName ? (
           // Fork: agents write their notes in markdown; the user's own notes stay the text they typed.
           <CommentMarkdown
             content={body}
@@ -353,7 +424,7 @@ export function DiffCommentCard({
         ) : (
           <div className="orca-diff-comment-body">{body}</div>
         )}
-        {footer}
+        {collapsed ? null : footer}
       </div>
     </div>
   )

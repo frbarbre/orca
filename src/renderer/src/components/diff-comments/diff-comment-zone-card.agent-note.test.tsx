@@ -179,6 +179,40 @@ describe('agent note zone card', () => {
     })
   })
 
+  it('collapses a note and its thread to one line, and expands it again', () => {
+    const reply: DiffComment = {
+      ...agentNote,
+      id: 'reply-c',
+      body: 'Done: renamed it.',
+      replyToNoteId: 'collapse-1'
+    }
+    const note = { ...agentNote, id: 'collapse-1', threadReplies: [reply] }
+    act(() => renderDiffCommentZoneCard(root, note, context()))
+
+    act(() => container.querySelector<HTMLButtonElement>('[aria-label="Collapse note"]')?.click())
+    expect(container.querySelector('[data-agent-reply="reply-c"]')).toBeNull()
+    expect(container.querySelector('.orca-diff-comment-body')).toBeNull()
+    const summary = container.querySelector('[data-note-collapsed-summary]')
+    expect(summary?.textContent).toContain('Renamed fetchUser')
+    expect(summary?.textContent).toContain('1')
+
+    act(() => container.querySelector<HTMLButtonElement>('[aria-label="Expand note"]')?.click())
+    expect(container.querySelector('[data-agent-reply="reply-c"]')).not.toBeNull()
+    expect(container.querySelector('[data-note-collapsed-summary]')).toBeNull()
+  })
+
+  it('stays collapsed when the zone is rebuilt', () => {
+    const note = { ...agentNote, id: 'collapse-2' }
+    act(() => renderDiffCommentZoneCard(root, note, context()))
+    act(() => container.querySelector<HTMLButtonElement>('[aria-label="Collapse note"]')?.click())
+
+    act(() => root.unmount())
+    root = createRoot(container)
+    act(() => renderDiffCommentZoneCard(root, note, context()))
+
+    expect(container.querySelector('[data-note-collapsed-summary]')).not.toBeNull()
+  })
+
   it('keeps a user note as before', () => {
     const { agentAuthor: _agent, ...userNote } = agentNote
     act(() => renderDiffCommentZoneCard(root, userNote, context()))

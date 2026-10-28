@@ -5,15 +5,15 @@ import { closeTabKeepingReveal } from '@/lib/close-tab-keeping-reveal'
 
 type ViewFile = Pick<OpenFile, 'id' | 'filePath' | 'worktreeId' | 'mode' | 'diffSource' | 'isDirty'>
 
-type ViewState = {
+type ViewState<Reveal> = {
   openFiles: readonly ViewFile[]
   editorDrafts: Record<string, unknown>
   unifiedTabsByWorktree: Record<
     string,
     readonly { entityId: string; groupId: string; contentType: string }[]
   >
-  pendingEditorReveal: unknown
-  setPendingEditorReveal: (reveal: never) => void
+  pendingEditorReveal: Reveal | null
+  setPendingEditorReveal: (reveal: Reveal | null) => void
   closeFile: (fileId: string) => void
 }
 
@@ -30,7 +30,11 @@ function viewKind(file: ViewFile): 'edit' | 'diff' | null {
 
 // Fork: a file's editor and its working diff are one tab's two views, so opening one in a group
 // closes the other there, unless it holds unsaved edits or is also open in another group.
-export function closeOtherViewOfFile(state: ViewState, fileId: string, groupId: string): void {
+export function closeOtherViewOfFile<Reveal>(
+  state: ViewState<Reveal>,
+  fileId: string,
+  groupId: string
+): void {
   const active = state.openFiles.find((file) => file.id === fileId)
   const activeKind = active ? viewKind(active) : null
   if (!active || !activeKind) {

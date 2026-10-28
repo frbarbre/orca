@@ -27,7 +27,7 @@ const fixture = vi.hoisted(() => {
     setMarkdownViewMode: vi.fn(),
     setEditorViewMode: vi.fn()
   }
-  const save = vi.fn(async () => {
+  const save = vi.fn(async (_target: unknown) => {
     calls.push('save')
   })
   return { calls, state, save }

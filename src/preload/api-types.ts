@@ -83,6 +83,7 @@ import type {
   LanguageServerReferencesResult,
   LanguageServerRequest
 } from '../shared/language-server'
+import type { LintDiagnosticsEvent, LintRequest, LintSyncResult, LinterId } from '../shared/linter'
 import type {
   GitBlameLinks,
   GitBlameLinksRequest,
@@ -172,6 +173,12 @@ export type PreloadApi = {
     hover: (args: LanguageServerRequest) => Promise<LanguageServerHoverResult>
     references: (args: LanguageServerRequest) => Promise<LanguageServerReferencesResult>
     stop: (args: { language: LanguageServerLanguage }) => Promise<void>
+  }
+  lint: {
+    sync: (args: LintRequest) => Promise<LintSyncResult>
+    close: (args: { linter: LinterId; filePath: string }) => Promise<void>
+    stop: (args: { linter: LinterId }) => Promise<void>
+    onDiagnostics: (callback: (event: LintDiagnosticsEvent) => void) => () => void
   }
   materialIcons: {
     read: () => Promise<MaterialIconConfigSnapshot>

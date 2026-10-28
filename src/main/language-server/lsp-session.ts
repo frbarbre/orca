@@ -1,5 +1,7 @@
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { languageServerForFile, type LanguageServerLocation } from '../../shared/language-server'
+import type { LintDiagnostic } from '../../shared/linter'
+import { readPublishDiagnostics } from './lsp-diagnostics'
 import { createLspMessageReader, encodeLspMessage, type LspMessage } from './lsp-message-framing'
 
 export type LspTransport = {
@@ -20,6 +22,9 @@ export type LspSession = {
   references: (request: DefinitionRequest) => Promise<LanguageServerLocation[]>
   /** Fork: what changed on disk, so the server's view of the project stays current. */
   filesChanged: (changes: readonly WatchedFileChange[]) => void
+  /** Fork: hands the server the editor's text so it publishes diagnostics for it. */
+  open: (filePath: string, text: string) => Promise<void>
+  close: (filePath: string) => void
   dispose: () => void
 }
 
@@ -102,11 +107,13 @@ export function readHoverMarkdown(result: unknown): string | null {
 export function createLspSession({
   transport,
   rootPath,
-  serverName = 'language server'
+  serverName = 'language server',
+  onDiagnostics
 }: {
   transport: LspTransport
   rootPath: string
   serverName?: string
+  onDiagnostics?: (filePath: string, diagnostics: LintDiagnostic[]) => void
 }): LspSession {
   const pending = new Map<
     number,
@@ -162,6 +169,11 @@ export function createLspSession({
   transport.onData(
     createLspMessageReader((value) => {
       const message = value as IncomingMessage
+      const published = readPublishDiagnostics(message)
+      if (published) {
+        onDiagnostics?.(published.filePath, published.diagnostics)
+        return
+      }
       if (message.method && message.id !== undefined) {
         // Why answer server requests: an unanswered workspace/configuration stalls the server.
         const items = message.params?.items
@@ -196,7 +208,8 @@ export function createLspSession({
           textDocument: {
             definition: { linkSupport: true },
             hover: { contentFormat: ['markdown', 'plaintext'] },
-            references: {}
+            references: {},
+            publishDiagnostics: {}
           }
         }
       })
@@ -264,6 +277,16 @@ export function createLspSession({
         context: { includeDeclaration: true }
       })
       return Array.isArray(result) ? readDefinitionLocations(result) : []
+    },
+    open: async (filePath, text) => {
+      await ensureInitialized()
+      syncDocument(filePath, text)
+    },
+    close: (filePath) => {
+      const uri = pathToFileURL(filePath).href
+      if (documents.delete(uri)) {
+        send({ method: 'textDocument/didClose', params: { textDocument: { uri } } })
+      }
     },
     filesChanged: (changes) => {
       // Why drop early changes: a server that is still starting reads the disk as it comes up.

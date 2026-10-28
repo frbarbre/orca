@@ -21670,10 +21670,14 @@
       "goToDefinition": "go to definition",
       "hover": "hover",
       "references": "references",
-      "lsp": "lsp"
+      "lsp": "lsp",
+      "lint": "lint",
+      "linter": "linter",
+      "squiggles": "squiggles",
+      "diagnostics": "diagnostics"
     },
     "title": "Language Servers",
-    "description": "Cmd+click, hover and references per language. Each runs a background process per project.",
+    "description": "Cmd+click, hover and references per language, and lint squiggles. Each runs a background process per project.",
     "python": {
       "label": "Python",
       "description": "Runs in the project's venv, or the main checkout's when a worktree has none."
@@ -21685,6 +21689,12 @@
     "unavailable": "{{server}} is unavailable ({{error}}). Install it in the project, or choose another server or its path in Settings → Language Servers.",
     "restartFailed": "Could not restart the language server.",
     "restarted": "Language server restarted. It starts again on use."
+  },
+  "linters": {
+    "oxlint": {
+      "description": "Lint squiggles in JavaScript and TypeScript files, with the project's own oxlint and config. Projects without an oxlint config get none."
+    },
+    "unavailable": "{{linter}} is unavailable ({{error}}). Install it in the project, or set its path or turn it off in Settings → Language Servers."
   },
   "commentReactors": {
     "withOthers": "{{names}} and {{others}} others reacted with {{emoji}}",

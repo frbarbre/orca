@@ -69,6 +69,7 @@ import { memoryApi } from './api/memory-bridge'
 import { claudeUsageApi } from './api/claude-usage-bridge'
 import { claudeRemoteSessionApi } from './api/claude-remote-session-bridge'
 import { languageServerApi } from './api/language-server-bridge'
+import { lintApi } from './api/lint-bridge'
 import { gitBlameApi } from './api/git-blame-bridge'
 import { materialIconsApi } from './api/material-icons-bridge'
 import { agentTurnsApi } from './api/agent-turns-bridge'
@@ -178,6 +179,7 @@ const api = {
   claudeUsage: claudeUsageApi,
   claudeRemoteSession: claudeRemoteSessionApi,
   languageServer: languageServerApi,
+  lint: lintApi,
   gitBlame: gitBlameApi,
   materialIcons: materialIconsApi,
   agentTurns: agentTurnsApi,

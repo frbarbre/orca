@@ -1,5 +1,6 @@
 import type * as Monaco from 'monaco-editor'
 import type { LanguageServerLanguage } from '../../../shared/language-server'
+import type { LinterId } from '../../../shared/linter'
 import { translate } from '@/i18n/i18n'
 import {
   builtInTypeScriptDefinition,
@@ -47,5 +48,16 @@ export const RENDERER_LANGUAGE_SERVERS: Record<LanguageServerLanguage, RendererL
       references: (model, position) =>
         builtInTypeScriptReferences(monaco, monacoTS, model, position)
     })
+  }
+}
+
+// Fork: the renderer's half of the linter registry (`shared/linter.ts`).
+export const RENDERER_LINTERS: Record<LinterId, { description: () => string }> = {
+  oxlint: {
+    description: () =>
+      translate(
+        'linters.oxlint.description',
+        "Lint squiggles in JavaScript and TypeScript files, with the project's own oxlint and config. Projects without an oxlint config get none."
+      )
   }
 }

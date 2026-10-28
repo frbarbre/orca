@@ -1,6 +1,8 @@
 import { existsSync, readFileSync, statSync } from 'node:fs'
-import { app, ipcMain } from 'electron'
+import { app, BrowserWindow, ipcMain } from 'electron'
 import { isLanguageServerLanguage, type LanguageServerRequest } from '../../shared/language-server'
+import { isLinterId, type LintRequest } from '../../shared/linter'
+import { createLintService } from '../language-server/lint-service'
 import { createLanguageServerService } from '../language-server/language-server-service'
 import { startLanguageServerSession } from '../language-server/language-server-process'
 import { createProjectFileWatcher } from '../language-server/language-server-file-watcher'
@@ -47,6 +49,32 @@ function readRequest(value: unknown): LanguageServerRequest | null {
   }
 }
 
+function readLintRequest(value: unknown): LintRequest | null {
+  if (typeof value !== 'object' || value === null) {
+    return null
+  }
+  const { linter, command, filePath, worktreeRoot, repoRoot, text } = value as Record<
+    string,
+    unknown
+  >
+  if (
+    !isLinterId(linter) ||
+    typeof filePath !== 'string' ||
+    typeof worktreeRoot !== 'string' ||
+    typeof text !== 'string'
+  ) {
+    return null
+  }
+  return {
+    linter,
+    command: typeof command === 'string' && command.trim() ? command.trim() : null,
+    filePath,
+    worktreeRoot,
+    repoRoot: typeof repoRoot === 'string' && repoRoot ? repoRoot : null,
+    text
+  }
+}
+
 const PREVIEW_LINES = 10
 const MAX_PREVIEW_FILE_BYTES = 5_000_000
 
@@ -77,7 +105,39 @@ export function registerLanguageServerHandlers(): void {
     watchFiles: createProjectFileWatcher(),
     admit: (projectRoot) => beginWatcherInstall(projectRoot)
   })
-  setLanguageServerRemovalStop(service.stopUnder)
+  const lint = createLintService({
+    exists: existsSync,
+    startSession: startLanguageServerSession,
+    onDiagnostics: (event) => {
+      for (const window of BrowserWindow.getAllWindows()) {
+        if (!window.isDestroyed()) {
+          window.webContents.send('lint:diagnostics', event)
+        }
+      }
+    },
+    admit: (projectRoot) => beginWatcherInstall(projectRoot)
+  })
+  setLanguageServerRemovalStop((root) => {
+    service.stopUnder(root)
+    lint.stopUnder(root)
+  })
+  ipcMain.handle('lint:sync', async (_event, args: unknown) => {
+    const request = readLintRequest(args)
+    return request ? lint.sync(request) : { ok: false, error: 'Invalid lint request.' }
+  })
+  ipcMain.handle('lint:close', (_event, args: unknown) => {
+    const { linter, filePath } = (args ?? {}) as { linter?: unknown; filePath?: unknown }
+    if (isLinterId(linter) && typeof filePath === 'string') {
+      lint.close({ linter, filePath })
+    }
+  })
+  ipcMain.handle('lint:stop', (_event, args: unknown) => {
+    const linter = (args as { linter?: unknown } | null)?.linter
+    if (isLinterId(linter)) {
+      lint.stopLinter(linter)
+    }
+  })
+  app.once('will-quit', () => lint.disposeAll())
   ipcMain.handle('languageServer:definition', async (_event, args: unknown) => {
     const request = readRequest(args)
     return request

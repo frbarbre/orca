@@ -1,6 +1,7 @@
 import { delimiter } from 'node:path'
 import { spawnProcess } from '@orca/process-host'
 import { forceTerminateProcessTree } from '@orca/process-host/process-tree-termination'
+import type { LintDiagnostic } from '../../shared/linter'
 import type { LanguageServerLaunch } from './language-server-launchers'
 import { createLspSession, type LspSession } from './lsp-session'
 
@@ -18,7 +19,10 @@ export function languageServerEnvironment(
   }
 }
 
-export function startLanguageServerSession(launch: LanguageServerLaunch): LspSession {
+export function startLanguageServerSession(
+  launch: Omit<LanguageServerLaunch, 'language'>,
+  onDiagnostics?: (filePath: string, diagnostics: LintDiagnostic[]) => void
+): LspSession {
   const child = spawnProcess({
     program: launch.program,
     args: launch.args,
@@ -34,6 +38,7 @@ export function startLanguageServerSession(launch: LanguageServerLaunch): LspSes
   return createLspSession({
     rootPath: launch.projectRoot,
     serverName: launch.serverName,
+    onDiagnostics,
     transport: {
       write: (chunk) => {
         if (child.stdin.writable) {

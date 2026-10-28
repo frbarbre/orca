@@ -1,5 +1,6 @@
 import type { GlobalSettingsBase } from './global-settings-base'
 import type { LanguageServerSettingsMap } from './language-server'
+import type { LinterSettingsMap } from './linter'
 
 // Fork: kept out of global-settings-types.ts, which sits at the max-lines ceiling.
 export type SectionLayout = { order?: string[]; hidden?: string[] }
@@ -14,6 +15,8 @@ export type ForkSourceControlSettings = {
 type ForkEditorSettings = {
   /** Per-language server, read through `languageServerSettings`; a missing language means on. */
   languageServers?: LanguageServerSettingsMap
+  /** Per-linter switch and path, read through `linterSettings`; a missing linter means on. */
+  linters?: LinterSettingsMap
   /** The cursor line's blame annotation; an unset switch means on. */
   gitBlame?: { enabled?: boolean; youForMyCommits?: boolean }
   /** Open new Claude Code tabs in the claude.ai Remote Control web view. */

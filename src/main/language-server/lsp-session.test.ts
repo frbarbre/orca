@@ -41,7 +41,7 @@ function fakeServer(
     },
     kill: vi.fn()
   }
-  return { transport, received, exit: () => exit() }
+  return { transport, received, exit: () => exit(), notify: reply }
 }
 
 const request = (text: string) => ({
@@ -232,6 +232,71 @@ describe('LSP session', () => {
         { uri: 'file:///repo/src/lib.ts', type: 1 }
       ]
     })
+  })
+
+  it('opens a file for its diagnostics and hands on what the server publishes for it', async () => {
+    const server = fakeServer(null)
+    const onDiagnostics = vi.fn()
+    const session = createLspSession({
+      transport: server.transport,
+      rootPath: '/repo',
+      onDiagnostics
+    })
+
+    await session.open('/repo/src/a.ts', 'debugger')
+    server.notify({
+      method: 'textDocument/publishDiagnostics',
+      params: {
+        uri: 'file:///repo/src/a.ts',
+        diagnostics: [
+          {
+            range: { start: { line: 0, character: 0 }, end: { line: 0, character: 8 } },
+            severity: 1,
+            code: 'eslint(no-debugger)',
+            codeDescription: { href: 'https://oxc.rs/no-debugger' },
+            message: '`debugger` statement is not allowed'
+          }
+        ]
+      }
+    })
+
+    expect(server.received.find((m) => m.method === 'textDocument/didOpen')?.params).toEqual({
+      textDocument: {
+        uri: 'file:///repo/src/a.ts',
+        languageId: 'typescript',
+        version: 1,
+        text: 'debugger'
+      }
+    })
+    expect(onDiagnostics).toHaveBeenCalledWith('/repo/src/a.ts', [
+      {
+        line: 0,
+        character: 0,
+        endLine: 0,
+        endCharacter: 8,
+        severity: 1,
+        code: 'eslint(no-debugger)',
+        href: 'https://oxc.rs/no-debugger',
+        message: '`debugger` statement is not allowed'
+      }
+    ])
+  })
+
+  it('closes a file it opened', async () => {
+    const server = fakeServer(null)
+    const session = createLspSession({ transport: server.transport, rootPath: '/repo' })
+    await session.open('/repo/src/a.ts', 'x')
+
+    session.close('/repo/src/a.ts')
+    session.close('/repo/src/a.ts')
+
+    expect(server.received.filter((m) => m.method === 'textDocument/didClose')).toEqual([
+      {
+        jsonrpc: '2.0',
+        method: 'textDocument/didClose',
+        params: { textDocument: { uri: 'file:///repo/src/a.ts' } }
+      }
+    ])
   })
 
   it('sends nothing before the server is up', () => {

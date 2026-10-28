@@ -110,6 +110,7 @@ export async function getPRComments(
             createdAt: string
             lastEditedAt: string | null
             viewerCanUpdate?: boolean
+            viewerCanDelete?: boolean
             url: string
             path: string
             reactionGroups?: GitHubGraphQLReactionGroup[] | null
@@ -196,6 +197,7 @@ export async function getPRComments(
               createdAt: c.createdAt,
               lastEditedAt: c.lastEditedAt ?? undefined,
               viewerCanUpdate: c.viewerCanUpdate,
+              viewerCanDelete: c.viewerCanDelete,
               url: c.url,
               isBot: c.author?.__typename === 'Bot',
               reactionSubjectId: c.id,

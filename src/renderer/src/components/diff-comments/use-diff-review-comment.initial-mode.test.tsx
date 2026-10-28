@@ -37,8 +37,8 @@ function fakeDiffEditor(
  */
 function renderedModes(
   worktreeId: string,
-  line: number,
-  changes: { modifiedStartLineNumber: number; modifiedEndLineNumber: number }[]
+  changes: { modifiedStartLineNumber: number; modifiedEndLineNumber: number }[],
+  target: typeof TARGET | null = TARGET
 ): string[] {
   const seen: string[] = []
   // Why hoisted: the hook keys its diff subscription on this identity, so building one per
@@ -49,11 +49,11 @@ function renderedModes(
       // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: the hook reads only the two methods this fake provides.
       diffEditor: editor as never,
       modelKey: 'model-1',
-      target: TARGET,
+      target,
       relativePath: 'src/a.ts',
       worktreeId
     })
-    seen.push(review.resolveMode(line))
+    seen.push(review.resolvedMode)
     return <div />
   }
   render(<Probe />)
@@ -67,21 +67,64 @@ describe('the destination the popover opens on', () => {
     // visibly switched a frame later.
     setDiffCommentMode('wt-1', 'pending')
 
-    const modes = renderedModes('wt-1', 11, [
-      { modifiedStartLineNumber: 10, modifiedEndLineNumber: 12 }
-    ])
+    const modes = renderedModes('wt-1', [{ modifiedStartLineNumber: 10, modifiedEndLineNumber: 12 }])
 
     expect(modes[0]).toBe('pending')
     expect(new Set(modes)).toEqual(new Set(['pending']))
   })
 
-  it('still falls back for a line the diff does not carry', () => {
+  it('falls back to notes when the diff is not part of a pull request', () => {
     setDiffCommentMode('wt-2', 'pending')
 
-    const modes = renderedModes('wt-2', 99, [
-      { modifiedStartLineNumber: 10, modifiedEndLineNumber: 12 }
-    ])
+    const modes = renderedModes(
+      'wt-2',
+      [{ modifiedStartLineNumber: 10, modifiedEndLineNumber: 12 }],
+      null
+    )
 
     expect(modes.at(-1)).toBe('note')
+  })
+})
+
+describe('a comment on a line the diff does not carry', () => {
+  function probe(line: number, startLine?: number) {
+    const editor = {
+      ...fakeDiffEditor([{ modifiedStartLineNumber: 10, modifiedEndLineNumber: 12 }]),
+      getModifiedEditor: () => ({
+        getModel: () => ({
+          getLineMaxColumn: () => 18,
+          getValueInRange: (range: { startLineNumber: number; endLineNumber: number }) =>
+            range.startLineNumber === range.endLineNumber
+              ? 'logo: Icon | null'
+              : 'text: string\nlogo: Icon | null'
+        })
+      })
+    }
+    let result: { body: string; subjectType?: 'file' } | undefined
+    function Probe(): React.JSX.Element {
+      const review = useDiffReviewComment({
+        // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: the hook reads only the methods this fake provides.
+        diffEditor: editor as never,
+        modelKey: 'model-1',
+        target: TARGET,
+        relativePath: 'src/a.ts',
+        worktreeId: 'wt-3'
+      })
+      result = review.prepareReviewComment(line, startLine, 'Why nullable?')
+      return <div />
+    }
+    render(<Probe />)
+    return result
+  }
+
+  it('becomes a file comment quoting the line', () => {
+    expect(probe(86)).toEqual({
+      body: 'Line 86:\n```\nlogo: Icon | null\n```\n\nWhy nullable?',
+      subjectType: 'file'
+    })
+  })
+
+  it('stays a line comment inside the diff', () => {
+    expect(probe(11)).toEqual({ body: 'Why nullable?' })
   })
 })

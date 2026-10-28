@@ -58,12 +58,16 @@ describe('language server registry', () => {
     expect(languageServerSettings(null, 'python')).toEqual({
       enabled: true,
       server: 'pyrefly',
-      command: null
+      command: null,
+      diagnostics: true,
+      completions: true
     })
     expect(languageServerSettings({ languageServers: { python: false } }, 'python')).toEqual({
       enabled: false,
       server: 'pyrefly',
-      command: null
+      command: null,
+      diagnostics: true,
+      completions: true
     })
     expect(
       languageServerSettings(
@@ -72,13 +76,35 @@ describe('language server registry', () => {
         },
         'python'
       )
-    ).toEqual({ enabled: true, server: 'pyright', command: '/opt/pyright-langserver' })
+    ).toEqual({
+      enabled: true,
+      server: 'pyright',
+      command: '/opt/pyright-langserver',
+      diagnostics: true,
+      completions: true
+    })
     expect(
       languageServerSettings(
-        { languageServers: { typescript: { enabled: false, server: 'gone', command: '' } } },
+        {
+          languageServers: {
+            typescript: {
+              enabled: false,
+              server: 'gone',
+              command: '',
+              diagnostics: false,
+              completions: false
+            }
+          }
+        },
         'typescript'
       )
-    ).toEqual({ enabled: false, server: 'tsgo', command: null })
+    ).toEqual({
+      enabled: false,
+      server: 'tsgo',
+      command: null,
+      diagnostics: false,
+      completions: false
+    })
   })
 
   it("finds the server for an editor's language id", () => {

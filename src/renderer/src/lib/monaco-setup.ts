@@ -29,6 +29,7 @@ import { installMonacoContextMenuPaste } from '@/components/editor/install-monac
 import { runMonacoSetupSteps } from './monaco-setup-steps'
 import { installMonacoTsWorkerIdleStop } from './monaco-ts-worker-idle-stop'
 import { installMonacoLanguageServers } from './monaco-language-servers'
+import { installMonacoEditorDiagnostics } from './monaco-editor-diagnostics'
 import { installMonacoGitBlame } from './monaco-git-blame'
 
 globalThis.MonacoEnvironment = {
@@ -94,6 +95,7 @@ runMonacoSetupSteps([
   ['context-menu paste', () => installMonacoContextMenuPaste(monaco)],
   ['TS worker idle stop', () => installMonacoTsWorkerIdleStop(monaco)],
   ['language servers', () => installMonacoLanguageServers(monaco, monacoTS)],
+  ['editor diagnostics', () => installMonacoEditorDiagnostics(monaco)],
   ['git blame', () => installMonacoGitBlame(monaco)]
 ])
 

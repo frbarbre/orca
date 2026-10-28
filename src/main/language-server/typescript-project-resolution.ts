@@ -4,7 +4,7 @@ export type TypeScriptProject = { projectRoot: string; binDirs: string[] }
 
 const PROJECT_MARKERS = ['tsconfig.json', 'jsconfig.json']
 
-function directoriesUpTo(startDir: string, worktreeRoot: string): string[] {
+export function directoriesUpTo(startDir: string, worktreeRoot: string): string[] {
   const dirs: string[] = []
   for (let dir = startDir; ; dir = dirname(dir)) {
     const rel = relative(worktreeRoot, dir)

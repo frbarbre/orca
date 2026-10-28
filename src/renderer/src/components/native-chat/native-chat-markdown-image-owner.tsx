@@ -5,6 +5,7 @@ import {
   type NativeChatImageRuntimeContext
 } from './native-chat-image-runtime-context'
 import { useNativeChatFileLinkContext } from './use-native-chat-file-link-context'
+import { NativeChatImageStepperProvider } from './native-chat-image-stepper'
 
 export const NativeChatMarkdownImageOwnerContext = createContext<{
   fileLinkContext: NativeChatFileLinkContext | null
@@ -32,7 +33,7 @@ export function NativeChatMarkdownImageOwnerProvider({
   )
   return (
     <NativeChatMarkdownImageOwnerContext.Provider value={value}>
-      {children}
+      <NativeChatImageStepperProvider>{children}</NativeChatImageStepperProvider>
     </NativeChatMarkdownImageOwnerContext.Provider>
   )
 }

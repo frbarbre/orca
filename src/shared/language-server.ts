@@ -88,7 +88,13 @@ export const LANGUAGE_SERVER_LANGUAGES = Object.keys(LANGUAGE_SERVERS) as Langua
 
 export type LanguageServerSettingsValue =
   | boolean
-  | { enabled?: boolean; server?: string; command?: string }
+  | {
+      enabled?: boolean
+      server?: string
+      command?: string
+      diagnostics?: boolean
+      completions?: boolean
+    }
 
 export type LanguageServerSettingsMap = Partial<
   Record<LanguageServerLanguage, LanguageServerSettingsValue>
@@ -104,7 +110,13 @@ export function languageServerOptions(
 export function languageServerSettings(
   settings: { languageServers?: LanguageServerSettingsMap } | null,
   language: LanguageServerLanguage
-): { enabled: boolean; server: string; command: string | null } {
+): {
+  enabled: boolean
+  server: string
+  command: string | null
+  diagnostics: boolean
+  completions: boolean
+} {
   const value = settings?.languageServers?.[language]
   const stored = typeof value === 'object' && value !== null ? value : {}
   const { defaultServer } = LANGUAGE_SERVERS[language]
@@ -115,7 +127,9 @@ export function languageServerSettings(
   return {
     enabled: typeof value === 'boolean' ? value : stored.enabled !== false,
     server,
-    command: stored.command?.trim() || null
+    command: stored.command?.trim() || null,
+    diagnostics: stored.diagnostics !== false,
+    completions: stored.completions !== false
   }
 }
 
@@ -175,6 +189,9 @@ export type LanguageServerRequest = {
   character: number
 }
 
+/** An editor's file, without a position: what the server checks for errors. */
+export type LanguageServerDocument = Omit<LanguageServerRequest, 'line' | 'character'>
+
 export type LanguageServerHoverResult =
   | { ok: true; markdown: string | null }
   | { ok: false; error: string }
@@ -186,6 +203,36 @@ export type LanguageServerDefinitionResult =
 /** `files` holds the text of each referenced file other than the asking one. */
 export type LanguageServerReferencesResult =
   | { ok: true; locations: LanguageServerLocation[]; files: Record<string, string> }
+  | { ok: false; error: string }
+
+/** Zero-based, as the language server reports it. `kind` is LSP's CompletionItemKind. */
+export type LanguageServerCompletionItem = {
+  label: string
+  kind?: number
+  detail?: string
+  documentation?: string
+  sortText?: string
+  filterText?: string
+  insertText: string
+  /** The insert text is an LSP snippet, with `$1` tab stops. */
+  snippet?: true
+  /** What the insert text replaces; the word at the cursor when absent. */
+  range?: { line: number; character: number; endLine: number; endCharacter: number }
+}
+
+/** `incomplete`: the server narrowed the list, so typing on asks again instead of filtering. */
+export type LanguageServerCompletions = {
+  incomplete: boolean
+  items: LanguageServerCompletionItem[]
+}
+
+export type LanguageServerCompletionRequest = LanguageServerRequest & {
+  /** The character that opened the list, like `.`; absent when it was typed or asked for. */
+  triggerCharacter?: string
+}
+
+export type LanguageServerCompletionResult =
+  | ({ ok: true } & LanguageServerCompletions)
   | { ok: false; error: string }
 
 export function isLanguageServerLanguage(value: unknown): value is LanguageServerLanguage {

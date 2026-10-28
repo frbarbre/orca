@@ -3,7 +3,12 @@ import { usePendingReviewQueue, type PendingReviewQueue } from './use-pending-re
 
 export type DiffPendingReview = PendingReviewQueue & {
   /** Queue a comment against this diff's file, so callers pass only what they know. */
-  queueComment: (body: string, line: number, startLine: number | undefined) => void
+  queueComment: (
+    body: string,
+    line: number,
+    startLine: number | undefined,
+    subjectType?: 'file'
+  ) => void
 }
 
 export function usePendingReviewForDiff(
@@ -14,8 +19,8 @@ export function usePendingReviewForDiff(
   return useMemo(
     () => ({
       ...queue,
-      queueComment: (body, line, startLine) =>
-        queue.add({ path: relativePath, line, startLine, body })
+      queueComment: (body, line, startLine, subjectType) =>
+        queue.add({ path: relativePath, line, startLine, body, subjectType })
     }),
     [queue, relativePath]
   )

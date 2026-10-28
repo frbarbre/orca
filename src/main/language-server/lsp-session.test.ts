@@ -11,7 +11,9 @@ type Message = {
 function fakeServer(
   definitionResult: unknown,
   hoverResult: unknown = null,
-  referencesResult: unknown = null
+  referencesResult: unknown = null,
+  pulledDiagnostics?: unknown[],
+  completionResult: unknown = null
 ) {
   const received: Message[] = []
   let deliver: (chunk: Buffer) => void = () => {}
@@ -21,8 +23,15 @@ function fakeServer(
     const message = value as Message
     received.push(message)
     if (message.method === 'initialize') {
-      reply({ id: message.id, result: { capabilities: { definitionProvider: true } } })
+      const capabilities = pulledDiagnostics
+        ? { definitionProvider: true, diagnosticProvider: { interFileDependencies: true } }
+        : { definitionProvider: true }
+      reply({ id: message.id, result: { capabilities } })
       reply({ id: 900, method: 'workspace/configuration', params: { items: [{}] } })
+    } else if (message.method === 'textDocument/completion') {
+      reply({ id: message.id, result: completionResult })
+    } else if (message.method === 'textDocument/diagnostic') {
+      reply({ id: message.id, result: { kind: 'full', items: pulledDiagnostics ?? [] } })
     } else if (message.method === 'textDocument/definition') {
       reply({ id: message.id, result: definitionResult })
     } else if (message.method === 'textDocument/hover') {
@@ -41,7 +50,7 @@ function fakeServer(
     },
     kill: vi.fn()
   }
-  return { transport, received, exit: () => exit() }
+  return { transport, received, exit: () => exit(), notify: reply }
 }
 
 const request = (text: string) => ({
@@ -232,6 +241,165 @@ describe('LSP session', () => {
         { uri: 'file:///repo/src/lib.ts', type: 1 }
       ]
     })
+  })
+
+  it('opens a file for its diagnostics and hands on what the server publishes for it', async () => {
+    const server = fakeServer(null)
+    const onDiagnostics = vi.fn()
+    const session = createLspSession({
+      transport: server.transport,
+      rootPath: '/repo',
+      onDiagnostics
+    })
+
+    await session.open('/repo/src/a.ts', 'debugger')
+    server.notify({
+      method: 'textDocument/publishDiagnostics',
+      params: {
+        uri: 'file:///repo/src/a.ts',
+        diagnostics: [
+          {
+            range: { start: { line: 0, character: 0 }, end: { line: 0, character: 8 } },
+            severity: 1,
+            code: 'eslint(no-debugger)',
+            codeDescription: { href: 'https://oxc.rs/no-debugger' },
+            message: '`debugger` statement is not allowed'
+          }
+        ]
+      }
+    })
+
+    expect(server.received.find((m) => m.method === 'textDocument/didOpen')?.params).toEqual({
+      textDocument: {
+        uri: 'file:///repo/src/a.ts',
+        languageId: 'typescript',
+        version: 1,
+        text: 'debugger'
+      }
+    })
+    expect(onDiagnostics).toHaveBeenCalledWith('/repo/src/a.ts', [
+      {
+        line: 0,
+        character: 0,
+        endLine: 0,
+        endCharacter: 8,
+        severity: 1,
+        code: 'eslint(no-debugger)',
+        href: 'https://oxc.rs/no-debugger',
+        message: '`debugger` statement is not allowed'
+      }
+    ])
+  })
+
+  it('asks a server that offers it for the diagnostics of an open file, faded ones included', async () => {
+    const server = fakeServer(null, null, null, [
+      {
+        range: { start: { line: 1, character: 6 }, end: { line: 1, character: 12 } },
+        severity: 1,
+        code: 2322,
+        message: "Type 'string' is not assignable to type 'number'."
+      },
+      {
+        range: { start: { line: 1, character: 6 }, end: { line: 1, character: 12 } },
+        severity: 4,
+        code: 6133,
+        tags: [1],
+        message: "'broken' is declared but its value is never read."
+      }
+    ])
+    const session = createLspSession({ transport: server.transport, rootPath: '/repo' })
+    await session.open('/repo/src/a.ts', 'x\nconst broken: number = "text"')
+
+    await expect(session.pullDiagnostics('/repo/src/a.ts')).resolves.toEqual([
+      {
+        line: 1,
+        character: 6,
+        endLine: 1,
+        endCharacter: 12,
+        severity: 1,
+        code: '2322',
+        message: "Type 'string' is not assignable to type 'number'."
+      },
+      {
+        line: 1,
+        character: 6,
+        endLine: 1,
+        endCharacter: 12,
+        severity: 4,
+        code: '6133',
+        tags: [1],
+        message: "'broken' is declared but its value is never read."
+      }
+    ])
+    expect(server.received.find((m) => m.method === 'textDocument/diagnostic')?.params).toEqual({
+      textDocument: { uri: 'file:///repo/src/a.ts' }
+    })
+  })
+
+  it('asks nothing of a server that publishes its diagnostics itself, or for a file it has not opened', async () => {
+    const pushing = fakeServer(null)
+    const pushSession = createLspSession({ transport: pushing.transport, rootPath: '/repo' })
+    await pushSession.open('/repo/a.py', 'x')
+    const pulling = fakeServer(null, null, null, [])
+    const pullSession = createLspSession({ transport: pulling.transport, rootPath: '/repo' })
+    await pullSession.open('/repo/a.ts', 'x')
+
+    await expect(pushSession.pullDiagnostics('/repo/a.py')).resolves.toBeNull()
+    await expect(pullSession.pullDiagnostics('/repo/b.ts')).resolves.toBeNull()
+    expect(
+      [...pushing.received, ...pulling.received].filter(
+        (m) => m.method === 'textDocument/diagnostic'
+      )
+    ).toEqual([])
+  })
+
+  it('asks for completions at a position with the character that opened the list', async () => {
+    const server = fakeServer(null, null, null, undefined, [{ label: 'append', kind: 2 }])
+    const session = createLspSession({ transport: server.transport, rootPath: '/repo' })
+
+    await expect(
+      session.completion({ ...request('items.'), triggerCharacter: '.' })
+    ).resolves.toEqual({
+      incomplete: false,
+      items: [{ label: 'append', kind: 2, insertText: 'append' }]
+    })
+    await session.completion(request('items.ap'))
+
+    const asked = server.received.filter((m) => m.method === 'textDocument/completion')
+    expect(asked.map((m) => m.params)).toEqual([
+      {
+        textDocument: { uri: 'file:///repo/apps/backend/a.py' },
+        position: { line: 3, character: 8 },
+        context: { triggerKind: 2, triggerCharacter: '.' }
+      },
+      {
+        textDocument: { uri: 'file:///repo/apps/backend/a.py' },
+        position: { line: 3, character: 8 },
+        context: { triggerKind: 1 }
+      }
+    ])
+    expect(
+      server.received.find((m) => m.method === 'initialize')?.params?.capabilities
+    ).toMatchObject({
+      textDocument: { completion: { completionItem: { snippetSupport: true } } }
+    })
+  })
+
+  it('closes a file it opened', async () => {
+    const server = fakeServer(null)
+    const session = createLspSession({ transport: server.transport, rootPath: '/repo' })
+    await session.open('/repo/src/a.ts', 'x')
+
+    session.close('/repo/src/a.ts')
+    session.close('/repo/src/a.ts')
+
+    expect(server.received.filter((m) => m.method === 'textDocument/didClose')).toEqual([
+      {
+        jsonrpc: '2.0',
+        method: 'textDocument/didClose',
+        params: { textDocument: { uri: 'file:///repo/src/a.ts' } }
+      }
+    ])
   })
 
   it('sends nothing before the server is up', () => {

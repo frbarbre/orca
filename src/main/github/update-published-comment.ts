@@ -1,4 +1,6 @@
 import type {
+  DeletePublishedCommentRequest,
+  DeletePublishedCommentResult,
   UpdatePublishedCommentRequest,
   UpdatePublishedCommentResult
 } from '../../shared/github/pending-review-comment'
@@ -18,6 +20,10 @@ const UPDATE_REVIEW_MUTATION = `mutation($id: ID!, $body: String!) {
   updatePullRequestReview(input: { pullRequestReviewId: $id, body: $body }) {
     pullRequestReview { body lastEditedAt }
   }
+}`
+
+const DELETE_REVIEW_COMMENT_MUTATION = `mutation($id: ID!) {
+  deletePullRequestReviewComment(input: { id: $id }) { clientMutationId }
 }`
 
 const MUTATIONS = {
@@ -51,14 +57,10 @@ function firstGraphQLError(payload: unknown): string | null {
     .join('; ')
 }
 
-/** Rewrite the body of an inline review comment, or of a review's summary, already on the pull request. */
-export async function updatePublishedReviewComment(
-  request: UpdatePublishedCommentRequest
-): Promise<UpdatePublishedCommentResult> {
-  const body = request.body.trim()
-  if (!body) {
-    return { ok: false, error: 'A comment cannot be empty.' }
-  }
+async function runPublishedCommentMutation(
+  request: DeletePublishedCommentRequest,
+  fields: string[]
+): Promise<{ ok: true; payload: unknown } | { ok: false; error: string }> {
   const { ownerRepo, ghOptions } = await resolveGitHubRepoExecution(
     request.repoPath,
     request.prRepo,
@@ -74,36 +76,16 @@ export async function updatePublishedReviewComment(
       error: `GitHub GraphQL rate limit nearly exhausted (${guard.remaining}/${guard.limit}).`
     }
   }
-  const mutation = MUTATIONS[request.kind ?? 'review-comment']
   await acquire()
   try {
     noteRepositoryRateLimitSpend(ownerRepo, 'graphql', 1, ghOptions)
     const { stdout } = await ghExecFileAsync(
-      [
-        'api',
-        'graphql',
-        '-f',
-        `query=${mutation.query}`,
-        '-f',
-        `id=${request.commentNodeId}`,
-        '-f',
-        `body=${body}`
-      ],
+      ['api', 'graphql', ...fields.flatMap((field) => ['-f', field])],
       ghOptions
     )
-    const parsed: unknown = JSON.parse(stdout)
-    const error = firstGraphQLError(parsed)
-    if (error) {
-      return { ok: false, error }
-    }
-    const updated = asRecord(
-      asRecord(asRecord(asRecord(parsed)?.data)?.[mutation.field])?.[mutation.node]
-    )
-    return {
-      ok: true,
-      body: typeof updated?.body === 'string' ? updated.body : body,
-      lastEditedAt: typeof updated?.lastEditedAt === 'string' ? updated.lastEditedAt : null
-    }
+    const payload: unknown = JSON.parse(stdout)
+    const error = firstGraphQLError(payload)
+    return error ? { ok: false, error } : { ok: true, payload }
   } catch (caught) {
     // Why the raw message: gh prints the provider's own rejection, which names the reason
     // an edit was refused better than any paraphrase.
@@ -111,4 +93,42 @@ export async function updatePublishedReviewComment(
   } finally {
     release()
   }
+}
+
+/** Rewrite the body of an inline review comment, or of a review's summary, already on the pull request. */
+export async function updatePublishedReviewComment(
+  request: UpdatePublishedCommentRequest
+): Promise<UpdatePublishedCommentResult> {
+  const body = request.body.trim()
+  if (!body) {
+    return { ok: false, error: 'A comment cannot be empty.' }
+  }
+  const mutation = MUTATIONS[request.kind ?? 'review-comment']
+  const result = await runPublishedCommentMutation(request, [
+    `query=${mutation.query}`,
+    `id=${request.commentNodeId}`,
+    `body=${body}`
+  ])
+  if (!result.ok) {
+    return result
+  }
+  const updated = asRecord(
+    asRecord(asRecord(asRecord(result.payload)?.data)?.[mutation.field])?.[mutation.node]
+  )
+  return {
+    ok: true,
+    body: typeof updated?.body === 'string' ? updated.body : body,
+    lastEditedAt: typeof updated?.lastEditedAt === 'string' ? updated.lastEditedAt : null
+  }
+}
+
+/** Fork: remove an inline review comment already on the pull request; its replies stay. */
+export async function deletePublishedReviewComment(
+  request: DeletePublishedCommentRequest
+): Promise<DeletePublishedCommentResult> {
+  const result = await runPublishedCommentMutation(request, [
+    `query=${DELETE_REVIEW_COMMENT_MUTATION}`,
+    `id=${request.commentNodeId}`
+  ])
+  return result.ok ? { ok: true } : result
 }

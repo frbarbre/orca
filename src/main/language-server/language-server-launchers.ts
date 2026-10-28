@@ -58,7 +58,7 @@ const PROJECTS: Record<
 }
 
 // Why: a spawned program gets no shell, so nothing else expands a typed `~/`.
-function expandHome(command: string, home: string): string {
+export function expandHome(command: string, home: string): string {
   return command === '~' || command.startsWith('~/') ? join(home, command.slice(1)) : command
 }
 

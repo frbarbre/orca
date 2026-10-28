@@ -10,6 +10,7 @@ export const pendingReviewApi: PendingReviewApi = {
   writeSummary: (worktreeId, text) =>
     ipcRenderer.invoke('pending-review:summary-write', worktreeId, text),
   updateComment: (request) => ipcRenderer.invoke('pending-review:update-comment', request),
+  deleteComment: (request) => ipcRenderer.invoke('pending-review:delete-comment', request),
   resolveBase: (request) => ipcRenderer.invoke('pending-review:resolve-base', request),
   context: (request) => ipcRenderer.invoke('pending-review:context', request),
   uploadAsset: (request) => ipcRenderer.invoke('pending-review:asset-upload', request),

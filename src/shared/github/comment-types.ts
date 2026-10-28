@@ -45,6 +45,8 @@ export type PRComment = {
   /** The provider's own answer to whether this viewer may edit the comment. Preferred over
    *  comparing logins, which cannot see organization or repository permissions. */
   viewerCanUpdate?: boolean
+  /** Fork: the provider's answer to whether this viewer may delete an inline review comment. */
+  viewerCanDelete?: boolean
   /** True when GitHub identifies the author as a bot (REST `user.type === 'Bot'` or
    *  GraphQL `__typename === 'Bot'`). Preferred over login-string heuristics because
    *  third-party review bots (e.g. qodo-ai-reviewer, coderabbitai) don't follow a
@@ -109,4 +111,6 @@ export type GitHubPRReviewCommentInput = {
   line: number
   startLine?: number
   body: string
+  /** Fork: posts as a comment on the file, for a line outside the pull request's diff. */
+  subjectType?: 'file'
 }

@@ -59,7 +59,8 @@ function turnOffBuiltInTypeScriptProviders(monacoTS: typeof Monaco.typescript): 
       ...defaults.modeConfiguration,
       definitions: false,
       hovers: false,
-      references: false
+      references: false,
+      completionItems: false
     })
   }
 }

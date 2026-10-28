@@ -2,7 +2,8 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import type { editor } from 'monaco-editor'
 import {
   installChangedFileNavigationShortcut,
-  installMonacoDiffChangeNavigationShortcut
+  installMonacoDiffChangeNavigationShortcut,
+  installOpenFileFromDiffShortcut
 } from './editor-shortcuts'
 import { goToDiffWithoutWrap } from './diff-change-step'
 import { registerDiffEditorForOutsideShortcuts } from './diff-shortcuts-outside-editor'
@@ -38,10 +39,16 @@ function countChanges(diffEditor: editor.IStandaloneDiffEditor): number {
 }
 
 export function DiffNavigationProvider({
-  children
+  children,
+  onOpenFile
 }: {
   children: React.ReactNode
+  /** The header's "Open file tab", for its shortcut inside the diff. */
+  onOpenFile?: () => void
 }): React.JSX.Element {
+  const onOpenFileRef = useRef(onOpenFile)
+  onOpenFileRef.current = onOpenFile
+  const openFileShortcutCleanupRef = useRef<(() => void) | null>(null)
   const editorRef = useRef<editor.IStandaloneDiffEditor | null>(null)
   const updateSubRef = useRef<{ dispose: () => void } | null>(null)
   // Share the registered editor across header buttons and F7/Shift+F7 shortcuts.
@@ -78,6 +85,10 @@ export function DiffNavigationProvider({
       diffEditor,
       (direction, options) => stepToChangedFileRef.current(direction, options)
     )
+    openFileShortcutCleanupRef.current?.()
+    openFileShortcutCleanupRef.current = installOpenFileFromDiffShortcut(diffEditor, () =>
+      onOpenFileRef.current?.()
+    )
     outsideShortcutCleanupRef.current?.()
     outsideShortcutCleanupRef.current = registerDiffEditorForOutsideShortcuts({
       getShortcutTarget: () => diffEditor.getModifiedEditor().getContainerDomNode(),
@@ -97,6 +108,8 @@ export function DiffNavigationProvider({
     shortcutCleanupRef.current = null
     fileShortcutCleanupRef.current?.()
     fileShortcutCleanupRef.current = null
+    openFileShortcutCleanupRef.current?.()
+    openFileShortcutCleanupRef.current = null
     outsideShortcutCleanupRef.current?.()
     outsideShortcutCleanupRef.current = null
     editorRef.current = null

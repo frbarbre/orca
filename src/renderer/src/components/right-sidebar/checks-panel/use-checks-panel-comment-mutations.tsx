@@ -16,6 +16,7 @@ import type { ChecksPanelContextState } from './use-checks-panel-context-state'
 import { checksPanelAsyncResultKey } from '../checks-panel-async-result-key'
 import { isMutablePRConversationComment } from '../../../../../shared/github/pr-comment-mutability'
 import {
+  isDeletablePublishedReviewComment,
   isEditablePublishedReviewComment,
   isEditablePublishedReviewSummary
 } from '@/components/pending-review/editable-published-comment'
@@ -149,7 +150,8 @@ export function useChecksPanelCommentMutations(model: ChecksPanelCommentMutation
 
   const handleDeleteComment = useCallback(
     async (comment: PRComment): Promise<void> => {
-      if (!pr?.prRepo || !isMutablePRConversationComment(comment)) {
+      const isReviewComment = isDeletablePublishedReviewComment(comment)
+      if (!pr?.prRepo || (!isReviewComment && !isMutablePRConversationComment(comment))) {
         return
       }
       const confirmed = await confirm({
@@ -164,19 +166,35 @@ export function useChecksPanelCommentMutations(model: ChecksPanelCommentMutation
       if (!confirmed) {
         return
       }
-      const result = await window.api.gh.deleteIssueCommentBySlug({
-        owner: pr.prRepo.owner,
-        repo: pr.prRepo.repo,
-        host: githubProjectHost(pr.prRepo.host),
-        commentId: comment.id
-      })
-      if (!result.ok) {
-        toast.error(result.error.message)
-        return
+      if (isReviewComment) {
+        if (!repo || !comment.reactionSubjectId) {
+          return
+        }
+        const removed = await window.api.pendingReview.deleteComment({
+          repoPath: repo.path,
+          prRepo: pr.prRepo,
+          connectionId: repo.connectionId,
+          commentNodeId: comment.reactionSubjectId
+        })
+        if (!removed.ok) {
+          toast.error(removed.error)
+          return
+        }
+      } else {
+        const result = await window.api.gh.deleteIssueCommentBySlug({
+          owner: pr.prRepo.owner,
+          repo: pr.prRepo.repo,
+          host: githubProjectHost(pr.prRepo.host),
+          commentId: comment.id
+        })
+        if (!result.ok) {
+          toast.error(result.error.message)
+          return
+        }
       }
       setComments((prev) => prev.filter((entry) => entry.id !== comment.id))
     },
-    [pr?.prRepo, confirm, setComments]
+    [pr?.prRepo, repo, confirm, setComments]
   )
 
   const handleSetReaction = useCallback(

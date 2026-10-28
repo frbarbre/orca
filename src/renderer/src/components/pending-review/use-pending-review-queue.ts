@@ -12,7 +12,13 @@ import { setPendingReviewDrafts, usePendingReviewDrafts } from './pending-review
 
 export type PendingReviewQueue = {
   comments: PendingReviewComment[]
-  add: (draft: { path: string; line: number; startLine?: number; body: string }) => void
+  add: (draft: {
+    path: string
+    line: number
+    startLine?: number
+    body: string
+    subjectType?: 'file'
+  }) => void
   updateBody: (id: string, body: string) => void
   remove: (id: string) => void
   clear: () => void
@@ -81,7 +87,8 @@ export function usePendingReviewQueue(worktreeId: string | null): PendingReviewQ
               ? { startLine: draft.startLine }
               : {}),
             body: draft.body,
-            createdAt: Date.now()
+            createdAt: Date.now(),
+            ...(draft.subjectType ? { subjectType: draft.subjectType } : {})
           })
         ),
       updateBody: (id, body) => write(updatePendingReviewCommentBody(comments, id, body)),

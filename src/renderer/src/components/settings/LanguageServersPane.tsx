@@ -11,8 +11,9 @@ import {
   languageServerSettings,
   type LanguageServerLanguage
 } from '../../../../shared/language-server'
+import { LINTER_IDS, LINTERS, linterSettings, type LinterId } from '../../../../shared/linter'
 import { translate } from '@/i18n/i18n'
-import { RENDERER_LANGUAGE_SERVERS } from '@/lib/language-server-languages'
+import { RENDERER_LANGUAGE_SERVERS, RENDERER_LINTERS } from '@/lib/language-server-languages'
 import { MaterialNamedIcon } from '@/lib/material-icons/material-icon'
 import { Input } from '../ui/input'
 import { Label } from '../ui/label'
@@ -21,26 +22,50 @@ import { SettingsSegmentedControl, SettingsSwitch } from './SettingsFormControls
 import { getLanguageServersSearchEntries } from './language-servers-search'
 
 type Props = {
-  settings: Pick<GlobalSettings, 'languageServers'>
+  settings: Pick<GlobalSettings, 'languageServers' | 'linters'>
   updateSettings: (updates: Partial<GlobalSettings>) => void
 }
 
-type Choice = { enabled: boolean; server: string; command: string | null }
+type Choice = {
+  enabled: boolean
+  server: string
+  command: string | null
+  diagnostics: boolean
+  completions: boolean
+}
+
+function FeatureSwitch({
+  label,
+  ariaLabel,
+  checked,
+  onChange
+}: {
+  label: string
+  ariaLabel: string
+  checked: boolean
+  onChange: () => void
+}): React.JSX.Element {
+  return (
+    <div className="flex items-center justify-between gap-4">
+      <Label className="shrink-0 text-xs text-muted-foreground">{label}</Label>
+      <SettingsSwitch checked={checked} ariaLabel={ariaLabel} onChange={onChange} />
+    </div>
+  )
+}
 
 function CommandField({
-  language,
-  choice,
+  command,
+  defaultCommand,
   onCommit
 }: {
-  language: LanguageServerLanguage
-  choice: Choice
+  command: string | null
+  defaultCommand: string
   onCommit: (command: string | null) => void
 }): React.JSX.Element {
-  const [draft, setDraft] = useState(choice.command ?? '')
-  const server = languageServerOptions(language)[choice.server]
+  const [draft, setDraft] = useState(command ?? '')
   const commit = (): void => {
     const next = draft.trim() || null
-    if (next !== choice.command) {
+    if (next !== command) {
       onCommit(next)
     }
   }
@@ -62,7 +87,7 @@ function CommandField({
         placeholder={translate(
           'languageServers.pathPlaceholder',
           '{{command}} from the project, else PATH',
-          { command: server.command }
+          { command: defaultCommand }
         )}
         className="h-7 w-80 font-mono text-xs md:text-xs"
       />
@@ -147,8 +172,73 @@ function LanguageServerCard({
           <CommandField
             // Why remount per server: a saved path belongs to the server it was set for.
             key={choice.server}
-            language={language}
-            choice={choice}
+            command={choice.command}
+            defaultCommand={servers[choice.server].command}
+            onCommit={(command) => onChange({ ...choice, command })}
+          />
+          <FeatureSwitch
+            label={translate('languageServers.typeErrors', 'Type errors')}
+            ariaLabel={translate('languageServers.typeErrorsFor', '{{language}} type errors', {
+              language: label
+            })}
+            checked={choice.diagnostics}
+            onChange={() => onChange({ ...choice, diagnostics: !choice.diagnostics })}
+          />
+          <FeatureSwitch
+            label={translate('languageServers.suggestions', 'Suggestions')}
+            ariaLabel={translate('languageServers.suggestionsFor', '{{language}} suggestions', {
+              language: label
+            })}
+            checked={choice.completions}
+            onChange={() => onChange({ ...choice, completions: !choice.completions })}
+          />
+        </div>
+      ) : null}
+    </div>
+  )
+}
+
+function LinterCard({
+  linter,
+  choice,
+  onChange
+}: {
+  linter: LinterId
+  choice: { enabled: boolean; command: string | null }
+  onChange: (next: { enabled: boolean; command: string | null }) => void
+}): React.JSX.Element {
+  const spec = LINTERS[linter]
+  return (
+    <div data-linter={linter} className="rounded-lg border border-border/60 bg-card/40 px-4 py-3">
+      <div className="flex items-center gap-3">
+        <div className="min-w-0 flex-1 space-y-0.5">
+          <div className="flex items-center gap-2">
+            <Label className="text-sm">{spec.name}</Label>
+            <a
+              href={spec.homepage}
+              target="_blank"
+              rel="noreferrer"
+              aria-label={translate('languageServers.docs', 'Open {{server}} docs', {
+                server: spec.name
+              })}
+              className="text-muted-foreground hover:text-foreground"
+            >
+              <ExternalLink className="size-3.5" />
+            </a>
+          </div>
+          <p className="text-xs text-muted-foreground">{RENDERER_LINTERS[linter].description()}</p>
+        </div>
+        <SettingsSwitch
+          checked={choice.enabled}
+          ariaLabel={spec.name}
+          onChange={() => onChange({ ...choice, enabled: !choice.enabled })}
+        />
+      </div>
+      {choice.enabled ? (
+        <div className="mt-3 border-t border-border/60 pt-3">
+          <CommandField
+            command={choice.command}
+            defaultCommand={spec.command}
             onCommit={(command) => onChange({ ...choice, command })}
           />
         </div>
@@ -157,16 +247,32 @@ function LanguageServerCard({
   )
 }
 
-// Fork: one card per language in the registry (`shared/language-server.ts`), so a new language
-// shows up here without touching this pane.
+// Fork: one card per language in the registry (`shared/language-server.ts`) and per linter
+// (`shared/linter.ts`), so a new one shows up here without touching this pane.
 export function LanguageServersPane({ settings, updateSettings }: Props): React.JSX.Element {
   const searchEntries = getLanguageServersSearchEntries()
-  const save = (language: LanguageServerLanguage, { enabled, server, command }: Choice): void =>
+  const save = (
+    language: LanguageServerLanguage,
+    { enabled, server, command, diagnostics, completions }: Choice
+  ): void =>
     updateSettings({
       languageServers: {
         ...settings.languageServers,
-        [language]: { enabled, server, ...(command ? { command } : {}) }
+        [language]: {
+          enabled,
+          server,
+          ...(command ? { command } : {}),
+          ...(diagnostics ? {} : { diagnostics: false }),
+          ...(completions ? {} : { completions: false })
+        }
       }
+    })
+  const saveLinter = (
+    linter: LinterId,
+    { enabled, command }: { enabled: boolean; command: string | null }
+  ): void =>
+    updateSettings({
+      linters: { ...settings.linters, [linter]: { enabled, ...(command ? { command } : {}) } }
     })
   return (
     <div className="space-y-3">
@@ -176,6 +282,18 @@ export function LanguageServersPane({ settings, updateSettings }: Props): React.
             language={language}
             choice={languageServerSettings(settings, language)}
             onChange={(next) => save(language, next)}
+          />
+        </SearchableSetting>
+      ))}
+      {LINTER_IDS.map((linter, index) => (
+        <SearchableSetting
+          key={linter}
+          {...searchEntries[LANGUAGE_SERVER_LANGUAGES.length + index]}
+        >
+          <LinterCard
+            linter={linter}
+            choice={linterSettings(settings, linter)}
+            onChange={(next) => saveLinter(linter, next)}
           />
         </SearchableSetting>
       ))}

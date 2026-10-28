@@ -10,6 +10,9 @@ const EVENT_BY_VERDICT: Record<ReviewVerdict, string> = {
 }
 
 function threadLiteral(comment: PendingReviewComment): string {
+  if (comment.subjectType === 'file') {
+    return `{ path: ${JSON.stringify(comment.path)}, subjectType: FILE, body: ${JSON.stringify(comment.body)} }`
+  }
   const fields = [
     `path: ${JSON.stringify(comment.path)}`,
     `line: ${comment.line}`,

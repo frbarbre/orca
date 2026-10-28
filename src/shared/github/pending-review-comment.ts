@@ -9,6 +9,8 @@ export type PendingReviewComment = {
   startLine?: number
   body: string
   createdAt: number
+  /** Fork: set when the line is outside the pull request's diff, which GitHub only takes as a file comment. */
+  subjectType?: 'file'
 }
 
 export type ReviewVerdict = 'comment' | 'approve' | 'request-changes'
@@ -44,6 +46,10 @@ export type UpdatePublishedCommentRequest = {
 export type UpdatePublishedCommentResult =
   | { ok: true; body: string; lastEditedAt: string | null }
   | { ok: false; error: string }
+
+export type DeletePublishedCommentRequest = Omit<UpdatePublishedCommentRequest, 'body' | 'kind'>
+
+export type DeletePublishedCommentResult = { ok: true } | { ok: false; error: string }
 
 const MAX_PENDING_REVIEW_COMMENTS = 200
 

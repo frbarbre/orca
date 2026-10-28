@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useRef, useState } from 'react'
+import { createContext, useContext, useEffect, useId, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
 import { FileText } from 'lucide-react'
 import { ExpandableMarkdownImage } from '@/components/sidebar/MarkdownImageLightbox'
@@ -38,6 +38,7 @@ import { copyableNativeChatImageSrc, keepPreviewOpenForChatMenu } from './native
 import { resolveNativeChatFileLink } from './native-chat-file-link'
 import { useNativeChatFileLinkClick } from './use-native-chat-file-link-click'
 import { observeTranscriptVisibility } from './NativeChatTranscriptChrome'
+import { useNativeChatImageStepper } from './native-chat-image-stepper'
 
 export const NativeChatMarkdownImageLinkContext = createContext<string | undefined>(undefined)
 const IMAGE_ACCESS = chatImageAccess()
@@ -127,6 +128,20 @@ function NativeChatMarkdownImagePreview({
     runtimeContext?.connectionId,
     runtimeContext,
     IMAGE_ACCESS
+  )
+  const stepper = useNativeChatImageStepper()
+  const stepperId = useId()
+  useEffect(
+    () =>
+      stepper?.register(stepperId, {
+        element: triggerRef.current,
+        open: () => {
+          handingOff.current = false
+          setRetryKey((key) => key + 1)
+          setOpen(true)
+        }
+      }),
+    [stepper, stepperId]
   )
   useEffect(() => {
     const element = triggerRef.current
@@ -251,6 +266,17 @@ function NativeChatMarkdownImagePreview({
           }
         },
         onInteractOutside: keepPreviewOpenForChatMenu,
+        onKeyDown: (event) => {
+          if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') {
+            return
+          }
+          if (stepper?.step(stepperId, event.key === 'ArrowLeft' ? -1 : 1)) {
+            event.preventDefault()
+            handingOff.current = true
+            setOpen(false)
+            setMenuOpen(false)
+          }
+        },
         ...copyAttributes,
         toolbarActions: canOfferActions ? (
           <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen} modal={false}>

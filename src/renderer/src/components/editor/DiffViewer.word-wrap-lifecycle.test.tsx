@@ -105,7 +105,8 @@ vi.mock('@/components/pr-comments/use-inline-pr-comment-actions', () => ({
 }))
 vi.mock('./editor-shortcuts', () => ({
   installMonacoDiffChangeNavigationShortcut: () => vi.fn(),
-  installChangedFileNavigationShortcut: () => vi.fn()
+  installChangedFileNavigationShortcut: () => vi.fn(),
+  installOpenFileFromDiffShortcut: () => vi.fn()
 }))
 vi.mock('./LargeDiffFallback', () => ({ LargeDiffFallback: () => <div>Large diff</div> }))
 

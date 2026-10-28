@@ -1,4 +1,6 @@
 import type {
+  DeletePublishedCommentRequest,
+  DeletePublishedCommentResult,
   PendingReviewComment,
   PendingReviewDraftMap,
   SubmitReviewVerdictRequest,
@@ -39,6 +41,8 @@ export type PendingReviewApi = {
   writeSummary: (worktreeId: string, text: string) => Promise<void>
   /** Rewrites the body of an inline review comment already on the pull request. */
   updateComment: (request: UpdatePublishedCommentRequest) => Promise<UpdatePublishedCommentResult>
+  /** Fork: removes an inline review comment already on the pull request. */
+  deleteComment: (request: DeletePublishedCommentRequest) => Promise<DeletePublishedCommentResult>
   /** The base a "since last review" compare should use, rebuilt when the branch was rebased. */
   resolveBase: (request: ResolveReviewBaseRequest) => Promise<ResolveReviewBaseResult>
   /** What the viewer is allowed to do on this pull request. */

@@ -87,6 +87,30 @@ export function installMonacoDiffChangeNavigationShortcut(
   return () => target.removeEventListener('keydown', handleKeyDown, true)
 }
 
+/** Opens the diffed file in its own tab, like the header's "Open file tab" button. */
+export function installOpenFileFromDiffShortcut(
+  target: { getContainerDomNode: () => HTMLElement },
+  open: () => void
+): () => void {
+  const handleKeyDown = (event: KeyboardEvent): void => {
+    if (
+      isDiffShortcutTypingTarget(event.target) ||
+      !editorShortcutMatches('editor.openFileFromDiff', event)
+    ) {
+      return
+    }
+    event.preventDefault()
+    event.stopPropagation()
+    if (!event.repeat) {
+      open()
+    }
+  }
+
+  const container = target.getContainerDomNode()
+  container.addEventListener('keydown', handleKeyDown, true)
+  return () => container.removeEventListener('keydown', handleKeyDown, true)
+}
+
 type ChangedFileNavigationTarget = {
   getContainerDomNode: () => HTMLElement
 }

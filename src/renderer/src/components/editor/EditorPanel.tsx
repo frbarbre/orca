@@ -333,7 +333,9 @@ function EditorPanelInner({
   return (
     <EditorCommandOwnerContext value={isCmdSaveOwner}>
       {/* Split panes need independent bridges between diff editors and header controls. */}
-      <DiffNavigationProvider>
+      <DiffNavigationProvider
+        onOpenFile={() => handleOpenDiffTargetFile(model.isMarkdown ? 'rich' : undefined)}
+      >
         <EditorPanelShell
           panelRef={setPanelRef}
           activeFile={activeFile}

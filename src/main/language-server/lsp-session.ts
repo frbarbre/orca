@@ -1,6 +1,14 @@
-import { fileURLToPath, pathToFileURL } from 'node:url'
-import { languageServerForFile, type LanguageServerLocation } from '../../shared/language-server'
+import { pathToFileURL } from 'node:url'
+import {
+  languageServerForFile,
+  type LanguageServerCompletions,
+  type LanguageServerLocation
+} from '../../shared/language-server'
+import type { EditorDiagnostic } from '../../shared/editor-diagnostics'
+import { readDiagnosticList, readPublishDiagnostics } from './lsp-diagnostics'
 import { createLspMessageReader, encodeLspMessage, type LspMessage } from './lsp-message-framing'
+import { readCompletions } from './lsp-completions'
+import { readDefinitionLocations, readHoverMarkdown } from './lsp-results'
 
 export type LspTransport = {
   write: (chunk: Buffer) => void
@@ -18,8 +26,16 @@ export type LspSession = {
   definition: (request: DefinitionRequest) => Promise<LanguageServerLocation[]>
   hover: (request: DefinitionRequest) => Promise<string | null>
   references: (request: DefinitionRequest) => Promise<LanguageServerLocation[]>
+  completion: (
+    request: DefinitionRequest & { triggerCharacter?: string }
+  ) => Promise<LanguageServerCompletions>
   /** Fork: what changed on disk, so the server's view of the project stays current. */
   filesChanged: (changes: readonly WatchedFileChange[]) => void
+  /** Fork: hands the server the editor's text so it publishes diagnostics for it. */
+  open: (filePath: string, text: string) => Promise<void>
+  close: (filePath: string) => void
+  /** Null when the server publishes diagnostics itself, or the file is not open in it. */
+  pullDiagnostics: (filePath: string) => Promise<EditorDiagnostic[] | null>
   dispose: () => void
 }
 
@@ -32,8 +48,6 @@ const FILE_CHANGE_TYPES: Record<WatchedFileChange['type'], readonly number[]> = 
   delete: [3]
 }
 
-type Position = { line: number; character: number }
-type Range = { start: Position; end: Position }
 type IncomingMessage = {
   id?: number | string
   method?: string
@@ -44,69 +58,16 @@ type IncomingMessage = {
 
 const REQUEST_TIMEOUT_MS = 30_000
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
-}
-
-function readRange(value: unknown): Range | null {
-  if (!isRecord(value) || !isRecord(value.start)) {
-    return null
-  }
-  const { line, character } = value.start
-  return typeof line === 'number' && typeof character === 'number'
-    ? { start: { line, character }, end: { line, character } }
-    : null
-}
-
-function toLocation(value: unknown): LanguageServerLocation | null {
-  if (!isRecord(value)) {
-    return null
-  }
-  const uri = typeof value.targetUri === 'string' ? value.targetUri : value.uri
-  const range = readRange(value.targetSelectionRange ?? value.targetRange ?? value.range)
-  if (typeof uri !== 'string' || !uri.startsWith('file:') || !range) {
-    return null
-  }
-  return { filePath: fileURLToPath(uri), line: range.start.line, character: range.start.character }
-}
-
-export function readDefinitionLocations(result: unknown): LanguageServerLocation[] {
-  const items = Array.isArray(result) ? result : [result]
-  return items.flatMap((item) => {
-    const location = toLocation(item)
-    return location ? [location] : []
-  })
-}
-
-function markedStringToMarkdown(value: unknown): string | null {
-  if (typeof value === 'string') {
-    return value
-  }
-  if (isRecord(value) && typeof value.value === 'string') {
-    return typeof value.language === 'string'
-      ? `\`\`\`${value.language}\n${value.value}\n\`\`\``
-      : value.value
-  }
-  return null
-}
-
-// Why three shapes: LSP hover contents is MarkupContent, a MarkedString, or a MarkedString[].
-export function readHoverMarkdown(result: unknown): string | null {
-  const contents = isRecord(result) ? result.contents : null
-  const parts = (Array.isArray(contents) ? contents : [contents])
-    .map(markedStringToMarkdown)
-    .filter((part): part is string => Boolean(part?.trim()))
-  return parts.length > 0 ? parts.join('\n\n') : null
-}
-
 export function createLspSession({
   transport,
   rootPath,
-  serverName = 'language server'
+  serverName = 'language server',
+  onDiagnostics
 }: {
   transport: LspTransport
   rootPath: string
   serverName?: string
+  onDiagnostics?: (filePath: string, diagnostics: EditorDiagnostic[]) => void
 }): LspSession {
   const pending = new Map<
     number,
@@ -116,6 +77,7 @@ export function createLspSession({
   let nextId = 1
   let closed = false
   let ready = false
+  let pullsDiagnostics = false
   let initialized: Promise<void> | null = null
 
   const send = (message: LspMessage): void => {
@@ -162,6 +124,11 @@ export function createLspSession({
   transport.onData(
     createLspMessageReader((value) => {
       const message = value as IncomingMessage
+      const published = readPublishDiagnostics(message)
+      if (published) {
+        onDiagnostics?.(published.filePath, published.diagnostics)
+        return
+      }
       if (message.method && message.id !== undefined) {
         // Why answer server requests: an unanswered workspace/configuration stalls the server.
         const items = message.params?.items
@@ -185,7 +152,7 @@ export function createLspSession({
   const ensureInitialized = (): Promise<void> => {
     initialized ??= (async () => {
       const rootUri = pathToFileURL(rootPath).href
-      await request('initialize', {
+      const result = await request('initialize', {
         processId: process.pid,
         rootUri,
         workspaceFolders: [{ uri: rootUri, name: rootPath }],
@@ -196,12 +163,25 @@ export function createLspSession({
           textDocument: {
             definition: { linkSupport: true },
             hover: { contentFormat: ['markdown', 'plaintext'] },
-            references: {}
+            references: {},
+            completion: {
+              completionItem: {
+                snippetSupport: true,
+                documentationFormat: ['markdown', 'plaintext']
+              },
+              contextSupport: true
+            },
+            publishDiagnostics: { tagSupport: { valueSet: [1, 2] } },
+            diagnostic: { dynamicRegistration: false }
           }
         }
       })
       send({ method: 'initialized', params: {} })
       ready = true
+      pullsDiagnostics = Boolean(
+        (result as { capabilities?: { diagnosticProvider?: unknown } } | null)?.capabilities
+          ?.diagnosticProvider
+      )
     })()
     return initialized
   }
@@ -255,6 +235,17 @@ export function createLspSession({
       })
       return readHoverMarkdown(result)
     },
+    completion: async ({ filePath, text, line, character, triggerCharacter }) => {
+      await ensureInitialized()
+      const uri = syncDocument(filePath, text)
+      const result = await request('textDocument/completion', {
+        textDocument: { uri },
+        position: { line, character },
+        // LSP CompletionTriggerKind: Invoked = 1, TriggerCharacter = 2.
+        context: triggerCharacter ? { triggerKind: 2, triggerCharacter } : { triggerKind: 1 }
+      })
+      return readCompletions(result)
+    },
     references: async ({ filePath, text, line, character }) => {
       await ensureInitialized()
       const uri = syncDocument(filePath, text)
@@ -264,6 +255,24 @@ export function createLspSession({
         context: { includeDeclaration: true }
       })
       return Array.isArray(result) ? readDefinitionLocations(result) : []
+    },
+    open: async (filePath, text) => {
+      await ensureInitialized()
+      syncDocument(filePath, text)
+    },
+    close: (filePath) => {
+      const uri = pathToFileURL(filePath).href
+      if (documents.delete(uri)) {
+        send({ method: 'textDocument/didClose', params: { textDocument: { uri } } })
+      }
+    },
+    pullDiagnostics: async (filePath) => {
+      const uri = pathToFileURL(filePath).href
+      if (!pullsDiagnostics || !documents.has(uri)) {
+        return null
+      }
+      const result = await request('textDocument/diagnostic', { textDocument: { uri } })
+      return readDiagnosticList((result as { items?: unknown } | null)?.items)
     },
     filesChanged: (changes) => {
       // Why drop early changes: a server that is still starting reads the disk as it comes up.

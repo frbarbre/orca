@@ -58,7 +58,8 @@ export const createReviewCommentCreateAction = (
                 line: options.line,
                 startLine: options.startLine,
                 body,
-                prRepo: options?.prRepo ?? null
+                prRepo: options?.prRepo ?? null,
+                ...(options.subjectType ? { subjectType: options.subjectType } : {})
               },
               { timeoutMs: 30_000 }
             )
@@ -72,7 +73,8 @@ export const createReviewCommentCreateAction = (
               startLine: options.startLine,
               body,
               prRepo: options?.prRepo ?? null,
-              sourceContext: options?.sourceContext
+              sourceContext: options?.sourceContext,
+              ...(options.subjectType ? { subjectType: options.subjectType } : {})
             })
     } catch (err) {
       const error = err instanceof Error ? err.message : 'Failed to post review comment.'

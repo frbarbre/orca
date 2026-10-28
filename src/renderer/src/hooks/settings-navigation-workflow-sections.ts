@@ -113,7 +113,7 @@ export function buildWorkflowSettingsSections(
       title: translate('languageServers.title', 'Language Servers'),
       description: translate(
         'languageServers.description',
-        'Cmd+click, hover and references per language. Each runs a background process per project.'
+        'Cmd+click, hover and references per language, and lint squiggles. Each runs a background process per project.'
       ),
       icon: Braces,
       searchEntries: getLanguageServersSearchEntries(),

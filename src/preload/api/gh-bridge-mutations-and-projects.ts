@@ -127,6 +127,7 @@ export const ghMutationsAndProjectsApi = {
     line: number
     startLine?: number
     body: string
+    subjectType?: 'file'
   }): Promise<GitHubCommentResult> => ipcRenderer.invoke('gh:addPRReviewComment', args),
   listLabels: (args: {
     repoPath: string

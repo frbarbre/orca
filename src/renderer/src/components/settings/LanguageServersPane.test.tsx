@@ -25,15 +25,22 @@ describe('LanguageServersPane', () => {
 
   function render(
     languageServers: GlobalSettings['languageServers'],
-    updateSettings = vi.fn()
+    updateSettings = vi.fn(),
+    linters?: GlobalSettings['linters']
   ): ReturnType<typeof vi.fn> {
     act(() =>
       root.render(
-        <LanguageServersPane settings={{ languageServers }} updateSettings={updateSettings} />
+        <LanguageServersPane
+          settings={{ languageServers, linters }}
+          updateSettings={updateSettings}
+        />
       )
     )
     return updateSettings
   }
+
+  const linterCard = (linter: string) =>
+    container.querySelector<HTMLElement>(`[data-linter="${linter}"]`)
 
   const card = (language: string) =>
     container.querySelector<HTMLElement>(`[data-language-server="${language}"]`)
@@ -104,6 +111,93 @@ describe('LanguageServersPane', () => {
     render({ python: false })
     expect(card('python')?.querySelector('[role="radio"]')).toBeNull()
     expect(card('typescript')?.querySelector('[role="radio"]')).not.toBeNull()
+  })
+
+  it("turns a language's type errors off and keeps its server on", () => {
+    const updateSettings = render(undefined)
+
+    act(() =>
+      card('python')
+        ?.querySelector<HTMLElement>('[role="switch"][aria-label="Python type errors"]')
+        ?.click()
+    )
+
+    expect(updateSettings).toHaveBeenCalledWith({
+      languageServers: { python: { enabled: true, server: 'pyrefly', diagnostics: false } }
+    })
+  })
+
+  it("turns a language's suggestions off and keeps its type errors", () => {
+    const updateSettings = render({ typescript: { diagnostics: false } })
+
+    act(() =>
+      card('typescript')
+        ?.querySelector<HTMLElement>(
+          '[role="switch"][aria-label="TypeScript and JavaScript suggestions"]'
+        )
+        ?.click()
+    )
+
+    expect(updateSettings).toHaveBeenCalledWith({
+      languageServers: {
+        typescript: { enabled: true, server: 'tsgo', diagnostics: false, completions: false }
+      }
+    })
+  })
+
+  it.each(['autocomplete', 'suggestions', 'completion'])(
+    'finds the suggestion switches by searching "%s"',
+    (query) => {
+      expect(matchesSettingsSearch(query, getLanguageServersSearchEntries())).toBe(true)
+    }
+  )
+
+  it('shows type errors as on until turned off', () => {
+    render({ typescript: { diagnostics: false } })
+    const typeErrors = (language: string, label: string) =>
+      card(language)?.querySelector(`[role="switch"][aria-label="${label} type errors"]`)
+
+    expect(typeErrors('python', 'Python')?.getAttribute('aria-checked')).toBe('true')
+    expect(
+      typeErrors('typescript', 'TypeScript and JavaScript')?.getAttribute('aria-checked')
+    ).toBe('false')
+  })
+
+  it.each(['type errors', 'errors'])('finds the type-error switches by searching "%s"', (query) => {
+    expect(matchesSettingsSearch(query, getLanguageServersSearchEntries())).toBe(true)
+  })
+
+  it('turns oxlint off and keeps the language servers as they were', () => {
+    const updateSettings = render({ typescript: false })
+    expect(linterCard('oxlint')?.textContent).toContain('oxlint')
+
+    act(() => linterCard('oxlint')?.querySelector<HTMLElement>('[role="switch"]')?.click())
+
+    expect(updateSettings).toHaveBeenCalledWith({ linters: { oxlint: { enabled: false } } })
+  })
+
+  it("saves oxlint's path when the field is left", () => {
+    const updateSettings = render(undefined, vi.fn(), { oxlint: { enabled: true } })
+    const input = linterCard('oxlint')?.querySelector<HTMLInputElement>('input')
+    expect(input?.placeholder).toContain('oxlint')
+    act(() => {
+      const setValue = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set
+      setValue?.call(input, '/opt/bin/oxlint')
+      input?.dispatchEvent(new Event('input', { bubbles: true }))
+    })
+    act(() => input?.dispatchEvent(new FocusEvent('focusout', { bubbles: true })))
+    expect(updateSettings).toHaveBeenCalledWith({
+      linters: { oxlint: { enabled: true, command: '/opt/bin/oxlint' } }
+    })
+  })
+
+  it('hides the path of a linter that is off', () => {
+    render(undefined, vi.fn(), { oxlint: { enabled: false } })
+    expect(linterCard('oxlint')?.querySelector('input')).toBeNull()
+  })
+
+  it.each(['lint', 'oxlint', 'squiggles'])('finds the linters by searching "%s"', (query) => {
+    expect(matchesSettingsSearch(query, getLanguageServersSearchEntries())).toBe(true)
   })
 
   it.each(['language server', 'pyright', 'basedpyright', 'tsgo', 'go to definition', 'python'])(

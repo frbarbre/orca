@@ -16,6 +16,7 @@ import {
   NativeChatMarkdownImageOwnerContext,
   NativeChatMarkdownImageOwnerProvider
 } from './native-chat-markdown-image-owner'
+import { NativeChatImageStepperProvider } from './native-chat-image-stepper'
 import { useNativeChatLinkActions } from './use-native-chat-link-actions'
 import {
   nativeChatFanoutFixture,
@@ -119,16 +120,18 @@ function Transcript({
   return (
     <TooltipProvider>
       <NativeChatMarkdownImageOwnerContext.Provider value={owner}>
-        <div ref={rootRef}>
-          <NativeChatMarkdown
-            content={content}
-            variant={variant}
-            growing={growing}
-            onLinkClick={onLinkClick}
-            allowFileUriLinks
-          />
-          <LinkActionPopover request={linkActionRequest} onClose={closeLinkActions} />
-        </div>
+        <NativeChatImageStepperProvider>
+          <div ref={rootRef}>
+            <NativeChatMarkdown
+              content={content}
+              variant={variant}
+              growing={growing}
+              onLinkClick={onLinkClick}
+              allowFileUriLinks
+            />
+            <LinkActionPopover request={linkActionRequest} onClose={closeLinkActions} />
+          </div>
+        </NativeChatImageStepperProvider>
       </NativeChatMarkdownImageOwnerContext.Provider>
     </TooltipProvider>
   )
@@ -503,6 +506,19 @@ describe('native chat Markdown image preview', () => {
       }
     }
   )
+
+  it('steps to the next and previous image of the chat with the arrow keys', async () => {
+    render(<Transcript content={'![First](first.png)\n\nSome prose\n\n![Second](second.png)'} />)
+    fireEvent.click(screen.getByRole('button', { name: 'View image: First' }))
+    expect(screen.getByRole('dialog', { name: 'First' })).toBeInTheDocument()
+
+    fireEvent.keyDown(screen.getByRole('dialog', { name: 'First' }), { key: 'ArrowRight' })
+    await waitFor(() => expect(screen.getByRole('dialog', { name: 'Second' })).toBeInTheDocument())
+    await waitFor(() => expect(screen.queryByRole('dialog', { name: 'First' })).toBeNull())
+
+    fireEvent.keyDown(screen.getByRole('dialog', { name: 'Second' }), { key: 'ArrowLeft' })
+    await waitFor(() => expect(screen.getByRole('dialog', { name: 'First' })).toBeInTheDocument())
+  })
 
   it('uses one keyboard trigger for a linked image and returns focus after Escape', async () => {
     const user = userEvent.setup()

@@ -79,6 +79,32 @@ describe('a review summary', () => {
     expect(screen.queryByRole('menuitem', { name: 'Edit' })).not.toBeInTheDocument()
   })
 
+  it('offers Delete on an inline review comment GitHub lets this viewer delete', async () => {
+    renderRow({
+      path: 'src/a.ts',
+      threadId: 'PRRT_1',
+      reactionSubjectId: 'PRRC_1',
+      viewerCanUpdate: true,
+      viewerCanDelete: true
+    })
+    await openMoreMenu()
+
+    expect(screen.getByRole('menuitem', { name: 'Delete' })).toBeInTheDocument()
+  })
+
+  it('withholds Delete on an inline review comment GitHub does not let this viewer delete', async () => {
+    renderRow({
+      path: 'src/a.ts',
+      threadId: 'PRRT_1',
+      reactionSubjectId: 'PRRC_1',
+      viewerCanUpdate: true,
+      viewerCanDelete: false
+    })
+    await openMoreMenu()
+
+    expect(screen.queryByRole('menuitem', { name: 'Delete' })).not.toBeInTheDocument()
+  })
+
   it('leaves a plain comment unmarked', () => {
     renderRow({})
 

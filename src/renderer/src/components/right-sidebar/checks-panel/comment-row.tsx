@@ -6,6 +6,7 @@ import { CommentReactions } from '@/components/github/CommentReactions'
 import { CommentEditor } from './comment-editor'
 import { isBotPRComment } from '../../../../../shared/pr-comment-audience'
 import {
+  isDeletablePublishedReviewComment,
   isEditablePublishedReviewComment,
   isEditablePublishedReviewSummary
 } from '@/components/pending-review/editable-published-comment'
@@ -79,8 +80,7 @@ export function CommentRow({
   const reveal = usePRCommentReveal(comment.url)
   const automated = isBotPRComment(comment, botAuthorOverrides)
   const canMutateComment = forceMutable || isMutablePRConversationComment(comment)
-  // Why edit is wider than delete: the provider lets the author rewrite an inline review
-  // comment, but orca has no path for removing one, so the menu must not offer it.
+  const canDeleteComment = canMutateComment || isDeletablePublishedReviewComment(comment)
   const canEditComment =
     canMutateComment ||
     isEditablePublishedReviewComment(comment) ||
@@ -244,7 +244,7 @@ export function CommentRow({
         comment={comment}
         botAuthorOverrides={botAuthorOverrides}
         onStartEdit={canEditComment && onEditComment ? handleStartEdit : undefined}
-        onDelete={canMutateComment && onDeleteComment ? handleDelete : undefined}
+        onDelete={canDeleteComment && onDeleteComment ? handleDelete : undefined}
         onQueueForAgent={!isReply ? onQueueForAgent : undefined}
       />
     </div>

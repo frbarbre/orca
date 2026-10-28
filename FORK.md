@@ -100,22 +100,22 @@ Two rules, both learned the hard way:
    arm it — a fork build then silently checks upstream's releases and offers an upstream version.
    `src/main/updater-fork-feed-lazy.test.ts` guards this; do not collapse those functions to consts.
 
-| File                                                    | What is ours                                                                                                                                                                                      |
-| ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `src/main/updater/updater-manual-install.ts`            | Whole file (new). `armForkUpdateChannel` + the manual-install helpers.                                                                                                                            |
-| `src/main/index.ts`                                     | The `armForkUpdateChannel(app.isPackaged)` call and its import. If upstream restructures startup, move the call — keep it before any updater setup runs.                                          |
-| `src/main/updater/updater-setup.ts`                     | `ORCA_UPDATE_FEED_URL ??` on the feed URL, and the `!isManualInstallOnlyUpdate()` term in `autoInstallOnAppQuit`.                                                                                 |
-| `src/main/updater/updater-release-feed.ts`              | `ORCA_UPDATE_FEED_URL ??` on the fallback feed URL.                                                                                                                                               |
-| `src/main/updater-prerelease-feed.ts`                   | `repoBase()` / `atomFeedUrl()` / `releasesDownloadBase()` / `tagHrefPattern()` and the regexes derived from them. Upstream hardcodes the slug; keep it derived, and keep these as **functions**.  |
-| `src/main/updater/updater-download-install.ts`          | The `isManualInstallOnlyUpdate()` early return at the top of `downloadUpdate` and `quitAndInstall`.                                                                                               |
-| `config/electron-builder.config.cjs`                    | `owner: process.env.ORCA_PUBLISH_OWNER ?? 'frbarbre'` and `releaseType: … : 'release'`.                                                                                                           |
-| `.github/workflows/fork-release.yml`                    | Whole file (new).                                                                                                                                                                                 |
-| `config/scripts/fork-release-notes.mjs` (+ test)        | Whole file (new). Resolves the fork version and writes the two-part release notes.                                                                                                                |
-| `config/scripts/test-fork-features.sh`                  | Whole file (new). Runs every test a fork commit touched; part of [Verify](#verify).                                                                                                               |
-| `.github/workflows/fork-verify.yml`                     | Whole file (new). [Verify](#verify) on pull requests.                                                                                                                                             |
-| `config/scripts/fork-disable-upstream-pr-workflows.mjs` | Whole file (new). Keeps upstream's pull-request workflows disabled on this repository.                                                                                                            |
-| `src/shared/release-channel.ts`                         | `setMainReleaseRepoOverride` and the `mainReleaseRepo()` it feeds. `MAIN_RELEASE_REPO` itself stays upstream's — same rule as the updater URLs.                                                   |
-| `src/renderer/src/main.tsx`                             | Arms that override from `VITE_ORCA_RELEASES_REPO`. The renderer cannot read the main process's env, so release-notes links there resolved to upstream's repo — a 404 for every fork-only version. |
+| File                                                                            | What is ours                                                                                                                                                                                                            |
+| ------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/main/updater/updater-manual-install.ts`                                    | Whole file (new). `armForkUpdateChannel` + the manual-install helpers.                                                                                                                                                  |
+| `src/main/index.ts`                                                             | The `armForkUpdateChannel(app.isPackaged)` call and its import. If upstream restructures startup, move the call — keep it before any updater setup runs.                                                                |
+| `src/main/updater/updater-setup.ts`                                             | `ORCA_UPDATE_FEED_URL ??` on the feed URL, and the `!isManualInstallOnlyUpdate()` term in `autoInstallOnAppQuit`.                                                                                                       |
+| `src/main/updater/updater-release-feed.ts`                                      | The `ORCA_UPDATE_FEED_URL` early return ahead of upstream's stable-tag fallback.                                                                                                                                        |
+| `src/main/updater-release-repo.ts` (new), `src/main/updater-prerelease-feed.ts` | `repoBase()` / `atomFeedUrl()` / `releasesDownloadBase()` / `tagHrefPattern()` and the patterns derived from them, imported by the feed. Upstream hardcodes the slug; keep it derived, and keep these as **functions**. |
+| `src/main/updater/updater-download-install.ts`                                  | The `isManualInstallOnlyUpdate()` early return at the top of `downloadUpdate` and `quitAndInstall`.                                                                                                                     |
+| `config/electron-builder.config.cjs`                                            | `owner: process.env.ORCA_PUBLISH_OWNER ?? 'frbarbre'` and `releaseType: … : 'release'`.                                                                                                                                 |
+| `.github/workflows/fork-release.yml`                                            | Whole file (new).                                                                                                                                                                                                       |
+| `config/scripts/fork-release-notes.mjs` (+ test)                                | Whole file (new). Resolves the fork version and writes the two-part release notes.                                                                                                                                      |
+| `config/scripts/test-fork-features.sh`                                          | Whole file (new). Runs every test a fork commit touched; part of [Verify](#verify).                                                                                                                                     |
+| `.github/workflows/fork-verify.yml`                                             | Whole file (new). [Verify](#verify) on pull requests.                                                                                                                                                                   |
+| `config/scripts/fork-disable-upstream-pr-workflows.mjs`                         | Whole file (new). Keeps upstream's pull-request workflows disabled on this repository.                                                                                                                                  |
+| `src/shared/release-channel.ts`                                                 | `setMainReleaseRepoOverride` and the `mainReleaseRepo()` it feeds. `MAIN_RELEASE_REPO` itself stays upstream's — same rule as the updater URLs.                                                                         |
+| `src/renderer/src/main.tsx`                                                     | Arms that override from `VITE_ORCA_RELEASES_REPO`. The renderer cannot read the main process's env, so release-notes links there resolved to upstream's repo — a 404 for every fork-only version.                       |
 
 #### The fork installs its own updates (macOS)
 
@@ -1772,7 +1772,7 @@ The workflow also confirms the fork channel actually survived the merge — a cl
 ```bash
 # Each must print a match. A miss means the update channel was lost in the merge.
 grep -n "armForkUpdateChannel" src/main/index.ts
-grep -n "ORCA_RELEASES_REPO_URL" src/main/updater-prerelease-feed.ts
+grep -n "ORCA_RELEASES_REPO_URL" src/main/updater-release-repo.ts
 grep -n "ORCA_UPDATE_FEED_URL" src/main/updater/updater-setup.ts src/main/updater/updater-release-feed.ts
 grep -n "isManualInstallOnlyUpdate" src/main/updater/updater-download-install.ts
 grep -n "isForkSelfInstallUpdate" src/main/updater/updater-download-install.ts
@@ -1793,6 +1793,59 @@ blaming the merge for a failure, check whether upstream fixed it after the merge
 sync hit exactly that (#23062 landed two commits later) and was fixed by merging again.
 
 ### Sync log
+
+**1.4.214 → 1.4.214** (`293bfe795d..36d295628e`, 1058 upstream commits, eighty-three conflicts)
+
+- `package.json` still says 1.4.214, so the branch name repeats an eleventh time; the earlier pull
+  requests for it are merged, so a new one is opened on the same name.
+- Upstream's repository-wide comment cleanup (#33249) rewrote comments beside fork code in most of
+  the conflicted files. Hunks where upstream changed only comments kept the fork's code (with the
+  old comment); hunks where the fork changed only comments took upstream's. A diff3 conflict style
+  (`git checkout --conflict=diff3`) makes those easy to tell apart.
+- Generated and locale files — `bundled-skill-guides.ts`, `en.json`, `en-runtime-required.json`, the
+  six translated locales: took upstream's and regenerated (`pnpm install`,
+  `generate:bundled-skill-guides`, `sync:localization-catalog`, `sync:localization-runtime-catalog`).
+  The RPC catalog was already current.
+- `updater-release-feed.ts` — upstream's fallback now pins the latest stable tag
+  (`fetchLatestStableReleaseTag`, hardcoded to stablyai) instead of `releases/latest/download`.
+  The fork returns early on `ORCA_UPDATE_FEED_URL`, and a fork fix commit derives the stable-tag
+  lookup from the release repo too. The feed file was past its 300-line cap, so the fork's URL
+  derivation moved to `updater-release-repo.ts`; the Verify grep in `fork-verify.yml` follows it.
+- `updater-setup.ts`, `runtime-file-watcher-removal.ts`, `main-window-shortcut-routing.ts`,
+  `main-process-ipc-bootstrap.ts`, `use-app-shell-services.ts`, `ui-slice-contract-preferences.ts`,
+  `repo-types.ts`, `panel-content.tsx`, `monaco-setup.ts`, `tab-drag-pointer-sensor.ts`,
+  `checks-list.tsx`, `use-checks-panel-comment-mutations.tsx`, `branch-entry-row.tsx`: both sides
+  added lines or imports; kept both.
+- `filesystem.ts` and `RepositoryPane.tsx` moved into `ipc/filesystem/` and `settings/repository/`;
+  took the moves with the fork's imports re-pointed (`PythonEnvironmentSection` and
+  `fork-repository-sections` stay in `settings/`).
+- `register-app-menu.ts` — upstream moved Reload / Force Reload / DevTools into
+  `createAppMenuReloadAndDevToolsItems` and quit into `createAppMenuQuitItems`. Took both; the
+  fork's DevTools-on-the-window item is gone, and Paste stays in `app-menu-paste-item.ts`.
+- Worktree removal — upstream now finishes any partial removal Git deregistered, macOS "Directory
+  not empty" included, which is what the fork's Finder fix did, so `local-worktree-removal-recovery.ts`
+  (+ test) is upstream's. Upstream also added native Windows removal; `worktree-removal-leftover.ts`
+  and `runtime-interrupted-local-worktree-removal.ts` keep the fork's `provesFailedRemovalLeftover`
+  beside it (off the native path). `worktree-failed-removal.test.ts` is upstream's, which dropped
+  the retry tests the fork's leftover cases sat in. This leftover-folder work is not yet listed in
+  [What this fork owns](#what-this-fork-owns).
+- `use-global-keybindings.ts` — upstream folded the editable/floating-terminal checks into
+  `globalShortcutTargetYields`; the fork's group-focus chord runs just before it.
+- `HostedReviewActions.tsx` — upstream reworked stacked-PR merging; kept the fork's panel without
+  merge buttons (§13). `CommentMarkdown.tsx` — upstream's math rendering inside the fork's
+  `MediaGalleryProvider`. `section-header.tsx` — upstream's pluralized conflict count in the fork's
+  header. `TerminalPaneHeaderOverlay.tsx` — upstream's `canCloseTerminalPane` plus the web-view leaf
+  check. `textarea.tsx` — fork's `seamless` beside upstream's `composite`.
+- Deletions: took upstream's of `activity-bar-overflow.test.ts`,
+  `source-control-branch-section-heading.test.tsx` (§2's re-apply has nothing left to go into) and
+  `card-properties.test.ts`; kept the fork's of `commit-surface.tsx` and the right-panel composer's
+  IME test and focus timers.
+- **Found after the merge, not by git** (fork fix commit): upstream moved `ipc/filesystem-path-containment`,
+  the parcel watcher process files (`ipc/filesystem/watcher-process/`), `filesystem-watcher-ignore`
+  (`ipc/filesystem/watchers/`) and the source-control `section-order` (now
+  `shared/source-control-section-order.ts`). Upstream renamed the shared "Switch to terminal view"
+  key's text, so the Claude web error card has its own key; the chat View item takes upstream's
+  nullable shortcut label.
 
 **1.4.214 → 1.4.214** (`88aa3f27ce..293bfe795d`, 604 upstream commits, thirty-five conflicts)
 

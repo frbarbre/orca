@@ -78,12 +78,14 @@ import type {
 import type { ExecutionHostId } from '../shared/execution-host'
 import type {
   LanguageServerDefinitionResult,
+  LanguageServerDocument,
   LanguageServerHoverResult,
   LanguageServerLanguage,
   LanguageServerReferencesResult,
   LanguageServerRequest
 } from '../shared/language-server'
-import type { LintDiagnosticsEvent, LintRequest, LintSyncResult, LinterId } from '../shared/linter'
+import type { DiagnosticsSyncResult, EditorDiagnosticsEvent } from '../shared/editor-diagnostics'
+import type { LintRequest, LinterId } from '../shared/linter'
 import type {
   GitBlameLinks,
   GitBlameLinksRequest,
@@ -173,12 +175,15 @@ export type PreloadApi = {
     hover: (args: LanguageServerRequest) => Promise<LanguageServerHoverResult>
     references: (args: LanguageServerRequest) => Promise<LanguageServerReferencesResult>
     stop: (args: { language: LanguageServerLanguage }) => Promise<void>
+    sync: (args: LanguageServerDocument) => Promise<DiagnosticsSyncResult>
+    closeDocument: (args: { language: LanguageServerLanguage; filePath: string }) => Promise<void>
+    onDiagnostics: (callback: (event: EditorDiagnosticsEvent) => void) => () => void
   }
   lint: {
-    sync: (args: LintRequest) => Promise<LintSyncResult>
+    sync: (args: LintRequest) => Promise<DiagnosticsSyncResult>
     close: (args: { linter: LinterId; filePath: string }) => Promise<void>
     stop: (args: { linter: LinterId }) => Promise<void>
-    onDiagnostics: (callback: (event: LintDiagnosticsEvent) => void) => () => void
+    onDiagnostics: (callback: (event: EditorDiagnosticsEvent) => void) => () => void
   }
   materialIcons: {
     read: () => Promise<MaterialIconConfigSnapshot>

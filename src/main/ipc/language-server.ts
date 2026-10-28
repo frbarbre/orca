@@ -1,6 +1,7 @@
 import { existsSync, readFileSync, statSync } from 'node:fs'
 import { app, BrowserWindow, ipcMain } from 'electron'
 import { isLanguageServerLanguage, type LanguageServerRequest } from '../../shared/language-server'
+import type { EditorDiagnosticsEvent } from '../../shared/editor-diagnostics'
 import { isLinterId, type LintRequest } from '../../shared/linter'
 import { createLintService } from '../language-server/lint-service'
 import { createLanguageServerService } from '../language-server/language-server-service'
@@ -95,7 +96,16 @@ function readPreview(filePath: string, line: number): string | null {
   )
 }
 
-// Fork: Cmd+click and hover ask a language server (pyrefly for Python, tsgo for TypeScript).
+// Fork: Cmd+click, hover and type errors come from a language server (pyrefly for Python, tsgo
+// for TypeScript); lint squiggles from each project's linter.
+function broadcast(channel: string, event: EditorDiagnosticsEvent): void {
+  for (const window of BrowserWindow.getAllWindows()) {
+    if (!window.isDestroyed()) {
+      window.webContents.send(channel, event)
+    }
+  }
+}
+
 export function registerLanguageServerHandlers(): void {
   const service = createLanguageServerService({
     exists: existsSync,
@@ -103,18 +113,13 @@ export function registerLanguageServerHandlers(): void {
     readFile,
     startSession: startLanguageServerSession,
     watchFiles: createProjectFileWatcher(),
-    admit: (projectRoot) => beginWatcherInstall(projectRoot)
+    admit: (projectRoot) => beginWatcherInstall(projectRoot),
+    onDiagnostics: (event) => broadcast('languageServer:diagnostics', event)
   })
   const lint = createLintService({
     exists: existsSync,
     startSession: startLanguageServerSession,
-    onDiagnostics: (event) => {
-      for (const window of BrowserWindow.getAllWindows()) {
-        if (!window.isDestroyed()) {
-          window.webContents.send('lint:diagnostics', event)
-        }
-      }
-    },
+    onDiagnostics: (event) => broadcast('lint:diagnostics', event),
     admit: (projectRoot) => beginWatcherInstall(projectRoot)
   })
   setLanguageServerRemovalStop((root) => {
@@ -155,6 +160,18 @@ export function registerLanguageServerHandlers(): void {
     return request
       ? service.references(request)
       : { ok: false, error: 'Invalid language server request.' }
+  })
+  ipcMain.handle('languageServer:sync', async (_event, args: unknown) => {
+    const request = readRequest({ ...(args as object), line: 0, character: 0 })
+    return request
+      ? service.sync(request)
+      : { ok: false, error: 'Invalid language server request.' }
+  })
+  ipcMain.handle('languageServer:close', (_event, args: unknown) => {
+    const { language, filePath } = (args ?? {}) as { language?: unknown; filePath?: unknown }
+    if (isLanguageServerLanguage(language) && typeof filePath === 'string') {
+      service.closeDocument({ language, filePath })
+    }
   })
   ipcMain.handle('languageServer:stop', (_event, args: unknown) => {
     const language = (args as { language?: unknown } | null)?.language

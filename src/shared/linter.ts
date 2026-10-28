@@ -65,23 +65,3 @@ export type LintRequest = {
   repoRoot: string | null
   text: string
 }
-
-/** Zero-based, as the language server reports it. Severity is LSP's: 1 error to 4 hint. */
-export type LintDiagnostic = {
-  line: number
-  character: number
-  endLine: number
-  endCharacter: number
-  severity: 1 | 2 | 3 | 4
-  code?: string
-  href?: string
-  message: string
-}
-
-export type LintSyncResult = { ok: true } | { ok: false; error: string }
-
-export type LintDiagnosticsEvent = {
-  linter: LinterId
-  filePath: string
-  diagnostics: LintDiagnostic[]
-}

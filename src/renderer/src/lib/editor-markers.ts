@@ -1,12 +1,12 @@
-import { LINTERS, type LintDiagnostic, type LinterId } from '../../../shared/linter'
+import type { EditorDiagnostic } from '../../../shared/editor-diagnostics'
 
 type MarkerSeverities = { Hint: number; Info: number; Warning: number; Error: number }
 
 const SEVERITY_BY_LSP = { 1: 'Error', 2: 'Warning', 3: 'Info', 4: 'Hint' } as const
 
-export function toLintMarker<U>(
-  linter: LinterId,
-  diagnostic: LintDiagnostic,
+export function toEditorMarker<U>(
+  source: string,
+  diagnostic: EditorDiagnostic,
   severity: MarkerSeverities,
   parseUri: (href: string) => U
 ): {
@@ -17,6 +17,7 @@ export function toLintMarker<U>(
   severity: number
   source: string
   code?: string | { value: string; target: U }
+  tags?: number[]
   message: string
 } {
   const { code, href } = diagnostic
@@ -26,8 +27,10 @@ export function toLintMarker<U>(
     endLineNumber: diagnostic.endLine + 1,
     endColumn: diagnostic.endCharacter + 1,
     severity: severity[SEVERITY_BY_LSP[diagnostic.severity]],
-    source: LINTERS[linter].name,
+    source,
     ...(code ? { code: href ? { value: code, target: parseUri(href) } : code } : {}),
+    // Why as is: Monaco's MarkerTag numbers LSP's tags the same, 1 unnecessary and 2 deprecated.
+    ...(diagnostic.tags ? { tags: [...diagnostic.tags] } : {}),
     message: diagnostic.message
   }
 }

@@ -2,11 +2,18 @@ import { isAbsolute, relative } from 'node:path'
 import {
   languageServerForFile,
   type LanguageServerDefinitionResult,
+  type LanguageServerDocument,
   type LanguageServerHoverResult,
   type LanguageServerLanguage,
   type LanguageServerReferencesResult,
   type LanguageServerRequest
 } from '../../shared/language-server'
+import type {
+  DiagnosticsSyncResult,
+  EditorDiagnostic,
+  EditorDiagnosticsEvent
+} from '../../shared/editor-diagnostics'
+import { createHemolintFilter } from './hemolint-baseline'
 import { resolveLaunch, type LanguageServerLaunch } from './language-server-launchers'
 import type { LspSession, WatchedFileChange } from './lsp-session'
 import { createLspSessionPool } from './lsp-session-pool'
@@ -17,8 +24,26 @@ const MAX_REFERENCE_FILES = 50
 
 type Session = Pick<
   LspSession,
-  'closed' | 'definition' | 'hover' | 'references' | 'filesChanged' | 'dispose'
+  | 'closed'
+  | 'definition'
+  | 'hover'
+  | 'references'
+  | 'filesChanged'
+  | 'dispose'
+  | 'open'
+  | 'close'
+  | 'pullDiagnostics'
 >
+
+/** A file shown in an editor, whose errors the editor wants. */
+type DiagnosedFile = {
+  language: LanguageServerLanguage
+  server: string
+  worktreeRoot: string
+  text: string
+  key: string
+  session: Session
+}
 
 /** Watches a project for disk changes; returns the call that stops watching. */
 export type WatchProjectFiles = (
@@ -41,12 +66,17 @@ export function createLanguageServerService({
   readFile,
   startSession,
   watchFiles,
-  admit
+  admit,
+  onDiagnostics
 }: {
   exists: (path: string) => boolean
   readPreview: (filePath: string, line: number) => string | null
   readFile: (filePath: string) => string | null
-  startSession: (launch: LanguageServerLaunch) => Session
+  startSession: (
+    launch: LanguageServerLaunch,
+    publish: (filePath: string, diagnostics: EditorDiagnostic[]) => void
+  ) => Session
+  onDiagnostics?: (event: EditorDiagnosticsEvent) => void
   watchFiles?: WatchProjectFiles
   /** Admits a server into its project, throwing while the project is being removed; the returned
    *  call releases it when the server stops. */
@@ -55,12 +85,52 @@ export function createLanguageServerService({
   definition: (request: LanguageServerRequest) => Promise<LanguageServerDefinitionResult>
   hover: (request: LanguageServerRequest) => Promise<LanguageServerHoverResult>
   references: (request: LanguageServerRequest) => Promise<LanguageServerReferencesResult>
+  /** Fork: hands the server an editor's text; its errors arrive through `onDiagnostics`. */
+  sync: (document: LanguageServerDocument) => Promise<DiagnosticsSyncResult>
+  closeDocument: (args: { language: LanguageServerLanguage; filePath: string }) => void
   stopLanguage: (language: LanguageServerLanguage) => void
   stopUnder: (root: string) => void
   disposeAll: () => void
 } {
   const launches = new Map<string, LanguageServerLaunch>()
   const lastLaunchByWorktree = new Map<string, LanguageServerLaunch>()
+  const diagnosed = new Map<string, DiagnosedFile>()
+  const hideBaselined = createHemolintFilter({ exists, readFile })
+
+  const report = (
+    language: LanguageServerLanguage,
+    filePath: string,
+    diagnostics: EditorDiagnostic[]
+  ): void => {
+    const file = diagnosed.get(filePath)
+    if (!file || file.language !== language) {
+      return
+    }
+    const { server, worktreeRoot, text } = file
+    // Why pyrefly only: hemolint keys a baseline by the tool that found it.
+    const shown =
+      server === 'pyrefly'
+        ? hideBaselined({ tool: 'pyrefly', filePath, worktreeRoot, text, diagnostics })
+        : diagnostics
+    onDiagnostics?.({ source: language, filePath, diagnostics: shown })
+  }
+
+  const pull = async (filePath: string, file: DiagnosedFile): Promise<void> => {
+    const diagnostics = await file.session.pullDiagnostics(filePath).catch(() => null)
+    if (diagnostics) {
+      report(file.language, filePath, diagnostics)
+    }
+  }
+
+  // Why every open file: a change to one file can fix or break the files that import it.
+  const recheck = async (key: string, except?: string): Promise<void> => {
+    for (const [filePath, file] of diagnosed) {
+      if (file.key === key && filePath !== except) {
+        await pull(filePath, file)
+      }
+    }
+  }
+
   const pool = createLspSessionPool<Session>({
     start: (key) => {
       const launch = launches.get(key)
@@ -70,14 +140,17 @@ export function createLanguageServerService({
       const release = admit?.(launch.projectRoot)
       let session: Session
       try {
-        session = startSession(launch)
+        session = startSession(launch, (filePath, diagnostics) =>
+          report(launch.language, filePath, diagnostics)
+        )
       } catch (error) {
         release?.()
         throw error
       }
-      const stopWatching = watchFiles?.(launch.projectRoot, (changes) =>
+      const stopWatching = watchFiles?.(launch.projectRoot, (changes) => {
         session.filesChanged(changes)
-      )
+        void recheck(key)
+      })
       if (!stopWatching && !release) {
         return session
       }
@@ -91,6 +164,9 @@ export function createLanguageServerService({
         hover: (request) => session.hover(request),
         references: (request) => session.references(request),
         filesChanged: (changes) => session.filesChanged(changes),
+        open: (filePath, text) => session.open(filePath, text),
+        close: (filePath) => session.close(filePath),
+        pullDiagnostics: (filePath) => session.pullDiagnostics(filePath),
         dispose: () => {
           stopWatching?.()
           session.dispose()
@@ -104,7 +180,7 @@ export function createLanguageServerService({
 
   const withSession = async <T>(
     request: LanguageServerRequest,
-    ask: (session: Session) => Promise<T>
+    ask: (session: Session, key: string) => Promise<T>
   ): Promise<{ ok: true; value: T } | { ok: false; error: string }> => {
     const { language, filePath, worktreeRoot } = request
     if (
@@ -127,13 +203,34 @@ export function createLanguageServerService({
     const key = sessionKey(launch)
     launches.set(key, launch)
     try {
-      return { ok: true, value: await ask(pool.acquire(key)) }
+      return { ok: true, value: await ask(pool.acquire(key), key) }
     } catch (error) {
       return { ok: false, error: error instanceof Error ? error.message : String(error) }
     }
   }
 
   return {
+    sync: async (document) => {
+      const { language, server, filePath, worktreeRoot, text } = document
+      const result = await withSession(
+        { ...document, line: 0, character: 0 },
+        async (session, key) => {
+          const file = { language, server, worktreeRoot, text, key, session }
+          diagnosed.set(filePath, file)
+          await session.open(filePath, text)
+          await pull(filePath, file)
+          await recheck(key, filePath)
+        }
+      )
+      return result.ok ? { ok: true } : result
+    },
+    closeDocument: ({ language, filePath }) => {
+      const file = diagnosed.get(filePath)
+      if (file?.language === language) {
+        diagnosed.delete(filePath)
+        file.session.close(filePath)
+      }
+    },
     definition: async (request) => {
       const { filePath, text, line, character } = request
       const result = await withSession(request, (session) =>

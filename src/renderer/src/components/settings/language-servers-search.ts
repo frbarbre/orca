@@ -13,7 +13,9 @@ export const getLanguageServersSearchEntries = createLocalizedCatalog(() => {
     ...translateSearchKeyword('languageServers.search.goToDefinition', 'go to definition'),
     ...translateSearchKeyword('languageServers.search.hover', 'hover'),
     ...translateSearchKeyword('languageServers.search.references', 'references'),
-    ...translateSearchKeyword('languageServers.search.lsp', 'lsp', { englishOnly: true })
+    ...translateSearchKeyword('languageServers.search.lsp', 'lsp', { englishOnly: true }),
+    ...translateSearchKeyword('languageServers.search.typeErrors', 'type errors'),
+    ...translateSearchKeyword('languageServers.search.errors', 'errors')
   ]
   const lint = [
     ...translateSearchKeyword('languageServers.search.lint', 'lint'),

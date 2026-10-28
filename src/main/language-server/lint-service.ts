@@ -1,11 +1,10 @@
 import { isAbsolute, relative } from 'node:path'
 import type {
-  LintDiagnostic,
-  LintDiagnosticsEvent,
-  LintRequest,
-  LintSyncResult,
-  LinterId
-} from '../../shared/linter'
+  DiagnosticsSyncResult,
+  EditorDiagnostic,
+  EditorDiagnosticsEvent
+} from '../../shared/editor-diagnostics'
+import type { LintRequest, LinterId } from '../../shared/linter'
 import { resolveLinterLaunch, type LinterLaunch } from './linter-launch'
 import type { LspSession } from './lsp-session'
 import { createLspSessionPool } from './lsp-session-pool'
@@ -31,13 +30,13 @@ export function createLintService({
   exists: (path: string) => boolean
   startSession: (
     launch: LinterLaunch,
-    publish: (filePath: string, diagnostics: LintDiagnostic[]) => void
+    publish: (filePath: string, diagnostics: EditorDiagnostic[]) => void
   ) => LintSession
-  onDiagnostics: (event: LintDiagnosticsEvent) => void
+  onDiagnostics: (event: EditorDiagnosticsEvent) => void
   /** Admits a server into its project, throwing while the project is being removed. */
   admit?: (projectRoot: string) => () => void
 }): {
-  sync: (request: LintRequest) => Promise<LintSyncResult>
+  sync: (request: LintRequest) => Promise<DiagnosticsSyncResult>
   close: (args: { linter: LinterId; filePath: string }) => void
   stopLinter: (linter: LinterId) => void
   stopUnder: (root: string) => void
@@ -54,7 +53,7 @@ export function createLintService({
       const release = admit?.(launch.projectRoot)
       try {
         const session = startSession(launch, (filePath, diagnostics) =>
-          onDiagnostics({ linter: launch.linter, filePath, diagnostics })
+          onDiagnostics({ source: launch.linter, filePath, diagnostics })
         )
         return release
           ? {

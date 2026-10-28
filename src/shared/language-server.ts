@@ -88,7 +88,7 @@ export const LANGUAGE_SERVER_LANGUAGES = Object.keys(LANGUAGE_SERVERS) as Langua
 
 export type LanguageServerSettingsValue =
   | boolean
-  | { enabled?: boolean; server?: string; command?: string }
+  | { enabled?: boolean; server?: string; command?: string; diagnostics?: boolean }
 
 export type LanguageServerSettingsMap = Partial<
   Record<LanguageServerLanguage, LanguageServerSettingsValue>
@@ -104,7 +104,7 @@ export function languageServerOptions(
 export function languageServerSettings(
   settings: { languageServers?: LanguageServerSettingsMap } | null,
   language: LanguageServerLanguage
-): { enabled: boolean; server: string; command: string | null } {
+): { enabled: boolean; server: string; command: string | null; diagnostics: boolean } {
   const value = settings?.languageServers?.[language]
   const stored = typeof value === 'object' && value !== null ? value : {}
   const { defaultServer } = LANGUAGE_SERVERS[language]
@@ -115,7 +115,8 @@ export function languageServerSettings(
   return {
     enabled: typeof value === 'boolean' ? value : stored.enabled !== false,
     server,
-    command: stored.command?.trim() || null
+    command: stored.command?.trim() || null,
+    diagnostics: stored.diagnostics !== false
   }
 }
 
@@ -174,6 +175,9 @@ export type LanguageServerRequest = {
   line: number
   character: number
 }
+
+/** An editor's file, without a position: what the server checks for errors. */
+export type LanguageServerDocument = Omit<LanguageServerRequest, 'line' | 'character'>
 
 export type LanguageServerHoverResult =
   | { ok: true; markdown: string | null }

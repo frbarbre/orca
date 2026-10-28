@@ -11,7 +11,8 @@ type Message = {
 function fakeServer(
   definitionResult: unknown,
   hoverResult: unknown = null,
-  referencesResult: unknown = null
+  referencesResult: unknown = null,
+  pulledDiagnostics?: unknown[]
 ) {
   const received: Message[] = []
   let deliver: (chunk: Buffer) => void = () => {}
@@ -21,8 +22,13 @@ function fakeServer(
     const message = value as Message
     received.push(message)
     if (message.method === 'initialize') {
-      reply({ id: message.id, result: { capabilities: { definitionProvider: true } } })
+      const capabilities = pulledDiagnostics
+        ? { definitionProvider: true, diagnosticProvider: { interFileDependencies: true } }
+        : { definitionProvider: true }
+      reply({ id: message.id, result: { capabilities } })
       reply({ id: 900, method: 'workspace/configuration', params: { items: [{}] } })
+    } else if (message.method === 'textDocument/diagnostic') {
+      reply({ id: message.id, result: { kind: 'full', items: pulledDiagnostics ?? [] } })
     } else if (message.method === 'textDocument/definition') {
       reply({ id: message.id, result: definitionResult })
     } else if (message.method === 'textDocument/hover') {
@@ -280,6 +286,68 @@ describe('LSP session', () => {
         message: '`debugger` statement is not allowed'
       }
     ])
+  })
+
+  it('asks a server that offers it for the diagnostics of an open file, faded ones included', async () => {
+    const server = fakeServer(null, null, null, [
+      {
+        range: { start: { line: 1, character: 6 }, end: { line: 1, character: 12 } },
+        severity: 1,
+        code: 2322,
+        message: "Type 'string' is not assignable to type 'number'."
+      },
+      {
+        range: { start: { line: 1, character: 6 }, end: { line: 1, character: 12 } },
+        severity: 4,
+        code: 6133,
+        tags: [1],
+        message: "'broken' is declared but its value is never read."
+      }
+    ])
+    const session = createLspSession({ transport: server.transport, rootPath: '/repo' })
+    await session.open('/repo/src/a.ts', 'x\nconst broken: number = "text"')
+
+    await expect(session.pullDiagnostics('/repo/src/a.ts')).resolves.toEqual([
+      {
+        line: 1,
+        character: 6,
+        endLine: 1,
+        endCharacter: 12,
+        severity: 1,
+        code: '2322',
+        message: "Type 'string' is not assignable to type 'number'."
+      },
+      {
+        line: 1,
+        character: 6,
+        endLine: 1,
+        endCharacter: 12,
+        severity: 4,
+        code: '6133',
+        tags: [1],
+        message: "'broken' is declared but its value is never read."
+      }
+    ])
+    expect(server.received.find((m) => m.method === 'textDocument/diagnostic')?.params).toEqual({
+      textDocument: { uri: 'file:///repo/src/a.ts' }
+    })
+  })
+
+  it('asks nothing of a server that publishes its diagnostics itself, or for a file it has not opened', async () => {
+    const pushing = fakeServer(null)
+    const pushSession = createLspSession({ transport: pushing.transport, rootPath: '/repo' })
+    await pushSession.open('/repo/a.py', 'x')
+    const pulling = fakeServer(null, null, null, [])
+    const pullSession = createLspSession({ transport: pulling.transport, rootPath: '/repo' })
+    await pullSession.open('/repo/a.ts', 'x')
+
+    await expect(pushSession.pullDiagnostics('/repo/a.py')).resolves.toBeNull()
+    await expect(pullSession.pullDiagnostics('/repo/b.ts')).resolves.toBeNull()
+    expect(
+      [...pushing.received, ...pulling.received].filter(
+        (m) => m.method === 'textDocument/diagnostic'
+      )
+    ).toEqual([])
   })
 
   it('closes a file it opened', async () => {

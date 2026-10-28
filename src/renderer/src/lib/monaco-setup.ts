@@ -23,7 +23,7 @@ import { installMonacoPeekReferencesPreviewOptions } from './monaco-peek-preview
 import { installMonacoContextMenuPaste } from '@/components/editor/install-monaco-context-menu-paste'
 import { runMonacoSetupSteps } from './monaco-setup-steps'
 import { installMonacoLanguageServers } from './monaco-language-servers'
-import { installMonacoLintDiagnostics } from './monaco-lint-diagnostics'
+import { installMonacoEditorDiagnostics } from './monaco-editor-diagnostics'
 import { installMonacoGitBlame } from './monaco-git-blame'
 
 globalThis.MonacoEnvironment = {
@@ -101,7 +101,7 @@ runMonacoSetupSteps([
   // works like Cmd+V (which already works via native events).
   ['context-menu paste', () => installMonacoContextMenuPaste(monaco)],
   ['language servers', () => installMonacoLanguageServers(monaco, monacoTS)],
-  ['lint diagnostics', () => installMonacoLintDiagnostics(monaco)],
+  ['editor diagnostics', () => installMonacoEditorDiagnostics(monaco)],
   ['git blame', () => installMonacoGitBlame(monaco)]
 ])
 

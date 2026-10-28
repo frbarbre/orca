@@ -113,6 +113,35 @@ describe('LanguageServersPane', () => {
     expect(card('typescript')?.querySelector('[role="radio"]')).not.toBeNull()
   })
 
+  it("turns a language's type errors off and keeps its server on", () => {
+    const updateSettings = render(undefined)
+
+    act(() =>
+      card('python')
+        ?.querySelector<HTMLElement>('[role="switch"][aria-label="Python type errors"]')
+        ?.click()
+    )
+
+    expect(updateSettings).toHaveBeenCalledWith({
+      languageServers: { python: { enabled: true, server: 'pyrefly', diagnostics: false } }
+    })
+  })
+
+  it('shows type errors as on until turned off', () => {
+    render({ typescript: { diagnostics: false } })
+    const typeErrors = (language: string, label: string) =>
+      card(language)?.querySelector(`[role="switch"][aria-label="${label} type errors"]`)
+
+    expect(typeErrors('python', 'Python')?.getAttribute('aria-checked')).toBe('true')
+    expect(
+      typeErrors('typescript', 'TypeScript and JavaScript')?.getAttribute('aria-checked')
+    ).toBe('false')
+  })
+
+  it.each(['type errors', 'errors'])('finds the type-error switches by searching "%s"', (query) => {
+    expect(matchesSettingsSearch(query, getLanguageServersSearchEntries())).toBe(true)
+  })
+
   it('turns oxlint off and keeps the language servers as they were', () => {
     const updateSettings = render({ typescript: false })
     expect(linterCard('oxlint')?.textContent).toContain('oxlint')

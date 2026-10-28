@@ -26,7 +26,7 @@ type Props = {
   updateSettings: (updates: Partial<GlobalSettings>) => void
 }
 
-type Choice = { enabled: boolean; server: string; command: string | null }
+type Choice = { enabled: boolean; server: string; command: string | null; diagnostics: boolean }
 
 function CommandField({
   command,
@@ -151,6 +151,18 @@ function LanguageServerCard({
             defaultCommand={servers[choice.server].command}
             onCommit={(command) => onChange({ ...choice, command })}
           />
+          <div className="flex items-center justify-between gap-4">
+            <Label className="shrink-0 text-xs text-muted-foreground">
+              {translate('languageServers.typeErrors', 'Type errors')}
+            </Label>
+            <SettingsSwitch
+              checked={choice.diagnostics}
+              ariaLabel={translate('languageServers.typeErrorsFor', '{{language}} type errors', {
+                language: label
+              })}
+              onChange={() => onChange({ ...choice, diagnostics: !choice.diagnostics })}
+            />
+          </div>
         </div>
       ) : null}
     </div>
@@ -210,11 +222,19 @@ function LinterCard({
 // (`shared/linter.ts`), so a new one shows up here without touching this pane.
 export function LanguageServersPane({ settings, updateSettings }: Props): React.JSX.Element {
   const searchEntries = getLanguageServersSearchEntries()
-  const save = (language: LanguageServerLanguage, { enabled, server, command }: Choice): void =>
+  const save = (
+    language: LanguageServerLanguage,
+    { enabled, server, command, diagnostics }: Choice
+  ): void =>
     updateSettings({
       languageServers: {
         ...settings.languageServers,
-        [language]: { enabled, server, ...(command ? { command } : {}) }
+        [language]: {
+          enabled,
+          server,
+          ...(command ? { command } : {}),
+          ...(diagnostics ? {} : { diagnostics: false })
+        }
       }
     })
   const saveLinter = (

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import type { LintDiagnostic } from '../../shared/linter'
+import type { EditorDiagnostic } from '../../shared/editor-diagnostics'
 import { createLintService } from './lint-service'
 import type { LinterLaunch } from './linter-launch'
 
@@ -15,7 +15,7 @@ const request = (filePath: string, text = 'x') => ({
   text
 })
 
-const diagnostic: LintDiagnostic = {
+const diagnostic: EditorDiagnostic = {
   line: 0,
   character: 0,
   endLine: 0,
@@ -27,7 +27,7 @@ const diagnostic: LintDiagnostic = {
 function setup() {
   const sessions: {
     launch: LinterLaunch
-    publish: (filePath: string, diagnostics: LintDiagnostic[]) => void
+    publish: (filePath: string, diagnostics: EditorDiagnostic[]) => void
     open: ReturnType<typeof vi.fn>
     close: ReturnType<typeof vi.fn>
     dispose: ReturnType<typeof vi.fn>
@@ -67,7 +67,7 @@ describe('lint service', () => {
       ['/wt/src/b.ts', 'two']
     ])
     expect(onDiagnostics).toHaveBeenCalledWith({
-      linter: 'oxlint',
+      source: 'oxlint',
       filePath: '/wt/src/a.ts',
       diagnostics: [diagnostic]
     })

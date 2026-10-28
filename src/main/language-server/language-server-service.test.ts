@@ -42,7 +42,10 @@ function setup(watchFiles?: ServiceOptions['watchFiles'], admit?: ServiceOptions
       filesChanged: vi.fn(),
       definition,
       hover,
-      references
+      references,
+      open: vi.fn(async () => undefined),
+      close: vi.fn(),
+      pullDiagnostics: vi.fn(async () => null)
     }
     sessions.push(session)
     return session
@@ -93,13 +96,15 @@ describe('language server service', () => {
       filePath: '/wt/e-5139/apps/frontend/src/a.ts'
     })
     expect(startSession).toHaveBeenCalledWith(
-      expect.objectContaining({ program: '/repo/apps/backend/.venv/bin/pyrefly' })
+      expect.objectContaining({ program: '/repo/apps/backend/.venv/bin/pyrefly' }),
+      expect.any(Function)
     )
     expect(startSession).toHaveBeenCalledWith(
       expect.objectContaining({
         projectRoot: '/wt/e-5139/apps/frontend',
         program: '/repo/apps/frontend/node_modules/.bin/tsgo'
-      })
+      }),
+      expect.any(Function)
     )
   })
 
@@ -130,15 +135,18 @@ describe('language server service', () => {
     await service.definition({ ...request, filePath: '/repo/apps/backend/c.py' })
 
     expect(startSession).toHaveBeenCalledTimes(1)
-    expect(startSession).toHaveBeenCalledWith({
-      language: 'python',
-      serverName: 'pyrefly',
-      projectRoot: '/repo/apps/backend',
-      program: '/repo/apps/backend/.venv/bin/pyrefly',
-      args: ['lsp'],
-      env: { VIRTUAL_ENV: '/repo/apps/backend/.venv' },
-      pathPrefix: ['/repo/apps/backend/.venv/bin']
-    })
+    expect(startSession).toHaveBeenCalledWith(
+      {
+        language: 'python',
+        serverName: 'pyrefly',
+        projectRoot: '/repo/apps/backend',
+        program: '/repo/apps/backend/.venv/bin/pyrefly',
+        args: ['lsp'],
+        env: { VIRTUAL_ENV: '/repo/apps/backend/.venv' },
+        pathPrefix: ['/repo/apps/backend/.venv/bin']
+      },
+      expect.any(Function)
+    )
     expect(definition).toHaveBeenLastCalledWith({
       filePath: '/repo/apps/backend/c.py',
       text: 'import b',
@@ -172,15 +180,18 @@ describe('language server service', () => {
     await service.hover({ ...tsRequest, filePath: '/repo/apps/frontend/src/b.ts' })
 
     expect(startSession).toHaveBeenCalledTimes(1)
-    expect(startSession).toHaveBeenCalledWith({
-      language: 'typescript',
-      serverName: 'tsgo',
-      projectRoot: '/repo/apps/frontend',
-      program: '/repo/apps/frontend/node_modules/.bin/tsgo',
-      args: ['--lsp', '--stdio'],
-      env: {},
-      pathPrefix: []
-    })
+    expect(startSession).toHaveBeenCalledWith(
+      {
+        language: 'typescript',
+        serverName: 'tsgo',
+        projectRoot: '/repo/apps/frontend',
+        program: '/repo/apps/frontend/node_modules/.bin/tsgo',
+        args: ['--lsp', '--stdio'],
+        env: {},
+        pathPrefix: []
+      },
+      expect.any(Function)
+    )
   })
 
   it("asks the worktree's last server about a file outside it, like a bundled typeshed stub", async () => {
@@ -191,7 +202,8 @@ describe('language server service', () => {
     await service.hover({ ...request, filePath: stub })
     expect(startSession).toHaveBeenCalledTimes(1)
     expect(startSession).toHaveBeenCalledWith(
-      expect.objectContaining({ projectRoot: '/repo/apps/backend' })
+      expect.objectContaining({ projectRoot: '/repo/apps/backend' }),
+      expect.any(Function)
     )
     expect(definition).toHaveBeenCalledTimes(1)
   })

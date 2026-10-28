@@ -20976,7 +20976,6 @@
       "tabGroupFocusDown": "Focus group below",
       "editorPreviousFile": "Go to Previous Changed File",
       "editorNextFile": "Go to Next Changed File",
-      "editorOpenFileFromDiff": "Open File from Diff",
       "editorOpenInExternalApp": "Open in External App",
       "sourceControlOpenLatestAgentTurn": "Open Latest Agent Turn",
       "sourceControlToggleUncommittedOnly": "Show Only Uncommitted Changes",

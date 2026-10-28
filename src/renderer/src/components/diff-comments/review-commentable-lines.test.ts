@@ -6,26 +6,35 @@ import {
 } from './review-commentable-lines'
 
 describe('collectReviewCommentableLines', () => {
-  it('includes every line of a changed range', () => {
+  const sorted = (lines: ReadonlySet<number>): number[] => [...lines].sort((a, b) => a - b)
+
+  it('includes a changed range and three lines of hunk context each side', () => {
     const lines = collectReviewCommentableLines([
-      { modifiedStartLineNumber: 3, modifiedEndLineNumber: 5 }
+      { modifiedStartLineNumber: 13, modifiedEndLineNumber: 13 }
     ])
-    expect([...lines]).toEqual([3, 4, 5])
+    expect(sorted(lines)).toEqual([10, 11, 12, 13, 14, 15, 16])
   })
 
-  it('skips a pure deletion, which has no line on the modified side', () => {
+  it('stops the context at the first line', () => {
+    const lines = collectReviewCommentableLines([
+      { modifiedStartLineNumber: 2, modifiedEndLineNumber: 3 }
+    ])
+    expect(sorted(lines)).toEqual([1, 2, 3, 4, 5, 6])
+  })
+
+  it('takes the context around a pure deletion, which has no line of its own', () => {
     const lines = collectReviewCommentableLines([
       { modifiedStartLineNumber: 7, modifiedEndLineNumber: 0 }
     ])
-    expect(lines.size).toBe(0)
+    expect(sorted(lines)).toEqual([5, 6, 7, 8, 9, 10])
   })
 
   it('merges several hunks', () => {
     const lines = collectReviewCommentableLines([
       { modifiedStartLineNumber: 1, modifiedEndLineNumber: 1 },
-      { modifiedStartLineNumber: 10, modifiedEndLineNumber: 11 }
+      { modifiedStartLineNumber: 20, modifiedEndLineNumber: 21 }
     ])
-    expect([...lines].sort((a, b) => a - b)).toEqual([1, 10, 11])
+    expect(sorted(lines)).toEqual([1, 2, 3, 4, 17, 18, 19, 20, 21, 22, 23, 24])
   })
 
   it('is empty when the diff has not been computed yet', () => {

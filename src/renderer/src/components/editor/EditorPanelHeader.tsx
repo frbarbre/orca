@@ -46,7 +46,7 @@ type EditorPanelHeaderProps = {
   sideBySide: boolean
   openFileState: EditorHeaderOpenFileState
   onCopyPath: () => void
-  onOpenDiffTargetFile: (preferredMarkdownViewMode?: 'rich') => void
+  onOpenDiffTargetFile: (preferredMarkdownViewMode?: 'rich', line?: number | null) => void
   onOpenPreviewToSide: () => void
   onOpenMarkdownPreview: () => void
   onToggleSideBySide: () => void
@@ -101,7 +101,7 @@ export function EditorPanelHeader({
     () => diffComments.filter((comment) => comment.filePath === activeFile.relativePath),
     [activeFile.relativePath, diffComments]
   )
-  const { changeCount, goToPreviousDiff, goToNextDiff } = useDiffNavigation()
+  const { changeCount, goToPreviousDiff, goToNextDiff, cursorLine } = useDiffNavigation()
   const previousChangeShortcut = useShortcutKeyDetails('editor.previousChange')
   const nextChangeShortcut = useShortcutKeyDetails('editor.nextChange')
   const openFileShortcut = useShortcutKeyDetails('editor.openFileFromDiff')
@@ -147,7 +147,7 @@ export function EditorPanelHeader({
               <button
                 type="button"
                 className="p-1 rounded hover:bg-accent text-muted-foreground hover:text-foreground transition-colors flex-shrink-0 disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-muted-foreground"
-                onClick={() => onOpenDiffTargetFile(isMarkdown ? 'rich' : undefined)}
+                onClick={() => onOpenDiffTargetFile(isMarkdown ? 'rich' : undefined, cursorLine())}
                 aria-label={translate(
                   'auto.components.editor.EditorPanelHeader.a10d9b8337',
                   'Open file'

@@ -18,6 +18,7 @@ export type DiffNavigationContextValue = {
   goToPreviousDiff: () => void
   goToNextDiff: () => void
   changeCount: number
+  cursorLine: () => number | null
 }
 
 const noop = (): void => {}
@@ -32,11 +33,16 @@ const DiffEditorRegistrationContext = createContext<DiffEditorRegistrationContex
 const DiffNavigationContext = createContext<DiffNavigationContextValue>({
   goToPreviousDiff: noop,
   goToNextDiff: noop,
-  changeCount: 0
+  changeCount: 0,
+  cursorLine: () => null
 })
 
 function countChanges(diffEditor: editor.IStandaloneDiffEditor): number {
   return diffEditor.getLineChanges()?.length ?? 0
+}
+
+function cursorLineOf(diffEditor: editor.IStandaloneDiffEditor | null): number | null {
+  return diffEditor?.getModifiedEditor().getPosition()?.lineNumber ?? null
 }
 
 export function DiffNavigationProvider({
@@ -45,7 +51,7 @@ export function DiffNavigationProvider({
 }: {
   children: React.ReactNode
   /** The header's "Open file tab", for its shortcut inside the diff. */
-  onOpenFile?: () => void
+  onOpenFile?: (line: number | null) => void
 }): React.JSX.Element {
   const onOpenFileRef = useRef(onOpenFile)
   onOpenFileRef.current = onOpenFile
@@ -92,7 +98,7 @@ export function DiffNavigationProvider({
     )
     openFileShortcutCleanupRef.current?.()
     openFileShortcutCleanupRef.current = installOpenFileFromDiffShortcut(diffEditor, () =>
-      onOpenFileRef.current?.()
+      onOpenFileRef.current?.(cursorLineOf(diffEditor))
     )
     outsideShortcutCleanupRef.current?.()
     outsideShortcutCleanupRef.current = registerDiffEditorForOutsideShortcuts({
@@ -135,6 +141,8 @@ export function DiffNavigationProvider({
     }
   }, [])
 
+  const cursorLine = useCallback(() => cursorLineOf(editorRef.current), [])
+
   useEffect(() => {
     return () => {
       updateSubRef.current?.dispose()
@@ -156,9 +164,10 @@ export function DiffNavigationProvider({
     () => ({
       goToPreviousDiff,
       goToNextDiff,
-      changeCount
+      changeCount,
+      cursorLine
     }),
-    [goToPreviousDiff, goToNextDiff, changeCount]
+    [goToPreviousDiff, goToNextDiff, changeCount, cursorLine]
   )
 
   return (

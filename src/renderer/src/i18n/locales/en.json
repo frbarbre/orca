@@ -3273,7 +3273,8 @@
         "reviewAssets": {
           "noRepository": "This workspace has no GitHub repository to attach the file to.",
           "uploadingLine": "Uploading {{name}}…",
-          "uploadFailed": "Could not upload {{name}}. {{reason}}"
+          "uploadFailed": "Could not upload {{name}}. {{reason}}",
+          "removeVideo": "Remove video"
         }
       },
       "linear": {

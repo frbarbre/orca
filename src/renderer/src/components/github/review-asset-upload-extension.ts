@@ -6,6 +6,7 @@ import { translate } from '@/i18n/i18n'
 import { createBrowserUuid } from '@/lib/browser-uuid'
 import { reviewAssetKind } from '../../../../shared/github/review-asset'
 import type { GitHubRepositoryIdentity } from '../../../../shared/github/pull-request-types'
+import { REVIEW_ATTACHMENT_VIDEO, ReviewAttachmentVideo } from './review-attachment-video-node'
 
 export type ReviewAssetUploadOptions = {
   isEnabled: () => boolean
@@ -97,6 +98,10 @@ export const ReviewAssetUpload = Extension.create<ReviewAssetUploadOptions>({
     }
   },
 
+  addExtensions() {
+    return [ReviewAttachmentVideo]
+  },
+
   addProseMirrorPlugins() {
     const editor = this.editor
     const options = this.options
@@ -165,10 +170,7 @@ export const ReviewAssetUpload = Extension.create<ReviewAssetUploadOptions>({
             if (pos !== null && 'url' in result) {
               editor
                 .chain()
-                .insertContentAt(pos, {
-                  type: 'paragraph',
-                  content: [{ type: 'text', text: result.url }]
-                })
+                .insertContentAt(pos, { type: REVIEW_ATTACHMENT_VIDEO, attrs: { src: result.url } })
                 .run()
             }
           }

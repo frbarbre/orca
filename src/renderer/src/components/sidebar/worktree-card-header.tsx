@@ -15,6 +15,7 @@ import { WorktreeCardSshHostControl } from './WorktreeCardSshHostControl'
 import { WorktreeTitleInlineRename } from './WorktreeTitleInlineRename'
 import { WorktreeCardPrAuthor } from './worktree-card-pr-author'
 import { WorktreeCardStackPosition } from './worktree-card-stack-position'
+import { WorktreeCardWorkspaceStatus } from './worktree-card-workspace-status'
 import type { WorktreeCardController } from './use-worktree-card-controller'
 
 function RepoIdentityChip({
@@ -267,16 +268,26 @@ export function WorktreeCardHeader({
         )}
 
         {showTitleRowIndicators && titleRowIndicators}
+        <WorktreeCardWorkspaceStatus
+          enabled={card.showWorkspaceStatus}
+          worktree={card.worktree}
+          workspaceStatuses={card.workspaceStatuses}
+          className={showTitleRowIndicators ? 'mr-1.5' : 'ml-auto mr-1.5'}
+        />
         <WorktreeCardStackPosition
           enabled={card.showStack}
           stack={card.prStack}
-          className={showTitleRowIndicators ? 'mr-1.5' : 'ml-auto mr-1.5'}
+          className={
+            showTitleRowIndicators || card.showWorkspaceStatus ? 'mr-1.5' : 'ml-auto mr-1.5'
+          }
         />
         <WorktreeCardPrAuthor
           worktreeId={card.worktree.id}
           enabled={card.showPrAuthor}
           className={
-            showTitleRowIndicators || (card.showStack && card.prStack) ? 'mr-1.5' : 'ml-auto mr-1.5'
+            showTitleRowIndicators || card.showWorkspaceStatus || (card.showStack && card.prStack)
+              ? 'mr-1.5'
+              : 'ml-auto mr-1.5'
           }
         />
       </div>

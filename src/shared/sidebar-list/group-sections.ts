@@ -11,6 +11,7 @@ import {
   getMixedHostContextLabels
 } from './host-labels'
 import type { OrderedGroupEntry } from './worktree-group-entry'
+import { getStackNumberFromLaneKey } from './stack-groups'
 import type { ProjectGroupingIndex } from '../project-section-grouping'
 import {
   appendWorktreeRows,
@@ -112,12 +113,15 @@ export function appendOrderedGroups(
               }
             })()
           : (() => {
-              const prGroup = key.replace(/^pr:/, '') as PRGroupKey
+              const icon =
+                groupBy === 'stack'
+                  ? { kind: 'stack' as const, stack: getStackNumberFromLaneKey(key) }
+                  : { kind: 'pr-status' as const, prGroup: key.replace(/^pr:/, '') as PRGroupKey }
               return {
                 type: 'header' as const,
                 key,
                 count: group.items.length + folderPairs.length,
-                icon: { kind: 'pr-status' as const, prGroup },
+                icon,
                 hostWorktreeCounts: getLaneHostWorktreeCounts(
                   group.items,
                   folderPairs,

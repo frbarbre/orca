@@ -1,3 +1,4 @@
+import { useAppStore } from '@/store'
 import { useWorkspaceReferenceDetails } from './use-workspace-reference-details'
 import { getWorkspaceAttachments } from '../../../../shared/workspace-attachments'
 import { summarizeWorkspaceReviewChecks } from '../../../../shared/workspace-review-checks'
@@ -48,6 +49,8 @@ export function useWorktreeCardController(props: ResolvedWorktreeCardProps) {
   const showLinearTitle = foundation.cardProps.includes('linear-title')
   const showPrAuthor = foundation.cardProps.includes('pr-author')
   const showStack = foundation.cardProps.includes('stack')
+  const showWorkspaceStatus = foundation.cardProps.includes('workspace-status')
+  const workspaceStatuses = useAppStore((s) => s.workspaceStatuses)
   const prStack =
     review.prDisplay && 'stack' in review.prDisplay ? review.prDisplay.stack : undefined
   const shouldRefreshHostedReview = foundation.newCardStyle ? showStatus : showPR
@@ -176,6 +179,8 @@ export function useWorktreeCardController(props: ResolvedWorktreeCardProps) {
     showPrAuthor,
     showStack,
     prStack,
+    showWorkspaceStatus,
+    workspaceStatuses,
     showJiraIssue,
     showPR,
     showAutomation,

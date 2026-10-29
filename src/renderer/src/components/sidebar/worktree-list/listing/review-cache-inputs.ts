@@ -30,7 +30,7 @@ export function selectWorktreeListReviewCacheInputs(
   const folderCardsNeedReview =
     hasFolderWorkspaces &&
     (newCardStyle ? cardProperties.includes('status') : cardProperties.includes('pr'))
-  const needsPrCache = groupBy === 'pr-status' || folderCardsNeedReview
+  const needsPrCache = groupBy === 'pr-status' || groupBy === 'stack' || folderCardsNeedReview
   const needsHostedReviewCache = newCardStyle && folderCardsNeedReview
 
   // Cards subscribe per entry; only PR grouping and synthetic folder cards need whole caches.

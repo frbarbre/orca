@@ -40,6 +40,8 @@ function headerTitle(row: GroupHeaderRow): string {
     case 'project':
     case 'workspace-status':
       return row.label ?? ''
+    case 'stack':
+      return row.icon.stack === null ? 'Not in a stack' : `Stack #${row.icon.stack}`
   }
 }
 

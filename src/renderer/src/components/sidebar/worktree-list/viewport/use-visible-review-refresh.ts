@@ -78,6 +78,7 @@ export function useVisiblePrRefreshReporting(args: {
   const cardProps = useAppStore((s) => s.worktreeCardProperties)
   const enabled =
     args.groupBy === 'pr-status' ||
+    args.groupBy === 'stack' ||
     (args.newCardStyle
       ? cardProps.includes('status')
       : cardProps.includes('pr') || cardProps.includes('ci'))

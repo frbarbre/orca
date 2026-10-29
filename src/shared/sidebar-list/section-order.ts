@@ -4,12 +4,14 @@ import type { ProjectSectionModel } from '../project-section-grouping'
 import { ALL_GROUP_KEY } from './group-keys'
 import type { SidebarPRGroupReader, WorktreeGroupBy } from './row-types'
 import { getGroupKeyForWorktree } from './worktree-group-keys'
+import type { SidebarStackReader } from './stack-groups'
 
 export function getRenderedNaturalAnchorRepoIds({
   groupBy,
   worktrees,
   repoMap,
   prGroupOf,
+  stackOf,
   collapsedGroups,
   workspaceStatuses,
   projectGrouping
@@ -18,6 +20,7 @@ export function getRenderedNaturalAnchorRepoIds({
   worktrees: readonly Worktree[]
   repoMap: Map<string, Repo>
   prGroupOf: SidebarPRGroupReader
+  stackOf?: SidebarStackReader
   collapsedGroups: ReadonlySet<string>
   workspaceStatuses: readonly WorkspaceStatusDefinition[]
   projectGrouping?: ProjectSectionModel
@@ -44,7 +47,8 @@ export function getRenderedNaturalAnchorRepoIds({
       repoMap,
       prGroupOf,
       workspaceStatuses,
-      projectGrouping
+      projectGrouping,
+      stackOf
     )
     if (groupKey && !collapsedGroups.has(groupKey)) {
       renderedRepoIds.add(worktree.repoId)

@@ -1891,6 +1891,25 @@ the `review-imports` attribute, which `.gitattributes` can also set.
 | `listing/file-category.ts`, `file-category-filter.tsx`          | The `imports` type and its label.                   |
 | `src/shared/git-review-attributes.ts`                           | `review-imports`.                                   |
 
+### 67. Group by Stack, and the workspace status on the card
+
+Group by has a fifth mode, "Stack": one section per GitHub stack, headed "Stack #N", listing its
+worktrees from the PR furthest from main down to the one on main; newest stack first, then a "Not in
+a stack" section for the rest. Stacks come from the PR cache's `stack`, so the mode loads PRs the
+way PR grouping does; lineage nesting is off in it so parent rows can't reorder a stack. The paired
+phone's feed carries no stack facts, so there every worktree sits under "Not in a stack". Card
+display gains "Workspace status", a status badge in the card's title row, so the status lane stays
+visible under any grouping.
+
+| File                                                                  | What is ours                                   |
+| --------------------------------------------------------------------- | ---------------------------------------------- |
+| `src/shared/sidebar-list/stack-groups.ts`, `grouping/stack-key.ts`    | Stack lane keys, order, and the cache reader.  |
+| `worktree-grouping.ts`, `group-sections.ts`, `worktree-group-keys.ts` | The `stack` mode and its `stack` header icon.  |
+| `sidebar-row-plan.ts`, `section-order.ts`, and the three plan callers | `stackOf`; no lineage nesting in stack mode.   |
+| `rows/header-visuals.ts`, `host-sidebar-feed-sections.ts` (mobile)    | Header names.                                  |
+| `worktree-card-workspace-status.tsx`, `worktree-card-header.tsx`      | The status badge; `workspace-status` property. |
+| `review-cache-inputs.ts`, `use-visible-review-refresh.ts`, `stale-…`  | Stack mode loads PRs like PR grouping.         |
+
 ## Verify
 
 Verify runs on GitHub, not locally: `fork-verify.yml` runs it on every pull request against `main`,

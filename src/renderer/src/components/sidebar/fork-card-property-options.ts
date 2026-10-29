@@ -19,6 +19,18 @@ const FORK_CARD_DISPLAY_OPTIONS: { after: WorktreeCardProperty; option: CardDisp
   {
     after: 'jira-issue',
     option: {
+      id: 'workspace-status',
+      get label() {
+        return translate(
+          'auto.components.sidebar.SidebarWorkspaceOptionsMenu.workspaceStatus',
+          'Workspace status'
+        )
+      }
+    }
+  },
+  {
+    after: 'jira-issue',
+    option: {
       id: 'pr-author',
       get label() {
         return translate(

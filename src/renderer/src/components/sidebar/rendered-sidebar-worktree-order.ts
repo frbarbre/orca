@@ -10,6 +10,7 @@ import { getRepoMapFromState, getWorktreeMapFromState } from '@/store/selectors'
 import { getProjectHostSetupProjectionFromState } from '@/store/project-host-setup-selector'
 import { planSidebarRows } from '../../../../shared/sidebar-list/sidebar-row-plan'
 import { createSidebarPRGroupReader } from './worktree-list/grouping/pr-group-key'
+import { createSidebarStackReader } from './worktree-list/grouping/stack-key'
 import {
   getPinnedWorktreeDisplayPolicy,
   type ImportedWorktreesCardCandidate,
@@ -73,6 +74,7 @@ export function computeRenderedSidebarRows(
     worktrees: [...visibleWorktrees],
     repoMap,
     prGroupOf: createSidebarPRGroupReader(repoMap, prCache),
+    stackOf: createSidebarStackReader(repoMap, prCache),
     repoOrder: getLogicalRepoOrderRankById(state.repos.map((repo) => repo.id)),
     workspaceStatuses: selectWorkspaceBoardStatuses(state),
     projectOrderBy: state.projectOrderBy,

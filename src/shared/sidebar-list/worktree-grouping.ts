@@ -10,6 +10,7 @@ import {
 } from './folder-workspace-lanes'
 import { PR_GROUP_ORDER, getPRLaneKey } from './group-keys'
 import type { OrderedGroupEntry, WorktreeGroupEntry } from './worktree-group-entry'
+import { getStackLaneKey, orderStackGroups, type SidebarStackReader } from './stack-groups'
 import { buildProjectSections, type ProjectGroupingIndex } from '../project-section-grouping'
 import { orderProjectSections } from '../project-section-order'
 import type {
@@ -25,6 +26,7 @@ export function buildOrderedGroups(args: {
   naturalWorktrees: readonly Worktree[]
   repoMap: Map<string, Repo>
   prGroupOf: SidebarPRGroupReader
+  stackOf?: SidebarStackReader
   workspaceStatuses: readonly WorkspaceStatusDefinition[]
   projectIndex: ProjectGroupingIndex | null
   displayRootByIdentity?: ReadonlyMap<string, Worktree>
@@ -41,6 +43,7 @@ export function buildOrderedGroups(args: {
     naturalWorktrees,
     repoMap,
     prGroupOf,
+    stackOf,
     workspaceStatuses,
     projectIndex,
     displayRootByIdentity,
@@ -83,7 +86,9 @@ export function buildOrderedGroups(args: {
     const key =
       groupBy === 'workspace-status'
         ? getWorkspaceStatusGroupKey(getWorkspaceStatus(w, workspaceStatuses))
-        : getPRLaneKey(prGroupOf(w))
+        : groupBy === 'stack'
+          ? getStackLaneKey(w, stackOf)
+          : getPRLaneKey(prGroupOf(w))
     if (!grouped.has(key)) {
       grouped.set(key, { label: '', items: [], repo: undefined, repoIds: new Set() })
     }
@@ -110,6 +115,9 @@ export function buildOrderedGroups(args: {
     group.folderWorkspaces?.sort((left, right) =>
       compareFolderWorkspacesForDisplay(left.folderWorkspace, right.folderWorkspace)
     )
+  }
+  if (groupBy === 'stack') {
+    return orderStackGroups(grouped, stackOf)
   }
   const orderedGroups: OrderedGroupEntry[] = []
   if (groupBy === 'pr-status') {

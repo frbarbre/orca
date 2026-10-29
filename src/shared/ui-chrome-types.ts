@@ -42,6 +42,8 @@ export type WorktreeCardProperty =
   | 'pr-author'
   // Fork: the PR's position in its GitHub stack.
   | 'stack'
+  // Fork: the workspace's status lane, for groupings other than Status.
+  | 'workspace-status'
   | 'jira-issue'
   | 'pr'
   | 'automation'

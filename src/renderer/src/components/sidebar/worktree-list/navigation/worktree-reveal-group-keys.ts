@@ -18,6 +18,7 @@ import type {
 } from '../../../../../../shared/sidebar-list/row-types'
 import { planSidebarRows } from '../../../../../../shared/sidebar-list/sidebar-row-plan'
 import { createSidebarPRGroupReader } from '../grouping/pr-group-key'
+import { createSidebarStackReader } from '../grouping/stack-key'
 
 export function getWorktreeRevealCollapsedGroupKeys(args: {
   occurrencePlan?: WorktreeOccurrencePlan<Worktree>
@@ -49,6 +50,7 @@ export function getWorktreeRevealCollapsedGroupKeys(args: {
       worktrees: [...(args.visibleWorktrees ?? args.worktrees)],
       repoMap: args.repoMap,
       prGroupOf: createSidebarPRGroupReader(args.repoMap, args.prCache),
+      stackOf: createSidebarStackReader(args.repoMap, args.prCache),
       workspaceStatuses: args.workspaceStatuses,
       projectOrderBy: 'manual',
       lineageById: { ...args.worktreeLineageById },

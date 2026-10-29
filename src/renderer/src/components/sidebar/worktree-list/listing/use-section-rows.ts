@@ -12,6 +12,7 @@ import {
 import { getHostDisplayLabelOverrides } from '../../../../../../shared/host-setting-overrides'
 import { planSidebarRows } from '../../../../../../shared/sidebar-list/sidebar-row-plan'
 import { createSidebarPRGroupReader } from '../grouping/pr-group-key'
+import { createSidebarStackReader } from '../grouping/stack-key'
 import { useEffectiveCollapsedGroups } from './use-collapsed-groups'
 import type { Row } from '../../../../../../shared/sidebar-list/row-types'
 import type { SectionRowsArgs } from './sidebar-list-model'
@@ -143,6 +144,7 @@ export function useSidebarSectionRows(args: SectionRowsArgs) {
         worktrees,
         repoMap,
         prGroupOf: createSidebarPRGroupReader(repoMap, args.prCache),
+        stackOf: createSidebarStackReader(repoMap, args.prCache),
         repoOrder,
         workspaceStatuses: args.workspaceStatuses,
         projectOrderBy: args.projectOrderBy,

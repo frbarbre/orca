@@ -23,6 +23,7 @@ import type {
 import { planSidebarRows } from '../../../../../../shared/sidebar-list/sidebar-row-plan'
 import type { PRCacheView } from '../../../../../../shared/sidebar-list/workspace-review-facts'
 import { createSidebarPRGroupReader } from './pr-group-key'
+import { createSidebarStackReader } from './stack-key'
 
 /** Test-only positional entry to the shared row builder, with the window's defaults. */
 export function buildSidebarRowPlan(
@@ -58,6 +59,7 @@ export function buildSidebarRowPlan(
     worktrees,
     repoMap,
     prGroupOf: createSidebarPRGroupReader(repoMap, prCache),
+    stackOf: createSidebarStackReader(repoMap, prCache),
     repoOrder,
     workspaceStatuses,
     projectOrderBy,

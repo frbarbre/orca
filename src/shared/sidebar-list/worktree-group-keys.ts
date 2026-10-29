@@ -10,6 +10,7 @@ import { ALL_GROUP_KEY, getPRLaneKey, getProjectGroupHeaderKey } from './group-k
 import { buildProjectGroupingIndex, getProjectGroupingForRepo } from '../project-section-grouping'
 import type { ProjectSectionModel } from '../project-section-grouping'
 import type { SidebarPRGroupReader, WorktreeGroupBy } from './row-types'
+import { getStackLaneKey, type SidebarStackReader } from './stack-groups'
 
 export function getGroupKeyForWorktree(
   groupBy: WorktreeGroupBy,
@@ -18,10 +19,14 @@ export function getGroupKeyForWorktree(
   /** Null reads every worktree as having no PR, which is the in-progress lane. */
   prGroupOf: SidebarPRGroupReader | null,
   workspaceStatuses: readonly WorkspaceStatusDefinition[] = cloneDefaultWorkspaceStatuses(),
-  projectGrouping?: ProjectSectionModel
+  projectGrouping?: ProjectSectionModel,
+  stackOf?: SidebarStackReader
 ): string | null {
   if (groupBy === 'none') {
     return ALL_GROUP_KEY
+  }
+  if (groupBy === 'stack') {
+    return getStackLaneKey(worktree, stackOf)
   }
   if (groupBy === 'workspace-status') {
     return getWorkspaceStatusGroupKey(getWorkspaceStatus(worktree, workspaceStatuses))
@@ -43,7 +48,8 @@ export function getGroupKeysForWorktree(
   prGroupOf: SidebarPRGroupReader | null,
   workspaceStatuses: readonly WorkspaceStatusDefinition[] = cloneDefaultWorkspaceStatuses(),
   projectGroups: readonly ProjectGroup[] = [],
-  projectGrouping?: ProjectSectionModel
+  projectGrouping?: ProjectSectionModel,
+  stackOf?: SidebarStackReader
 ): string[] {
   const groupKey = getGroupKeyForWorktree(
     groupBy,
@@ -51,7 +57,8 @@ export function getGroupKeysForWorktree(
     repoMap,
     prGroupOf,
     workspaceStatuses,
-    projectGrouping
+    projectGrouping,
+    stackOf
   )
   if (!groupKey) {
     return []

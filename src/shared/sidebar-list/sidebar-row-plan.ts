@@ -50,6 +50,7 @@ import type {
 import { orderMainWorktreeFirst, getRenderedNaturalAnchorRepoIds } from './section-order'
 import { withRepoSectionDisplayLabels } from '../project-section-order'
 import { buildOrderedGroups } from './worktree-grouping'
+import type { SidebarStackReader } from './stack-groups'
 
 type SidebarOccurrenceSection = WorktreeOccurrenceSection<Worktree> & { group: WorktreeGroupEntry }
 
@@ -62,6 +63,8 @@ export type SidebarRowPlanInputs = {
   /** Defaults to repoMap's registration for the row's repo id. */
   repoOfWorktree?: RepoOfWorktree
   prGroupOf: SidebarPRGroupReader
+  /** Clients without stack facts leave it out; every worktree then sits outside a stack. */
+  stackOf?: SidebarStackReader
   repoOrder?: Map<string, number>
   workspaceStatuses: readonly WorkspaceStatusDefinition[]
   projectOrderBy: ProjectOrderBy
@@ -89,6 +92,7 @@ export function planSidebarRows(inputs: SidebarRowPlanInputs) {
     repoMap,
     repoOfWorktree,
     prGroupOf,
+    stackOf,
     repoOrder,
     workspaceStatuses,
     projectOrderBy,
@@ -122,9 +126,11 @@ export function planSidebarRows(inputs: SidebarRowPlanInputs) {
   const occurrencePlan = buildWorktreeOccurrencePlan({
     rows: worktrees,
     identityOf: getWorktreeHostIdentity,
-    childrenByParentIdentity: nestLineage
-      ? getSidebarLineageChildren(worktrees, lineageById, worktreeMap, filterRepoIds)
-      : new Map<string, Worktree[]>(),
+    // Stack lanes order by stack position, which parent nesting would override.
+    childrenByParentIdentity:
+      nestLineage && groupBy !== 'stack'
+        ? getSidebarLineageChildren(worktrees, lineageById, worktreeMap, filterRepoIds)
+        : new Map<string, Worktree[]>(),
     isPinned: (worktree) => worktree.isPinned === true,
     duplicatePinned: pinnedDisplayPolicy === 'duplicate-in-groups',
     owningSectionOf: (worktree) =>
@@ -139,6 +145,7 @@ export function planSidebarRows(inputs: SidebarRowPlanInputs) {
               naturalWorktrees: natural,
               repoMap,
               prGroupOf,
+              stackOf,
               workspaceStatuses,
               projectIndex,
               displayRootByIdentity,
@@ -204,6 +211,7 @@ export function planSidebarRows(inputs: SidebarRowPlanInputs) {
       worktrees: naturalWorktrees,
       repoMap,
       prGroupOf,
+      stackOf,
       collapsedGroups,
       workspaceStatuses,
       projectGrouping

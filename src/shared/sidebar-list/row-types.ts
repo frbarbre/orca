@@ -6,7 +6,7 @@ import type { DetectedWorktree, WorkspaceStatus, Worktree } from '../worktree/ty
 import type { ExecutionHostId } from '../execution-host'
 import type { PRGroupKey } from '../workspace-view/workspace-pr-groups'
 
-export type WorktreeGroupBy = 'none' | 'workspace-status' | 'repo' | 'pr-status'
+export type WorktreeGroupBy = 'none' | 'workspace-status' | 'repo' | 'pr-status' | 'stack'
 /** A row's own registration of its repo; the same repo id can be registered on several hosts. */
 export type RepoOfWorktree = (worktree: Worktree) => Repo | undefined
 export type PinnedWorktreeDisplayPolicy = 'single-location' | 'duplicate-in-groups'
@@ -24,6 +24,8 @@ export type SidebarHeaderIcon =
   | { kind: 'project' }
   | { kind: 'pr-status'; prGroup: PRGroupKey }
   | { kind: 'workspace-status'; status: WorkspaceStatus }
+  // Fork: a GitHub stack lane; null is the lane for worktrees outside any stack.
+  | { kind: 'stack'; stack: number | null }
 
 /** A worktree's PR lane, read by each client from its own PR facts. */
 export type SidebarPRGroupReader = (worktree: Worktree) => PRGroupKey

@@ -1,4 +1,4 @@
-import { CircleX, FolderTree, List, Pin } from 'lucide-react'
+import { CircleX, FolderTree, Layers, Layers2, List, Pin } from 'lucide-react'
 import type React from 'react'
 import { translate } from '@/i18n/i18n'
 import type { PRGroupKey } from '../../../../../../shared/workspace-view/workspace-pr-groups'
@@ -91,6 +91,17 @@ export function getSidebarHeaderVisual(
       return PROJECT_GROUP_META
     case 'pr-status':
       return PR_GROUP_META[icon.prGroup]
+    case 'stack':
+      return {
+        icon: icon.stack === null ? Layers2 : Layers,
+        tone: icon.stack === null ? 'text-muted-foreground' : 'text-foreground',
+        label:
+          icon.stack === null
+            ? translate('auto.components.sidebar.worktree.list.groups.noStack', 'Not in a stack')
+            : translate('auto.components.sidebar.worktree.list.groups.stack', 'Stack #{{stack}}', {
+                stack: icon.stack
+              })
+      }
     case 'workspace-status': {
       const { icon: statusIcon, tone } = getWorkspaceStatusVisualMeta(
         workspaceStatuses.find((status) => status.id === icon.status) ?? icon.status

@@ -27,6 +27,11 @@ function shownLabel(
 
 function getFileCategoryLabel(category: SourceControlFileFilterKey): string {
   switch (category) {
+    case 'imports':
+      return translate(
+        'auto.components.right.sidebar.SourceControl.fileCategory.imports',
+        'Imports only'
+      )
     case 'lint-baseline':
       return translate(
         'auto.components.right.sidebar.SourceControl.fileCategory.lintBaseline',

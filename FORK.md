@@ -1872,6 +1872,25 @@ quick open the type filter narrows narrows by area too.
 | `listing/file-category-filter.tsx`                        | The areas group and the header label.              |
 | `file-scope-store.ts` and the listing hooks that carry it | `SourceControlFileFilterKey` for the hidden set.   |
 
+### 66. Imports only
+
+A changed file whose change against the branch base touches only its imports is filed under the
+file type "Imports only", ahead of every other type, so a PR that mostly moves imports can be read
+without them. Main reads each candidate at the merge base and on disk and compares them with the
+import statements taken out (TypeScript/JavaScript `import` and `export … from`, multi-line ones
+too; Python `import` and `from … import`, with parentheses or backslashes); a file qualifies when
+nothing but imports and blank lines differs. Candidates are the files with 1–60 changed lines, at
+most 200, asked again when a file's line counts move; local worktrees only. The app marks them with
+the `review-imports` attribute, which `.gitattributes` can also set.
+
+| File                                                            | What is ours                                        |
+| --------------------------------------------------------------- | --------------------------------------------------- |
+| `src/shared/import-only-change.ts`                              | The comparison.                                     |
+| `src/main/git/import-only-paths.ts`, `filesystem-git-review-…`  | Reading the candidates; `git:importOnlyPaths`.      |
+| `listing/import-only-attributes.ts`, `use-review-attributes.ts` | The candidates, and marking the imports-only paths. |
+| `listing/file-category.ts`, `file-category-filter.tsx`          | The `imports` type and its label.                   |
+| `src/shared/git-review-attributes.ts`                           | `review-imports`.                                   |
+
 ## Verify
 
 Verify runs on GitHub, not locally: `fork-verify.yml` runs it on every pull request against `main`,

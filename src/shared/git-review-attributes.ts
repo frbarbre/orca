@@ -8,6 +8,8 @@ export const GIT_REVIEW_ATTRIBUTE_NAMES = [
   'review-agent-guidance',
   'review-localization',
   'review-assets',
+  // Fork: set by the app on a file whose change touches only imports, or by .gitattributes.
+  'review-imports',
   'linguist-generated',
   'linguist-documentation'
 ] as const

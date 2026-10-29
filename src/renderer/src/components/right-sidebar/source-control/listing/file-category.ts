@@ -8,6 +8,7 @@ import type { SourceControlPathEntry } from './file-filter'
 
 export const SOURCE_CONTROL_FILE_CATEGORIES = [
   'implementation',
+  'imports',
   'test',
   'documentation',
   'generated',
@@ -47,6 +48,8 @@ type PathAttributes = GitPathReviewAttributes[string]
 
 // Why this order: when a path carries several categories, the most specific supporting role wins over implementation.
 const ATTRIBUTE_PRECEDENCE: readonly [GitReviewAttributeName, SourceControlFileCategory][] = [
+  // Fork: a change that only touches imports is noise to a review whatever the file is.
+  ['review-imports', 'imports'],
   ['review-generated', 'generated'],
   ['review-test', 'test'],
   ['review-documentation', 'documentation'],

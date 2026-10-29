@@ -9,6 +9,9 @@ import { getConnectionId } from '@/lib/connection-context'
 import { getRuntimeGitReviewAttributes } from '@/runtime/runtime-git-status-client'
 import type { RuntimeClientTarget } from '../../../../../../shared/runtime-client-target'
 import { setSourceControlReviewAttributes } from './file-scope-store'
+import { useAppStore } from '@/store'
+import { importOnlyCandidates, withImportOnlyAttributes } from './import-only-attributes'
+import { selectBranchLineCounts } from './scoped-change-entries'
 
 const NO_ATTRIBUTES: GitPathReviewAttributes = Object.freeze({})
 
@@ -82,11 +85,73 @@ export function useSourceControlReviewAttributes({
   ])
 
   // Why keep the last answer while a refetch runs: rules rarely change between polls, and rows would flicker between categories.
-  const attributes = enabled && store.scope === scope ? store.attributes : NO_ATTRIBUTES
+  const checked = enabled && store.scope === scope ? store.attributes : NO_ATTRIBUTES
+  const importOnlyPaths = useImportOnlyPaths({ activeWorktreeId, worktreePath, isFolder, scope })
+  const attributes = useMemo(
+    () => withImportOnlyAttributes(checked, importOnlyPaths),
+    [checked, importOnlyPaths]
+  )
   useEffect(() => {
     if (activeWorktreeId) {
       setSourceControlReviewAttributes(activeWorktreeId, attributes)
     }
   }, [activeWorktreeId, attributes])
   return attributes
+}
+
+const NO_PATHS: string[] = []
+
+// Fork: which small changes touch only imports, asked again whenever a file's line counts move.
+function useImportOnlyPaths({
+  activeWorktreeId,
+  worktreePath,
+  isFolder,
+  scope
+}: {
+  activeWorktreeId: string | null
+  worktreePath: string | null
+  isFolder: boolean
+  scope: string
+}): string[] {
+  const lineCounts = useAppStore((state) => selectBranchLineCounts(state, activeWorktreeId))
+  const mergeBase = useAppStore((state) =>
+    activeWorktreeId ? state.gitBranchCompareSummaryByWorktree[activeWorktreeId]?.mergeBase : null
+  )
+  const candidates = useMemo(() => importOnlyCandidates(lineCounts), [lineCounts])
+  // Why a key: the counts object is rebuilt on every status poll even when no count moved.
+  const countsKey =
+    candidates.length > 0
+      ? JSON.stringify(
+          candidates.map((path) => [
+            path,
+            lineCounts?.[path]?.added ?? 0,
+            lineCounts?.[path]?.removed ?? 0
+          ])
+        )
+      : ''
+  const [found, setFound] = useState<{ scope: string; paths: string[] }>({ scope, paths: NO_PATHS })
+  useEffect(() => {
+    if (!worktreePath || !mergeBase || isFolder || !countsKey) {
+      return
+    }
+    let cancelled = false
+    const connectionId = getConnectionId(activeWorktreeId ?? null) ?? undefined
+    window.api.git
+      .importOnlyPaths({
+        worktreePath,
+        mergeBase,
+        paths: (JSON.parse(countsKey) as [string, number, number][]).map(([path]) => path),
+        connectionId
+      })
+      .catch(() => NO_PATHS)
+      .then((paths) => {
+        if (!cancelled) {
+          setFound({ scope, paths })
+        }
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [activeWorktreeId, countsKey, isFolder, mergeBase, scope, worktreePath])
+  return found.scope === scope && countsKey ? found.paths : NO_PATHS
 }

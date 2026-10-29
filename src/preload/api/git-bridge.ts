@@ -44,6 +44,12 @@ export const gitApi = {
     paths: string[]
     connectionId?: string
   }): Promise<GitPathReviewAttributes> => ipcRenderer.invoke('git:checkReviewAttributes', args),
+  importOnlyPaths: (args: {
+    worktreePath: string
+    mergeBase: string
+    paths: string[]
+    connectionId?: string
+  }): Promise<string[]> => ipcRenderer.invoke('git:importOnlyPaths', args),
   findHugeFoldersToIgnore: (args: { worktreePath: string }): Promise<string[]> =>
     ipcRenderer.invoke('git:findHugeFoldersToIgnore', args),
   appendGitignore: (args: { worktreePath: string; folderName: string }): Promise<boolean> =>

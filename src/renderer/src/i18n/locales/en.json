@@ -13142,6 +13142,7 @@
               "allHiddenHeading": "All changed files are hidden",
               "allHiddenSupporting": "Show more file types from the file type filter.",
               "implementation": "Implementation",
+              "imports": "Imports only",
               "test": "Tests",
               "documentation": "Documentation",
               "generated": "Generated",

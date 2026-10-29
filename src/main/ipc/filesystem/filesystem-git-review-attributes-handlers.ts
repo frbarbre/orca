@@ -1,5 +1,7 @@
 import { ipcMain } from 'electron'
 import { checkReviewAttributes } from '../../git/check-review-attributes'
+import { importOnlyPathsInWorktree } from '../../git/import-only-paths'
+import { readGitBranchLineTotalMergeBaseParam } from '../../../shared/git-branch-line-total'
 import type { GitPathReviewAttributes } from '../../../shared/git-review-attributes'
 import { requireReachableGitRoute } from '../../providers/execution-host-provider-dispatch'
 import { getConnectionExecutionHostId } from '../../../shared/execution-host'
@@ -26,6 +28,28 @@ export function registerFilesystemGitReviewAttributesHandlers({
         worktreePath
       )
       return checkReviewAttributes(worktreePath, paths, gitOptions)
+    }
+  )
+  // Fork: the changed files that only touch imports, for the Changes list's "Imports only".
+  ipcMain.handle(
+    'git:importOnlyPaths',
+    async (
+      _event,
+      args: { worktreePath: string; mergeBase: string; paths: string[]; connectionId?: string }
+    ): Promise<string[]> => {
+      const mergeBase = readGitBranchLineTotalMergeBaseParam(args.mergeBase)
+      // Why local only: it reads the files from disk.
+      if (args.connectionId || !mergeBase) {
+        return []
+      }
+      const worktreePath = await resolveRegisteredWorktreePath(args.worktreePath, store)
+      const paths = args.paths.map((p) => validateGitRelativeFilePath(worktreePath, p))
+      const gitOptions = getLocalGitOptionsForRegisteredWorktree(
+        store,
+        args.worktreePath,
+        worktreePath
+      )
+      return importOnlyPathsInWorktree(worktreePath, mergeBase, paths, gitOptions)
     }
   )
 }

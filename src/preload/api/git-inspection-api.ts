@@ -58,6 +58,13 @@ export type GitInspectionApi = {
     paths: string[]
     connectionId?: string
   }) => Promise<GitPathReviewAttributes>
+  /** Fork: the paths whose change against `mergeBase` touches only imports; local worktrees only. */
+  importOnlyPaths: (args: {
+    worktreePath: string
+    mergeBase: string
+    paths: string[]
+    connectionId?: string
+  }) => Promise<string[]>
   findHugeFoldersToIgnore: (args: { worktreePath: string }) => Promise<string[]>
   history: (
     args: { worktreePath: string; connectionId?: string } & GitHistoryOptions

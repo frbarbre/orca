@@ -6,9 +6,11 @@ import { resolveRuntimeWorktreeByPath } from './web-runtime-worktree-catalog'
 /** Fork: the changed-file type filter's attribute lookup, over the paired runtime. */
 export function createWebGitReviewAttributesApi(): Pick<
   PreloadApi['git'],
-  'checkReviewAttributes'
+  'checkReviewAttributes' | 'importOnlyPaths'
 > {
   return {
+    // Why none: it reads the files from the desktop's disk, which the web client has no route to.
+    importOnlyPaths: async () => [],
     checkReviewAttributes: async ({ worktreePath, paths }) => {
       const worktree = await resolveRuntimeWorktreeByPath(worktreePath)
       return callRuntimeResult('git.checkReviewAttributes', {

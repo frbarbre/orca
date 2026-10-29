@@ -7,14 +7,16 @@ import {
   languageServerSettings,
   type LanguageServerLanguage,
   type LanguageServerLocation,
-  type LanguageServerRequest
+  type LanguageServerRequest,
+  type LanguageServerResolveRequest
 } from '../../../shared/language-server'
 import { toast } from 'sonner'
 import { translate } from '@/i18n/i18n'
 import { useAppStore } from '@/store'
 import { definitionOpenTarget, toEditorPosition } from './language-server-editor'
 import { fileSource } from './language-server-file-source'
-import { toMonacoCompletion } from './language-server-completions'
+import { toMonacoCompletion, toMonacoTextEdits } from './language-server-completions'
+import { installCodeActionProvider } from './monaco-code-action-provider'
 import { RENDERER_LANGUAGE_SERVERS, type LanguageServerFallback } from './language-server-languages'
 import {
   definitionModelUri,
@@ -80,6 +82,8 @@ function referenceLocations(
 }
 
 const reportedFailures = new Set<string>()
+
+const resolvable = new WeakMap<Monaco.languages.CompletionItem, LanguageServerResolveRequest>()
 
 // Why once per message: hover fires constantly, and a missing server would otherwise fail silently.
 function reportServerFailure(request: SourcedRequest, error: string): void {
@@ -193,19 +197,44 @@ function installLanguageProviders(
           )
           return {
             incomplete: result.incomplete,
-            suggestions: result.items.map((item) =>
-              toMonacoCompletion(item, {
+            suggestions: result.items.map((item) => {
+              const suggestion = toMonacoCompletion(item, {
                 kinds: monaco.languages.CompletionItemKind,
                 insertAsSnippet: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
                 wordRange
               })
-            )
+              if (item.resolve) {
+                resolvable.set(suggestion, { ...request, item: item.resolve })
+              }
+              return suggestion
+            })
           }
         }
         reportServerFailure(request, result.error)
       }
       return fallback ? fallback.completion(model, position) : { suggestions: [] }
+    },
+    // Why: tsgo sends an auto-import's import edit only when the item is resolved; Monaco applies
+    // it once this answers, after inserting the name.
+    resolveCompletionItem: async (suggestion) => {
+      const pending = resolvable.get(suggestion)
+      const result = pending ? await window.api.languageServer.resolveCompletion(pending) : null
+      if (!result?.ok) {
+        return suggestion
+      }
+      const { detail, documentation, additionalEdits } = result
+      return {
+        ...suggestion,
+        ...(detail ? { detail } : {}),
+        ...(documentation ? { documentation: { value: documentation } } : {}),
+        ...(additionalEdits ? { additionalTextEdits: toMonacoTextEdits(additionalEdits) } : {})
+      }
     }
+  })
+
+  installCodeActionProvider(monaco, languageId, {
+    serverRequest,
+    reportFailure: reportServerFailure
   })
 }
 

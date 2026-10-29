@@ -42,6 +42,8 @@ type Choice = {
   command: string | null
   diagnostics: boolean
   completions: boolean
+  quickFixes: boolean
+  organizeImports: boolean
 }
 
 function FeatureSwitch({
@@ -202,6 +204,24 @@ function LanguageServerCard({
             checked={choice.completions}
             onChange={() => onChange({ ...choice, completions: !choice.completions })}
           />
+          <FeatureSwitch
+            label={translate('languageServers.quickFixes', 'Quick fixes')}
+            ariaLabel={translate('languageServers.quickFixesFor', '{{language}} quick fixes', {
+              language: label
+            })}
+            checked={choice.quickFixes}
+            onChange={() => onChange({ ...choice, quickFixes: !choice.quickFixes })}
+          />
+          <FeatureSwitch
+            label={translate('languageServers.organizeImportsSwitch', 'Organize imports (⌥⇧O)')}
+            ariaLabel={translate(
+              'languageServers.organizeImportsFor',
+              '{{language}} organize imports',
+              { language: label }
+            )}
+            checked={choice.organizeImports}
+            onChange={() => onChange({ ...choice, organizeImports: !choice.organizeImports })}
+          />
         </div>
       ) : null}
     </div>
@@ -269,7 +289,7 @@ export function LanguageServersPane({ settings, updateSettings }: Props): React.
   const searchEntries = getLanguageServersSearchEntries()
   const save = (
     language: LanguageServerLanguage,
-    { enabled, server, command, diagnostics, completions }: Choice
+    { enabled, server, command, diagnostics, completions, quickFixes, organizeImports }: Choice
   ): void =>
     updateSettings({
       languageServers: {
@@ -279,7 +299,9 @@ export function LanguageServersPane({ settings, updateSettings }: Props): React.
           server,
           ...(command ? { command } : {}),
           ...(diagnostics ? {} : { diagnostics: false }),
-          ...(completions ? {} : { completions: false })
+          ...(completions ? {} : { completions: false }),
+          ...(quickFixes ? {} : { quickFixes: false }),
+          ...(organizeImports ? {} : { organizeImports: false })
         }
       }
     })

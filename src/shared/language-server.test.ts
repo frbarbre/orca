@@ -60,14 +60,18 @@ describe('language server registry', () => {
       server: 'pyrefly',
       command: null,
       diagnostics: true,
-      completions: true
+      completions: true,
+      quickFixes: true,
+      organizeImports: true
     })
     expect(languageServerSettings({ languageServers: { python: false } }, 'python')).toEqual({
       enabled: false,
       server: 'pyrefly',
       command: null,
       diagnostics: true,
-      completions: true
+      completions: true,
+      quickFixes: true,
+      organizeImports: true
     })
     expect(
       languageServerSettings(
@@ -81,7 +85,9 @@ describe('language server registry', () => {
       server: 'pyright',
       command: '/opt/pyright-langserver',
       diagnostics: true,
-      completions: true
+      completions: true,
+      quickFixes: true,
+      organizeImports: true
     })
     expect(
       languageServerSettings(
@@ -92,7 +98,9 @@ describe('language server registry', () => {
               server: 'gone',
               command: '',
               diagnostics: false,
-              completions: false
+              completions: false,
+              quickFixes: false,
+              organizeImports: false
             }
           }
         },
@@ -103,7 +111,9 @@ describe('language server registry', () => {
       server: 'tsgo',
       command: null,
       diagnostics: false,
-      completions: false
+      completions: false,
+      quickFixes: false,
+      organizeImports: false
     })
   })
 

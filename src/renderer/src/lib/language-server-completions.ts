@@ -1,5 +1,8 @@
 import type * as Monaco from 'monaco-editor'
-import type { LanguageServerCompletionItem } from '../../../shared/language-server'
+import type {
+  LanguageServerCompletionItem,
+  LanguageServerTextEdit
+} from '../../../shared/language-server'
 
 type MonacoKind = keyof typeof Monaco.languages.CompletionItemKind
 
@@ -32,6 +35,21 @@ const KIND_BY_LSP: readonly MonacoKind[] = [
   'TypeParameter'
 ]
 
+export function toMonacoRange(edit: LanguageServerTextEdit): Monaco.IRange {
+  return {
+    startLineNumber: edit.startLine + 1,
+    startColumn: edit.startCharacter + 1,
+    endLineNumber: edit.endLine + 1,
+    endColumn: edit.endCharacter + 1
+  }
+}
+
+export function toMonacoTextEdits(
+  edits: readonly LanguageServerTextEdit[]
+): Monaco.languages.TextEdit[] {
+  return edits.map((edit) => ({ range: toMonacoRange(edit), text: edit.text }))
+}
+
 export function toMonacoCompletion(
   item: LanguageServerCompletionItem,
   {
@@ -46,9 +64,18 @@ export function toMonacoCompletion(
 ): Monaco.languages.CompletionItem {
   const kindName = (item.kind ? KIND_BY_LSP[item.kind - 1] : undefined) ?? 'Text'
   const { range } = item
+  const { labelDetail, labelDescription, additionalEdits } = item
   return {
-    label: item.label,
+    label:
+      labelDetail || labelDescription
+        ? {
+            label: item.label,
+            ...(labelDetail ? { detail: labelDetail } : {}),
+            ...(labelDescription ? { description: labelDescription } : {})
+          }
+        : item.label,
     kind: kinds[kindName] ?? kinds.Text ?? 0,
+    ...(additionalEdits ? { additionalTextEdits: toMonacoTextEdits(additionalEdits) } : {}),
     ...(item.detail ? { detail: item.detail } : {}),
     ...(item.documentation ? { documentation: { value: item.documentation } } : {}),
     ...(item.sortText ? { sortText: item.sortText } : {}),

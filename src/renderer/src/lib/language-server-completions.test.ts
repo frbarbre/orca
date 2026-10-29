@@ -44,6 +44,40 @@ describe('toMonacoCompletion', () => {
     })
   })
 
+  it('shows where a name comes from beside it, and adds its import when accepted', () => {
+    expect(
+      toMonacoCompletion(
+        {
+          label: 'getLogger',
+          labelDetail: ' (import logging)',
+          labelDescription: 'logging',
+          insertText: 'getLogger',
+          additionalEdits: [
+            {
+              startLine: 0,
+              startCharacter: 0,
+              endLine: 0,
+              endCharacter: 0,
+              text: 'from logging import getLogger\n'
+            }
+          ]
+        },
+        deps
+      )
+    ).toEqual({
+      label: { label: 'getLogger', detail: ' (import logging)', description: 'logging' },
+      kind: 18,
+      insertText: 'getLogger',
+      additionalTextEdits: [
+        {
+          range: { startLineNumber: 1, startColumn: 1, endLineNumber: 1, endColumn: 1 },
+          text: 'from logging import getLogger\n'
+        }
+      ],
+      range: wordRange
+    })
+  })
+
   it.each([
     [2, 0],
     [6, 4],

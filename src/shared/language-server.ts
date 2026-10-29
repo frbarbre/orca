@@ -94,6 +94,8 @@ export type LanguageServerSettingsValue =
       command?: string
       diagnostics?: boolean
       completions?: boolean
+      quickFixes?: boolean
+      organizeImports?: boolean
     }
 
 export type LanguageServerSettingsMap = Partial<
@@ -116,6 +118,8 @@ export function languageServerSettings(
   command: string | null
   diagnostics: boolean
   completions: boolean
+  quickFixes: boolean
+  organizeImports: boolean
 } {
   const value = settings?.languageServers?.[language]
   const stored = typeof value === 'object' && value !== null ? value : {}
@@ -129,7 +133,9 @@ export function languageServerSettings(
     server,
     command: stored.command?.trim() || null,
     diagnostics: stored.diagnostics !== false,
-    completions: stored.completions !== false
+    completions: stored.completions !== false,
+    quickFixes: stored.quickFixes !== false,
+    organizeImports: stored.organizeImports !== false
   }
 }
 
@@ -205,9 +211,27 @@ export type LanguageServerReferencesResult =
   | { ok: true; locations: LanguageServerLocation[]; files: Record<string, string> }
   | { ok: false; error: string }
 
+/** Zero-based, as the language server reports it. */
+export type LanguageServerTextEdit = {
+  startLine: number
+  startCharacter: number
+  endLine: number
+  endCharacter: number
+  text: string
+}
+
+/** Which answer of its server an item came from, so the server can fill it in later. */
+export type LanguageServerCompletionRef = { list: number; index: number }
+
 /** Zero-based, as the language server reports it. `kind` is LSP's CompletionItemKind. */
 export type LanguageServerCompletionItem = {
   label: string
+  /** Shown faded after the label, and right-aligned, like the module an import comes from. */
+  labelDetail?: string
+  labelDescription?: string
+  /** Edits elsewhere in the file that accepting the item makes, like its import. */
+  additionalEdits?: LanguageServerTextEdit[]
+  resolve?: LanguageServerCompletionRef
   kind?: number
   detail?: string
   documentation?: string
@@ -233,6 +257,40 @@ export type LanguageServerCompletionRequest = LanguageServerRequest & {
 
 export type LanguageServerCompletionResult =
   | ({ ok: true } & LanguageServerCompletions)
+  | { ok: false; error: string }
+
+export type ResolvedCompletion = Pick<
+  LanguageServerCompletionItem,
+  'detail' | 'documentation' | 'additionalEdits'
+>
+
+export type LanguageServerResolveRequest = LanguageServerRequest & {
+  item: LanguageServerCompletionRef
+}
+
+/** Empty when the item's list has been replaced since. */
+export type LanguageServerResolveResult =
+  | ({ ok: true } & ResolvedCompletion)
+  | { ok: false; error: string }
+
+/** The range the quick fixes are for, from `line`/`character` to here. */
+export type LanguageServerCodeActionRequest = LanguageServerRequest & {
+  endLine: number
+  endCharacter: number
+}
+
+export type LanguageServerCodeAction = {
+  title: string
+  preferred?: true
+  edits: LanguageServerTextEdit[]
+}
+
+export type LanguageServerCodeActionsResult =
+  | { ok: true; actions: LanguageServerCodeAction[] }
+  | { ok: false; error: string }
+
+export type LanguageServerEditsResult =
+  | { ok: true; edits: LanguageServerTextEdit[] }
   | { ok: false; error: string }
 
 export function isLanguageServerLanguage(value: unknown): value is LanguageServerLanguage {

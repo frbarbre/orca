@@ -220,6 +220,26 @@ export function registerLanguageServerHandlers(): void {
         })
       : { ok: false, error: 'Invalid language server request.' }
   })
+  ipcMain.handle('languageServer:resolveCompletion', async (_event, args: unknown) => {
+    const request = readRequest(args)
+    const item = (args as { item?: { list?: unknown; index?: unknown } } | null)?.item
+    return request && typeof item?.list === 'number' && typeof item.index === 'number'
+      ? service.resolveCompletion({ ...request, item: { list: item.list, index: item.index } })
+      : { ok: false, error: 'Invalid language server request.' }
+  })
+  ipcMain.handle('languageServer:codeActions', async (_event, args: unknown) => {
+    const request = readRequest(args)
+    const { endLine, endCharacter } = (args ?? {}) as { endLine?: unknown; endCharacter?: unknown }
+    return request && typeof endLine === 'number' && typeof endCharacter === 'number'
+      ? service.codeActions({ ...request, endLine, endCharacter })
+      : { ok: false, error: 'Invalid language server request.' }
+  })
+  ipcMain.handle('languageServer:organizeImports', async (_event, args: unknown) => {
+    const request = readRequest({ ...(args as object), line: 0, character: 0 })
+    return request
+      ? service.organizeImports(request)
+      : { ok: false, error: 'Invalid language server request.' }
+  })
   ipcMain.handle('languageServer:sync', async (_event, args: unknown) => {
     const request = readRequest({ ...(args as object), line: 0, character: 0 })
     return request

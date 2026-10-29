@@ -1794,6 +1794,27 @@ Language Servers; changing either stops its server.
 | `editor/monaco-editor-input-bindings.ts`, `useEditorCmdSaveRequest.ts`   | Mod+S in the editor, and from outside it.          |
 | `settings/LanguageServersPane.tsx`, `language-servers-search.ts`         | The formatter cards.                               |
 
+### 61. Auto-imports, quick fixes and Shift+Alt+O
+
+A suggestion shows where a name comes from (LSP `labelDetails`) and accepting it adds its import
+(`additionalTextEdits`). tsgo sends that edit only on `completionItem/resolve`, so each session keeps
+its latest list and resolves an item by its place in it. On a squiggle, the lightbulb and the hover's
+Quick Fix list the server's `quickfix` actions, asked for with the server's own diagnostics at the
+range (published, or pulled fresh), and only those that edit the file alone. Shift+Alt+O asks for
+`source.organizeImports` (tsgo drops unused imports and sorts the rest); pyrefly has none, so its
+"Remove unused import" fix runs for each `unused-import` diagnostic instead. Quick fixes and organize
+imports each have a switch per language in Settings → Language Servers.
+
+| File                                                                      | What is ours                                          |
+| ------------------------------------------------------------------------- | ----------------------------------------------------- |
+| `src/shared/language-server.ts`, `language-server-api.ts`                 | The item, code action and edit types; the switches.   |
+| `lsp-completions.ts`, `lsp-code-actions.ts`, `lsp-client-capabilities.ts` | Reading them, and organize imports' fallback.         |
+| `lsp-session.ts`, `lsp-documents.ts`, `lsp-watched-files.ts`              | Resolve, code actions, organize imports.              |
+| `language-server-service.ts`, `src/main/ipc/language-server.ts`           | Routing them to the file's server.                    |
+| `monaco-language-server-providers.ts`, `monaco-code-action-provider.ts`   | `resolveCompletionItem` and the code action provider. |
+| `language-server-completions.ts`, `language-server-code-actions.ts`       | Turning them into Monaco's shapes.                    |
+| `settings/LanguageServersPane.tsx`, `language-servers-search.ts`          | The two switches.                                     |
+
 ## Verify
 
 Verify runs on GitHub, not locally: `fork-verify.yml` runs it on every pull request against `main`,

@@ -13,12 +13,28 @@ const FORMATTING_EDITS = [
   { range: { start: { line: 4 } }, newText: 'malformed' }
 ]
 
+const A_TS = 'file:///repo/src/a.ts'
+
+const IMPORT = {
+  range: { start: { line: 0, character: 0 }, end: { line: 0, character: 0 } },
+  newText: "import { useState } from 'react'\n"
+}
+
+const IMPORT_EDIT = {
+  startLine: 0,
+  startCharacter: 0,
+  endLine: 0,
+  endCharacter: 0,
+  text: "import { useState } from 'react'\n"
+}
+
 function fakeServer(
   definitionResult: unknown,
   hoverResult: unknown = null,
   referencesResult: unknown = null,
   pulledDiagnostics?: unknown[],
-  completionResult: unknown = null
+  completionResult: unknown = null,
+  { resolveProvider = false }: { resolveProvider?: boolean } = {}
 ) {
   const received: Message[] = []
   let deliver: (chunk: Buffer) => void = () => {}
@@ -28,9 +44,11 @@ function fakeServer(
     const message = value as Message
     received.push(message)
     if (message.method === 'initialize') {
-      const capabilities = pulledDiagnostics
-        ? { definitionProvider: true, diagnosticProvider: { interFileDependencies: true } }
-        : { definitionProvider: true }
+      const capabilities = {
+        definitionProvider: true,
+        ...(pulledDiagnostics ? { diagnosticProvider: { interFileDependencies: true } } : {}),
+        ...(resolveProvider ? { completionProvider: { resolveProvider: true } } : {})
+      }
       reply({ id: message.id, result: { capabilities } })
       reply({ id: 900, method: 'workspace/configuration', params: { items: [{}] } })
     } else if (message.method === 'textDocument/completion') {
@@ -45,6 +63,26 @@ function fakeServer(
       reply({ id: message.id, result: referencesResult })
     } else if (message.method === 'textDocument/formatting') {
       reply({ id: message.id, result: FORMATTING_EDITS })
+    } else if (message.method === 'completionItem/resolve') {
+      reply({
+        id: message.id,
+        result: {
+          ...message.params,
+          documentation: 'Returns a stateful value.',
+          additionalTextEdits: [IMPORT]
+        }
+      })
+    } else if (message.method === 'textDocument/codeAction') {
+      reply({
+        id: message.id,
+        result: [
+          {
+            title: 'Add import from "react"',
+            kind: 'quickfix',
+            edit: { changes: { [A_TS]: [IMPORT] } }
+          }
+        ]
+      })
     }
   })
   const transport: LspTransport = {
@@ -389,6 +427,134 @@ describe('LSP session', () => {
       server.received.find((m) => m.method === 'initialize')?.params?.capabilities
     ).toMatchObject({
       textDocument: { completion: { completionItem: { snippetSupport: true } } }
+    })
+  })
+
+  it('fills in an item of the latest list on request, with the import accepting it adds', async () => {
+    const items = [{ label: 'useState', data: { id: 4 } }]
+    const server = fakeServer(null, null, null, undefined, items, { resolveProvider: true })
+    const session = createLspSession({ transport: server.transport, rootPath: '/repo' })
+
+    const completions = await session.completion({
+      ...request('useSta'),
+      filePath: '/repo/src/a.ts'
+    })
+    expect(completions.items).toEqual([
+      { label: 'useState', insertText: 'useState', resolve: { list: 1, index: 0 } }
+    ])
+    await expect(session.resolveCompletion({ list: 1, index: 0 })).resolves.toEqual({
+      documentation: 'Returns a stateful value.',
+      additionalEdits: [IMPORT_EDIT]
+    })
+    expect(server.received.find((m) => m.method === 'completionItem/resolve')?.params).toEqual({
+      label: 'useState',
+      data: { id: 4 }
+    })
+
+    await session.completion({ ...request('useStat'), filePath: '/repo/src/a.ts' })
+    await expect(session.resolveCompletion({ list: 1, index: 0 })).resolves.toBeNull()
+    expect(
+      server.received.find((m) => m.method === 'initialize')?.params?.capabilities
+    ).toMatchObject({
+      textDocument: {
+        completion: {
+          completionItem: {
+            labelDetailsSupport: true,
+            resolveSupport: { properties: ['documentation', 'detail', 'additionalTextEdits'] }
+          }
+        }
+      }
+    })
+  })
+
+  it('asks for quick fixes with the diagnostics the server published at the range', async () => {
+    const server = fakeServer(null)
+    const session = createLspSession({ transport: server.transport, rootPath: '/repo' })
+    await session.open('/repo/src/a.ts', 'useState()\n')
+    const unknownName = {
+      range: { start: { line: 1, character: 0 }, end: { line: 1, character: 8 } },
+      code: 2304,
+      message: "Cannot find name 'useState'."
+    }
+    const elsewhere = {
+      ...unknownName,
+      range: { start: { line: 9, character: 0 }, end: { line: 9, character: 1 } }
+    }
+    server.notify({
+      method: 'textDocument/publishDiagnostics',
+      params: { uri: A_TS, diagnostics: [elsewhere, unknownName] }
+    })
+
+    const actions = await session.codeActions({
+      filePath: '/repo/src/a.ts',
+      text: '\nuseState()\n',
+      line: 1,
+      character: 4,
+      endLine: 1,
+      endCharacter: 4
+    })
+
+    expect(actions).toEqual([{ title: 'Add import from "react"', edits: [IMPORT_EDIT] }])
+    expect(server.received.find((m) => m.method === 'textDocument/codeAction')?.params).toEqual({
+      textDocument: { uri: A_TS },
+      range: { start: { line: 1, character: 4 }, end: { line: 1, character: 4 } },
+      context: { diagnostics: [unknownName], only: ['quickfix'], triggerKind: 1 }
+    })
+    expect(
+      server.received.find((m) => m.method === 'textDocument/didChange')?.params
+    ).toMatchObject({
+      contentChanges: [{ text: '\nuseState()\n' }]
+    })
+  })
+
+  it('pulls fresh diagnostics for quick fixes from a server that answers for them', async () => {
+    const unknownName = {
+      range: { start: { line: 0, character: 0 }, end: { line: 0, character: 8 } },
+      code: 2304,
+      message: "Cannot find name 'useState'."
+    }
+    const server = fakeServer(null, null, null, [unknownName])
+    const session = createLspSession({ transport: server.transport, rootPath: '/repo' })
+
+    await session.codeActions({
+      filePath: '/repo/src/a.ts',
+      text: 'useState()',
+      line: 0,
+      character: 2,
+      endLine: 0,
+      endCharacter: 2
+    })
+
+    expect(
+      server.received.find((m) => m.method === 'textDocument/codeAction')?.params
+    ).toMatchObject({
+      context: { diagnostics: [unknownName] }
+    })
+    expect(
+      server.received.find((m) => m.method === 'initialize')?.params?.capabilities
+    ).toMatchObject({
+      textDocument: {
+        codeAction: {
+          codeActionLiteralSupport: {
+            codeActionKind: { valueSet: ['quickfix', 'source.organizeImports'] }
+          },
+          isPreferredSupport: true
+        }
+      }
+    })
+  })
+
+  it("organizes a file's imports with the text it is handed", async () => {
+    const server = fakeServer(null)
+    const session = createLspSession({ transport: server.transport, rootPath: '/repo' })
+
+    await expect(
+      session.organizeImports({ filePath: '/repo/src/a.ts', text: 'a\nb\n' })
+    ).resolves.toEqual([IMPORT_EDIT])
+    expect(server.received.find((m) => m.method === 'textDocument/codeAction')?.params).toEqual({
+      textDocument: { uri: A_TS },
+      range: { start: { line: 0, character: 0 }, end: { line: 3, character: 0 } },
+      context: { diagnostics: [], only: ['source.organizeImports'], triggerKind: 1 }
     })
   })
 

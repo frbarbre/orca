@@ -1,28 +1,19 @@
 import { isAbsolute, relative } from 'node:path'
 import {
   languageServerForFile,
-  type LanguageServerCompletionRequest,
-  type LanguageServerCompletionResult,
-  type LanguageServerDefinitionResult,
-  type LanguageServerDocument,
-  type LanguageServerHoverResult,
   type LanguageServerLanguage,
-  type LanguageServerReferencesResult,
   type LanguageServerRequest
 } from '../../shared/language-server'
-import type {
-  DiagnosticsSyncResult,
-  EditorDiagnostic,
-  EditorDiagnosticsEvent
-} from '../../shared/editor-diagnostics'
+import type { LanguageServerApi } from '../../shared/language-server-api'
+import type { EditorDiagnostic, EditorDiagnosticsEvent } from '../../shared/editor-diagnostics'
 import { createHemolintFilter } from './hemolint-baseline'
 import { resolveLaunch, type LanguageServerLaunch } from './language-server-launchers'
 import type { LspSession, WatchedFileChange } from './lsp-session'
 import { createLspSessionPool } from './lsp-session-pool'
+import { referencedFileTexts } from './language-server-reference-files'
 
 const IDLE_MS = 15 * 60_000
 const MAX_SESSIONS = 4
-const MAX_REFERENCE_FILES = 50
 
 type Session = Pick<
   LspSession,
@@ -31,6 +22,9 @@ type Session = Pick<
   | 'hover'
   | 'references'
   | 'completion'
+  | 'resolveCompletion'
+  | 'codeActions'
+  | 'organizeImports'
   | 'filesChanged'
   | 'dispose'
   | 'open'
@@ -84,13 +78,17 @@ export function createLanguageServerService({
   /** Admits a server into its project, throwing while the project is being removed; the returned
    *  call releases it when the server stops. */
   admit?: (projectRoot: string) => () => void
-}): {
-  definition: (request: LanguageServerRequest) => Promise<LanguageServerDefinitionResult>
-  hover: (request: LanguageServerRequest) => Promise<LanguageServerHoverResult>
-  references: (request: LanguageServerRequest) => Promise<LanguageServerReferencesResult>
-  completion: (request: LanguageServerCompletionRequest) => Promise<LanguageServerCompletionResult>
-  /** Fork: hands the server an editor's text; its errors arrive through `onDiagnostics`. */
-  sync: (document: LanguageServerDocument) => Promise<DiagnosticsSyncResult>
+}): Pick<
+  LanguageServerApi,
+  | 'definition'
+  | 'hover'
+  | 'references'
+  | 'completion'
+  | 'resolveCompletion'
+  | 'codeActions'
+  | 'organizeImports'
+  | 'sync'
+> & {
   closeDocument: (args: { language: LanguageServerLanguage; filePath: string }) => void
   stopLanguage: (language: LanguageServerLanguage) => void
   stopUnder: (root: string) => void
@@ -161,17 +159,10 @@ export function createLanguageServerService({
       // Why wrap dispose: the pool ends a session through it (idle, eviction, stop), and the
       // watcher and removal fence must go with the server they belong to.
       return {
+        ...session,
         get closed() {
           return session.closed
         },
-        definition: (request) => session.definition(request),
-        hover: (request) => session.hover(request),
-        references: (request) => session.references(request),
-        completion: (request) => session.completion(request),
-        filesChanged: (changes) => session.filesChanged(changes),
-        open: (filePath, text) => session.open(filePath, text),
-        close: (filePath) => session.close(filePath),
-        pullDiagnostics: (filePath) => session.pullDiagnostics(filePath),
         dispose: () => {
           stopWatching?.()
           session.dispose()
@@ -265,6 +256,26 @@ export function createLanguageServerService({
       )
       return result.ok ? { ok: true, ...result.value } : result
     },
+    resolveCompletion: async (request) => {
+      const result = await withSession(request, (session) =>
+        session.resolveCompletion(request.item)
+      )
+      return result.ok ? { ok: true, ...result.value } : result
+    },
+    codeActions: async (request) => {
+      const { filePath, text, line, character, endLine, endCharacter } = request
+      const result = await withSession(request, (session) =>
+        session.codeActions({ filePath, text, line, character, endLine, endCharacter })
+      )
+      return result.ok ? { ok: true, actions: result.value } : result
+    },
+    organizeImports: async (document) => {
+      const { filePath, text } = document
+      const result = await withSession({ ...document, line: 0, character: 0 }, (session) =>
+        session.organizeImports({ filePath, text })
+      )
+      return result.ok ? { ok: true, edits: result.value } : result
+    },
     hover: async (request) => {
       const { filePath, text, line, character } = request
       const result = await withSession(request, (session) =>
@@ -280,18 +291,7 @@ export function createLanguageServerService({
       if (!result.ok) {
         return result
       }
-      // Why the texts: the peek view shows each reference in its file, and the renderer only
-      // holds the files that are open.
-      const files: Record<string, string> = {}
-      const others = [...new Set(result.value.map((location) => location.filePath))].filter(
-        (path) => path !== filePath
-      )
-      for (const path of others.slice(0, MAX_REFERENCE_FILES)) {
-        const content = readFile(path)
-        if (content !== null) {
-          files[path] = content
-        }
-      }
+      const files = referencedFileTexts(result.value, filePath, readFile)
       return { ok: true, locations: result.value, files }
     },
     stopLanguage: (language) => pool.disposeMatching((key) => key.startsWith(`${language}\0`)),

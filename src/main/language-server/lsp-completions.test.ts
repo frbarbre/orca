@@ -73,6 +73,48 @@ describe('readCompletions', () => {
     })
   })
 
+  it('reads the source a name is imported from and the import edit accepting it adds', () => {
+    expect(
+      readCompletions([
+        {
+          label: 'getLogger',
+          labelDetails: { description: 'logging', detail: ' (import logging)' },
+          additionalTextEdits: [
+            {
+              range: { start: { line: 0, character: 0 }, end: { line: 0, character: 0 } },
+              newText: 'from logging import getLogger\n'
+            }
+          ]
+        }
+      ]).items
+    ).toEqual([
+      {
+        label: 'getLogger',
+        labelDetail: ' (import logging)',
+        labelDescription: 'logging',
+        insertText: 'getLogger',
+        additionalEdits: [
+          {
+            startLine: 0,
+            startCharacter: 0,
+            endLine: 0,
+            endCharacter: 0,
+            text: 'from logging import getLogger\n'
+          }
+        ]
+      }
+    ])
+  })
+
+  it('numbers each item within its list, so the server can fill it in later', () => {
+    expect(
+      readCompletions([{ kind: 6 }, { label: 'useState' }, { label: 'useEffect' }], 7).items
+    ).toEqual([
+      { label: 'useState', insertText: 'useState', resolve: { list: 7, index: 1 } },
+      { label: 'useEffect', insertText: 'useEffect', resolve: { list: 7, index: 2 } }
+    ])
+  })
+
   it('reads nothing from an empty answer', () => {
     expect(readCompletions(null)).toEqual({ incomplete: false, items: [] })
   })

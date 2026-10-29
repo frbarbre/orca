@@ -21,6 +21,14 @@ const tsRequest = {
   filePath: '/repo/apps/frontend/src/a.tsx'
 }
 
+const IMPORT_EDIT = {
+  startLine: 0,
+  startCharacter: 0,
+  endLine: 0,
+  endCharacter: 0,
+  text: 'from logging import getLogger\n'
+}
+
 type ServiceOptions = Parameters<typeof createLanguageServerService>[0]
 
 function setup(watchFiles?: ServiceOptions['watchFiles'], admit?: ServiceOptions['admit']) {
@@ -32,6 +40,15 @@ function setup(watchFiles?: ServiceOptions['watchFiles'], admit?: ServiceOptions
     incomplete: false,
     items: [{ label: 'append', kind: 2, insertText: 'append' }]
   }))
+  const resolveCompletion = vi.fn(async (_item: { list: number; index: number }) => ({
+    additionalEdits: [IMPORT_EDIT]
+  }))
+  const codeActions = vi.fn(async (_request: { endLine: number; endCharacter: number }) => [
+    { title: 'Insert import', edits: [IMPORT_EDIT] }
+  ])
+  const organizeImports = vi.fn(async (_request: { filePath: string; text: string }) => [
+    IMPORT_EDIT
+  ])
   const references = vi.fn(async () => [
     { filePath: '/repo/apps/backend/a.py', line: 19, character: 6 },
     { filePath: '/repo/apps/backend/c.py', line: 4, character: 10 },
@@ -50,7 +67,10 @@ function setup(watchFiles?: ServiceOptions['watchFiles'], admit?: ServiceOptions
       open: vi.fn(async () => undefined),
       close: vi.fn(),
       pullDiagnostics: vi.fn(async () => null),
-      completion
+      completion,
+      resolveCompletion,
+      codeActions,
+      organizeImports
     }
     sessions.push(session)
     return session
@@ -78,6 +98,9 @@ function setup(watchFiles?: ServiceOptions['watchFiles'], admit?: ServiceOptions
     hover,
     references,
     completion,
+    resolveCompletion,
+    codeActions,
+    organizeImports,
     sessions,
     readPreview,
     readFile
@@ -139,6 +162,41 @@ describe('language server service', () => {
       line: 0,
       character: 7,
       triggerCharacter: '.'
+    })
+  })
+
+  it('fills in a completion and offers quick fixes from the server that answered it', async () => {
+    const { service, startSession, resolveCompletion, codeActions } = setup()
+    await service.completion(request)
+
+    await expect(
+      service.resolveCompletion({ ...request, item: { list: 3, index: 1 } })
+    ).resolves.toEqual({ ok: true, additionalEdits: [IMPORT_EDIT] })
+    await expect(service.codeActions({ ...request, endLine: 0, endCharacter: 8 })).resolves.toEqual(
+      { ok: true, actions: [{ title: 'Insert import', edits: [IMPORT_EDIT] }] }
+    )
+    expect(startSession).toHaveBeenCalledTimes(1)
+    expect(resolveCompletion).toHaveBeenCalledWith({ list: 3, index: 1 })
+    expect(codeActions).toHaveBeenCalledWith({
+      filePath: '/repo/apps/backend/a.py',
+      text: 'import b',
+      line: 0,
+      character: 7,
+      endLine: 0,
+      endCharacter: 8
+    })
+  })
+
+  it("organizes a file's imports in its own server", async () => {
+    const { service, organizeImports } = setup()
+
+    await expect(service.organizeImports(request)).resolves.toEqual({
+      ok: true,
+      edits: [IMPORT_EDIT]
+    })
+    expect(organizeImports).toHaveBeenCalledWith({
+      filePath: '/repo/apps/backend/a.py',
+      text: 'import b'
     })
   })
 

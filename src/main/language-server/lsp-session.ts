@@ -1,14 +1,20 @@
 import { pathToFileURL } from 'node:url'
-import {
-  languageServerForFile,
-  type LanguageServerCompletions,
-  type LanguageServerLocation
+import type {
+  LanguageServerCodeAction,
+  LanguageServerCompletionRef,
+  LanguageServerCompletions,
+  LanguageServerLocation,
+  ResolvedCompletion
 } from '../../shared/language-server'
 import type { EditorDiagnostic } from '../../shared/editor-diagnostics'
 import type { FormatDocumentRequest, FormatEdit } from '../../shared/formatter'
 import { readDiagnosticList, readPublishDiagnostics } from './lsp-diagnostics'
 import { createLspMessageReader, encodeLspMessage, type LspMessage } from './lsp-message-framing'
-import { readCompletions } from './lsp-completions'
+import { createCompletionLists, readCompletions, readResolvedCompletion } from './lsp-completions'
+import { requestOrganizeImports, requestQuickFixes } from './lsp-code-actions'
+import { createLspDocuments } from './lsp-documents'
+import { LSP_CLIENT_CAPABILITIES, type ServerCapabilities } from './lsp-client-capabilities'
+import { didChangeWatchedFiles, type WatchedFileChange } from './lsp-watched-files'
 import { readDefinitionLocations, readHoverMarkdown, readTextEdits } from './lsp-results'
 
 export type LspTransport = {
@@ -20,7 +26,7 @@ export type LspTransport = {
 
 export type DefinitionRequest = { filePath: string; text: string; line: number; character: number }
 
-export type WatchedFileChange = { filePath: string; type: 'create' | 'update' | 'delete' }
+export type { WatchedFileChange }
 
 export type LspSession = {
   readonly closed: boolean
@@ -30,6 +36,13 @@ export type LspSession = {
   completion: (
     request: DefinitionRequest & { triggerCharacter?: string }
   ) => Promise<LanguageServerCompletions>
+  /** Null when the item's list has been replaced since. */
+  resolveCompletion: (item: LanguageServerCompletionRef) => Promise<ResolvedCompletion | null>
+  codeActions: (
+    request: DefinitionRequest & { endLine: number; endCharacter: number }
+  ) => Promise<LanguageServerCodeAction[]>
+  /** The edits that drop the file's unused imports, and sort the rest where the server can. */
+  organizeImports: (request: { filePath: string; text: string }) => Promise<FormatEdit[]>
   /** Fork: what changed on disk, so the server's view of the project stays current. */
   filesChanged: (changes: readonly WatchedFileChange[]) => void
   /** Fork: hands the server the editor's text so it publishes diagnostics for it. */
@@ -41,19 +54,10 @@ export type LspSession = {
   dispose: () => void
 }
 
-// LSP FileChangeType: Created = 1, Changed = 2, Deleted = 3.
-// Why Changed before Created: an atomic save replaces a known file and arrives as a create, and
-// tsgo drops a Created for a file it already has unless a Changed for it came first.
-const FILE_CHANGE_TYPES: Record<WatchedFileChange['type'], readonly number[]> = {
-  create: [2, 1],
-  update: [2],
-  delete: [3]
-}
-
 type IncomingMessage = {
   id?: number | string
   method?: string
-  params?: { items?: unknown[] }
+  params?: { items?: unknown[]; diagnostics?: unknown[] }
   result?: unknown
   error?: { message?: string }
 }
@@ -75,11 +79,13 @@ export function createLspSession({
     number,
     { resolve: (value: unknown) => void; reject: (error: Error) => void }
   >()
-  const documents = new Map<string, { version: number; text: string }>()
   let nextId = 1
   let closed = false
   let ready = false
   let pullsDiagnostics = false
+  let resolvesCompletions = false
+  const completionLists = createCompletionLists()
+  const published = new Map<string, unknown[]>()
   let initialized: Promise<void> | null = null
 
   const send = (message: LspMessage): void => {
@@ -87,6 +93,7 @@ export function createLspSession({
       transport.write(encodeLspMessage({ jsonrpc: '2.0', ...message }))
     }
   }
+  const documents = createLspDocuments(send)
 
   const close = (reason: string): void => {
     if (closed) {
@@ -126,9 +133,11 @@ export function createLspSession({
   transport.onData(
     createLspMessageReader((value) => {
       const message = value as IncomingMessage
-      const published = readPublishDiagnostics(message)
-      if (published) {
-        onDiagnostics?.(published.filePath, published.diagnostics)
+      const diagnostics = readPublishDiagnostics(message)
+      if (diagnostics) {
+        // Why keep the server's own: a quick fix is asked for with them, `data` and all.
+        published.set(pathToFileURL(diagnostics.filePath).href, message.params?.diagnostics ?? [])
+        onDiagnostics?.(diagnostics.filePath, diagnostics.diagnostics)
         return
       }
       if (message.method && message.id !== undefined) {
@@ -158,61 +167,26 @@ export function createLspSession({
         processId: process.pid,
         rootUri,
         workspaceFolders: [{ uri: rootUri, name: rootPath }],
-        capabilities: {
-          // Why: the servers rely on the client to watch the disk; without this an agent's new
-          // module or export stayed unknown until the server was restarted.
-          workspace: { didChangeWatchedFiles: { dynamicRegistration: false } },
-          textDocument: {
-            definition: { linkSupport: true },
-            hover: { contentFormat: ['markdown', 'plaintext'] },
-            references: {},
-            completion: {
-              completionItem: {
-                snippetSupport: true,
-                documentationFormat: ['markdown', 'plaintext']
-              },
-              contextSupport: true
-            },
-            publishDiagnostics: { tagSupport: { valueSet: [1, 2] } },
-            diagnostic: { dynamicRegistration: false }
-          }
-        }
+        capabilities: LSP_CLIENT_CAPABILITIES
       })
       send({ method: 'initialized', params: {} })
       ready = true
-      pullsDiagnostics = Boolean(
-        (result as { capabilities?: { diagnosticProvider?: unknown } } | null)?.capabilities
-          ?.diagnosticProvider
-      )
+      const capabilities = (result as { capabilities?: ServerCapabilities } | null)?.capabilities
+      pullsDiagnostics = Boolean(capabilities?.diagnosticProvider)
+      resolvesCompletions = capabilities?.completionProvider?.resolveProvider === true
     })()
     return initialized
   }
 
-  const syncDocument = (filePath: string, text: string): string => {
-    const uri = pathToFileURL(filePath).href
-    const known = documents.get(uri)
-    if (!known) {
-      documents.set(uri, { version: 1, text })
-      send({
-        method: 'textDocument/didOpen',
-        params: {
-          textDocument: {
-            uri,
-            languageId: languageServerForFile(filePath)?.lspLanguageId ?? 'plaintext',
-            version: 1,
-            text
-          }
-        }
-      })
-    } else if (known.text !== text) {
-      const version = known.version + 1
-      documents.set(uri, { version, text })
-      send({
-        method: 'textDocument/didChange',
-        params: { textDocument: { uri, version }, contentChanges: [{ text }] }
-      })
-    }
-    return uri
+  const syncDocument = documents.sync
+
+  // Why the server's own diagnostics: a quick fix is asked for with them, `data` and all.
+  const diagnosticsOf = async (uri: string): Promise<unknown[]> => {
+    const pulled = pullsDiagnostics
+      ? await request('textDocument/diagnostic', { textDocument: { uri } })
+      : null
+    const items = (pulled as { items?: unknown } | null)?.items
+    return Array.isArray(items) ? items : (published.get(uri) ?? [])
   }
 
   return {
@@ -246,7 +220,25 @@ export function createLspSession({
         // LSP CompletionTriggerKind: Invoked = 1, TriggerCharacter = 2.
         context: triggerCharacter ? { triggerKind: 2, triggerCharacter } : { triggerKind: 1 }
       })
-      return readCompletions(result)
+      return resolvesCompletions ? completionLists.read(result) : readCompletions(result)
+    },
+    resolveCompletion: async (ref) => {
+      const item = completionLists.item(ref)
+      return item === undefined
+        ? null
+        : readResolvedCompletion(await request('completionItem/resolve', item))
+    },
+    codeActions: async ({ filePath, text, ...range }) => {
+      await ensureInitialized()
+      const uri = syncDocument(filePath, text)
+      return requestQuickFixes(request, { uri, diagnostics: await diagnosticsOf(uri), range })
+    },
+    organizeImports: async ({ filePath, text }) => {
+      await ensureInitialized()
+      const uri = syncDocument(filePath, text)
+      const lineCount = text.split('\n').length
+      const diagnostics = await diagnosticsOf(uri)
+      return requestOrganizeImports(request, { uri, diagnostics, lineCount })
     },
     references: async ({ filePath, text, line, character }) => {
       await ensureInitialized()
@@ -262,15 +254,10 @@ export function createLspSession({
       await ensureInitialized()
       syncDocument(filePath, text)
     },
-    close: (filePath) => {
-      const uri = pathToFileURL(filePath).href
-      if (documents.delete(uri)) {
-        send({ method: 'textDocument/didClose', params: { textDocument: { uri } } })
-      }
-    },
+    close: documents.close,
     pullDiagnostics: async (filePath) => {
       const uri = pathToFileURL(filePath).href
-      if (!pullsDiagnostics || !documents.has(uri)) {
+      if (!pullsDiagnostics || !documents.isOpen(uri)) {
         return null
       }
       const result = await request('textDocument/diagnostic', { textDocument: { uri } })
@@ -290,23 +277,12 @@ export function createLspSession({
       if (!ready || changes.length === 0) {
         return
       }
+      // Why close: an open document is the server's copy of the file, so it would never see
+      // the new disk content; the next request reopens it with the editor's text.
       for (const { filePath } of changes) {
-        const uri = pathToFileURL(filePath).href
-        // Why close: an open document is the server's copy of the file, so it would never see
-        // the new disk content; the next request reopens it with the editor's text.
-        if (documents.delete(uri)) {
-          send({ method: 'textDocument/didClose', params: { textDocument: { uri } } })
-        }
+        documents.close(filePath)
       }
-      send({
-        method: 'workspace/didChangeWatchedFiles',
-        params: {
-          changes: changes.flatMap(({ filePath, type }) => {
-            const uri = pathToFileURL(filePath).href
-            return FILE_CHANGE_TYPES[type].map((changeType) => ({ uri, type: changeType }))
-          })
-        }
-      })
+      send(didChangeWatchedFiles(changes))
     },
     dispose: () => {
       if (closed) {

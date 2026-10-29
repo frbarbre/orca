@@ -1,4 +1,4 @@
-import { LANGUAGE_SERVERS } from './language-server'
+import { LANGUAGE_SERVERS, type LanguageServerTextEdit } from './language-server'
 
 type FormatterSpec = {
   name: string
@@ -53,13 +53,7 @@ export type FormatterSettingsMap = Partial<
   Record<FormatterId, { enabled?: boolean; command?: string }>
 >
 
-export type FormatEdit = {
-  startLine: number
-  startCharacter: number
-  endLine: number
-  endCharacter: number
-  text: string
-}
+export type FormatEdit = LanguageServerTextEdit
 
 export type FormatDocumentRequest = {
   filePath: string

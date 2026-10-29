@@ -76,16 +76,7 @@ import type {
   ClaudeWebReplayedKey
 } from '../shared/claude-remote-session'
 import type { ExecutionHostId } from '../shared/execution-host'
-import type {
-  LanguageServerCompletionRequest,
-  LanguageServerCompletionResult,
-  LanguageServerDefinitionResult,
-  LanguageServerDocument,
-  LanguageServerHoverResult,
-  LanguageServerLanguage,
-  LanguageServerReferencesResult,
-  LanguageServerRequest
-} from '../shared/language-server'
+import type { LanguageServerApi } from '../shared/language-server-api'
 import type { DiagnosticsSyncResult, EditorDiagnosticsEvent } from '../shared/editor-diagnostics'
 import type { LintRequest, LinterId } from '../shared/linter'
 import type { FormatterApi } from '../shared/formatter'
@@ -173,16 +164,7 @@ export type PreloadApi = {
     attachGuest: (args: { webContentsId: number }) => Promise<void>
     onReplayKey: (callback: (key: ClaudeWebReplayedKey) => void) => () => void
   }
-  languageServer: {
-    definition: (args: LanguageServerRequest) => Promise<LanguageServerDefinitionResult>
-    hover: (args: LanguageServerRequest) => Promise<LanguageServerHoverResult>
-    references: (args: LanguageServerRequest) => Promise<LanguageServerReferencesResult>
-    completion: (args: LanguageServerCompletionRequest) => Promise<LanguageServerCompletionResult>
-    stop: (args: { language: LanguageServerLanguage }) => Promise<void>
-    sync: (args: LanguageServerDocument) => Promise<DiagnosticsSyncResult>
-    closeDocument: (args: { language: LanguageServerLanguage; filePath: string }) => Promise<void>
-    onDiagnostics: (callback: (event: EditorDiagnosticsEvent) => void) => () => void
-  }
+  languageServer: LanguageServerApi
   lint: {
     sync: (args: LintRequest) => Promise<DiagnosticsSyncResult>
     close: (args: { linter: LinterId; filePath: string }) => Promise<void>

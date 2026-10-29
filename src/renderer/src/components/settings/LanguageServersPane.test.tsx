@@ -149,6 +149,43 @@ describe('LanguageServersPane', () => {
     })
   })
 
+  it("turns a language's quick fixes off and keeps its suggestions", () => {
+    const updateSettings = render(undefined)
+
+    act(() =>
+      card('python')
+        ?.querySelector<HTMLElement>('[role="switch"][aria-label="Python quick fixes"]')
+        ?.click()
+    )
+
+    expect(updateSettings).toHaveBeenCalledWith({
+      languageServers: { python: { enabled: true, server: 'pyrefly', quickFixes: false } }
+    })
+  })
+
+  it("turns a language's organize imports off", () => {
+    const updateSettings = render(undefined)
+
+    act(() =>
+      card('typescript')
+        ?.querySelector<HTMLElement>(
+          '[role="switch"][aria-label="TypeScript and JavaScript organize imports"]'
+        )
+        ?.click()
+    )
+
+    expect(updateSettings).toHaveBeenCalledWith({
+      languageServers: { typescript: { enabled: true, server: 'tsgo', organizeImports: false } }
+    })
+  })
+
+  it.each(['quick fix', 'auto import', 'code action', 'organize imports', 'unused imports'])(
+    'finds the quick-fix switches by searching "%s"',
+    (query) => {
+      expect(matchesSettingsSearch(query, getLanguageServersSearchEntries())).toBe(true)
+    }
+  )
+
   it.each(['autocomplete', 'suggestions', 'completion'])(
     'finds the suggestion switches by searching "%s"',
     (query) => {

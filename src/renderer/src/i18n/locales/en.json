@@ -21128,10 +21128,13 @@
       "lint": "lint",
       "linter": "linter",
       "squiggles": "squiggles",
-      "diagnostics": "diagnostics"
+      "diagnostics": "diagnostics",
+      "formatter": "formatter",
+      "formatOnSave": "format on save",
+      "prettier": "prettier"
     },
     "title": "Language Servers",
-    "description": "Cmd+click, hover and references per language, and lint squiggles. Each runs a background process per project.",
+    "description": "Cmd+click, hover and references per language, lint squiggles, and formatting on Cmd+S. Each runs a background process per project.",
     "python": {
       "label": "Python",
       "description": "Runs in the project's venv, or the main checkout's when a worktree has none."
@@ -21149,6 +21152,15 @@
       "description": "Lint squiggles in JavaScript and TypeScript files, with the project's own oxlint and config. Projects without an oxlint config get none."
     },
     "unavailable": "{{linter}} is unavailable ({{error}}). Install it in the project, or set its path or turn it off in Settings → Language Servers."
+  },
+  "formatters": {
+    "oxfmt": {
+      "description": "Formats JavaScript, TypeScript, JSON, CSS and Markdown when you press ⌘S, with the project's own oxfmt and config. Autosave never formats, and projects without an oxfmt config are left as they are."
+    },
+    "ruff": {
+      "description": "Formats Python when you press ⌘S, with Ruff from the project's venv, or the main checkout's when a worktree has none. Autosave never formats, and projects without a Ruff config are left as they are."
+    },
+    "unavailable": "{{formatter}} could not format the file ({{error}}). Saved it unformatted; set its path or turn it off in Settings → Language Servers."
   },
   "commentReactors": {
     "withOthers": "{{names}} and {{others}} others reacted with {{emoji}}",

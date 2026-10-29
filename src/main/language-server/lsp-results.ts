@@ -1,4 +1,5 @@
 import { fileURLToPath } from 'node:url'
+import type { FormatEdit } from '../../shared/formatter'
 import type { LanguageServerLocation } from '../../shared/language-server'
 
 type Position = { line: number; character: number }
@@ -57,4 +58,29 @@ export function readHoverMarkdown(result: unknown): string | null {
     .map(markedStringToMarkdown)
     .filter((part): part is string => Boolean(part?.trim()))
   return parts.length > 0 ? parts.join('\n\n') : null
+}
+
+function readPosition(value: unknown): Position | null {
+  return isRecord(value) && typeof value.line === 'number' && typeof value.character === 'number'
+    ? { line: value.line, character: value.character }
+    : null
+}
+
+export function readTextEdits(result: unknown): FormatEdit[] {
+  return (Array.isArray(result) ? result : []).flatMap((value: unknown) => {
+    const range = isRecord(value) && isRecord(value.range) ? value.range : null
+    const start = readPosition(range?.start)
+    const end = readPosition(range?.end)
+    return start && end && isRecord(value) && typeof value.newText === 'string'
+      ? [
+          {
+            startLine: start.line,
+            startCharacter: start.character,
+            endLine: end.line,
+            endCharacter: end.character,
+            text: value.newText
+          }
+        ]
+      : []
+  })
 }

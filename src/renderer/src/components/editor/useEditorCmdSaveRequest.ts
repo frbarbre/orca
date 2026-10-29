@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { formatFileBeforeSave } from '@/lib/format-before-save'
 import { useAppStore } from '@/store'
 import type { OpenFile } from '@/store/slices/editor'
 import {
@@ -38,16 +39,19 @@ export function useEditorCmdSaveRequest({
       if (!saveTargetFile) {
         return
       }
-      // Read-only Markdown previews still save their source record’s current draft.
-      const state = useAppStore.getState()
-      const draft = state.editorDrafts[saveTargetFile.id]
-      if (!draft && !saveTargetFile.isUntitled && !saveTargetFile.isDirty) {
-        return
-      }
-      const fallbackContent =
-        draft ??
-        (activeFile.mode === 'markdown-preview' ? fileContents[activeFile.id]?.content : '')
-      void handleSave(fallbackContent ?? '')
+      // Fork: format first, so Mod+S on an autosaved file still saves the formatted text.
+      void formatFileBeforeSave(saveTargetFile.filePath).then(() => {
+        // Read-only Markdown previews still save their source record’s current draft.
+        const state = useAppStore.getState()
+        const draft = state.editorDrafts[saveTargetFile.id]
+        if (!draft && !saveTargetFile.isUntitled && !saveTargetFile.isDirty) {
+          return
+        }
+        const fallbackContent =
+          draft ??
+          (activeFile.mode === 'markdown-preview' ? fileContents[activeFile.id]?.content : '')
+        void handleSave(fallbackContent ?? '')
+      })
     }
     window.addEventListener(ORCA_EDITOR_REQUEST_CMD_SAVE_EVENT, handler)
     return () => window.removeEventListener(ORCA_EDITOR_REQUEST_CMD_SAVE_EVENT, handler)

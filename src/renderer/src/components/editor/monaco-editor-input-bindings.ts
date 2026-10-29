@@ -16,6 +16,7 @@ import {
   type MonacoMarkdownSelectionAnnotationTarget
 } from './monaco-markdown-selection-annotation'
 import { handleMonacoLargeTextPaste } from './monaco-large-text-paste'
+import { formatEditorThenSave, trackEditorForFormatting } from '@/lib/format-before-save'
 import { beginEditorLargePaste } from './editor-large-paste-in-flight'
 import type { MarkdownCommentPopoverState } from './use-monaco-markdown-annotations'
 import type { MonacoEditorPropsRef } from './monaco-editor-mount-params'
@@ -56,9 +57,9 @@ export function installMonacoEditorInputBindings(params: MonacoEditorInputBindin
 
   const editorDomNode = editorInstance.getContainerDomNode()
   const cleanupSaveShortcut = installEditorSaveShortcut(editorDomNode, () => {
-    const value = editorInstance.getValue()
-    propsRef.current.onSave(value)
+    void formatEditorThenSave(editorInstance, (value) => propsRef.current.onSave(value))
   })
+  const untrackFormatting = trackEditorForFormatting(editorInstance)
   const cleanupFindShortcut = installMonacoEditorFindShortcut(editorInstance)
   const cleanupAddReviewNoteShortcut = installEditorAddReviewNoteShortcut(editorDomNode, () => {
     // Preserve open drafts during same-tick chords before the composer guard mounts.
@@ -137,6 +138,7 @@ export function installMonacoEditorInputBindings(params: MonacoEditorInputBindin
   return {
     disposeInputBindings: () => {
       cleanupSaveShortcut()
+      untrackFormatting()
       cleanupFindShortcut()
       cleanupAddReviewNoteShortcut()
       editorDomNode.removeEventListener('paste', onLargeTextPaste, { capture: true })

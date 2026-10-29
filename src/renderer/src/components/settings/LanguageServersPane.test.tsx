@@ -26,12 +26,13 @@ describe('LanguageServersPane', () => {
   function render(
     languageServers: GlobalSettings['languageServers'],
     updateSettings = vi.fn(),
-    linters?: GlobalSettings['linters']
+    linters?: GlobalSettings['linters'],
+    formatters?: GlobalSettings['formatters']
   ): ReturnType<typeof vi.fn> {
     act(() =>
       root.render(
         <LanguageServersPane
-          settings={{ languageServers, linters }}
+          settings={{ languageServers, linters, formatters }}
           updateSettings={updateSettings}
         />
       )
@@ -41,6 +42,9 @@ describe('LanguageServersPane', () => {
 
   const linterCard = (linter: string) =>
     container.querySelector<HTMLElement>(`[data-linter="${linter}"]`)
+
+  const formatterCard = (formatter: string) =>
+    container.querySelector<HTMLElement>(`[data-formatter="${formatter}"]`)
 
   const card = (language: string) =>
     container.querySelector<HTMLElement>(`[data-language-server="${language}"]`)
@@ -195,6 +199,40 @@ describe('LanguageServersPane', () => {
     render(undefined, vi.fn(), { oxlint: { enabled: false } })
     expect(linterCard('oxlint')?.querySelector('input')).toBeNull()
   })
+
+  it('turns Ruff formatting off and keeps oxfmt and the linters as they were', () => {
+    const updateSettings = render(undefined, vi.fn(), { oxlint: { enabled: true } })
+    expect(formatterCard('oxfmt')?.textContent).toContain('oxfmt')
+
+    act(() => formatterCard('ruff')?.querySelector<HTMLElement>('[role="switch"]')?.click())
+
+    expect(updateSettings).toHaveBeenCalledWith({ formatters: { ruff: { enabled: false } } })
+  })
+
+  it("saves oxfmt's path when the field is left, and hides it while oxfmt is off", () => {
+    const updateSettings = render(undefined, vi.fn(), undefined, { ruff: { enabled: false } })
+    expect(formatterCard('ruff')?.querySelector('input')).toBeNull()
+    const input = formatterCard('oxfmt')?.querySelector<HTMLInputElement>('input')
+    expect(input?.placeholder).toContain('oxfmt')
+
+    act(() => {
+      const setValue = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set
+      setValue?.call(input, '/opt/bin/oxfmt')
+      input?.dispatchEvent(new Event('input', { bubbles: true }))
+    })
+    act(() => input?.dispatchEvent(new FocusEvent('focusout', { bubbles: true })))
+
+    expect(updateSettings).toHaveBeenCalledWith({
+      formatters: { ruff: { enabled: false }, oxfmt: { enabled: true, command: '/opt/bin/oxfmt' } }
+    })
+  })
+
+  it.each(['format on save', 'formatter', 'ruff', 'oxfmt'])(
+    'finds the formatters by searching "%s"',
+    (query) => {
+      expect(matchesSettingsSearch(query, getLanguageServersSearchEntries())).toBe(true)
+    }
+  )
 
   it.each(['lint', 'oxlint', 'squiggles'])('finds the linters by searching "%s"', (query) => {
     expect(matchesSettingsSearch(query, getLanguageServersSearchEntries())).toBe(true)

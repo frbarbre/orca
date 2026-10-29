@@ -8,6 +8,11 @@ type Message = {
   params?: Record<string, unknown> & { textDocument?: { languageId?: string } }
 }
 
+const FORMATTING_EDITS = [
+  { range: { start: { line: 0, character: 6 }, end: { line: 2, character: 8 } }, newText: 'x = 1' },
+  { range: { start: { line: 4 } }, newText: 'malformed' }
+]
+
 function fakeServer(
   definitionResult: unknown,
   hoverResult: unknown = null,
@@ -38,6 +43,8 @@ function fakeServer(
       reply({ id: message.id, result: hoverResult })
     } else if (message.method === 'textDocument/references') {
       reply({ id: message.id, result: referencesResult })
+    } else if (message.method === 'textDocument/formatting') {
+      reply({ id: message.id, result: FORMATTING_EDITS })
     }
   })
   const transport: LspTransport = {
@@ -400,6 +407,29 @@ describe('LSP session', () => {
         params: { textDocument: { uri: 'file:///repo/src/a.ts' } }
       }
     ])
+  })
+
+  it('formats the text it is handed with the editor indentation and returns the edits', async () => {
+    const server = fakeServer(null)
+    const session = createLspSession({ transport: server.transport, rootPath: '/repo' })
+
+    const edits = await session.format({
+      filePath: '/repo/src/a.ts',
+      text: 'const  x=1',
+      tabSize: 4,
+      insertSpaces: false
+    })
+
+    expect(edits).toEqual([
+      { startLine: 0, startCharacter: 6, endLine: 2, endCharacter: 8, text: 'x = 1' }
+    ])
+    expect(server.received.find((m) => m.method === 'textDocument/didOpen')?.params).toMatchObject({
+      textDocument: { uri: 'file:///repo/src/a.ts', text: 'const  x=1' }
+    })
+    expect(server.received.find((m) => m.method === 'textDocument/formatting')?.params).toEqual({
+      textDocument: { uri: 'file:///repo/src/a.ts' },
+      options: { tabSize: 4, insertSpaces: false }
+    })
   })
 
   it('sends nothing before the server is up', () => {

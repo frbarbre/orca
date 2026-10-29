@@ -30,6 +30,7 @@ import { runMonacoSetupSteps } from './monaco-setup-steps'
 import { installMonacoTsWorkerIdleStop } from './monaco-ts-worker-idle-stop'
 import { installMonacoLanguageServers } from './monaco-language-servers'
 import { installMonacoEditorDiagnostics } from './monaco-editor-diagnostics'
+import { stopFormattersOnSettingsChange } from './format-before-save'
 import { installMonacoGitBlame } from './monaco-git-blame'
 
 globalThis.MonacoEnvironment = {
@@ -96,6 +97,7 @@ runMonacoSetupSteps([
   ['TS worker idle stop', () => installMonacoTsWorkerIdleStop(monaco)],
   ['language servers', () => installMonacoLanguageServers(monaco, monacoTS)],
   ['editor diagnostics', () => installMonacoEditorDiagnostics(monaco)],
+  ['formatter settings', stopFormattersOnSettingsChange],
   ['git blame', () => installMonacoGitBlame(monaco)]
 ])
 

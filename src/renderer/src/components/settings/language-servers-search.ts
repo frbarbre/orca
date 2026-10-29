@@ -3,8 +3,13 @@ import {
   languageServerOptions
 } from '../../../../shared/language-server'
 import { LINTER_IDS, LINTERS } from '../../../../shared/linter'
+import { FORMATTER_IDS, FORMATTERS } from '../../../../shared/formatter'
 import { createLocalizedCatalog } from '@/i18n/localized-catalog'
-import { RENDERER_LANGUAGE_SERVERS, RENDERER_LINTERS } from '@/lib/language-server-languages'
+import {
+  RENDERER_FORMATTERS,
+  RENDERER_LANGUAGE_SERVERS,
+  RENDERER_LINTERS
+} from '@/lib/language-server-languages'
 import { translateSearchKeyword } from './settings-search-keywords'
 
 export const getLanguageServersSearchEntries = createLocalizedCatalog(() => {
@@ -26,6 +31,11 @@ export const getLanguageServersSearchEntries = createLocalizedCatalog(() => {
     ...translateSearchKeyword('languageServers.search.squiggles', 'squiggles'),
     ...translateSearchKeyword('languageServers.search.diagnostics', 'diagnostics')
   ]
+  const format = [
+    ...translateSearchKeyword('languageServers.search.formatter', 'formatter'),
+    ...translateSearchKeyword('languageServers.search.formatOnSave', 'format on save'),
+    ...translateSearchKeyword('languageServers.search.prettier', 'prettier', { englishOnly: true })
+  ]
   return [
     ...LANGUAGE_SERVER_LANGUAGES.map((language) => ({
       title: RENDERER_LANGUAGE_SERVERS[language].label(),
@@ -43,6 +53,11 @@ export const getLanguageServersSearchEntries = createLocalizedCatalog(() => {
       title: LINTERS[linter].name,
       description: RENDERER_LINTERS[linter].description(),
       keywords: [...lint, LINTERS[linter].name]
+    })),
+    ...FORMATTER_IDS.map((formatter) => ({
+      title: FORMATTERS[formatter].name,
+      description: RENDERER_FORMATTERS[formatter].description(),
+      keywords: [...format, FORMATTERS[formatter].name]
     }))
   ]
 })

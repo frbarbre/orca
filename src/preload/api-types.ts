@@ -88,6 +88,7 @@ import type {
 } from '../shared/language-server'
 import type { DiagnosticsSyncResult, EditorDiagnosticsEvent } from '../shared/editor-diagnostics'
 import type { LintRequest, LinterId } from '../shared/linter'
+import type { FormatterApi } from '../shared/formatter'
 import type {
   GitBlameLinks,
   GitBlameLinksRequest,
@@ -188,6 +189,7 @@ export type PreloadApi = {
     stop: (args: { linter: LinterId }) => Promise<void>
     onDiagnostics: (callback: (event: EditorDiagnosticsEvent) => void) => () => void
   }
+  formatter: FormatterApi
   materialIcons: {
     read: () => Promise<MaterialIconConfigSnapshot>
     ensure: () => Promise<MaterialIconConfigSnapshot>

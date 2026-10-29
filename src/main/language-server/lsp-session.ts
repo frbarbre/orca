@@ -5,10 +5,11 @@ import {
   type LanguageServerLocation
 } from '../../shared/language-server'
 import type { EditorDiagnostic } from '../../shared/editor-diagnostics'
+import type { FormatDocumentRequest, FormatEdit } from '../../shared/formatter'
 import { readDiagnosticList, readPublishDiagnostics } from './lsp-diagnostics'
 import { createLspMessageReader, encodeLspMessage, type LspMessage } from './lsp-message-framing'
 import { readCompletions } from './lsp-completions'
-import { readDefinitionLocations, readHoverMarkdown } from './lsp-results'
+import { readDefinitionLocations, readHoverMarkdown, readTextEdits } from './lsp-results'
 
 export type LspTransport = {
   write: (chunk: Buffer) => void
@@ -36,6 +37,7 @@ export type LspSession = {
   close: (filePath: string) => void
   /** Null when the server publishes diagnostics itself, or the file is not open in it. */
   pullDiagnostics: (filePath: string) => Promise<EditorDiagnostic[] | null>
+  format: (request: FormatDocumentRequest) => Promise<FormatEdit[]>
   dispose: () => void
 }
 
@@ -273,6 +275,15 @@ export function createLspSession({
       }
       const result = await request('textDocument/diagnostic', { textDocument: { uri } })
       return readDiagnosticList((result as { items?: unknown } | null)?.items)
+    },
+    format: async ({ filePath, text, tabSize, insertSpaces }) => {
+      await ensureInitialized()
+      const uri = syncDocument(filePath, text)
+      const result = await request('textDocument/formatting', {
+        textDocument: { uri },
+        options: { tabSize, insertSpaces }
+      })
+      return readTextEdits(result)
     },
     filesChanged: (changes) => {
       // Why drop early changes: a server that is still starting reads the disk as it comes up.

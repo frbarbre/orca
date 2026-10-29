@@ -11,6 +11,16 @@ const storeState = vi.hoisted(() => ({ editorDrafts: {} as Record<string, string
 const EMPTY_FILE_CONTENTS: Parameters<typeof useEditorCmdSaveRequest>[0]['fileContents'] = {}
 
 vi.mock('@/store', () => ({ useAppStore: { getState: () => storeState } }))
+const formatFileBeforeSave = vi.hoisted(() => vi.fn(async (_filePath: string) => {}))
+vi.mock('@/lib/format-before-save', () => ({ formatFileBeforeSave }))
+
+const requestSave = async (fileId: string): Promise<void> => {
+  await act(async () => {
+    window.dispatchEvent(
+      new CustomEvent(ORCA_EDITOR_REQUEST_CMD_SAVE_EVENT, { detail: { fileId } })
+    )
+  })
+}
 
 type ProbeProps = {
   activeFile: OpenFile
@@ -56,6 +66,7 @@ describe('useEditorCmdSaveRequest', () => {
   beforeEach(() => {
     globalThis.IS_REACT_ACT_ENVIRONMENT = true
     storeState.editorDrafts = {}
+    formatFileBeforeSave.mockReset()
     container = document.body.appendChild(document.createElement('div'))
     root = createRoot(container)
   })
@@ -65,7 +76,35 @@ describe('useEditorCmdSaveRequest', () => {
     container.remove()
   })
 
-  it('saves only the visible panel that owns the requested file', () => {
+  it('formats the file first, so Mod+S on a clean file saves the formatted text', async () => {
+    const file = { ...makeFile('clean'), isDirty: false }
+    const save = vi.fn(async () => true)
+    formatFileBeforeSave.mockImplementation(async () => {
+      storeState.editorDrafts = { [file.id]: 'formatted' }
+    })
+    act(() => {
+      root.render(<SaveProbe activeFile={file} enabled onSave={save} />)
+    })
+
+    await requestSave(file.id)
+
+    expect(formatFileBeforeSave).toHaveBeenCalledWith('/repo/clean.md')
+    expect(save).toHaveBeenCalledExactlyOnceWith('formatted')
+  })
+
+  it('saves nothing for a clean file the formatter leaves as is', async () => {
+    const file = { ...makeFile('clean'), isDirty: false }
+    const save = vi.fn(async () => true)
+    act(() => {
+      root.render(<SaveProbe activeFile={file} enabled onSave={save} />)
+    })
+
+    await requestSave(file.id)
+
+    expect(save).not.toHaveBeenCalled()
+  })
+
+  it('saves only the visible panel that owns the requested file', async () => {
     const visibleFile = makeFile('visible')
     const otherVisibleFile = makeFile('other-visible')
     const hiddenFile = makeFile('hidden')
@@ -89,13 +128,7 @@ describe('useEditorCmdSaveRequest', () => {
         </>
       )
     })
-    act(() => {
-      window.dispatchEvent(
-        new CustomEvent(ORCA_EDITOR_REQUEST_CMD_SAVE_EVENT, {
-          detail: { fileId: visibleFile.id }
-        })
-      )
-    })
+    await requestSave(visibleFile.id)
 
     expect(visibleSave).toHaveBeenCalledExactlyOnceWith('visible draft')
     expect(mirroredSave).not.toHaveBeenCalled()
@@ -103,7 +136,7 @@ describe('useEditorCmdSaveRequest', () => {
     expect(hiddenSave).not.toHaveBeenCalled()
   })
 
-  it('uses the preview tab for ownership and the source file for content', () => {
+  it('uses the preview tab for ownership and the source file for content', async () => {
     const sourceFile = makeFile('source')
     const previewFile: OpenFile = {
       ...sourceFile,
@@ -124,18 +157,8 @@ describe('useEditorCmdSaveRequest', () => {
         />
       )
     })
-    act(() => {
-      window.dispatchEvent(
-        new CustomEvent(ORCA_EDITOR_REQUEST_CMD_SAVE_EVENT, {
-          detail: { fileId: sourceFile.id }
-        })
-      )
-      window.dispatchEvent(
-        new CustomEvent(ORCA_EDITOR_REQUEST_CMD_SAVE_EVENT, {
-          detail: { fileId: previewFile.id }
-        })
-      )
-    })
+    await requestSave(sourceFile.id)
+    await requestSave(previewFile.id)
 
     expect(save).toHaveBeenCalledExactlyOnceWith('source draft')
   })

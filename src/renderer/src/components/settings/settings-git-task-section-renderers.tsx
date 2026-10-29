@@ -60,7 +60,7 @@ export function renderLanguageServersSettingsSection(
       title={translate('languageServers.title', 'Language Servers')}
       description={translate(
         'languageServers.description',
-        'Cmd+click, hover and references per language, and lint squiggles. Each runs a background process per project.'
+        'Cmd+click, hover and references per language, lint squiggles, and formatting on Cmd+S. Each runs a background process per project.'
       )}
       searchEntries={navigation.getSectionSearchEntries('language-servers')}
     >

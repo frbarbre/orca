@@ -1774,6 +1774,26 @@ that; the same scroll takes ~0.5 s. A test forbids `body:has()` rules that reach
 | `src/renderer/src/assets/main.css`                   | `body[data-modal-scene]` in place of `body:has()`. |
 | `src/renderer/src/assets/main-css-has-scope.test.ts` | The `body:has()` reach guard.                      |
 
+### 60. Mod+S formats with the project's oxfmt or Ruff
+
+Mod+S asks the file's formatter for edits, applies them as one undo step and saves; autosave
+never formats. oxfmt (`oxfmt --lsp`) formats JS/TS, JSON, CSS, Markdown and YAML under an oxfmt
+config, from the project's `node_modules` or the main checkout's. Ruff (`ruff server`) formats
+Python under a `ruff.toml`, `.ruff.toml` or a `pyproject.toml` with `[tool.ruff]`, from the venv
+pyrefly would use (`resolvePythonProject`). A project without the config is left alone. A formatter
+that fails or takes over 3 s leaves the save unformatted. Each has a switch and a path in Settings →
+Language Servers; changing either stops its server.
+
+| File                                                                     | What is ours                                       |
+| ------------------------------------------------------------------------ | -------------------------------------------------- |
+| `src/shared/formatter.ts`                                                | The registry, settings and request types.          |
+| `src/main/language-server/formatter-launch.ts`, `formatter-service.ts`   | Finding each formatter and one server per project. |
+| `lsp-session.ts`, `lsp-results.ts`                                       | `textDocument/formatting`.                         |
+| `src/main/ipc/language-server.ts`, `src/preload/api/formatter-bridge.ts` | `formatter:format`, `formatter:stop`.              |
+| `src/renderer/src/lib/format-before-save.ts`                             | Formatting the editor's text before a save.        |
+| `editor/monaco-editor-input-bindings.ts`, `useEditorCmdSaveRequest.ts`   | Mod+S in the editor, and from outside it.          |
+| `settings/LanguageServersPane.tsx`, `language-servers-search.ts`         | The formatter cards.                               |
+
 ## Verify
 
 Verify runs on GitHub, not locally: `fork-verify.yml` runs it on every pull request against `main`,

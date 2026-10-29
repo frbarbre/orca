@@ -12,8 +12,18 @@ import {
   type LanguageServerLanguage
 } from '../../../../shared/language-server'
 import { LINTER_IDS, LINTERS, linterSettings, type LinterId } from '../../../../shared/linter'
+import {
+  FORMATTER_IDS,
+  FORMATTERS,
+  formatterSettings,
+  type FormatterId
+} from '../../../../shared/formatter'
 import { translate } from '@/i18n/i18n'
-import { RENDERER_LANGUAGE_SERVERS, RENDERER_LINTERS } from '@/lib/language-server-languages'
+import {
+  RENDERER_FORMATTERS,
+  RENDERER_LANGUAGE_SERVERS,
+  RENDERER_LINTERS
+} from '@/lib/language-server-languages'
 import { MaterialNamedIcon } from '@/lib/material-icons/material-icon'
 import { Input } from '../ui/input'
 import { Label } from '../ui/label'
@@ -22,7 +32,7 @@ import { SettingsSegmentedControl, SettingsSwitch } from './SettingsFormControls
 import { getLanguageServersSearchEntries } from './language-servers-search'
 
 type Props = {
-  settings: Pick<GlobalSettings, 'languageServers' | 'linters'>
+  settings: Pick<GlobalSettings, 'languageServers' | 'linters' | 'formatters'>
   updateSettings: (updates: Partial<GlobalSettings>) => void
 }
 
@@ -198,18 +208,23 @@ function LanguageServerCard({
   )
 }
 
-function LinterCard({
-  linter,
+type ToolChoice = { enabled: boolean; command: string | null }
+
+function ToolCard({
+  dataAttributes,
+  spec,
+  description,
   choice,
   onChange
 }: {
-  linter: LinterId
-  choice: { enabled: boolean; command: string | null }
-  onChange: (next: { enabled: boolean; command: string | null }) => void
+  dataAttributes: Record<`data-${string}`, string>
+  spec: { name: string; command: string; homepage: string }
+  description: string
+  choice: ToolChoice
+  onChange: (next: ToolChoice) => void
 }): React.JSX.Element {
-  const spec = LINTERS[linter]
   return (
-    <div data-linter={linter} className="rounded-lg border border-border/60 bg-card/40 px-4 py-3">
+    <div {...dataAttributes} className="rounded-lg border border-border/60 bg-card/40 px-4 py-3">
       <div className="flex items-center gap-3">
         <div className="min-w-0 flex-1 space-y-0.5">
           <div className="flex items-center gap-2">
@@ -226,7 +241,7 @@ function LinterCard({
               <ExternalLink className="size-3.5" />
             </a>
           </div>
-          <p className="text-xs text-muted-foreground">{RENDERER_LINTERS[linter].description()}</p>
+          <p className="text-xs text-muted-foreground">{description}</p>
         </div>
         <SettingsSwitch
           checked={choice.enabled}
@@ -247,8 +262,9 @@ function LinterCard({
   )
 }
 
-// Fork: one card per language in the registry (`shared/language-server.ts`) and per linter
-// (`shared/linter.ts`), so a new one shows up here without touching this pane.
+// Fork: one card per language in the registry (`shared/language-server.ts`), per linter
+// (`shared/linter.ts`) and per formatter (`shared/formatter.ts`), so a new one shows up here
+// without touching this pane.
 export function LanguageServersPane({ settings, updateSettings }: Props): React.JSX.Element {
   const searchEntries = getLanguageServersSearchEntries()
   const save = (
@@ -267,12 +283,16 @@ export function LanguageServersPane({ settings, updateSettings }: Props): React.
         }
       }
     })
-  const saveLinter = (
-    linter: LinterId,
-    { enabled, command }: { enabled: boolean; command: string | null }
-  ): void =>
+  const saveLinter = (linter: LinterId, { enabled, command }: ToolChoice): void =>
     updateSettings({
       linters: { ...settings.linters, [linter]: { enabled, ...(command ? { command } : {}) } }
+    })
+  const saveFormatter = (formatter: FormatterId, { enabled, command }: ToolChoice): void =>
+    updateSettings({
+      formatters: {
+        ...settings.formatters,
+        [formatter]: { enabled, ...(command ? { command } : {}) }
+      }
     })
   return (
     <div className="space-y-3">
@@ -290,10 +310,26 @@ export function LanguageServersPane({ settings, updateSettings }: Props): React.
           key={linter}
           {...searchEntries[LANGUAGE_SERVER_LANGUAGES.length + index]}
         >
-          <LinterCard
-            linter={linter}
+          <ToolCard
+            dataAttributes={{ 'data-linter': linter }}
+            spec={LINTERS[linter]}
+            description={RENDERER_LINTERS[linter].description()}
             choice={linterSettings(settings, linter)}
             onChange={(next) => saveLinter(linter, next)}
+          />
+        </SearchableSetting>
+      ))}
+      {FORMATTER_IDS.map((formatter, index) => (
+        <SearchableSetting
+          key={formatter}
+          {...searchEntries[LANGUAGE_SERVER_LANGUAGES.length + LINTER_IDS.length + index]}
+        >
+          <ToolCard
+            dataAttributes={{ 'data-formatter': formatter }}
+            spec={FORMATTERS[formatter]}
+            description={RENDERER_FORMATTERS[formatter].description()}
+            choice={formatterSettings(settings, formatter)}
+            onChange={(next) => saveFormatter(formatter, next)}
           />
         </SearchableSetting>
       ))}

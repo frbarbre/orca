@@ -3,6 +3,8 @@ import { app, BrowserWindow, ipcMain } from 'electron'
 import { isLanguageServerLanguage, type LanguageServerRequest } from '../../shared/language-server'
 import type { EditorDiagnosticsEvent } from '../../shared/editor-diagnostics'
 import { isLinterId, type LintRequest } from '../../shared/linter'
+import { isFormatterId, type FormatRequest } from '../../shared/formatter'
+import { createFormatterService } from '../language-server/formatter-service'
 import { createLintService } from '../language-server/lint-service'
 import { createLanguageServerService } from '../language-server/language-server-service'
 import { startLanguageServerSession } from '../language-server/language-server-process'
@@ -76,6 +78,34 @@ function readLintRequest(value: unknown): LintRequest | null {
   }
 }
 
+function readFormatRequest(value: unknown): FormatRequest | null {
+  if (typeof value !== 'object' || value === null) {
+    return null
+  }
+  const { formatter, command, filePath, worktreeRoot, repoRoot, venvSetting, text } =
+    value as Record<string, unknown>
+  const { tabSize, insertSpaces } = value as Record<string, unknown>
+  if (
+    !isFormatterId(formatter) ||
+    typeof filePath !== 'string' ||
+    typeof worktreeRoot !== 'string' ||
+    typeof text !== 'string'
+  ) {
+    return null
+  }
+  return {
+    formatter,
+    command: typeof command === 'string' && command.trim() ? command.trim() : null,
+    filePath,
+    worktreeRoot,
+    repoRoot: typeof repoRoot === 'string' && repoRoot ? repoRoot : null,
+    venvSetting: typeof venvSetting === 'string' ? venvSetting : null,
+    text,
+    tabSize: typeof tabSize === 'number' && tabSize > 0 ? tabSize : 2,
+    insertSpaces: insertSpaces !== false
+  }
+}
+
 const PREVIEW_LINES = 10
 const MAX_PREVIEW_FILE_BYTES = 5_000_000
 
@@ -122,10 +152,27 @@ export function registerLanguageServerHandlers(): void {
     onDiagnostics: (event) => broadcast('lint:diagnostics', event),
     admit: (projectRoot) => beginWatcherInstall(projectRoot)
   })
+  const formatters = createFormatterService({
+    files: { exists: existsSync, read: readFile },
+    startSession: (launch) => startLanguageServerSession(launch),
+    admit: (projectRoot) => beginWatcherInstall(projectRoot)
+  })
   setLanguageServerRemovalStop((root) => {
     service.stopUnder(root)
     lint.stopUnder(root)
+    formatters.stopUnder(root)
   })
+  ipcMain.handle('formatter:format', async (_event, args: unknown) => {
+    const request = readFormatRequest(args)
+    return request ? formatters.format(request) : { ok: false, error: 'Invalid format request.' }
+  })
+  ipcMain.handle('formatter:stop', (_event, args: unknown) => {
+    const formatter = (args as { formatter?: unknown } | null)?.formatter
+    if (isFormatterId(formatter)) {
+      formatters.stopFormatter(formatter)
+    }
+  })
+  app.once('will-quit', () => formatters.disposeAll())
   ipcMain.handle('lint:sync', async (_event, args: unknown) => {
     const request = readLintRequest(args)
     return request ? lint.sync(request) : { ok: false, error: 'Invalid lint request.' }

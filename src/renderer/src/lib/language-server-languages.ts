@@ -1,6 +1,7 @@
 import type * as Monaco from 'monaco-editor'
 import type { LanguageServerLanguage } from '../../../shared/language-server'
 import type { LinterId } from '../../../shared/linter'
+import type { FormatterId } from '../../../shared/formatter'
 import { translate } from '@/i18n/i18n'
 import {
   builtInTypeScriptDefinition,
@@ -52,6 +53,24 @@ export const RENDERER_LANGUAGE_SERVERS: Record<LanguageServerLanguage, RendererL
       completion: (model, position) =>
         builtInTypeScriptCompletions(monaco, monacoTS, model, position)
     })
+  }
+}
+
+// Fork: the renderer's half of the formatter registry (`shared/formatter.ts`).
+export const RENDERER_FORMATTERS: Record<FormatterId, { description: () => string }> = {
+  oxfmt: {
+    description: () =>
+      translate(
+        'formatters.oxfmt.description',
+        "Formats JavaScript, TypeScript, JSON, CSS and Markdown when you press ⌘S, with the project's own oxfmt and config. Autosave never formats, and projects without an oxfmt config are left as they are."
+      )
+  },
+  ruff: {
+    description: () =>
+      translate(
+        'formatters.ruff.description',
+        "Formats Python when you press ⌘S, with Ruff from the project's venv, or the main checkout's when a worktree has none. Autosave never formats, and projects without a Ruff config are left as they are."
+      )
   }
 }
 

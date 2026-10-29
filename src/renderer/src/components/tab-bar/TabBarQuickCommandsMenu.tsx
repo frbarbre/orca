@@ -210,7 +210,7 @@ export function TabBarQuickCommandsMenu({
     'More quick commands'
   )
   const splitButtonClass =
-    'my-auto flex h-7 shrink-0 items-stretch overflow-hidden rounded-md border border-border/60 text-muted-foreground'
+    'my-auto flex h-6 shrink-0 items-stretch overflow-hidden rounded-md border border-border/60 text-muted-foreground'
   const innerButtonBase =
     'flex items-center bg-transparent leading-none text-muted-foreground hover:bg-accent/50 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent'
   return (

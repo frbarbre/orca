@@ -1900,7 +1900,8 @@ request (their "reviewing" condition) come first under "Reviewing", stacked or n
 not your own stack work. Stacks come from the PR cache's `stack`, so the mode loads PRs the
 way PR grouping does; lineage nesting is off in it so parent rows can't reorder a stack. The paired
 phone's feed carries no stack facts, so there every worktree sits under "Not in a stack". Card
-display gains "Workspace status", a status badge in the card's title row, so the status lane stays
+display gains "Workspace status", a status badge on its own row under the card's title (the title
+row is already full with a long branch name and the stack position), so the status lane stays
 visible under any grouping.
 
 | File                                                                  | What is ours                                   |
@@ -1909,8 +1910,14 @@ visible under any grouping.
 | `worktree-grouping.ts`, `group-sections.ts`, `worktree-group-keys.ts` | The `stack` mode and its `stack` header icon.  |
 | `sidebar-row-plan.ts`, `section-order.ts`, and the three plan callers | `stackOf`; no lineage nesting in stack mode.   |
 | `rows/header-visuals.ts`, `host-sidebar-feed-sections.ts` (mobile)    | Header names.                                  |
-| `worktree-card-workspace-status.tsx`, `worktree-card-header.tsx`      | The status badge; `workspace-status` property. |
+| `worktree-card-workspace-status.tsx`, `worktree-card-parent-content…` | The status badge; `workspace-status` property. |
 | `review-cache-inputs.ts`, `use-visible-review-refresh.ts`, `stale-…`  | Stack mode loads PRs like PR grouping.         |
+
+### 68. Quick command button sits clear of the tab strip's edges
+
+The tab strip's bordered quick-command split button is `h-6`, not upstream's `h-7`: at 28px in the
+31px strip it touched the strip's bottom border and read as sitting low
+(`tab-bar/TabBarQuickCommandsMenu.tsx`).
 
 ## Verify
 

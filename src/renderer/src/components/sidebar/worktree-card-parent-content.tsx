@@ -5,6 +5,7 @@ import { getWorkspaceAttachments } from '../../../../shared/workspace-attachment
 import { WorktreeCardHeader } from './worktree-card-header'
 import { WorktreeCardMetaRow } from './worktree-card-meta-row'
 import { WorktreeCardLinearTitle } from './worktree-card-linear-title'
+import { WorktreeCardWorkspaceStatus } from './worktree-card-workspace-status'
 import { WorktreeCardDetailsHover } from './WorktreeCardMeta'
 import { WorktreeCardPortsDetails } from './WorktreeCardPorts'
 import type { WorktreeCardPresentation } from './worktree-card-presentation'
@@ -82,6 +83,12 @@ export function WorktreeCardParentContent({
         enabled={card.showLinearTitle}
         title={linearIssue?.title}
         tooltipEnabled={!hasHoverDetails}
+      />
+      <WorktreeCardWorkspaceStatus
+        enabled={card.showWorkspaceStatus}
+        worktree={worktree}
+        workspaceStatuses={card.workspaceStatuses}
+        className="self-start"
       />
     </div>
   )

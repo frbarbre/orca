@@ -55,7 +55,12 @@ function fakeEditor(path: string, text = 'const  x=1') {
       return true
     })
   }
-  return { editor, model, calls, type: () => (version += 1) }
+  return { editor: asEditor(editor), model, calls, type: () => (version += 1) }
+}
+
+// Why the cast: the fakes carry only what formatting reads, not Monaco's whole editor and model.
+function asEditor<T>(fake: T): T & Parameters<typeof formatEditorBeforeSave>[0] {
+  return fake as T & Parameters<typeof formatEditorBeforeSave>[0]
 }
 
 const formatEdit = { startLine: 0, startCharacter: 5, endLine: 0, endCharacter: 7, text: ' ' }
@@ -181,7 +186,7 @@ describe('formatEditorThenSave', () => {
   it('saves nothing when the editor moved to another file while formatting', async () => {
     const shown = fakeEditor('/wt/src/a.ts')
     const next = fakeEditor('/wt/src/b.ts')
-    const editor = { ...shown.editor, getModel: vi.fn(() => shown.model) }
+    const editor = asEditor({ ...shown.editor, getModel: vi.fn(() => shown.model) })
     format.mockImplementation(async () => {
       editor.getModel.mockReturnValue(next.model)
       return { ok: true, edits: [] }

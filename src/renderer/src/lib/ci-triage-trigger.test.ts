@@ -189,7 +189,8 @@ describe('maybeStartCiTriage', () => {
       prRepo: null,
       branch: 'feature',
       headSha: 'sha-b',
-      checks: failing
+      checks: failing,
+      trigger: 'watch'
     })
     await triage(12, 'feature', 'sha-c', [
       { name: 'checks', status: 'completed', conclusion: 'success', url: null }

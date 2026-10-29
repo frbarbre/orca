@@ -1,4 +1,4 @@
-import { CircleX, FolderTree, Layers, Layers2, List, Pin } from 'lucide-react'
+import { CircleX, Eye, FolderTree, Layers, Layers2, List, Pin } from 'lucide-react'
 import type React from 'react'
 import { translate } from '@/i18n/i18n'
 import type { PRGroupKey } from '../../../../../../shared/workspace-view/workspace-pr-groups'
@@ -92,6 +92,13 @@ export function getSidebarHeaderVisual(
     case 'pr-status':
       return PR_GROUP_META[icon.prGroup]
     case 'stack':
+      if (icon.stack === 'reviewing') {
+        return {
+          icon: Eye,
+          tone: 'text-foreground',
+          label: translate('auto.components.sidebar.worktree.list.groups.reviewing', 'Reviewing')
+        }
+      }
       return {
         icon: icon.stack === null ? Layers2 : Layers,
         tone: icon.stack === null ? 'text-muted-foreground' : 'text-foreground',

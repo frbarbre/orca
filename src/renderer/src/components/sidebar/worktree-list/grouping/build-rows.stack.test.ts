@@ -6,6 +6,8 @@ import { cloneDefaultWorkspaceStatuses } from '../../../../../../shared/workspac
 import { getSidebarHeaderVisual } from '../rows/header-visuals'
 import { createSidebarStackReader } from './stack-key'
 import type { Worktree } from '../../../../../../shared/worktree/types'
+import { planSidebarRows } from '../../../../../../shared/sidebar-list/sidebar-row-plan'
+import { LOCAL_EXECUTION_HOST_ID } from '../../../../../../shared/execution-host'
 
 function branchWorktree(id: string, branch: string): Worktree {
   return { ...worktree, id, path: `/tmp/${id}`, branch: `refs/heads/${branch}`, displayName: id }
@@ -80,11 +82,52 @@ describe('groupBy stack', () => {
     ).toBe('stack:repo-1:7')
   })
 
+  it('gives worktrees in the reviewing status their own section first, even inside a stack', () => {
+    const reviewing = (w: Worktree) => ({ ...w, workspaceStatus: 'in-review' })
+    const worktrees = [loose, bottom, reviewing(top), reviewing(other), middle]
+    const rows = planSidebarRows({
+      groupBy: 'stack',
+      worktrees,
+      repoMap,
+      prGroupOf: () => 'in-progress',
+      stackOf: createSidebarStackReader(repoMap, prCache, 'in-review'),
+      workspaceStatuses: cloneDefaultWorkspaceStatuses(),
+      projectOrderBy: 'manual',
+      lineageById: {},
+      worktreeMap: new Map(worktrees.map((w) => [w.id, w])),
+      nestLineage: false,
+      projectGroups: [],
+      placeholderRepoIds: new Set(),
+      importedWorktreesByRepo: new Map(),
+      newExternalWorktreesInboxByRepo: new Map(),
+      pendingCreations: [],
+      folderWorkspaces: [],
+      defaultHostId: LOCAL_EXECUTION_HOST_ID,
+      pinnedDisplayPolicy: 'single-location',
+      filterRepoIds: []
+    }).render(new Set())
+
+    expect(summary(rows)).toEqual([
+      '# stack:reviewing 2',
+      'top',
+      'other',
+      '# stack:repo-1:7 2',
+      'middle',
+      'bottom',
+      '# stack:none 1',
+      'loose'
+    ])
+    expect(rows[0]).toMatchObject({ type: 'header', icon: { kind: 'stack', stack: 'reviewing' } })
+  })
+
   it('names stack headers by their stack number', () => {
     const statuses = cloneDefaultWorkspaceStatuses()
     expect(getSidebarHeaderVisual({ kind: 'stack', stack: 7 }, statuses).label).toBe('Stack #7')
     expect(getSidebarHeaderVisual({ kind: 'stack', stack: null }, statuses).label).toBe(
       'Not in a stack'
+    )
+    expect(getSidebarHeaderVisual({ kind: 'stack', stack: 'reviewing' }, statuses).label).toBe(
+      'Reviewing'
     )
   })
 })

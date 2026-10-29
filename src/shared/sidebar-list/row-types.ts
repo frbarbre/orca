@@ -25,7 +25,7 @@ export type SidebarHeaderIcon =
   | { kind: 'pr-status'; prGroup: PRGroupKey }
   | { kind: 'workspace-status'; status: WorkspaceStatus }
   // Fork: a GitHub stack lane; null is the lane for worktrees outside any stack.
-  | { kind: 'stack'; stack: number | null }
+  | { kind: 'stack'; stack: number | 'reviewing' | null }
 
 /** A worktree's PR lane, read by each client from its own PR facts. */
 export type SidebarPRGroupReader = (worktree: Worktree) => PRGroupKey

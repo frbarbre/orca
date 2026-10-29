@@ -6275,7 +6275,8 @@
               "6798dc7c94": "In review",
               "5076efc3d2": "Done",
               "stack": "Stack #{{stack}}",
-              "noStack": "Not in a stack"
+              "noStack": "Not in a stack",
+              "reviewing": "Reviewing"
             }
           }
         },

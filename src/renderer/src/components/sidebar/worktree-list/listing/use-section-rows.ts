@@ -12,7 +12,7 @@ import {
 import { getHostDisplayLabelOverrides } from '../../../../../../shared/host-setting-overrides'
 import { planSidebarRows } from '../../../../../../shared/sidebar-list/sidebar-row-plan'
 import { createSidebarPRGroupReader } from '../grouping/pr-group-key'
-import { createSidebarStackReader } from '../grouping/stack-key'
+import { createSidebarStackReader, selectStackReviewingStatus } from '../grouping/stack-key'
 import { useEffectiveCollapsedGroups } from './use-collapsed-groups'
 import type { Row } from '../../../../../../shared/sidebar-list/row-types'
 import type { SectionRowsArgs } from './sidebar-list-model'
@@ -86,6 +86,7 @@ export function useSidebarSectionRows(args: SectionRowsArgs) {
   const { repos, worktrees, repoMap, defaultHostId } = args
   const worktreesByRepo = useAppStore((s) => selectWorktreesByRepo(s))
   const workspaceHostOrder = useAppStore((s) => s.workspaceHostOrder)
+  const reviewingStatus = useAppStore(selectStackReviewingStatus)
   const setWorkspaceHostOrder = useAppStore((s) => s.setWorkspaceHostOrder)
 
   // Why: manual header order is bound to state.repos; Recent/Smart derive order from the sorted worktree stream.
@@ -144,7 +145,7 @@ export function useSidebarSectionRows(args: SectionRowsArgs) {
         worktrees,
         repoMap,
         prGroupOf: createSidebarPRGroupReader(repoMap, args.prCache),
-        stackOf: createSidebarStackReader(repoMap, args.prCache),
+        stackOf: createSidebarStackReader(repoMap, args.prCache, reviewingStatus),
         repoOrder,
         workspaceStatuses: args.workspaceStatuses,
         projectOrderBy: args.projectOrderBy,
@@ -168,6 +169,7 @@ export function useSidebarSectionRows(args: SectionRowsArgs) {
       worktrees,
       repoMap,
       args.prCache,
+      reviewingStatus,
       defaultHostId,
       repoOrder,
       args.workspaceStatuses,

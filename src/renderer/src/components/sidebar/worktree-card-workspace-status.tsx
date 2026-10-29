@@ -28,13 +28,15 @@ export function WorktreeCardWorkspaceStatus({
       <TooltipTrigger asChild>
         <span
           className={cn(
-            'inline-flex min-w-0 shrink items-center gap-0.5 text-[10px] text-muted-foreground',
+            'inline-flex h-4 min-w-0 max-w-full items-center gap-0.5 rounded-[4px] border border-worktree-sidebar-border bg-worktree-sidebar-accent/55 px-0.5',
             className
           )}
           data-worktree-card-workspace-status={statusId}
         >
           <Icon className={cn('size-3 shrink-0', tone)} />
-          <span className="truncate">{label}</span>
+          <span className="min-w-0 truncate text-3xs leading-none text-muted-foreground">
+            {label}
+          </span>
         </span>
       </TooltipTrigger>
       <TooltipContent side="right" sideOffset={8}>

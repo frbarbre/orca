@@ -79,16 +79,16 @@ export function WorktreeCardParentContent({
     >
       <WorktreeCardHeader card={card} presentation={presentation} />
       {presentation.hasMetaRow && <WorktreeCardMetaRow card={card} presentation={presentation} />}
-      <WorktreeCardLinearTitle
-        enabled={card.showLinearTitle}
-        title={linearIssue?.title}
-        tooltipEnabled={!hasHoverDetails}
-      />
       <WorktreeCardWorkspaceStatus
         enabled={card.showWorkspaceStatus}
         worktree={worktree}
         workspaceStatuses={card.workspaceStatuses}
         className="self-start"
+      />
+      <WorktreeCardLinearTitle
+        enabled={card.showLinearTitle}
+        title={linearIssue?.title}
+        tooltipEnabled={!hasHoverDetails}
       />
     </div>
   )

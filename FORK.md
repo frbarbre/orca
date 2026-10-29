@@ -1900,9 +1900,9 @@ request (their "reviewing" condition) come first under "Reviewing", stacked or n
 not your own stack work. Stacks come from the PR cache's `stack`, so the mode loads PRs the
 way PR grouping does; lineage nesting is off in it so parent rows can't reorder a stack. The paired
 phone's feed carries no stack facts, so there every worktree sits under "Not in a stack". Card
-display gains "Workspace status", a status badge on its own row under the card's title (the title
-row is already full with a long branch name and the stack position), so the status lane stays
-visible under any grouping.
+display gains "Workspace status", a chip styled like the project chip on its own row above the
+Linear title (the title row is already full with a long branch name and the stack position), so the
+status lane stays visible under any grouping.
 
 | File                                                                  | What is ours                                   |
 | --------------------------------------------------------------------- | ---------------------------------------------- |

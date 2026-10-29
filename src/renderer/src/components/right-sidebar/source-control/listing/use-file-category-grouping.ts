@@ -6,7 +6,7 @@ import { filterSourceControlPathEntries, type SourceControlFileFilterState } fro
 import {
   collectSourceControlFileCategories,
   filterSourceControlPathEntriesByCategory,
-  type SourceControlFileCategory
+  type SourceControlFileFilterKey
 } from './file-category'
 import type { SourceControlEntryGroups } from '../../../../../../shared/source-control-section-order'
 
@@ -20,10 +20,10 @@ export function useSourceControlCategoryGrouping({
   entries: GitStatusEntry[]
   branchEntries: GitBranchChangeEntry[]
   grouped: SourceControlEntryGroups
-  hiddenFileCategories: ReadonlySet<SourceControlFileCategory>
+  hiddenFileCategories: ReadonlySet<SourceControlFileFilterKey>
   reviewAttributes: GitPathReviewAttributes
 }): {
-  presentFileCategories: SourceControlFileCategory[]
+  presentFileCategories: SourceControlFileFilterKey[]
   isCategoryFilterActive: boolean
   categoryGrouped: SourceControlEntryGroups
 } {

@@ -30,4 +30,17 @@ describe('compact file type filter', () => {
   it('names the shown file types in the header while filtering', () => {
     expect(render(true)).toContain('>Implementation</span>')
   })
+
+  it('names a hidden area in the header, and lint baselines as a file type', () => {
+    const markup = renderToStaticMarkup(
+      <SourceControlFileCategoryFilter
+        compact
+        presentFileCategories={['implementation', 'lint-baseline', 'backend', 'frontend']}
+        hiddenFileCategories={new Set(['lint-baseline', 'backend'])}
+        isCategoryFilterActive
+        onToggleFileCategory={vi.fn()}
+      />
+    )
+    expect(markup).toContain('>Implementation · Frontend</span>')
+  })
 })

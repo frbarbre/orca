@@ -11,7 +11,7 @@ import {
 } from './file-filter'
 import {
   filterSourceControlPathEntriesByCategory,
-  type SourceControlFileCategory
+  type SourceControlFileFilterKey
 } from './file-category'
 import {
   filterSourceControlEntryGroups,
@@ -50,7 +50,7 @@ export type SourceControlFileProjection = {
   grouped: SourceControlEntryGroups
   fileFilterState: SourceControlFileFilterState
   normalizedFilter: string
-  presentFileCategories: SourceControlFileCategory[]
+  presentFileCategories: SourceControlFileFilterKey[]
   isCategoryFilterActive: boolean
   isGitHistoryVisible: boolean
   filteredGrouped: SourceControlEntryGroups
@@ -102,7 +102,7 @@ export function useSourceControlFileProjection({
   entries: GitStatusEntry[]
   branchEntries: GitBranchChangeEntry[]
   filterQuery: string
-  hiddenFileCategories: ReadonlySet<SourceControlFileCategory>
+  hiddenFileCategories: ReadonlySet<SourceControlFileFilterKey>
   reviewAttributes: GitPathReviewAttributes
   sourceControlGroupOrder: readonly SourceControlDisplaySectionArea[]
   activeWorktreeId: string | null

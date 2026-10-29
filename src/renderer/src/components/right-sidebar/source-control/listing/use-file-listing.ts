@@ -9,7 +9,7 @@ import type { SourceControlPanelViewState } from '../panel/use-panel-view-state'
 import { useSourceControlGitHistory } from '../sync/use-git-history'
 import type { SourceControlStatusRefresh } from '../sync/use-status-refresh'
 import { useSourceControlFileProjection } from './use-file-projection'
-import type { SourceControlFileCategory } from './file-category'
+import type { SourceControlFileFilterKey } from './file-category'
 import { useSourceControlReviewAttributes } from './use-review-attributes'
 import { usePublishedSourceControlReviewOrder } from './use-published-review-order'
 import { usePRCommentScope } from '@/components/pr-comments/use-pr-comment-scope'
@@ -59,7 +59,7 @@ export function useSourceControlFileListing({
   compareBaseRef: string | null
   entries: SourceControlWorktreeContext['entries']
   filterQuery: string
-  hiddenFileCategories: ReadonlySet<SourceControlFileCategory>
+  hiddenFileCategories: ReadonlySet<SourceControlFileFilterKey>
   isBranchVisible: boolean
   isFolder: boolean
   isGitHistoryExpanded: boolean

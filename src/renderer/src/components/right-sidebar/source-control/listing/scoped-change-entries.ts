@@ -7,7 +7,7 @@ import type { AppState } from '@/store/types'
 import { buildAllChangeEntries } from './all-changes'
 import {
   filterSourceControlPathEntriesByCategory,
-  type SourceControlFileCategory
+  type SourceControlFileFilterKey
 } from './file-category'
 
 // Why the merge-base check: a total can outlive the fork point it measured, like the branch chip's.
@@ -36,7 +36,7 @@ export function buildScopedChangeEntries({
   branchEntries: readonly GitBranchChangeEntry[]
   changesFilter: ChangesFilter | null
   lineCounts?: Readonly<Record<string, { added?: number; removed?: number }>>
-  hiddenCategories: ReadonlySet<SourceControlFileCategory>
+  hiddenCategories: ReadonlySet<SourceControlFileFilterKey>
   reviewAttributes: GitPathReviewAttributes
 }): GitBranchChangeEntry[] {
   // Fork: a previewed turn or commit lists its own files in place of the branch's.

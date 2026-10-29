@@ -10,10 +10,32 @@ import {
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu'
 import { translate } from '@/i18n/i18n'
-import type { SourceControlFileCategory } from './file-category'
+import { isSourceControlFileArea, type SourceControlFileFilterKey } from './file-category'
 
-function getFileCategoryLabel(category: SourceControlFileCategory): string {
+// Why per group: a hidden area says nothing about file types, so each group names only its own.
+function shownLabel(
+  present: readonly SourceControlFileFilterKey[],
+  hidden: ReadonlySet<SourceControlFileFilterKey>,
+  none: string
+): string | null {
+  if (!present.some((key) => hidden.has(key))) {
+    return null
+  }
+  const shown = present.filter((key) => !hidden.has(key))
+  return shown.length === 0 ? none : shown.map(getFileCategoryLabel).join(', ')
+}
+
+function getFileCategoryLabel(category: SourceControlFileFilterKey): string {
   switch (category) {
+    case 'lint-baseline':
+      return translate(
+        'auto.components.right.sidebar.SourceControl.fileCategory.lintBaseline',
+        'Lint baselines'
+      )
+    case 'backend':
+      return translate('auto.components.right.sidebar.SourceControl.fileArea.backend', 'Backend')
+    case 'frontend':
+      return translate('auto.components.right.sidebar.SourceControl.fileArea.frontend', 'Frontend')
     case 'implementation':
       return translate(
         'auto.components.right.sidebar.SourceControl.fileCategory.implementation',
@@ -47,7 +69,7 @@ function getFileCategoryLabel(category: SourceControlFileCategory): string {
 }
 
 export function shouldShowSourceControlFileCategoryFilter(
-  presentFileCategories: readonly SourceControlFileCategory[],
+  presentFileCategories: readonly SourceControlFileFilterKey[],
   isCategoryFilterActive: boolean
 ): boolean {
   return presentFileCategories.length > 1 || isCategoryFilterActive
@@ -60,27 +82,48 @@ export function SourceControlFileCategoryFilter({
   onToggleFileCategory,
   compact = false
 }: {
-  presentFileCategories: readonly SourceControlFileCategory[]
-  hiddenFileCategories: ReadonlySet<SourceControlFileCategory>
+  presentFileCategories: readonly SourceControlFileFilterKey[]
+  hiddenFileCategories: ReadonlySet<SourceControlFileFilterKey>
   isCategoryFilterActive: boolean
-  onToggleFileCategory: (category: SourceControlFileCategory) => void
+  onToggleFileCategory: (category: SourceControlFileFilterKey) => void
   /** An icon button for a section header instead of the full-width row. */
   compact?: boolean
 }): React.JSX.Element {
-  const shownCategories = presentFileCategories.filter(
-    (category) => !hiddenFileCategories.has(category)
-  )
+  const presentTypes = presentFileCategories.filter((key) => !isSourceControlFileArea(key))
+  const presentAreas = presentFileCategories.filter(isSourceControlFileArea)
   const triggerLabel = !isCategoryFilterActive
     ? translate(
         'auto.components.right.sidebar.SourceControl.fileCategory.allTypes',
         'All file types'
       )
-    : shownCategories.length === 0
-      ? translate(
-          'auto.components.right.sidebar.SourceControl.fileCategory.noTypes',
-          'No file types'
+    : [
+        shownLabel(
+          presentTypes,
+          hiddenFileCategories,
+          translate(
+            'auto.components.right.sidebar.SourceControl.fileCategory.noTypes',
+            'No file types'
+          )
+        ),
+        shownLabel(
+          presentAreas,
+          hiddenFileCategories,
+          translate('auto.components.right.sidebar.SourceControl.fileArea.none', 'No areas')
         )
-      : shownCategories.map(getFileCategoryLabel).join(', ')
+      ]
+        .filter(Boolean)
+        .join(' · ')
+  const checkbox = (category: SourceControlFileFilterKey): React.JSX.Element => (
+    <DropdownMenuCheckboxItem
+      key={category}
+      checked={!hiddenFileCategories.has(category)}
+      onCheckedChange={() => onToggleFileCategory(category)}
+      // Why: keep the menu open so several types can be toggled in one visit.
+      onSelect={(event) => event.preventDefault()}
+    >
+      {getFileCategoryLabel(category)}
+    </DropdownMenuCheckboxItem>
+  )
 
   const ariaLabel = translate(
     'auto.components.right.sidebar.SourceControl.fileCategory.triggerLabel',
@@ -138,17 +181,19 @@ export function SourceControlFileCategoryFilter({
           )}
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        {presentFileCategories.map((category) => (
-          <DropdownMenuCheckboxItem
-            key={category}
-            checked={!hiddenFileCategories.has(category)}
-            onCheckedChange={() => onToggleFileCategory(category)}
-            // Why: keep the menu open so several types can be toggled in one visit.
-            onSelect={(event) => event.preventDefault()}
-          >
-            {getFileCategoryLabel(category)}
-          </DropdownMenuCheckboxItem>
-        ))}
+        {presentTypes.map(checkbox)}
+        {presentAreas.length > 0 ? (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuLabel>
+              {translate(
+                'auto.components.right.sidebar.SourceControl.fileArea.menuLabel',
+                'Show areas'
+              )}
+            </DropdownMenuLabel>
+            {presentAreas.map(checkbox)}
+          </>
+        ) : null}
       </DropdownMenuContent>
     </DropdownMenu>
   )

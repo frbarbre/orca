@@ -5,7 +5,7 @@ import { getNextSourceControlViewMode } from './header-toolbar'
 import { normalizeSourceControlViewMode } from '../commit/commit-drafts'
 import type { SourceControlStoreActions } from '../listing/use-store-actions'
 import type { SourceControlWorktreeContext } from '../listing/use-worktree-context'
-import type { SourceControlFileCategory } from '../listing/file-category'
+import type { SourceControlFileFilterKey } from '../listing/file-category'
 import {
   getSourceControlFileScope,
   setSourceControlHiddenCategories,
@@ -104,7 +104,7 @@ export function useSourceControlPanelViewState({
   )
 
   const toggleFileCategory = useCallback(
-    (category: SourceControlFileCategory) => {
+    (category: SourceControlFileFilterKey) => {
       const key = activeWorktreeId ?? ''
       const next = new Set(getSourceControlFileScope(key).hiddenCategories)
       if (next.has(category)) {

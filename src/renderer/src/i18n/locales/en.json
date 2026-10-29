@@ -13145,6 +13145,7 @@
               "test": "Tests",
               "documentation": "Documentation",
               "generated": "Generated",
+              "lintBaseline": "Lint baselines",
               "agentGuidance": "Agent guidance",
               "localization": "Localization",
               "assets": "Assets",
@@ -13152,6 +13153,12 @@
               "noTypes": "No file types",
               "triggerLabel": "Filter changed files by type",
               "menuLabel": "Show file types"
+            },
+            "fileArea": {
+              "backend": "Backend",
+              "frontend": "Frontend",
+              "none": "No areas",
+              "menuLabel": "Show areas"
             }
           },
           "SourceControlAgentActionDialog": {

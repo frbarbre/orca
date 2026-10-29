@@ -14,11 +14,11 @@ import type { SourceControlEntryGroups } from '../../../../../../shared/source-c
 import type { FlatEntry } from './use-selection'
 import { useChangesFilter } from '@/lib/changes-filter'
 import type { GitPathReviewAttributes } from '../../../../../../shared/git-review-attributes'
-import type { SourceControlFileCategory } from './file-category'
+import type { SourceControlFileFilterKey } from './file-category'
 import { buildScopedChangeEntries, selectBranchLineCounts } from './scoped-change-entries'
 
 const NO_ENTRIES: GitBranchChangeEntry[] = []
-const NO_HIDDEN_CATEGORIES: ReadonlySet<SourceControlFileCategory> = new Set()
+const NO_HIDDEN_CATEGORIES: ReadonlySet<SourceControlFileFilterKey> = new Set()
 const NO_REVIEW_ATTRIBUTES: GitPathReviewAttributes = Object.freeze({})
 const NO_TREE_ROWS: AllChangesTreeNode[] = []
 const NO_SELECTABLE_ENTRIES: FlatEntry[] = []

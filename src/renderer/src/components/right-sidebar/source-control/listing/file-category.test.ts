@@ -25,6 +25,15 @@ describe('classifySourceControlFilePath without .gitattributes', () => {
     expect(classifySourceControlFilePath(path)).toBe('generated')
   })
 
+  it.each([
+    'apps/backend/.hemolint/pyrefly-unused-call-result/djank/services/test_page_list.py.json',
+    'apps/frontend/.steiger-baseline/fsd-no-public-api-sidestep/src/use-backend-sync.ts.json',
+    'apps/backend/.noprim-baseline/domain.txt',
+    'apps/backend/.file-lines-baseline.json'
+  ])('treats %s as a lint baseline', (path) => {
+    expect(classifySourceControlFilePath(path)).toBe('lint-baseline')
+  })
+
   it.each(['apps/frontend/src/button.tsx', 'apps/backend/app/latest.py'])(
     'treats %s as implementation',
     (path) => {
@@ -84,6 +93,17 @@ describe('collectSourceControlFileCategories', () => {
       )
     ).toEqual(['implementation', 'documentation', 'generated'])
   })
+
+  it('lists the backend and frontend areas after the file types, when changes fall in them', () => {
+    expect(
+      collectSourceControlFileCategories(
+        [
+          [{ path: 'apps/frontend/src/a.ts' }, { path: 'apps/backend/b.py' }, { path: 'README.md' }]
+        ],
+        {}
+      )
+    ).toEqual(['implementation', 'backend', 'frontend'])
+  })
 })
 
 describe('filterSourceControlPathEntriesByCategory', () => {
@@ -97,6 +117,20 @@ describe('filterSourceControlPathEntriesByCategory', () => {
     expect(
       filterSourceControlPathEntriesByCategory(entries, new Set(['test', 'generated']), {})
     ).toEqual([{ path: 'src/a.ts' }])
+  })
+
+  it('drops entries in a hidden area, whatever their file type', () => {
+    expect(
+      filterSourceControlPathEntriesByCategory(
+        [
+          { path: 'apps/backend/a.py' },
+          { path: 'apps/backend/tests/test_a.py' },
+          { path: 'apps/frontend/a.ts' }
+        ],
+        new Set(['backend']),
+        {}
+      )
+    ).toEqual([{ path: 'apps/frontend/a.ts' }])
   })
 
   it('classifies with .gitattributes when filtering', () => {

@@ -1857,6 +1857,21 @@ is appended to `<userData>/logs/ci-triage.jsonl` with the PR, head, runs, the pa
 | `src/shared/ci-triage-log.ts`, `src/main/ci-triage-log.ts`             | The log entry and the rotating file.   |
 | `src/main/ipc/ci-triage-log.ts`, `src/preload/api/ci-triage-bridge.ts` | `ciTriage:log`.                        |
 
+### 65. Lint baselines as a file type, and Backend / Frontend areas
+
+The Changes file type filter gains Lint baselines: a path through `.hemolint/`, or a dot-named file
+or folder with "baseline" in it (`.steiger-baseline/`, `.noprim-baseline/`,
+`.file-lines-baseline.json`). Under "Show areas" it lists Backend (`apps/backend/`) and Frontend
+(`apps/frontend/`) when the changes reach them; hiding one hides its files whatever their type. Areas
+share the hidden set with the file types (`SourceControlFileFilterKey`), so every list, count and
+quick open the type filter narrows narrows by area too.
+
+| File                                                      | What is ours                                       |
+| --------------------------------------------------------- | -------------------------------------------------- |
+| `source-control/listing/file-category.ts`                 | `lint-baseline`, the areas, and filtering by both. |
+| `listing/file-category-filter.tsx`                        | The areas group and the header label.              |
+| `file-scope-store.ts` and the listing hooks that carry it | `SourceControlFileFilterKey` for the hidden set.   |
+
 ## Verify
 
 Verify runs on GitHub, not locally: `fork-verify.yml` runs it on every pull request against `main`,

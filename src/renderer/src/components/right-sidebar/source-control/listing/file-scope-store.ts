@@ -1,13 +1,13 @@
 import { useSyncExternalStore } from 'react'
 import type { GitPathReviewAttributes } from '../../../../../../shared/git-review-attributes'
-import type { SourceControlFileCategory } from './file-category'
+import type { SourceControlFileFilterKey } from './file-category'
 
 export type SourceControlFileScope = {
-  hiddenCategories: ReadonlySet<SourceControlFileCategory>
+  hiddenCategories: ReadonlySet<SourceControlFileFilterKey>
   reviewAttributes: GitPathReviewAttributes
 }
 
-const NO_HIDDEN_CATEGORIES: ReadonlySet<SourceControlFileCategory> = new Set()
+const NO_HIDDEN_CATEGORIES: ReadonlySet<SourceControlFileFilterKey> = new Set()
 const NO_ATTRIBUTES: GitPathReviewAttributes = Object.freeze({})
 const EMPTY_SCOPE: SourceControlFileScope = {
   hiddenCategories: NO_HIDDEN_CATEGORIES,
@@ -40,7 +40,7 @@ function update(worktreeId: string, patch: Partial<SourceControlFileScope>): voi
 
 export function setSourceControlHiddenCategories(
   worktreeId: string,
-  hiddenCategories: ReadonlySet<SourceControlFileCategory>
+  hiddenCategories: ReadonlySet<SourceControlFileFilterKey>
 ): void {
   update(worktreeId, { hiddenCategories })
 }

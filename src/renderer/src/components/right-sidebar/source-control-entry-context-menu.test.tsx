@@ -101,7 +101,13 @@ function showsLocalOnlyHint(item: ItemProps | undefined): boolean {
   return renderToStaticMarkup(<>{item?.children}</>).includes('Local only')
 }
 
-function renderMenu(props: { connectionId?: string; hasWorkingTreeFile?: boolean } = {}): void {
+function renderMenu(
+  props: {
+    connectionId?: string
+    hasWorkingTreeFile?: boolean
+    discard?: { label: string; onDiscard: () => void }
+  } = {}
+): void {
   renderToStaticMarkup(
     <SourceControlEntryContextMenu
       currentWorktreeId="worktree-1"
@@ -110,6 +116,7 @@ function renderMenu(props: { connectionId?: string; hasWorkingTreeFile?: boolean
       hasWorkingTreeFile={props.hasWorkingTreeFile ?? true}
       connectionId={props.connectionId}
       onRevealInExplorer={vi.fn()}
+      discard={props.discard}
     >
       <div />
     </SourceControlEntryContextMenu>
@@ -142,6 +149,18 @@ describe('SourceControlEntryContextMenu', () => {
 
   afterEach(() => {
     vi.unstubAllGlobals()
+  })
+
+  it("discards the file's uncommitted change when it has one", () => {
+    const onDiscard = vi.fn()
+    renderMenu({ discard: { label: 'Discard changes', onDiscard } })
+
+    items.list.find((item) => childrenText(item.children) === 'Discard changes')?.onSelect?.()
+    expect(onDiscard).toHaveBeenCalled()
+
+    items.list = []
+    renderMenu()
+    expect(items.list.map((item) => childrenText(item.children))).not.toContain('Discard changes')
   })
 
   it('copies the supplied relative path', () => {

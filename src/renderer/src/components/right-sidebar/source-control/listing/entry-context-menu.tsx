@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo } from 'react'
-import { Copy, ExternalLink, Eye, FolderOpen } from 'lucide-react'
+import { Copy, ExternalLink, Eye, FolderOpen, Undo2 } from 'lucide-react'
 import {
   ContextMenu,
   ContextMenuContent,
@@ -43,6 +43,8 @@ type SourceControlEntryContextMenuProps = {
   onView?: () => void
   onRevealInExplorer: (worktreeId: string, absolutePath: string) => void
   onOpenChange?: (open: boolean) => void
+  /** Fork: set when the file has an uncommitted change that may be discarded. */
+  discard?: { label: string; onDiscard: () => void }
   children: React.ReactNode
 }
 
@@ -55,6 +57,7 @@ export function SourceControlEntryContextMenu({
   onView,
   onRevealInExplorer,
   onOpenChange,
+  discard,
   children
 }: SourceControlEntryContextMenuProps): React.JSX.Element {
   const openInApplications = useAppStore(
@@ -199,6 +202,15 @@ export function SourceControlEntryContextMenu({
             'Open in File Explorer'
           )}
         </ContextMenuItem>
+        {discard ? (
+          <>
+            <ContextMenuSeparator />
+            <ContextMenuItem onSelect={discard.onDiscard}>
+              <Undo2 className="size-3.5" />
+              {discard.label}
+            </ContextMenuItem>
+          </>
+        ) : null}
       </ContextMenuContent>
     </ContextMenu>
   )

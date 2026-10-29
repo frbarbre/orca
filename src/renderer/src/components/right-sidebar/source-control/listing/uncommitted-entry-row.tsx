@@ -1,14 +1,5 @@
 import React from 'react'
-import {
-  ChevronDown,
-  MessageSquare,
-  MessagesSquare,
-  Minus,
-  PencilLine,
-  Plus,
-  Trash,
-  Undo2
-} from 'lucide-react'
+import { ChevronDown, MessageSquare, MessagesSquare, Minus, PencilLine, Plus } from 'lucide-react'
 import { FileTypeIcon } from '@/components/FileTypeIcon'
 import { basename, dirname, joinPath } from '@/lib/path'
 import { cn } from '@/lib/utils'
@@ -18,6 +9,7 @@ import { translate } from '@/i18n/i18n'
 import { AgentNoteFileBadge } from './agent-note-file-badge'
 import type { GitStatusEntry } from '../../../../../../shared/git-status-types'
 import { ActionButton } from './action-button'
+import { discardAction } from './discard-action'
 import { ConflictBadge } from './conflict-badge'
 import { getLocalizedConflictKindLabel } from './conflict-label'
 import { DiffLineCounts } from './diff-line-counts'
@@ -106,6 +98,11 @@ export const UncommittedEntryRow = React.memo(function UncommittedEntryRow({
       connectionId={connectionId}
       onView={() => onOpen(entry)}
       onRevealInExplorer={onRevealInExplorer}
+      discard={
+        canDiscard
+          ? { label: discardAction(entry).label, onDiscard: () => onDiscard(entry) }
+          : undefined
+      }
       onOpenChange={(open) => {
         if (open && onContextMenu) {
           onContextMenu(entryKey)
@@ -244,23 +241,8 @@ export const UncommittedEntryRow = React.memo(function UncommittedEntryRow({
         <div className={SOURCE_CONTROL_ROW_ACTION_OVERLAY_CLASS}>
           {canDiscard && (
             <ActionButton
-              icon={entry.area === 'untracked' ? Trash : Undo2}
-              title={
-                entry.area === 'untracked'
-                  ? translate(
-                      'auto.components.right.sidebar.SourceControl.11463f7a98',
-                      'Delete untracked file'
-                    )
-                  : entry.status === 'deleted'
-                    ? translate(
-                        'auto.components.right.sidebar.SourceControl.989f3d5e34',
-                        'Restore file'
-                      )
-                    : translate(
-                        'auto.components.right.sidebar.SourceControl.d54dd48b0b',
-                        'Discard changes'
-                      )
-              }
+              icon={discardAction(entry).icon}
+              title={discardAction(entry).label}
               onClick={(event) => {
                 event.stopPropagation()
                 onDiscard(entry)

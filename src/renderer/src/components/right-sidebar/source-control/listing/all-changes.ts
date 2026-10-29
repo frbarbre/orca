@@ -1,5 +1,6 @@
 import type { GitBranchChangeEntry } from '../../../../../../shared/git-diff-compare-types'
 import { compareFileNames } from '../../../../../../shared/file-name-sort'
+import { canDiscardStatusEntry } from '../../../../../../shared/source-control-entry-actions'
 import type {
   GitBranchChangeStatus,
   GitStatusEntry
@@ -27,6 +28,15 @@ export function buildAllChangesOpenRowKeys(signature: string | null): ReadonlySe
   return ONE_ROW_PER_FILE_SOURCES.has(signature.slice(0, separator)) && path
     ? new Set([`${ALL_CHANGES_AREA}::${path}`])
     : NO_ROW_KEYS
+}
+
+/** Each file's uncommitted change that a discard throws away, where discarding is allowed. */
+export function discardableEntriesByPath(
+  statusEntries: readonly GitStatusEntry[]
+): ReadonlyMap<string, GitStatusEntry> {
+  return new Map(
+    statusEntries.filter(canDiscardStatusEntry).map((entry) => [entry.path, entry] as const)
+  )
 }
 
 function localStatus(local: readonly GitStatusEntry[]): {

@@ -1826,6 +1826,21 @@ This covers every rich markdown editor: GitHub comments, Linear descriptions, ma
 | -------------------------------------------------------------- | ---------------------------- |
 | `src/renderer/src/components/editor/rich-markdown-lowlight.ts` | `singleLineCodePastePlugin`. |
 
+### 63. Discard from the Changes list
+
+A Changes row (§35) of a file with an uncommitted change that may be discarded (unstaged or
+untracked, not conflicted, not a submodule) gets upstream's hover button for it, and both that row
+and upstream's uncommitted rows get the same item in their right-click menu. It goes through the
+usual confirmation, and throws away only the uncommitted change; committed changes on the branch
+stay. A previewed turn or commit offers none, since its rows show that change, not the disk.
+
+| File                                                                     | What is ours                                            |
+| ------------------------------------------------------------------------ | ------------------------------------------------------- |
+| `source-control/listing/all-changes.ts`, `use-all-changes-projection.ts` | `discardableEntriesByPath`, and `discardableByPath`.    |
+| `listing/all-changes-section.tsx`, `branch-entry-row.tsx`                | The button on a Changes row.                            |
+| `listing/entry-context-menu.tsx`, `uncommitted-entry-row.tsx`            | The menu item; the shared label in `discard-action.ts`. |
+| `source-control/panel/panel-content.tsx`                                 | Passing `requestDiscardEntry` to the Changes list.      |
+
 ## Verify
 
 Verify runs on GitHub, not locally: `fork-verify.yml` runs it on every pull request against `main`,

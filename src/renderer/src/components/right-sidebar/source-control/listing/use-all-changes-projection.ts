@@ -8,7 +8,7 @@ import {
   compactSourceControlTree,
   flattenSourceControlTree
 } from '../../source-control-tree'
-import { ALL_CHANGES_AREA, buildAllChangeEntries } from './all-changes'
+import { ALL_CHANGES_AREA, buildAllChangeEntries, discardableEntriesByPath } from './all-changes'
 import type { AllChangesTreeNode } from './all-changes-section'
 import type { SourceControlEntryGroups } from '../../../../../../shared/source-control-section-order'
 import type { FlatEntry } from './use-selection'
@@ -22,6 +22,7 @@ const NO_HIDDEN_CATEGORIES: ReadonlySet<SourceControlFileCategory> = new Set()
 const NO_REVIEW_ATTRIBUTES: GitPathReviewAttributes = Object.freeze({})
 const NO_TREE_ROWS: AllChangesTreeNode[] = []
 const NO_SELECTABLE_ENTRIES: FlatEntry[] = []
+const NO_DISCARDABLE: ReadonlyMap<string, GitStatusEntry> = new Map()
 
 /** The all-changes rows, built from the same filtered status and branch entries the sections use. */
 export function useAllChangesProjection({
@@ -69,6 +70,11 @@ export function useAllChangesProjection({
         : NO_ENTRIES,
     [changesFilter, enabled, filteredBranchEntries, filteredGrouped, lineCounts]
   )
+  // Why none under a turn or commit: those rows show that change, not what is on disk now.
+  const discardableByPath = useMemo(
+    () => (enabled && !sourceEntries ? discardableEntriesByPath(entries) : NO_DISCARDABLE),
+    [enabled, entries, sourceEntries]
+  )
   const totalAllChangeCount = useMemo(() => {
     if (!enabled) {
       return 0
@@ -102,6 +108,7 @@ export function useAllChangesProjection({
     allChangeEntries,
     totalAllChangeCount,
     visibleAllChangesTreeRows,
-    allChangesReviewOrder
+    allChangesReviewOrder,
+    discardableByPath
   }
 }

@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import type { GitBranchChangeEntry } from '../../../../../../shared/git-diff-compare-types'
 import type { GitStatusEntry } from '../../../../../../shared/git-status-types'
-import { buildAllChangeEntries, buildAllChangesOpenRowKeys } from './all-changes'
+import {
+  buildAllChangeEntries,
+  buildAllChangesOpenRowKeys,
+  discardableEntriesByPath
+} from './all-changes'
 import { buildActiveOpenFileSignature } from './active-open-file-keys'
 
 function status(entry: Partial<GitStatusEntry> & Pick<GitStatusEntry, 'path'>): GitStatusEntry {
@@ -13,6 +17,33 @@ function branch(
 ): GitBranchChangeEntry {
   return { status: 'modified', ...entry }
 }
+
+describe('discardableEntriesByPath', () => {
+  it("finds each file's uncommitted change that discarding throws away", () => {
+    const unstaged = status({ path: 'src/a.ts' })
+    const untracked = status({ path: 'src/new.ts', status: 'untracked', area: 'untracked' })
+    const alsoStaged = status({ path: 'src/b.ts', area: 'staged' })
+    const unstagedOnTop = status({ path: 'src/b.ts' })
+
+    expect(
+      discardableEntriesByPath([
+        unstaged,
+        untracked,
+        alsoStaged,
+        unstagedOnTop,
+        status({ path: 'src/only-staged.ts', area: 'staged' }),
+        status({ path: 'src/conflict.ts', conflictStatus: 'unresolved' }),
+        status({ path: 'vendor/lib', submoduleRoot: 'vendor/lib' })
+      ])
+    ).toEqual(
+      new Map([
+        ['src/a.ts', unstaged],
+        ['src/new.ts', untracked],
+        ['src/b.ts', unstagedOnTop]
+      ])
+    )
+  })
+})
 
 describe('buildAllChangeEntries', () => {
   it('lists every changed file once, whether committed, staged, unstaged or untracked', () => {

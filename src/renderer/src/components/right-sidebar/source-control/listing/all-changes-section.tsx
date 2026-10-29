@@ -2,6 +2,7 @@ import React, { useMemo } from 'react'
 import { X } from 'lucide-react'
 import { getIntlLocale, translate } from '@/i18n/i18n'
 import type { GitBranchChangeEntry } from '../../../../../../shared/git-diff-compare-types'
+import type { GitStatusEntry } from '../../../../../../shared/git-status-types'
 import type { SourceControlViewMode } from '../../../../../../shared/ui-chrome-types'
 import type { SourceControlTreeNode } from '../../source-control-tree'
 import type { SourceControlRowOpenEvent } from './split-open'
@@ -82,7 +83,9 @@ export function SourceControlAllChangesSection({
   reviewThreadCountByPath,
   pendingReviewCountByPath,
   activeOpenRowKeys,
-  activeOpenRowKey
+  activeOpenRowKey,
+  discardableByPath,
+  onDiscard
 }: {
   baseRef: string | null
   entries: GitBranchChangeEntry[]
@@ -108,6 +111,9 @@ export function SourceControlAllChangesSection({
   pendingReviewCountByPath: Map<string, number>
   activeOpenRowKeys: ReadonlySet<string>
   activeOpenRowKey: string | null
+  /** Fork: each file's uncommitted change that its row may discard. */
+  discardableByPath?: ReadonlyMap<string, GitStatusEntry>
+  onDiscard?: (entry: GitStatusEntry) => void
 }): React.JSX.Element {
   const fileCount = entries.length
   const ref = baseRef?.trim()
@@ -146,6 +152,8 @@ export function SourceControlAllChangesSection({
       pendingReviewCount={pendingReviewCountByPath.get(entry.path) ?? 0}
       isOpenFile={activeOpenRowKeys.has(key)}
       showPathHint={depth === undefined}
+      discardEntry={discardableByPath?.get(entry.path)}
+      onDiscard={onDiscard}
     />
   )
 

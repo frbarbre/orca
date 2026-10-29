@@ -23,6 +23,7 @@ export function SourceControlPanelContent(props: SourceControlPanelReadyProps) {
     showAllChanges,
     totalAllChangeCount,
     visibleAllChangesTreeRows,
+    discardableByPath,
     activeConnectionId,
     activeOpenRowKeys,
     activeOpenRowKey,
@@ -188,6 +189,8 @@ export function SourceControlPanelContent(props: SourceControlPanelReadyProps) {
             pendingReviewCountByPath={pendingReviewCountByPath}
             activeOpenRowKeys={activeOpenRowKeys}
             activeOpenRowKey={activeOpenRowKey}
+            discardableByPath={discardableByPath}
+            onDiscard={requestDiscardEntry}
           />
         )}
 

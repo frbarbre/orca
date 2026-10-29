@@ -2,6 +2,8 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { GitBranchChangeEntry } from '../../../../../../shared/git-diff-compare-types'
+import type { GitStatusEntry } from '../../../../../../shared/git-status-types'
+import { TooltipProvider } from '@/components/ui/tooltip'
 import { SourceControlAllChangesSection } from './all-changes-section'
 
 const entries: GitBranchChangeEntry[] = [
@@ -33,7 +35,11 @@ function renderSection(overrides: Partial<Parameters<typeof SourceControlAllChan
     activeOpenRowKey: null,
     ...overrides
   }
-  render(<SourceControlAllChangesSection {...props} />)
+  render(
+    <TooltipProvider>
+      <SourceControlAllChangesSection {...props} />
+    </TooltipProvider>
+  )
   return props
 }
 
@@ -85,6 +91,24 @@ describe('SourceControlAllChangesSection', () => {
   it('shows no line total when the listed files changed no lines', () => {
     renderSection({ entries: [{ path: 'logo.png', status: 'added' }] })
     expect(screen.queryByTestId('source-control-changes-line-total')).toBeNull()
+  })
+
+  it("discards a file's uncommitted change from its row, and offers nothing on a committed one", () => {
+    const untracked: GitStatusEntry = {
+      path: 'src/untracked.ts',
+      status: 'untracked',
+      area: 'untracked'
+    }
+    const props = renderSection({
+      discardableByPath: new Map([['src/untracked.ts', untracked]]),
+      onDiscard: vi.fn()
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: 'Delete untracked file' }))
+
+    expect(props.onDiscard).toHaveBeenCalledWith(untracked)
+    expect(props.onOpen).not.toHaveBeenCalled()
+    expect(screen.getAllByRole('button', { name: /Discard|Delete|Restore/ })).toHaveLength(1)
   })
 
   it('shows no badge, and no View all, while every change is listed', () => {

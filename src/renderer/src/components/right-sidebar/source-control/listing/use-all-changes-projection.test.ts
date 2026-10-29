@@ -61,6 +61,32 @@ describe('useAllChangesProjection', () => {
     act(() => clearChangesFilter('wt-turn'))
   })
 
+  it("offers each file's uncommitted change for discarding, but not while a turn is previewed", () => {
+    const { result } = renderProjection('list', new Set(), 'wt-discard')
+    expect(result.current.discardableByPath).toEqual(
+      new Map([
+        ['src/ui/b.ts', unstaged],
+        ['README.md', untracked]
+      ])
+    )
+    act(() =>
+      setChangesFilter('wt-discard', {
+        kind: 'turn',
+        compare: {
+          commitOid: 'e'.repeat(40),
+          parentOid: 's'.repeat(40),
+          compareRef: 'e',
+          baseRef: 's'
+        },
+        entries: [{ path: 'src/ui/b.ts', status: 'modified' }],
+        prompt: 'Do the thing',
+        latest: true
+      })
+    )
+    expect(result.current.discardableByPath.size).toBe(0)
+    act(() => clearChangesFilter('wt-discard'))
+  })
+
   it('lists the files the filter keeps, and counts every changed file for the heading', () => {
     const { allChangeEntries, totalAllChangeCount, allChangesReviewOrder } = project('list')
     expect(allChangeEntries.map((entry) => entry.path)).toEqual([

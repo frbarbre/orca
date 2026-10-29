@@ -12,7 +12,14 @@ import { ChangeEntryStat } from './change-entry-stat'
 import { reviewNoteCountTitle } from './review-note-count-title'
 import { SourceControlEntryContextMenu } from './entry-context-menu'
 import { toPermanentSourceControlRowOpenEvent, type SourceControlRowOpenEvent } from './split-open'
-import { SOURCE_CONTROL_TREE_FILE_PADDING_PX, SOURCE_CONTROL_TREE_INDENT_PX } from './row-layout'
+import {
+  SOURCE_CONTROL_ROW_ACTION_OVERLAY_CLASS,
+  SOURCE_CONTROL_TREE_FILE_PADDING_PX,
+  SOURCE_CONTROL_TREE_INDENT_PX
+} from './row-layout'
+import { ActionButton } from './action-button'
+import { discardAction } from './discard-action'
+import type { GitStatusEntry } from '../../../../../../shared/git-status-types'
 import { STATUS_COLORS } from '../../status-display'
 
 export function BranchEntryRow({
@@ -27,7 +34,9 @@ export function BranchEntryRow({
   reviewThreadCount,
   pendingReviewCount,
   isOpenFile = false,
-  showPathHint = true
+  showPathHint = true,
+  discardEntry,
+  onDiscard
 }: {
   entry: GitBranchChangeEntry
   currentWorktreeId: string
@@ -41,10 +50,14 @@ export function BranchEntryRow({
   pendingReviewCount: number
   isOpenFile?: boolean
   showPathHint?: boolean
+  /** Fork: the file's uncommitted change, when the all-changes list may discard it. */
+  discardEntry?: GitStatusEntry
+  onDiscard?: (entry: GitStatusEntry) => void
 }): React.JSX.Element {
   const fileName = basename(entry.path)
   const parentDir = dirname(entry.path)
   const dirPath = parentDir === '.' ? '' : parentDir
+  const discard = discardEntry && onDiscard ? discardAction(discardEntry) : null
 
   return (
     <SourceControlEntryContextMenu
@@ -55,6 +68,11 @@ export function BranchEntryRow({
       connectionId={connectionId}
       onView={() => onOpen()}
       onRevealInExplorer={onRevealInExplorer}
+      discard={
+        discard && discardEntry && onDiscard
+          ? { label: discard.label, onDiscard: () => onDiscard(discardEntry) }
+          : undefined
+      }
     >
       <div
         // Why: mirrors the uncommitted row so the open file reads the same whether it came from the
@@ -63,7 +81,7 @@ export function BranchEntryRow({
         data-source-control-path={entry.path}
         data-source-control-area="branch"
         className={cn(
-          'group flex cursor-pointer items-center gap-1 pr-3 py-1 transition-colors',
+          'group relative flex cursor-pointer items-center gap-1 pr-3 py-1 transition-colors',
           isOpenFile ? 'bg-accent hover:bg-accent' : 'hover:bg-accent/40'
         )}
         style={{
@@ -127,6 +145,18 @@ export function BranchEntryRow({
           </span>
         )}
         <ChangeEntryStat entry={entry} />
+        {discard && discardEntry && onDiscard ? (
+          <div className={SOURCE_CONTROL_ROW_ACTION_OVERLAY_CLASS}>
+            <ActionButton
+              icon={discard.icon}
+              title={discard.label}
+              onClick={(event) => {
+                event.stopPropagation()
+                onDiscard(discardEntry)
+              }}
+            />
+          </div>
+        ) : null}
       </div>
     </SourceControlEntryContextMenu>
   )

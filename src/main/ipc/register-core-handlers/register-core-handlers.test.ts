@@ -240,6 +240,10 @@ vi.mock('../agent-turns', () => ({
   registerAgentTurnHandlers: vi.fn()
 }))
 
+vi.mock('../ci-triage-log', () => ({
+  registerCiTriageLogHandlers: vi.fn()
+}))
+
 vi.mock('../notifications', () => ({
   registerNotificationHandlers: registerNotificationHandlersMock
 }))

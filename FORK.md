@@ -1758,6 +1758,22 @@ button is gone.
 | `editor/EditorDiffFileSurface.tsx`, `EditorContent.tsx`                                         | Read-only diffs.                                         |
 | `src/shared/keybindings/definitions-core-4.ts`, `types.ts`                                      | The bindings.                                            |
 
+### 59. The modal blur keys off a body attribute, not `body:has()`
+
+Upstream blurs the workspace behind a dialog, sheet or onboarding with
+`body:has(> [data-slot='dialog-overlay'], …) .app-layout > :not(.window-controls)` (#33799). Chromium
+re-checks that `:has()` for every node inserted anywhere in the page, and a match restyles the whole
+app, so scrolling an editor spent ~37 s of style recalc per 60 wheel ticks. The fork sets
+`data-modal-scene` on `<body>` from a `MutationObserver` on its direct children and keys the blur off
+that; the same scroll takes ~0.5 s. A test forbids `body:has()` rules that reach past the toaster.
+
+| File                                                 | What is ours                                       |
+| ---------------------------------------------------- | -------------------------------------------------- |
+| `src/renderer/src/lib/modal-scene-attribute.ts`      | The observer.                                      |
+| `src/renderer/src/main.tsx`, `space.tsx`             | Installing it.                                     |
+| `src/renderer/src/assets/main.css`                   | `body[data-modal-scene]` in place of `body:has()`. |
+| `src/renderer/src/assets/main-css-has-scope.test.ts` | The `body:has()` reach guard.                      |
+
 ## Verify
 
 Verify runs on GitHub, not locally: `fork-verify.yml` runs it on every pull request against `main`,

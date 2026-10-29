@@ -866,9 +866,8 @@ body:has(> [data-slot='dialog-overlay'], > [data-slot='sheet-overlay'])
 }
 
 /* Blur source regions independently so status-bar animation cannot re-filter the workspace. */
-body:has(> [data-slot='dialog-overlay'], > [data-slot='sheet-overlay'], > [data-onboarding-overlay])
-  .app-layout
-  > :not(.window-controls) {
+/* Fork: body[data-modal-scene] (modal-scene-attribute.ts) instead of body:has(), which restyled the app on every scroll. */
+body[data-modal-scene] .app-layout > :not(.window-controls) {
   filter: blur(2px);
 }
 

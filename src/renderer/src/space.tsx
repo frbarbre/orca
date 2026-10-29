@@ -17,6 +17,7 @@ import { buildAppFontFamily } from './lib/app-font-family'
 import { getOrCreateRendererRoot } from './lib/react-renderer-root'
 import { I18nProvider } from './i18n/I18nProvider'
 import { useAppStore } from './store'
+import { installModalSceneAttribute } from './lib/modal-scene-attribute'
 
 function SpaceWindowRoot(): React.JSX.Element {
   const { t } = useTranslation()
@@ -95,6 +96,8 @@ const root = document.getElementById('root')
 if (!root) {
   throw new Error('Space window root not found.')
 }
+const disposeModalSceneAttribute = installModalSceneAttribute(document.body)
+import.meta.hot?.dispose(disposeModalSceneAttribute)
 getOrCreateRendererRoot(root, import.meta.hot?.data).render(
   <StrictMode>
     <I18nProvider>

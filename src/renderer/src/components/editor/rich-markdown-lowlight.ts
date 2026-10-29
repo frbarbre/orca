@@ -202,12 +202,30 @@ function createRichMarkdownLowlightPlugin({
   return plugin
 }
 
+function singleLineCodePastePlugin(): Plugin {
+  return new Plugin({
+    key: new PluginKey('richMarkdownSingleLineCodePaste'),
+    props: {
+      handlePaste: (view, event) => {
+        const text = event.clipboardData?.getData('text/plain') ?? ''
+        if (!event.clipboardData?.getData('vscode-editor-data') || !text || /[\r\n]/.test(text)) {
+          return false
+        }
+        view.dispatch(view.state.tr.insertText(text).setMeta('paste', true).scrollIntoView())
+        return true
+      }
+    }
+  })
+}
+
 export const RichMarkdownCodeBlockLowlight = CodeBlock.extend<CodeBlockLowlightOptions>({
   addOptions() {
     return { ...CodeBlockLowlight.options }
   },
   addProseMirrorPlugins() {
     return [
+      // Fork: ahead of CodeBlock's VS Code paste handler, which fences even a copied word.
+      singleLineCodePastePlugin(),
       ...(this.parent?.() ?? []),
       createRichMarkdownLowlightPlugin({
         name: this.name,

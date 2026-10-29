@@ -1815,6 +1815,17 @@ imports each have a switch per language in Settings → Language Servers.
 | `language-server-completions.ts`, `language-server-code-actions.ts`       | Turning them into Monaco's shapes.                    |
 | `settings/LanguageServersPane.tsx`, `language-servers-search.ts`          | The two switches.                                     |
 
+### 62. One line copied from the code editor pastes as text
+
+Tiptap's CodeBlock turns any paste carrying `vscode-editor-data` (Monaco and VS Code copies) into a
+fenced block in that language, so copying one name into a comment fenced it. A plugin ahead of that
+handler inserts a single line as plain text at the cursor; several lines still become a code block.
+This covers every rich markdown editor: GitHub comments, Linear descriptions, markdown files.
+
+| File                                                           | What is ours                 |
+| -------------------------------------------------------------- | ---------------------------- |
+| `src/renderer/src/components/editor/rich-markdown-lowlight.ts` | `singleLineCodePastePlugin`. |
+
 ## Verify
 
 Verify runs on GitHub, not locally: `fork-verify.yml` runs it on every pull request against `main`,

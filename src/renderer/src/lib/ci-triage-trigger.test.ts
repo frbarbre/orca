@@ -25,11 +25,24 @@ const failing = [
 ] as never
 
 const triage = (prNumber: number, branch: string, headSha: string, checks = failing) =>
-  maybeStartCiTriage({ repo, prNumber, prRepo: null, branch, headSha, checks })
+  maybeStartCiTriage({ repo, prNumber, prRepo: null, branch, headSha, checks, trigger: 'watch' })
+
+const log = vi.fn(async (_entry: unknown) => {})
+
+function memoryStorage(): Pick<Storage, 'getItem' | 'setItem'> {
+  const items = new Map<string, string>()
+  return {
+    getItem: (key) => items.get(key) ?? null,
+    setItem: (key, value) => void items.set(key, value)
+  }
+}
 
 describe('maybeStartCiTriage', () => {
   beforeEach(() => {
-    vi.stubGlobal('window', { api: { pendingReview: { context: reviewContext } } })
+    vi.stubGlobal('window', {
+      api: { pendingReview: { context: reviewContext }, ciTriage: { log } },
+      localStorage: memoryStorage()
+    })
   })
   afterEach(() => {
     vi.clearAllMocks()
@@ -104,6 +117,59 @@ describe('maybeStartCiTriage', () => {
     )[0].basePrompt
     expect(secondPrompt).toContain('https://x/e')
     expect(secondPrompt).not.toContain('https://x/l')
+  })
+
+  it('starts nothing for a failed summary status without a link, which only echoes a failed run', async () => {
+    const combined = { name: 'Combined CI', status: 'completed', conclusion: 'failure', url: null }
+    await triage(50, 'feature', 'sha-summary')
+    await triage(50, 'feature', 'sha-summary', [
+      ...(failing as unknown as unknown[]),
+      combined
+    ] as never)
+    await triage(51, 'feature', 'sha-summary-only', [combined] as never)
+
+    expect(startFixChecksAgent).toHaveBeenCalledTimes(1)
+    expect(log).toHaveBeenCalledWith(
+      expect.objectContaining({ prNumber: 51, decision: 'no-linked-failure' })
+    )
+  })
+
+  it('remembers the runs it triaged across a restart', async () => {
+    await triage(52, 'feature', 'sha-restart')
+    vi.resetModules()
+    const restarted = await import('./ci-triage-trigger')
+    await restarted.maybeStartCiTriage({
+      repo,
+      prNumber: 52,
+      prRepo: null,
+      branch: 'feature',
+      headSha: 'sha-restart',
+      checks: failing,
+      trigger: 'checks'
+    })
+
+    expect(startFixChecksAgent).toHaveBeenCalledTimes(1)
+  })
+
+  it('logs why it started an agent, with the runs, head and what asked', async () => {
+    await triage(53, 'feature', 'sha-log')
+    await vi.waitFor(() =>
+      expect(log).toHaveBeenCalledWith(expect.objectContaining({ decision: 'launched' }))
+    )
+
+    expect(log).toHaveBeenCalledWith(
+      expect.objectContaining({
+        decision: 'started',
+        trigger: 'watch',
+        repoId: 'repo-1',
+        prNumber: 53,
+        branch: 'feature',
+        headSha: 'sha-log',
+        worktreeId: 'wt-feature',
+        runs: [{ name: 'checks', url: 'https://x/runs/7' }],
+        prStarts: 1
+      })
+    )
   })
 
   it('stops after three triage agents on one PR, so pushed fixes cannot loop', async () => {

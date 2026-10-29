@@ -1841,6 +1841,22 @@ stay. A previewed turn or commit offers none, since its rows show that change, n
 | `listing/entry-context-menu.tsx`, `uncommitted-entry-row.tsx`            | The menu item; the shared label in `discard-action.ts`. |
 | `source-control/panel/panel-content.tsx`                                 | Passing `requestDiscardEntry` to the Changes list.      |
 
+### 64. CI triage starts one agent per failed run, and logs why
+
+CI triage starts a background agent per failed run of a red PR you wrote. A failed status without
+a link (a combined CI status) never starts one by itself: it only sums up runs that failed on their
+own, and failing a minute after them it used to start a second agent on the same head. Triaged runs
+and the three-per-PR cap live in `localStorage` for a week, so an update or restart does not triage
+the same red run again. Each decision (started, launched, already-triaged, no-linked-failure, …)
+is appended to `<userData>/logs/ci-triage.jsonl` with the PR, head, runs, the path that asked
+(watcher or checks fetch), the window and the app process; skips are written once per window.
+
+| File                                                                   | What is ours                           |
+| ---------------------------------------------------------------------- | -------------------------------------- |
+| `src/renderer/src/lib/ci-triage-trigger.ts`                            | The decisions, memory and log entries. |
+| `src/shared/ci-triage-log.ts`, `src/main/ci-triage-log.ts`             | The log entry and the rotating file.   |
+| `src/main/ipc/ci-triage-log.ts`, `src/preload/api/ci-triage-bridge.ts` | `ciTriage:log`.                        |
+
 ## Verify
 
 Verify runs on GitHub, not locally: `fork-verify.yml` runs it on every pull request against `main`,

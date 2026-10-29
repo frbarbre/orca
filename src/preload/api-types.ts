@@ -80,6 +80,7 @@ import type { LanguageServerApi } from '../shared/language-server-api'
 import type { DiagnosticsSyncResult, EditorDiagnosticsEvent } from '../shared/editor-diagnostics'
 import type { LintRequest, LinterId } from '../shared/linter'
 import type { FormatterApi } from '../shared/formatter'
+import type { CiTriageApi } from '../shared/ci-triage-log'
 import type {
   GitBlameLinks,
   GitBlameLinksRequest,
@@ -172,6 +173,7 @@ export type PreloadApi = {
     onDiagnostics: (callback: (event: EditorDiagnosticsEvent) => void) => () => void
   }
   formatter: FormatterApi
+  ciTriage: CiTriageApi
   materialIcons: {
     read: () => Promise<MaterialIconConfigSnapshot>
     ensure: () => Promise<MaterialIconConfigSnapshot>

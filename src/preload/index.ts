@@ -73,6 +73,7 @@ import { claudeRemoteSessionApi } from './api/claude-remote-session-bridge'
 import { languageServerApi } from './api/language-server-bridge'
 import { lintApi } from './api/lint-bridge'
 import { formatterApi } from './api/formatter-bridge'
+import { ciTriageApi } from './api/ci-triage-bridge'
 import { gitBlameApi } from './api/git-blame-bridge'
 import { materialIconsApi } from './api/material-icons-bridge'
 import { agentTurnsApi } from './api/agent-turns-bridge'
@@ -184,6 +185,7 @@ const api = {
   languageServer: languageServerApi,
   lint: lintApi,
   formatter: formatterApi,
+  ciTriage: ciTriageApi,
   gitBlame: gitBlameApi,
   materialIcons: materialIconsApi,
   agentTurns: agentTurnsApi,

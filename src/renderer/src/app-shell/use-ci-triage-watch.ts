@@ -39,7 +39,7 @@ export function useCiTriageWatch({ enabled }: { enabled: boolean }): void {
             { repoId: target.repo.id }
           )
           // Why: a cache hit returns before fetchPRChecks reaches the triage trigger.
-          .then((checks) => maybeStartCiTriage({ ...target, checks }))
+          .then((checks) => maybeStartCiTriage({ ...target, checks, trigger: 'watch' }))
           .catch(() => lookedAt.delete(key))
       }
     }

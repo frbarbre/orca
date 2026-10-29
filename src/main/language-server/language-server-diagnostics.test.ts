@@ -70,6 +70,9 @@ function setup() {
         hover: vi.fn(),
         references: vi.fn(),
         completion: vi.fn(),
+        resolveCompletion: vi.fn(),
+        codeActions: vi.fn(),
+        organizeImports: vi.fn(),
         publish,
         open: vi.fn(async (filePath: string) => {
           opened.add(filePath)

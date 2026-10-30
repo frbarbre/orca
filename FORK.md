@@ -1956,8 +1956,9 @@ cask bump and the in-app updater handles upgrades. Install with
 ### 73. `orca settings export|import`
 
 The CLI runs Share settings' own export and import (`lib/settings-transfer-actions.ts`, shared with
-`SettingsTransferSection`). The RPC methods `settingsTransfer.export|import` relay to the open
-window (`main/window/settings-transfer-cli-relay.ts`), which answers and, after an import, reloads.
+`SettingsTransferSection`). The RPC methods `settingsTransfer.export|import` call an Electron-free
+port (`main/host/settings-transfer-cli-port.ts`) that the window relay registers
+(`main/window/settings-transfer-cli-relay.ts`); the window answers and, after an import, reloads.
 The CLI reads and writes the file on the caller's machine. `notes` and `settings` are in
 `CLI_COMMAND_NAMES` so packaged Linux launches route them to the CLI.
 

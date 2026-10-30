@@ -1,5 +1,5 @@
 import { SettingsTransferImport } from '../../../../shared/rpc-contract/settings-transfer-params'
-import { requestSettingsTransferFromWindow } from '../../../window/settings-transfer-cli-relay'
+import { requestSettingsTransfer } from '../../../host/settings-transfer-cli-port'
 import { defineMethod } from '../core'
 
 export const SETTINGS_TRANSFER_METHODS = [
@@ -7,12 +7,12 @@ export const SETTINGS_TRANSFER_METHODS = [
     name: 'settingsTransfer.export',
     permission: 'workspace',
     params: null,
-    handler: () => requestSettingsTransferFromWindow({ kind: 'export' })
+    handler: () => requestSettingsTransfer({ kind: 'export' })
   }),
   defineMethod({
     name: 'settingsTransfer.import',
     permission: 'settings-write',
     params: SettingsTransferImport,
-    handler: (params) => requestSettingsTransferFromWindow({ kind: 'import', text: params.text })
+    handler: (params) => requestSettingsTransfer({ kind: 'import', text: params.text })
   })
 ]

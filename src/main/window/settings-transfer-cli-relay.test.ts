@@ -11,6 +11,7 @@ vi.mock('electron', () => ({
   }
 }))
 
+import { requestSettingsTransfer } from '../host/settings-transfer-cli-port'
 import {
   requestSettingsTransferFromWindow,
   trackSettingsTransferWindow
@@ -32,7 +33,7 @@ describe('settings transfer CLI relay', () => {
   it("resolves with the tracked window's reply to its own request", async () => {
     const { window, webContents } = createWindow()
     trackSettingsTransferWindow(window as never)
-    const pending = requestSettingsTransferFromWindow({ kind: 'export' })
+    const pending = requestSettingsTransfer({ kind: 'export' })
     const request = sentRequest(webContents)
 
     expect(webContents.send).toHaveBeenCalledWith('settingsTransfer:cliRequest', request)
@@ -70,7 +71,7 @@ describe('settings transfer CLI relay', () => {
     trackSettingsTransferWindow(window as never)
     window.emit('closed')
 
-    await expect(requestSettingsTransferFromWindow({ kind: 'export' })).rejects.toThrow(
+    await expect(requestSettingsTransfer({ kind: 'export' })).rejects.toThrow(
       'Orca has no open window'
     )
   })

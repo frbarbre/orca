@@ -7,6 +7,7 @@ import type {
   SettingsTransferCliReply,
   SettingsTransferCliResult
 } from '../../shared/settings-transfer-cli'
+import { setSettingsTransferRequester } from '../host/settings-transfer-cli-port'
 
 const SETTINGS_TRANSFER_CLI_TIMEOUT_MS = 30_000
 
@@ -14,9 +15,11 @@ let settingsWindow: BrowserWindow | null = null
 
 export function trackSettingsTransferWindow(window: BrowserWindow): void {
   settingsWindow = window
+  setSettingsTransferRequester((action) => requestSettingsTransferFromWindow(action, window))
   window.on('closed', () => {
     if (settingsWindow === window) {
       settingsWindow = null
+      setSettingsTransferRequester(null)
     }
   })
 }
@@ -24,9 +27,9 @@ export function trackSettingsTransferWindow(window: BrowserWindow): void {
 /** Runs an export or import in the window, through the same code as the Settings screen. */
 export function requestSettingsTransferFromWindow(
   action: SettingsTransferCliAction,
-  window: BrowserWindow | null = settingsWindow
+  window: BrowserWindow
 ): Promise<SettingsTransferCliResult> {
-  if (!window || window.isDestroyed() || window.webContents.isDestroyed()) {
+  if (window.isDestroyed() || window.webContents.isDestroyed()) {
     return Promise.reject(new Error('Orca has no open window to export or import settings in.'))
   }
   const webContents = window.webContents

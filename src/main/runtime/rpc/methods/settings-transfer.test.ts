@@ -4,8 +4,8 @@ import type { OrcaRuntimeService } from '../../orca-runtime'
 import { RpcDispatcher } from '../dispatcher'
 
 const relay = vi.hoisted(() => ({ request: vi.fn() }))
-vi.mock('../../../window/settings-transfer-cli-relay', () => ({
-  requestSettingsTransferFromWindow: relay.request
+vi.mock('../../../host/settings-transfer-cli-port', () => ({
+  requestSettingsTransfer: relay.request
 }))
 
 import { SETTINGS_TRANSFER_METHODS } from './settings-transfer'

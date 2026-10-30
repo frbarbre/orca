@@ -534,6 +534,7 @@ import {
   WorktreeTabSelector
 } from './session-tabs-schemas-params'
 import { SessionReadTerminalScrollbackParams } from './session-terminal-scrollback-params'
+import { SettingsTransferImport } from './settings-transfer-params'
 import { SidebarSessionBeginParams } from './sidebar-session-params'
 import {
   SkillsCancelInstallParams,
@@ -1342,6 +1343,8 @@ export const RPC_PARAMS_BY_METHOD = {
   'settings.update': SettingsUpdate,
   'settings.updatePRBotAuthorOverride': PRBotAuthorOverrideUpdate,
   'settings.updateTerminalQuickCommands': TerminalQuickCommandsUpdate,
+  'settingsTransfer.export': null,
+  'settingsTransfer.import': SettingsTransferImport,
   'sidebarInputs.activityFacts': null,
   'sidebarInputs.desktopFacts': null,
   'sidebarInputs.pairedServerRows': null,

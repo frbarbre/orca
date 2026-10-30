@@ -8,5 +8,10 @@ export const BROWSER_AND_FORK_HANDLER_GROUPS: readonly HandlerGroup[] = [
     name: 'notes',
     keys: ['notes add', 'notes reply', 'notes list', 'notes rm'],
     load: async () => (await import('./handlers/notes.js')).NOTES_HANDLERS
+  },
+  {
+    name: 'settings-transfer',
+    keys: ['settings export', 'settings import'],
+    load: async () => (await import('./handlers/settings-transfer.js')).SETTINGS_TRANSFER_HANDLERS
   }
 ]

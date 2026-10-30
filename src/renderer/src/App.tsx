@@ -39,6 +39,7 @@ import { useWindowVisibilityEffects } from './app-shell/use-window-visibility-ef
 import { SpaceWindowStatePublisher } from './components/workspace-space/SpaceWindowStatePublisher'
 import { PlainSshTerminalPanels } from './components/plain-ssh-terminal/PlainSshTerminalPanels'
 import { installActiveWorktreeRemovalSuccessor } from './lib/active-worktree-removal-successor'
+import { installSettingsTransferCliBridge } from './hooks/ipc-events/settings-transfer-cli-ipc-bridge'
 
 function App(): React.JSX.Element {
   const layout = useAppChromeLayout()
@@ -60,6 +61,8 @@ function App(): React.JSX.Element {
   useGlobalKeybindings({ layout, floatingWorkspace })
   // App owns active-selection removal; the Space window only mirrors selection.
   useEffect(() => installActiveWorktreeRemovalSuccessor(), [])
+  // Fork: `orca settings export|import` run here, through the Settings screen's code.
+  useEffect(() => installSettingsTransferCliBridge(), [])
 
   // Portaled sheets/dialogs live outside .app-layout and need root offsets to clear Windows/Linux controls.
   useEffect(() => {

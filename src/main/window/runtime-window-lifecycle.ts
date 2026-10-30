@@ -14,6 +14,7 @@ import { createRuntimeRendererNotificationSender } from './runtime-renderer-noti
 import { requestSessionTabCloseFromRenderer } from './session-tab-close-request-relay'
 import { revealTerminalPaneInWindow } from './terminal-pane-reveal-relay'
 import { requestTerminalTabCloseFromRenderer } from './terminal-tab-close-request-relay'
+import { trackSettingsTransferWindow } from './settings-transfer-cli-relay'
 import { ORCA_SIDEBAR_INPUTS_IS_MAIN } from '../../shared/sidebar-inputs-switch'
 
 let runtimeNotifierTokenCounter = 0
@@ -246,6 +247,8 @@ export function registerRuntimeWindowLifecycle(
   mainWebContents.on('render-process-gone', () => {
     rendererNotifications.onRendererProcessGone()
   })
+  // Fork: `orca settings export|import` run in this window.
+  trackSettingsTransferWindow(mainWindow)
   mainWindow.on('closed', () => {
     detachSidebarInputsNotices?.()
     rendererNotifications.close()

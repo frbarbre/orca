@@ -236,6 +236,15 @@ orca notes rm --id <note-id> --json
 
 `notes list` returns the user's notes and the agent notes. `notes add` leaves an agent note on lines of the current file; Orca shows it in the diff as a bot note, apart from the user's notes, and never sends it to an agent. `--file` is relative to cwd or absolute inside the worktree. `--github-comment <url>` links the note to the GitHub review comment it answers.
 
+## Settings
+
+```bash
+orca settings export --output ~/orca-settings.json
+orca settings import --file ~/orca-settings.json
+```
+
+The same export and import as Settings › Share settings: preferences, board columns, automations, project settings, keybindings and editor themes, without accounts, tokens, API keys or local paths. `export` prints the JSON when `--output` is left out. `import` needs Orca running with a window open, and Orca reloads after it.
+
 ## Built-in browser
 
 Browser commands control Orca's embedded browser tab for the selected worktree. They do not control Chrome, Safari, or the Orca desktop UI.

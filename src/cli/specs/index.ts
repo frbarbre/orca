@@ -26,6 +26,7 @@ import { ARTIFACT_COMMAND_SPECS } from './artifacts'
 import { SEARCH_COMMAND_SPECS } from './search'
 import { PROFILE_STATE_COMMAND_SPECS } from './profile-state'
 import { NOTES_COMMAND_SPECS } from './notes'
+import { SETTINGS_TRANSFER_COMMAND_SPECS } from './settings-transfer'
 import { REFERENCE_COMMAND_SPECS } from './reference'
 import { PORTS_COMMAND_SPECS } from './ports'
 
@@ -58,5 +59,6 @@ export const COMMAND_SPECS: CommandSpec[] = [
   ...SEARCH_COMMAND_SPECS,
   ...PROFILE_STATE_COMMAND_SPECS,
   ...NOTES_COMMAND_SPECS,
+  ...SETTINGS_TRANSFER_COMMAND_SPECS,
   ...PORTS_COMMAND_SPECS
 ]

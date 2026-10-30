@@ -12,7 +12,9 @@ export function createWebSettingsTransferApi(): Pick<PreloadApi, 'settingsTransf
       readFiles: () => Promise.resolve({ keybindings: null, editorThemes: {} }),
       writeFiles: () => Promise.resolve(),
       save: () => Promise.resolve({ ok: false as const, error: desktopOnly() }),
-      open: () => Promise.resolve({ ok: false as const, error: desktopOnly() })
+      open: () => Promise.resolve({ ok: false as const, error: desktopOnly() }),
+      onCliRequest: () => () => {},
+      replyCliRequest: () => {}
     }
   }
 }

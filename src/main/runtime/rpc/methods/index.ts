@@ -65,6 +65,7 @@ import { MANAGED_RUNTIME_INSTALL_METHODS } from './managed-runtime-install'
 import { ARTIFACT_METHODS } from './artifacts'
 import { AGENT_HOOK_METHODS } from './agent-hooks'
 import { AGENT_NOTE_METHODS } from './agent-notes'
+import { SETTINGS_TRANSFER_METHODS } from './settings-transfer'
 import { AGENT_LAUNCH_METHODS } from './agent-launch'
 import { CONNECTOR_METHODS } from './connector'
 import {
@@ -83,6 +84,7 @@ export const ALL_RPC_METHODS = [
   ...SESSION_TERMINAL_SCROLLBACK_METHODS,
   ...AGENT_HOOK_METHODS,
   ...AGENT_NOTE_METHODS,
+  ...SETTINGS_TRANSFER_METHODS,
   ...AI_VAULT_METHODS,
   ...ARTIFACT_METHODS,
   ...AUTOMATION_METHODS,

@@ -1953,6 +1953,14 @@ in the system browser, or toasts when there is none (`lib/worktree-linear-issue-
 cask bump and the in-app updater handles upgrades. Install with
 `brew tap frbarbre/orca https://github.com/frbarbre/orca && brew install --cask frbarbre/orca/orca`.
 
+### 73. `orca settings export|import`
+
+The CLI runs Share settings' own export and import (`lib/settings-transfer-actions.ts`, shared with
+`SettingsTransferSection`). The RPC methods `settingsTransfer.export|import` relay to the open
+window (`main/window/settings-transfer-cli-relay.ts`), which answers and, after an import, reloads.
+The CLI reads and writes the file on the caller's machine. `notes` and `settings` are in
+`CLI_COMMAND_NAMES` so packaged Linux launches route them to the CLI.
+
 ## Verify
 
 Verify runs on GitHub, not locally: `fork-verify.yml` runs it on every pull request against `main`,

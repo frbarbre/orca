@@ -11,6 +11,8 @@ const CHIP_CLASS =
 
 const CHIP_LABEL_CLASS = 'min-w-0 truncate text-3xs leading-none text-muted-foreground'
 
+const NO_LABELS: NonNullable<LinearIssue['labelDetails']> = []
+
 function WorkspaceStatusChip({
   worktree,
   workspaceStatuses
@@ -43,7 +45,7 @@ export function WorktreeCardWorkspaceStatus({
   enabled,
   worktree,
   workspaceStatuses,
-  labels = [],
+  labels = NO_LABELS,
   className
 }: {
   enabled: boolean

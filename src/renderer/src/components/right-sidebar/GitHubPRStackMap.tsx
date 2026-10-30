@@ -7,44 +7,37 @@ import type {
 import { cn } from '@/lib/utils'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { translate } from '@/i18n/i18n'
+import {
+  getGitHubPRStackEntryStatus,
+  type GitHubPRStackEntryTone
+} from './github-pr-stack-entry-status'
 
 export type GitHubPRStackMapNavigationModifiers = Pick<
   React.MouseEvent<HTMLButtonElement>,
   'metaKey' | 'ctrlKey' | 'shiftKey'
 >
 
-function stackEntryStatus(entry: GitHubPRStackEntry): string {
-  if (entry.state === 'merged') {
-    return translate('auto.components.right.sidebar.GitHubPRStackMap.8a9bdc36c0', 'merged')
-  }
-  if (entry.state === 'closed') {
-    return translate('auto.components.right.sidebar.GitHubPRStackMap.3511405914', 'closed')
-  }
-  if (entry.state === 'draft') {
-    return translate('auto.components.right.sidebar.GitHubPRStackMap.568c647ccd', 'draft')
-  }
-  if (entry.mergeable === 'CONFLICTING') {
-    return translate('auto.components.right.sidebar.GitHubPRStackMap.bea9ade223', 'conflicts')
-  }
-  if (entry.checksStatus === 'failure') {
-    return translate('auto.components.right.sidebar.GitHubPRStackMap.838aadf512', 'checks failed')
-  }
-  if (entry.checksStatus === 'pending') {
-    return translate('auto.components.right.sidebar.GitHubPRStackMap.316039b5db', 'checks pending')
-  }
-  if (entry.reviewDecision === 'CHANGES_REQUESTED') {
-    return translate(
-      'auto.components.right.sidebar.GitHubPRStackMap.4b1e5ee9d3',
-      'changes requested'
-    )
-  }
-  if (entry.reviewDecision === 'REVIEW_REQUIRED') {
-    return translate('auto.components.right.sidebar.GitHubPRStackMap.9a17b5255c', 'review needed')
-  }
-  if (entry.reviewDecision === 'APPROVED') {
-    return translate('auto.components.right.sidebar.GitHubPRStackMap.d3d97cf3f2', 'approved')
-  }
-  return translate('auto.components.right.sidebar.GitHubPRStackMap.e6cb964305', 'open')
+const STACK_ENTRY_TONE_CLASS: Record<GitHubPRStackEntryTone, string> = {
+  ready: 'border-emerald-500/30 bg-emerald-500/15 text-emerald-600 dark:text-emerald-400',
+  pending: 'border-amber-500/30 bg-amber-500/15 text-amber-600 dark:text-amber-400',
+  blocked: 'border-rose-500/30 bg-rose-500/15 text-rose-600 dark:text-rose-400',
+  merged: 'border-violet-500/30 bg-violet-500/15 text-violet-600 dark:text-violet-400',
+  neutral: 'border-border bg-muted text-muted-foreground'
+}
+
+function StackEntryStatusBadge({ entry }: { entry: GitHubPRStackEntry }): React.JSX.Element {
+  const { label, tone } = getGitHubPRStackEntryStatus(entry)
+  return (
+    <span
+      data-stack-pr-status={tone}
+      className={cn(
+        'shrink-0 rounded-full border px-1.5 py-px text-[10px] font-medium leading-4',
+        STACK_ENTRY_TONE_CLASS[tone]
+      )}
+    >
+      {label}
+    </span>
+  )
 }
 
 export function GitHubPRStackMap({
@@ -137,9 +130,7 @@ export function GitHubPRStackMap({
                 >
                   <span className="w-8 shrink-0 font-medium text-foreground">#{entry.number}</span>
                   <span className="min-w-0 flex-1 truncate text-foreground">{entry.title}</span>
-                  <span className="shrink-0 text-[10px] text-muted-foreground">
-                    {stackEntryStatus(entry)}
-                  </span>
+                  <StackEntryStatusBadge entry={entry} />
                 </button>
               )
             })}

@@ -3,7 +3,10 @@
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import type { GitHubPRStack } from '../../../../shared/github/pull-request-types'
+import type {
+  GitHubPRStack,
+  GitHubPRStackEntry
+} from '../../../../shared/github/pull-request-types'
 import { GitHubPRStackMap } from './GitHubPRStackMap'
 
 const stack: GitHubPRStack = {
@@ -81,8 +84,51 @@ describe('GitHubPRStackMap', () => {
       expect.stringContaining('#201')
     ])
     expect(rows[1]?.dataset.current).toBe('true')
-    expect(container.textContent).toContain('checks failed')
+    expect(container.textContent).toContain('Checks failed')
     expect(container.textContent).toContain('main')
+  })
+
+  it('badges each PR with GitHub merge readiness, ignoring checks GitHub does not require', () => {
+    const entry = (number: number, fields: Partial<GitHubPRStackEntry>): GitHubPRStackEntry => ({
+      position: number,
+      number,
+      title: `PR ${number}`,
+      url: `https://github.com/acme/repo/pull/${number}`,
+      state: 'open',
+      checksStatus: 'success',
+      mergeable: 'MERGEABLE',
+      ...fields
+    })
+    act(() => {
+      root.render(
+        <GitHubPRStackMap
+          stack={{
+            ...stack,
+            entries: [
+              entry(1, { state: 'merged' }),
+              entry(2, { checksStatus: 'pending', mergeStateStatus: 'CLEAN' }),
+              entry(3, { mergeable: 'CONFLICTING', mergeStateStatus: 'DIRTY' }),
+              entry(4, { checksStatus: 'neutral', mergeStateStatus: 'BLOCKED' })
+            ]
+          }}
+          currentPRNumber={2}
+          onOpenPullRequest={vi.fn()}
+        />
+      )
+    })
+    act(() =>
+      container.querySelector<HTMLButtonElement>('button[aria-label="Expand stack #51"]')?.click()
+    )
+
+    const badges = [...container.querySelectorAll<HTMLElement>('[data-stack-pr-status]')].map(
+      (badge) => [badge.textContent, badge.dataset.stackPrStatus]
+    )
+    expect(badges).toEqual([
+      ['Not ready', 'pending'],
+      ['Conflicts', 'blocked'],
+      ['Ready', 'ready'],
+      ['Merged', 'merged']
+    ])
   })
 
   it('opens another PR without changing local branches', () => {

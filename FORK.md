@@ -1919,6 +1919,13 @@ The tab strip's bordered quick-command split button is `h-6`, not upstream's `h-
 31px strip it touched the strip's bottom border and read as sitting low
 (`tab-bar/TabBarQuickCommandsMenu.tsx`).
 
+### 69. Stack map badges follow GitHub's merge readiness
+
+The Checks panel's stack map shows each PR's status as a colour-coded badge, like GitHub's stack box.
+A PR whose `mergeStateStatus` is CLEAN, HAS_HOOKS or UNSTABLE is "Ready" even while the check
+rollup is pending or failing, because GitHub only weighs required checks; BLOCKED without a more
+specific reason is "Not ready" (`right-sidebar/github-pr-stack-entry-status.ts`).
+
 ## Verify
 
 Verify runs on GitHub, not locally: `fork-verify.yml` runs it on every pull request against `main`,

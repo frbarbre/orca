@@ -20388,6 +20388,9 @@
     },
     "frontend": {
       "notRunning": "No frontend dev server is running."
+    },
+    "linearIssue": {
+      "none": "This workspace has no Linear issue."
     }
   },
   "tabHoverCard": {
@@ -21008,6 +21011,7 @@
       "sourceControlCopyPullRequestUrl": "Copy Pull Request URL",
       "sourceControlOpenPullRequestPreview": "Open Pull Request Preview Deployment",
       "workspaceOpenFrontend": "Open Frontend Dev Server",
+      "workspaceOpenLinearIssue": "Open Linear Issue in Browser",
       "workspaceRunNextAction": "Run Next Workspace Action",
       "workspaceReview": "Review Pull Request"
     },

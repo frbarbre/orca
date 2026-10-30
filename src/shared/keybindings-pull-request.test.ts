@@ -39,6 +39,15 @@ describe('pull request shortcuts', () => {
     }
   )
 
+  it.each(['darwin', 'linux', 'win32'] as const)(
+    'opens the linked Linear issue with Mod+Shift+L on %s',
+    (platform) => {
+      expect(getEffectiveKeybindingsForAction('workspace.openLinearIssue', platform)).toEqual([
+        'Mod+Shift+L'
+      ])
+    }
+  )
+
   it('copies its URL with Shift+Option+Cmd+G on macOS', () => {
     expect(
       keybindingMatchesAction(

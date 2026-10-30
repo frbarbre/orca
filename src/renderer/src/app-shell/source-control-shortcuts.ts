@@ -9,6 +9,7 @@ import {
   requestReviewSummaryFocus
 } from '@/components/pending-review/review-summary-focus'
 import { activeWorktreePullRequestUrl } from '@/lib/worktree-pull-request-url'
+import { activeWorktreeLinearIssueUrl } from '@/lib/worktree-linear-issue-url'
 import { openActiveWorkspaceFrontend } from '@/lib/open-workspace-frontend'
 import { selectWorkspaceActionContext } from '@/components/right-sidebar/workspace-actions/workspace-action-context'
 import { launchWorkspaceAction } from '@/components/right-sidebar/workspace-actions/launch-workspace-action'
@@ -26,6 +27,7 @@ type SourceControlShortcutId =
   | 'sourceControl.copyPullRequestUrl'
   | 'sourceControl.openPullRequestPreview'
   | 'workspace.openFrontend'
+  | 'workspace.openLinearIssue'
   | 'workspace.runNextAction'
   | 'workspace.review'
 
@@ -139,6 +141,15 @@ export function takeSourceControlShortcut(
       toast.info(translate('workspace.frontend.notRunning', 'No frontend dev server is running.'))
     }
     return 'workspace.openFrontend'
+  }
+  if (matchShortcut('workspace.openLinearIssue')) {
+    const url = activeWorktreeLinearIssueUrl(useAppStore.getState())
+    if (url) {
+      void window.api.shell.openUrl(url)
+    } else {
+      toast.info(translate('workspace.linearIssue.none', 'This workspace has no Linear issue.'))
+    }
+    return 'workspace.openLinearIssue'
   }
   if (matchShortcut('sourceControl.openPullRequest')) {
     withActivePullRequestUrl((url) => void window.api.shell.openUrl(url))

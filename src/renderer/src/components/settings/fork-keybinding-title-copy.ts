@@ -40,6 +40,8 @@ export const FORK_KEYBINDING_TITLE_COPY = {
     ),
   'workspace.openFrontend': () =>
     translate('keybindings.title.workspaceOpenFrontend', 'Open Frontend Dev Server'),
+  'workspace.openLinearIssue': () =>
+    translate('keybindings.title.workspaceOpenLinearIssue', 'Open Linear Issue in Browser'),
   'workspace.runNextAction': () =>
     translate('keybindings.title.workspaceRunNextAction', 'Run Next Workspace Action'),
   'workspace.review': () => translate('keybindings.title.workspaceReview', 'Review Pull Request')

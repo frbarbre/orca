@@ -30,6 +30,11 @@ vi.mock('@/lib/worktree-pull-request-url', () => ({
   activeWorktreePullRequestUrl: () => pullRequestUrl.current
 }))
 
+const linearIssueUrl = vi.hoisted(() => ({ current: null as string | null }))
+vi.mock('@/lib/worktree-linear-issue-url', () => ({
+  activeWorktreeLinearIssueUrl: () => linearIssueUrl.current
+}))
+
 const actions = { openDiffNotesSendMenuForActiveWorktree: () => false }
 
 const frontend = vi.hoisted(() => ({ opened: true, open: vi.fn(() => frontend.opened) }))
@@ -144,6 +149,30 @@ describe('pull request preview shortcut', () => {
     await vi.waitFor(() =>
       expect(toast.info).toHaveBeenCalledWith('No preview deployment for this pull request.')
     )
+  })
+})
+
+describe('Linear issue shortcut', () => {
+  const openUrl = vi.fn(async () => {})
+  const match = (id: string): boolean => id === 'workspace.openLinearIssue'
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.stubGlobal('window', { api: { shell: { openUrl } } })
+  })
+
+  it("opens the active workspace's Linear issue in the system browser", () => {
+    linearIssueUrl.current = 'https://linear.app/acme/issue/ENG-42'
+
+    expect(takeSourceControlShortcut(match, true, actions)).toBe('workspace.openLinearIssue')
+    expect(openUrl).toHaveBeenCalledWith('https://linear.app/acme/issue/ENG-42')
+  })
+
+  it('says so when the workspace has no Linear issue', () => {
+    linearIssueUrl.current = null
+
+    expect(takeSourceControlShortcut(match, true, actions)).toBe('workspace.openLinearIssue')
+    expect(openUrl).not.toHaveBeenCalled()
+    expect(toast.info).toHaveBeenCalledWith('This workspace has no Linear issue.')
   })
 })
 

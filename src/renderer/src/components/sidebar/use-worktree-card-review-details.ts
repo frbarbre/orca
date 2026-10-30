@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { getLinearReadScope, scopedLinearCacheKey } from '@/store/slices/linear/linear-slice-scope'
+import { worktreeLinearIssueCacheKey } from '@/lib/worktree-linear-issue-url'
 import { getWorkspaceAttachmentSourceContext } from './workspace-attachment-source-result'
 import { getWorkspaceReferenceLinearWorkspaceId } from './workspace-reference-details'
 import { getWorktreeGitIdentityDisplay } from '../../../../shared/worktree/git-identity-display'
@@ -68,12 +68,7 @@ export function useWorktreeCardReviewDetails({
     worktree.linkedLinearIssueWorkspaceId,
     linearSourceContext
   )
-  const linearIssueCacheKey = worktree.linkedLinearIssue
-    ? scopedLinearCacheKey(
-        getLinearReadScope(settings, linearSourceContext),
-        `${linearWorkspaceId}::${worktree.linkedLinearIssue}`
-      )
-    : ''
+  const linearIssueCacheKey = worktreeLinearIssueCacheKey(worktree, linearSourceContext, settings)
 
   // Subscribe to ONLY the specific cache entry, not entire review/issue caches.
   const hostedReviewEntry = useAppStore((s) =>

@@ -1942,6 +1942,11 @@ With the card's Linear issue option on, the issue's labels sit in the workspace 
 matching the status chip, each with a dot in its Linear color. `LinearIssue.labelDetails` carries
 the colors from both the SDK mapper and the raw issue query (`sidebar/worktree-card-workspace-status.tsx`).
 
+### 71. Open the Linear issue shortcut
+
+`Mod+Shift+L` (`workspace.openLinearIssue`) opens the Linear issue the active workspace's card shows
+in the system browser, or toasts when there is none (`lib/worktree-linear-issue-url.ts`).
+
 ## Verify
 
 Verify runs on GitHub, not locally: `fork-verify.yml` runs it on every pull request against `main`,

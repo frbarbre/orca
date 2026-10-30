@@ -116,6 +116,7 @@ export type KeybindingActionId =
   | 'sourceControl.copyPullRequestUrl'
   | 'sourceControl.openPullRequestPreview'
   | 'workspace.openFrontend'
+  | 'workspace.openLinearIssue'
   | 'workspace.runNextAction'
   | 'workspace.review'
   | 'sourceControl.focusReviewSummary'

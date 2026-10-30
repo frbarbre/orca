@@ -238,6 +238,15 @@ export const KEYBINDING_DEFINITION_CORE_4: readonly KeybindingDefinition[] = [
     defaultBindings: platformBindings(['Mod+Shift+B'])
   },
   {
+    id: 'workspace.openLinearIssue',
+    title: 'Open Linear Issue in Browser',
+    group: 'Global',
+    scope: 'global',
+    conflictGroup: 'editor',
+    searchKeywords: ['shortcut', 'linear', 'issue', 'ticket', 'browser', 'open'],
+    defaultBindings: platformBindings(['Mod+Shift+L'])
+  },
+  {
     id: 'workspace.runNextAction',
     title: 'Run Next Workspace Action',
     group: 'Global',

@@ -47,4 +47,29 @@ describe('mapLinearIssue', () => {
       project: undefined
     })
   })
+
+  it("keeps each label's Linear color for display", async () => {
+    const issue = {
+      id: 'issue-1',
+      identifier: 'LIN-1',
+      title: 'Labelled',
+      url: 'https://linear.app/acme/issue/LIN-1',
+      priority: 0,
+      updatedAt: new Date('2026-01-01T00:00:00.000Z'),
+      labels: async () => ({
+        nodes: [
+          { id: 'label-1', name: 'Frontend', color: '#d946ef' },
+          { id: 'label-2', name: 'Feature', color: '#a78bfa' }
+        ]
+      })
+    }
+
+    await expect(mapLinearIssue(issue as never)).resolves.toMatchObject({
+      labels: ['Frontend', 'Feature'],
+      labelDetails: [
+        { id: 'label-1', name: 'Frontend', color: '#d946ef' },
+        { id: 'label-2', name: 'Feature', color: '#a78bfa' }
+      ]
+    })
+  })
 })

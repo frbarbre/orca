@@ -83,7 +83,7 @@ export function WorktreeCardParentContent({
         enabled={card.showWorkspaceStatus}
         worktree={worktree}
         workspaceStatuses={card.workspaceStatuses}
-        className="self-start"
+        labels={card.showLinearTitle ? linearIssue?.labelDetails : undefined}
       />
       <WorktreeCardLinearTitle
         enabled={card.showLinearTitle}

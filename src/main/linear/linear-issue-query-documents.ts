@@ -34,7 +34,7 @@ export type LinearIssueNode = {
     avatarUrl?: string | null
   } | null
   labels?: {
-    nodes?: { id: string; name: string }[]
+    nodes?: { id: string; name: string; color?: string | null }[]
   } | null
 }
 
@@ -94,6 +94,7 @@ export const LINEAR_ISSUE_NODE_FIELDS = `
     nodes {
       id
       name
+      color
     }
   }
 `

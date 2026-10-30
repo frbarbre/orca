@@ -70,6 +70,9 @@ export function mapRawIssueForWorkspace(
     labels: labelNodes.map((label) => label.name),
     // Full-replace writes need all label IDs, even when display nodes are paginated.
     labelIds: issue.labelIds ?? labelNodes.map((label) => label.id),
+    labelDetails: labelNodes.flatMap((label) =>
+      label.color ? [{ id: label.id, name: label.name, color: label.color }] : []
+    ),
     assignee: issue.assignee
       ? {
           id: issue.assignee.id,

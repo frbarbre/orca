@@ -41,4 +41,26 @@ describe('WorktreeCardWorkspaceStatus', () => {
   it('stays hidden while the card option is off', () => {
     expect(badge(renderStatus(false, statuses[1].id).container)).toBeNull()
   })
+
+  it("shows the Linear issue's labels beside the status in their Linear colors", () => {
+    const { container } = render(
+      <TooltipProvider>
+        <WorktreeCardWorkspaceStatus
+          enabled={false}
+          worktree={{ workspaceStatus: statuses[1].id }}
+          workspaceStatuses={statuses}
+          labels={[
+            { id: 'label-1', name: 'Frontend', color: '#d946ef' },
+            { id: 'label-2', name: 'Feature', color: '#a78bfa' }
+          ]}
+        />
+      </TooltipProvider>
+    )
+
+    const chips = [...container.querySelectorAll<HTMLElement>('[data-worktree-card-linear-label]')]
+    expect(chips.map((chip) => chip.textContent)).toEqual(['Frontend', 'Feature'])
+    expect(
+      chips[0]?.querySelector<HTMLElement>('[data-linear-label-color]')?.style.backgroundColor
+    ).toBe('#d946ef')
+  })
 })

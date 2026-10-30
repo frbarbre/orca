@@ -24,6 +24,8 @@ export type LinearIssue = {
   subIssues?: LinearIssueChildSummary[]
   labels: string[]
   labelIds: string[]
+  /** Fork: names with their Linear colors, for the card's label chips. */
+  labelDetails?: { id: string; name: string; color: string }[]
   assignee?: {
     id: string
     displayName: string

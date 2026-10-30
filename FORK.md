@@ -1936,6 +1936,12 @@ tip, read in the same stack-details GraphQL call), the map says the stack is out
 force-pushing, rebases from the PR closest to the base up, and skips validation
 (`right-sidebar/github-pr-stack-rebase-prompt.ts`).
 
+### 70. Linear labels beside the workspace status
+
+With the card's Linear issue option on, the issue's labels sit in the workspace status row as chips
+matching the status chip, each with a dot in its Linear color. `LinearIssue.labelDetails` carries
+the colors from both the SDK mapper and the raw issue query (`sidebar/worktree-card-workspace-status.tsx`).
+
 ## Verify
 
 Verify runs on GitHub, not locally: `fork-verify.yml` runs it on every pull request against `main`,

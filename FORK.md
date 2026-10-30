@@ -1944,7 +1944,7 @@ the colors from both the SDK mapper and the raw issue query (`sidebar/worktree-c
 
 ### 71. Open the Linear issue shortcut
 
-`Mod+Shift+L` (`workspace.openLinearIssue`) opens the Linear issue the active workspace's card shows
+`Mod+Alt+L` on macOS (`workspace.openLinearIssue`), beside the PR's `Mod+Alt+G`, opens the Linear issue the active workspace's card shows
 in the system browser, or toasts when there is none (`lib/worktree-linear-issue-url.ts`).
 
 ## Verify

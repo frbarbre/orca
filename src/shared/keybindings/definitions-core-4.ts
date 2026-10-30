@@ -244,7 +244,8 @@ export const KEYBINDING_DEFINITION_CORE_4: readonly KeybindingDefinition[] = [
     scope: 'global',
     conflictGroup: 'editor',
     searchKeywords: ['shortcut', 'linear', 'issue', 'ticket', 'browser', 'open'],
-    defaultBindings: platformBindings(['Mod+Shift+L'])
+    // Why macOS only: Ctrl+Alt+letter is AltGr text input on Windows and Linux.
+    defaultBindings: { darwin: ['Mod+Alt+L'], linux: [], win32: [] }
   },
   {
     id: 'workspace.runNextAction',

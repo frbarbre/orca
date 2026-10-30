@@ -1947,6 +1947,12 @@ the colors from both the SDK mapper and the raw issue query (`sidebar/worktree-c
 `Mod+Alt+L` on macOS (`workspace.openLinearIssue`), beside the PR's `Mod+Alt+G`, opens the Linear issue the active workspace's card shows
 in the system browser, or toasts when there is none (`lib/worktree-linear-issue-url.ts`).
 
+### 72. Homebrew cask installs the fork
+
+`Casks/orca.rb` downloads the fork's latest release DMG with `version :latest`, so releases need no
+cask bump and the in-app updater handles upgrades. Install with
+`brew tap frbarbre/orca https://github.com/frbarbre/orca && brew install --cask frbarbre/orca/orca`.
+
 ## Verify
 
 Verify runs on GitHub, not locally: `fork-verify.yml` runs it on every pull request against `main`,

@@ -14106,6 +14106,8 @@
             "ready": "Ready",
             "notReady": "Not ready",
             "behind": "Behind",
+            "mergeStack_one": "Merge stack · {{count}} PR",
+            "mergeStack_other": "Merge stack · {{count}} PRs",
             "7737bd66be": "Collapse stack #{{value0}}",
             "0c1645ebd0": "Expand stack #{{value0}}",
             "e3ee2daa32": "Stack #{{value0}}",

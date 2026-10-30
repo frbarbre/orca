@@ -1,4 +1,7 @@
-import type { GitHubPRStackEntry } from '../../../../shared/github/pull-request-types'
+import type {
+  GitHubPRStack,
+  GitHubPRStackEntry
+} from '../../../../shared/github/pull-request-types'
 import { translate } from '@/i18n/i18n'
 
 export type GitHubPRStackEntryTone = 'ready' | 'pending' | 'blocked' | 'merged' | 'neutral'
@@ -6,6 +9,28 @@ export type GitHubPRStackEntryTone = 'ready' | 'pending' | 'blocked' | 'merged' 
 export type GitHubPRStackEntryStatus = { label: string; tone: GitHubPRStackEntryTone }
 
 const READY_MERGE_STATES = new Set(['CLEAN', 'HAS_HOOKS', 'UNSTABLE'])
+
+// Merging the top open PR lands every PR below it, so the whole stack needs to be ready.
+export function getGitHubPRStackMergeTarget(stack: GitHubPRStack): {
+  entry: GitHubPRStackEntry
+  count: number
+} | null {
+  const entries = stack.entries ?? []
+  const open = entries.filter((entry) => entry.state !== 'merged')
+  const ready = open.every(
+    (entry) =>
+      entry.state === 'open' &&
+      entry.mergeStateStatus != null &&
+      READY_MERGE_STATES.has(entry.mergeStateStatus)
+  )
+  if (entries.length !== stack.size || open.length === 0 || !ready) {
+    return null
+  }
+  const entry = open.reduce((top, candidate) =>
+    candidate.position > top.position ? candidate : top
+  )
+  return { entry, count: open.length }
+}
 
 // Readiness follows GitHub's merge state, which only weighs required checks; the rollup counts every check.
 export function getGitHubPRStackEntryStatus(entry: GitHubPRStackEntry): GitHubPRStackEntryStatus {

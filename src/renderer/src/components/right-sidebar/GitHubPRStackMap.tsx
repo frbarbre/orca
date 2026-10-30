@@ -7,8 +7,10 @@ import type {
 import { cn } from '@/lib/utils'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { translate } from '@/i18n/i18n'
+import { Button } from '@/components/ui/button'
 import {
   getGitHubPRStackEntryStatus,
+  getGitHubPRStackMergeTarget,
   type GitHubPRStackEntryTone
 } from './github-pr-stack-entry-status'
 
@@ -40,19 +42,26 @@ function StackEntryStatusBadge({ entry }: { entry: GitHubPRStackEntry }): React.
   )
 }
 
-export function GitHubPRStackMap({
-  stack,
-  currentPRNumber,
-  onOpenPullRequest
-}: {
+export type GitHubPRStackMapProps = {
   stack: GitHubPRStack
   currentPRNumber: number
   onOpenPullRequest: (
     entry: GitHubPRStackEntry,
     modifiers: GitHubPRStackMapNavigationModifiers
   ) => void
-}): React.JSX.Element {
+  onMergeStack?: (top: GitHubPRStackEntry) => void
+  mergingStack?: boolean
+}
+
+export function GitHubPRStackMap({
+  stack,
+  currentPRNumber,
+  onOpenPullRequest,
+  onMergeStack,
+  mergingStack = false
+}: GitHubPRStackMapProps): React.JSX.Element {
   const [open, setOpen] = useState(false)
+  const mergeTarget = onMergeStack ? getGitHubPRStackMergeTarget(stack) : null
   const entries = useMemo(
     () => [...(stack.entries ?? [])].sort((a, b) => b.position - a.position),
     [stack.entries]
@@ -148,6 +157,29 @@ export function GitHubPRStackMap({
           </div>
         )}
       </CollapsibleContent>
+      {mergeTarget && onMergeStack ? (
+        <div className="flex items-center border-t border-border px-2 py-1.5">
+          <Button
+            type="button"
+            size="xs"
+            data-merge-whole-stack=""
+            disabled={mergingStack}
+            onClick={() => onMergeStack(mergeTarget.entry)}
+          >
+            {mergeTarget.count === 1
+              ? translate(
+                  'auto.components.right.sidebar.GitHubPRStackMap.mergeStack_one',
+                  'Merge stack · {{count}} PR',
+                  { count: mergeTarget.count }
+                )
+              : translate(
+                  'auto.components.right.sidebar.GitHubPRStackMap.mergeStack_other',
+                  'Merge stack · {{count}} PRs',
+                  { count: mergeTarget.count }
+                )}
+          </Button>
+        </div>
+      ) : null}
     </Collapsible>
   )
 }

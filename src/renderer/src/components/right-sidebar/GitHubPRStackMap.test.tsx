@@ -131,6 +131,42 @@ describe('GitHubPRStackMap', () => {
     ])
   })
 
+  it('offers to merge the whole stack only once every open PR in it is ready', () => {
+    const entry = (number: number, fields: Partial<GitHubPRStackEntry>): GitHubPRStackEntry => ({
+      position: number,
+      number,
+      title: `PR ${number}`,
+      url: `https://github.com/acme/repo/pull/${number}`,
+      state: 'open',
+      checksStatus: 'success',
+      mergeable: 'MERGEABLE',
+      mergeStateStatus: 'CLEAN',
+      ...fields
+    })
+    const onMergeStack = vi.fn()
+    const render = (entries: GitHubPRStackEntry[]) =>
+      act(() => {
+        root.render(
+          <GitHubPRStackMap
+            stack={{ ...stack, position: 2, size: 3, entries }}
+            currentPRNumber={2}
+            onOpenPullRequest={vi.fn()}
+            onMergeStack={onMergeStack}
+          />
+        )
+      })
+    const mergeButton = () =>
+      container.querySelector<HTMLButtonElement>('button[data-merge-whole-stack]')
+
+    render([entry(1, { state: 'merged' }), entry(2, {}), entry(3, { mergeStateStatus: 'BLOCKED' })])
+    expect(mergeButton()).toBeNull()
+
+    render([entry(1, { state: 'merged' }), entry(2, {}), entry(3, { checksStatus: 'pending' })])
+    expect(mergeButton()?.textContent).toBe('Merge stack · 2 PRs')
+    act(() => mergeButton()?.click())
+    expect(onMergeStack).toHaveBeenCalledWith(expect.objectContaining({ number: 3 }))
+  })
+
   it('opens another PR without changing local branches', () => {
     const onOpenPullRequest = vi.fn()
     act(() => {

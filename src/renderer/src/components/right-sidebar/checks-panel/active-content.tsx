@@ -3,7 +3,7 @@ import React from 'react'
 import { Check, LoaderCircle, Pencil, X } from 'lucide-react'
 import { DetachedHeadBadge } from '@/components/DetachedHeadBadge'
 import HostedReviewActions from '../HostedReviewActions'
-import { GitHubPRStackMap } from '../GitHubPRStackMap'
+import { GitHubPRStackSection } from './github-pr-stack-section'
 import { SourceControlAgentActionDialog } from '../SourceControlAgentActionDialog'
 import { ChecksPanelUpdatedAtMetadata } from '../checks-panel-updated-at-metadata'
 import { getChecksPanelRefreshErrorBannerLine } from '../github-refresh-error-copy'
@@ -209,10 +209,12 @@ export function ChecksPanelActiveContent({
         {detachedHeadDisplay && <DetachedHeadBadge display={detachedHeadDisplay} side="bottom" />}
 
         {activeReview.provider === 'github' && pr?.stack ? (
-          <GitHubPRStackMap
+          <GitHubPRStackSection
+            repo={repo}
+            pr={pr}
             stack={pr.stack}
-            currentPRNumber={pr.number}
             onOpenPullRequest={handleOpenStackPR}
+            onMerged={refreshHostedReviewAfterMutation}
           />
         ) : null}
 

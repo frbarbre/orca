@@ -1924,7 +1924,10 @@ The tab strip's bordered quick-command split button is `h-6`, not upstream's `h-
 The Checks panel's stack map shows each PR's status as a colour-coded badge, like GitHub's stack box.
 A PR whose `mergeStateStatus` is CLEAN, HAS_HOOKS or UNSTABLE is "Ready" even while the check
 rollup is pending or failing, because GitHub only weighs required checks; BLOCKED without a more
-specific reason is "Not ready" (`right-sidebar/github-pr-stack-entry-status.ts`).
+specific reason is "Not ready" (`right-sidebar/github-pr-stack-entry-status.ts`). Once every
+unmerged PR in the stack is Ready, the map shows "Merge stack · N PRs" from any PR in it: it confirms
+with the stack-merge dialog and merges the top open PR, which lands everything below
+(`checks-panel/github-pr-stack-section.tsx`).
 
 ## Verify
 

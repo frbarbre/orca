@@ -1,9 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { getWorkspaceAttachmentSourceContext } from '@/components/sidebar/workspace-attachment-source-result'
-import {
-  activeWorktreeLinearIssueUrl,
-  worktreeLinearIssueCacheKey
-} from './worktree-linear-issue-url'
+import { getTaskSourceCacheScope } from '../../../shared/task-source-context'
+import { activeWorktreeLinearIssueUrl } from './worktree-linear-issue-url'
 
 const repo = { id: 'repo-1', path: '/code/app', displayName: 'app', badgeColor: '', addedAt: 0 }
 const worktree = {
@@ -14,13 +12,11 @@ const worktree = {
   head: 'abc',
   linkedLinearIssue: 'ENG-42'
 }
-const settings = {} as never
 
 function state(overrides: Record<string, unknown> = {}, wt: Record<string, unknown> = worktree) {
   return {
     activeWorktreeId: worktree.id,
     repos: [repo],
-    settings,
     getKnownWorktreeById: (id: string) => (id === worktree.id ? wt : undefined),
     linearIssueCache: {},
     ...overrides
@@ -29,11 +25,8 @@ function state(overrides: Record<string, unknown> = {}, wt: Record<string, unkno
 
 describe('activeWorktreeLinearIssueUrl', () => {
   it("gives the URL of the Linear issue the active workspace's card shows", () => {
-    const key = worktreeLinearIssueCacheKey(
-      worktree as never,
-      getWorkspaceAttachmentSourceContext('linear', repo as never, worktree as never),
-      settings
-    )
+    const source = getWorkspaceAttachmentSourceContext('linear', repo as never, worktree as never)
+    const key = `${getTaskSourceCacheScope(source!)}::all::ENG-42`
     const linearIssueCache = {
       [key]: { data: { identifier: 'ENG-42', url: 'https://linear.app/acme/issue/ENG-42' } }
     }

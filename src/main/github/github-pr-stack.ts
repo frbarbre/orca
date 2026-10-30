@@ -44,6 +44,7 @@ type GraphQLStackEntry = {
 type GraphQLStackResponse = {
   data?: {
     repository?: {
+      baseTip?: { target?: { oid?: unknown } | null } | null
       pullRequest?: {
         stack?: {
           number?: unknown
@@ -165,17 +166,20 @@ function parseStackDetails(
     .flatMap((entry) => (entry ? [mapStackEntry(entry)] : []))
     .filter((entry): entry is GitHubPRStackEntry => entry !== null)
     .sort((a, b) => a.position - b.position)
+  const baseTipSha = response.data?.repository?.baseTip?.target?.oid
   return {
     number: expectedStackNumber,
     size: typeof stack.size === 'number' ? stack.size : fallbackSize,
     baseRefName: typeof stack.baseRefName === 'string' ? stack.baseRefName : fallbackBaseRefName,
+    ...(typeof baseTipSha === 'string' ? { baseTipSha } : {}),
     ...(entries.length > 0 ? { entries } : {})
   }
 }
 
 const STACK_DETAILS_QUERY = `
-query($owner: String!, $repo: String!, $pr: Int!) {
+query($owner: String!, $repo: String!, $pr: Int!, $baseRef: String!) {
   repository(owner: $owner, name: $repo) {
+    baseTip: ref(qualifiedName: $baseRef) { target { oid } }
     pullRequest(number: $pr) {
       stack {
         number
@@ -226,7 +230,9 @@ async function fetchStackDetails(
       '-f',
       `repo=${repository.repo}`,
       '-F',
-      `pr=${prNumber}`
+      `pr=${prNumber}`,
+      '-f',
+      `baseRef=refs/heads/${summary.baseRefName}`
     ],
     { ...ghOptions, ...githubHostExecOptions(repository) }
   )

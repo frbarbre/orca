@@ -8,13 +8,15 @@ export function GitHubPRStackSection({
   pr,
   stack,
   onOpenPullRequest,
-  onMerged
+  onMerged,
+  onRebaseStack
 }: {
   repo: Repo | null | undefined
   pr: PRInfo
   stack: GitHubPRStack
   onOpenPullRequest: GitHubPRStackMapProps['onOpenPullRequest']
   onMerged: () => unknown
+  onRebaseStack?: () => void
 }): React.JSX.Element {
   const { mergeStack, mergingStack } = useMergeGitHubPRStack({ repo, pr, onMerged })
   return (
@@ -24,6 +26,7 @@ export function GitHubPRStackSection({
       onOpenPullRequest={onOpenPullRequest}
       onMergeStack={mergeStack}
       mergingStack={mergingStack}
+      onRebaseStack={onRebaseStack}
     />
   )
 }

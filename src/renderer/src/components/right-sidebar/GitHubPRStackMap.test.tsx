@@ -167,6 +167,32 @@ describe('GitHubPRStackMap', () => {
     expect(onMergeStack).toHaveBeenCalledWith(expect.objectContaining({ number: 3 }))
   })
 
+  it('offers to rebase the stack once main has moved past its base', () => {
+    const onRebaseStack = vi.fn()
+    const render = (baseTipSha: string) =>
+      act(() => {
+        root.render(
+          <GitHubPRStackMap
+            stack={{ ...stack, baseSha: 'base-sha', baseTipSha }}
+            currentPRNumber={202}
+            onOpenPullRequest={vi.fn()}
+            onRebaseStack={onRebaseStack}
+          />
+        )
+      })
+    const rebaseButton = () =>
+      container.querySelector<HTMLButtonElement>('button[data-rebase-stack]')
+
+    render('base-sha')
+    expect(rebaseButton()).toBeNull()
+
+    render('newer-main-sha')
+    expect(container.textContent).toContain('This stack is out of date with main')
+    expect(rebaseButton()?.textContent).toBe('Rebase stack')
+    act(() => rebaseButton()?.click())
+    expect(onRebaseStack).toHaveBeenCalledTimes(1)
+  })
+
   it('opens another PR without changing local branches', () => {
     const onOpenPullRequest = vi.fn()
     act(() => {

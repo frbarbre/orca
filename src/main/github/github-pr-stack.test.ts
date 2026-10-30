@@ -121,6 +121,26 @@ describe('hydrateGitHubPRStack', () => {
     )
   })
 
+  it("reads the base branch's current tip so an out-of-date stack can be told apart", async () => {
+    ghExecFileAsyncMock.mockResolvedValue({
+      stdout: JSON.stringify({
+        data: {
+          repository: {
+            baseTip: { target: { oid: 'main-tip-sha' } },
+            pullRequest: { stack: { number: 51, size: 3, baseRefName: 'main' } }
+          }
+        }
+      })
+    })
+
+    const stack = await hydrateGitHubPRStack(repository, 202, summary, { cwd: '/repo' })
+
+    expect(stack).toMatchObject({ baseSha: 'base-sha', baseTipSha: 'main-tip-sha' })
+    expect(ghExecFileAsyncMock.mock.calls[0]?.[0]).toEqual(
+      expect.arrayContaining(['baseRef=refs/heads/main'])
+    )
+  })
+
   it('refreshes cached stack details when the current PR changed', async () => {
     const response = (updatedAt: string, isDraft: boolean) => ({
       stdout: JSON.stringify({

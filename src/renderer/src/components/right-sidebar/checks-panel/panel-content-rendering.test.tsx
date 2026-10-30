@@ -145,6 +145,7 @@ describe('checks panel concrete content', () => {
       handleResolve: vi.fn(),
       handleResolveCommentsWithAI: vi.fn(),
       handleResolveConflictsWithAI: vi.fn(),
+      handleRebaseStackWithAI: vi.fn(),
       handleSaveTitle: vi.fn(),
       handleSetReaction: vi.fn(),
       handleStartEdit: vi.fn(),

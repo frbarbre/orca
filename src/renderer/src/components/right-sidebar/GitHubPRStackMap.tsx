@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { ChevronDown, GitBranch, GitPullRequest } from 'lucide-react'
+import { AlertTriangle, ChevronDown, GitBranch, GitPullRequest } from 'lucide-react'
 import type {
   GitHubPRStack,
   GitHubPRStackEntry
@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { translate } from '@/i18n/i18n'
 import { Button } from '@/components/ui/button'
+import { isGitHubPRStackOutOfDate } from './github-pr-stack-rebase-prompt'
 import {
   getGitHubPRStackEntryStatus,
   getGitHubPRStackMergeTarget,
@@ -51,6 +52,7 @@ export type GitHubPRStackMapProps = {
   ) => void
   onMergeStack?: (top: GitHubPRStackEntry) => void
   mergingStack?: boolean
+  onRebaseStack?: () => void
 }
 
 export function GitHubPRStackMap({
@@ -58,8 +60,10 @@ export function GitHubPRStackMap({
   currentPRNumber,
   onOpenPullRequest,
   onMergeStack,
-  mergingStack = false
+  mergingStack = false,
+  onRebaseStack
 }: GitHubPRStackMapProps): React.JSX.Element {
+  const outOfDate = onRebaseStack !== undefined && isGitHubPRStackOutOfDate(stack)
   const [open, setOpen] = useState(false)
   const mergeTarget = onMergeStack ? getGitHubPRStackMergeTarget(stack) : null
   const entries = useMemo(
@@ -157,6 +161,30 @@ export function GitHubPRStackMap({
           </div>
         )}
       </CollapsibleContent>
+      {outOfDate && onRebaseStack ? (
+        <div className="flex min-w-0 items-center gap-2 border-t border-border px-2 py-1.5">
+          <AlertTriangle className="size-3.5 shrink-0 text-amber-500" />
+          <span className="min-w-0 flex-1 truncate text-[11px] text-foreground">
+            {translate(
+              'auto.components.right.sidebar.GitHubPRStackMap.outOfDate',
+              'This stack is out of date with {{base}}',
+              { base: stack.baseRefName }
+            )}
+          </span>
+          <Button
+            type="button"
+            variant="outline"
+            size="xs"
+            data-rebase-stack=""
+            onClick={onRebaseStack}
+          >
+            {translate(
+              'auto.components.right.sidebar.GitHubPRStackMap.rebaseStack',
+              'Rebase stack'
+            )}
+          </Button>
+        </div>
+      ) : null}
       {mergeTarget && onMergeStack ? (
         <div className="flex items-center border-t border-border px-2 py-1.5">
           <Button

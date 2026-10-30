@@ -61,6 +61,7 @@ export function ChecksPanelActiveContent({
     handleRefresh,
     handleResolveCommentsWithAI,
     handleResolveConflictsWithAI,
+    handleRebaseStackWithAI,
     handleSaveTitle,
     handleStartEdit,
     handleTitleKeyDown,
@@ -215,6 +216,7 @@ export function ChecksPanelActiveContent({
             stack={pr.stack}
             onOpenPullRequest={handleOpenStackPR}
             onMerged={refreshHostedReviewAfterMutation}
+            onRebaseStack={sourceControlAiActionsVisible ? handleRebaseStackWithAI : undefined}
           />
         ) : null}
 

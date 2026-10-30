@@ -46,6 +46,8 @@ export type GitHubPRStack = {
   size: number
   baseRefName: string
   baseSha?: string
+  /** Fork: the base branch's current tip; differs from baseSha once the stack is out of date. */
+  baseTipSha?: string
   entries?: GitHubPRStackEntry[]
 }
 

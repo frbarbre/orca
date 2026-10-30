@@ -12,6 +12,7 @@ import { forgeOwnerHostIdForWorkspace } from '@/runtime/forge-credential-target'
 import { toast } from 'sonner'
 import { buildResolvePullRequestConflictsPrompt } from '../SourceControl'
 import { buildPRCommentsResolutionPrompt } from '../../pr-comments-resolution-prompt'
+import { buildGitHubPRStackRebasePrompt } from '../github-pr-stack-rebase-prompt'
 import { parseGitHubIssueOrPRLink } from '../../../../../shared/github/links'
 import type { PRCommentGroup } from '../../../../../shared/pr-comment-groups'
 import { translate } from '@/i18n/i18n'
@@ -155,6 +156,25 @@ export function useChecksPanelAiQueue(model: ChecksPanelAiQueueInput) {
     })
   }
 
+  const handleRebaseStackWithAI = (): void => {
+    if (!sourceControlAiActionsVisible || !activeWorktreeId || !pr?.stack) {
+      return
+    }
+    openOrStart({
+      actionId: 'resolveConflicts',
+      title: translate(
+        'auto.components.right.sidebar.ChecksPanel.rebaseStackTitle',
+        'Rebase Stack With AI'
+      ),
+      description: translate(
+        'auto.components.right.sidebar.ChecksPanel.abf59262fb',
+        'Review and edit the full command input before starting an agent.'
+      ),
+      prompt: buildGitHubPRStackRebasePrompt(pr.stack),
+      launchSource: 'conflict_resolution'
+    })
+  }
+
   const handleResolveCommentsWithAI = (selectedGroups: PRCommentGroup[]): void => {
     if (
       !sourceControlAiActionsVisible ||
@@ -270,6 +290,7 @@ export function useChecksPanelAiQueue(model: ChecksPanelAiQueueInput) {
 
   return {
     handleResolveConflictsWithAI,
+    handleRebaseStackWithAI,
     handleResolveCommentsWithAI,
     resolveCommentsWithAIDisabledReason: savedStart.isStarting
       ? 'Still finishing the previous comment launch.'

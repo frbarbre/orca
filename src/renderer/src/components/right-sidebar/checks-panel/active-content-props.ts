@@ -87,6 +87,9 @@ export type ChecksPanelActiveContentModel = Pick<
     | 'handleUnlinkReview'
   > &
   Pick<ChecksPanelRefreshState, 'handleRefresh'> &
-  Pick<ChecksPanelAiQueueState, 'handleResolveCommentsWithAI' | 'handleResolveConflictsWithAI'> &
+  Pick<
+    ChecksPanelAiQueueState,
+    'handleResolveCommentsWithAI' | 'handleResolveConflictsWithAI' | 'handleRebaseStackWithAI'
+  > &
   Pick<ChecksPanelReviewState, 'sourceControlAiActionsVisible'> &
   Pick<ChecksPanelComposerState, 'stateRequestKey'>

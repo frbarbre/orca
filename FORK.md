@@ -1929,6 +1929,13 @@ unmerged PR in the stack is Ready, the map shows "Merge stack · N PRs" from any
 with the stack-merge dialog and merges the top open PR, which lands everything below
 (`checks-panel/github-pr-stack-section.tsx`).
 
+When main has moved past the stack's base (GitHub's stack `base.sha` differs from the base branch's
+tip, read in the same stack-details GraphQL call), the map says the stack is out of date and offers
+"Rebase stack". It launches the conflict-resolution agent recipe with a prompt that names the
+`/fba-stack-prs` skill rather than inlining its steps, so edits to the skill apply; the prompt allows
+force-pushing, rebases from the PR closest to the base up, and skips validation
+(`right-sidebar/github-pr-stack-rebase-prompt.ts`).
+
 ## Verify
 
 Verify runs on GitHub, not locally: `fork-verify.yml` runs it on every pull request against `main`,

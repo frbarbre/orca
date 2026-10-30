@@ -1,4 +1,5 @@
-import type { Worktree } from '../worktree/types'
+import type { WorkspaceStatusDefinition, Worktree } from '../worktree/types'
+import { getWorkspaceStatus } from '../workspace-statuses'
 import type { OrderedGroupEntry, WorktreeGroupEntry } from './worktree-group-entry'
 
 export type SidebarStackPlace = { number: number; position: number }
@@ -28,10 +29,11 @@ export function getStackFromLaneKey(key: string): number | 'reviewing' | null {
   return Number.isInteger(number) && number > 0 ? number : null
 }
 
-/** Reviewing first; then newest stack first, each listed from the PR furthest from main down; worktrees outside a stack last. */
+/** Reviewing first; then newest stack first, each listed from the PR furthest from main down; worktrees outside a stack last, in status order. */
 export function orderStackGroups(
   grouped: Map<string, WorktreeGroupEntry>,
-  stackOf: SidebarStackReader | undefined
+  stackOf: SidebarStackReader | undefined,
+  workspaceStatuses: readonly WorkspaceStatusDefinition[]
 ): OrderedGroupEntry[] {
   const positionOf = (worktree: Worktree) => {
     const stack = stackOf?.(worktree)
@@ -47,6 +49,10 @@ export function orderStackGroups(
   for (const [, group] of stacks) {
     group.items.sort((left, right) => positionOf(right) - positionOf(left))
   }
+  const statusRank = new Map(workspaceStatuses.map((status, index) => [status.id, index]))
+  const rankOf = (worktree: Worktree) =>
+    statusRank.get(getWorkspaceStatus(worktree, workspaceStatuses)) ?? workspaceStatuses.length
+  grouped.get(NO_STACK_GROUP_KEY)?.items.sort((left, right) => rankOf(left) - rankOf(right))
   const lane = (key: string): OrderedGroupEntry[] => {
     const group = grouped.get(key)
     return group ? [[key, group]] : []

@@ -1895,7 +1895,7 @@ the `review-imports` attribute, which `.gitattributes` can also set.
 
 Group by has a fifth mode, "Stack": one section per GitHub stack, headed "Stack #N", listing its
 worktrees from the PR furthest from main down to the one on main; newest stack first, then a "Not in
-a stack" section for the rest. Worktrees in the status the status rules give someone else's pull
+a stack" section for the rest, sorted in status-list order like the status grouping's sections. Worktrees in the status the status rules give someone else's pull
 request (their "reviewing" condition) come first under "Reviewing", stacked or not, since a review is
 not your own stack work. Stacks come from the PR cache's `stack`, so the mode loads PRs the
 way PR grouping does; lineage nesting is off in it so parent rows can't reorder a stack. The paired

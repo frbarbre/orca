@@ -120,6 +120,46 @@ describe('groupBy stack', () => {
     expect(rows[0]).toMatchObject({ type: 'header', icon: { kind: 'stack', stack: 'reviewing' } })
   })
 
+  it('orders worktrees outside a stack by workspace status, like the status grouping', () => {
+    const statuses = [
+      { id: 'approved', label: 'Approved', color: 'emerald', icon: 'circle-check' },
+      ...cloneDefaultWorkspaceStatuses()
+    ]
+    const withStatus = (id: string, workspaceStatus: string) => ({
+      ...branchWorktree(id, id),
+      workspaceStatus
+    })
+    const worktrees = [
+      withStatus('doing', 'in-progress'),
+      withStatus('done', 'completed'),
+      withStatus('approved', 'approved'),
+      withStatus('waiting', 'todo')
+    ]
+    const rows = planSidebarRows({
+      groupBy: 'stack',
+      worktrees,
+      repoMap,
+      prGroupOf: () => 'in-progress',
+      stackOf: createSidebarStackReader(repoMap, null),
+      workspaceStatuses: statuses,
+      projectOrderBy: 'manual',
+      lineageById: {},
+      worktreeMap: new Map(worktrees.map((w) => [w.id, w])),
+      nestLineage: false,
+      projectGroups: [],
+      placeholderRepoIds: new Set(),
+      importedWorktreesByRepo: new Map(),
+      newExternalWorktreesInboxByRepo: new Map(),
+      pendingCreations: [],
+      folderWorkspaces: [],
+      defaultHostId: LOCAL_EXECUTION_HOST_ID,
+      pinnedDisplayPolicy: 'single-location',
+      filterRepoIds: []
+    }).render(new Set())
+
+    expect(summary(rows)).toEqual(['# stack:none 4', 'approved', 'waiting', 'doing', 'done'])
+  })
+
   it('names stack headers by their stack number', () => {
     const statuses = cloneDefaultWorkspaceStatuses()
     expect(getSidebarHeaderVisual({ kind: 'stack', stack: 7 }, statuses).label).toBe('Stack #7')

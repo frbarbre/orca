@@ -117,7 +117,7 @@ export function buildOrderedGroups(args: {
     )
   }
   if (groupBy === 'stack') {
-    return orderStackGroups(grouped, stackOf)
+    return orderStackGroups(grouped, stackOf, workspaceStatuses)
   }
   const orderedGroups: OrderedGroupEntry[] = []
   if (groupBy === 'pr-status') {

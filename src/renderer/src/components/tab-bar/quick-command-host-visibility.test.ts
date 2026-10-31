@@ -2,6 +2,7 @@
 
 import { beforeEach, describe, expect, it } from 'vitest'
 import type { HostedTerminalQuickCommand } from '@/hooks/use-terminal-quick-command-hosts'
+import type { ExecutionHostId } from '../../../../shared/execution-host'
 import {
   hideQuickCommandsOfHiddenHosts,
   readHiddenQuickCommandHosts,
@@ -9,7 +10,7 @@ import {
   writeHiddenQuickCommandHosts
 } from './quick-command-host-visibility'
 
-function entry(hostId: string, id: string): HostedTerminalQuickCommand {
+function entry(hostId: ExecutionHostId, id: string): HostedTerminalQuickCommand {
   return {
     key: `${hostId}\0${id}`,
     hostId,

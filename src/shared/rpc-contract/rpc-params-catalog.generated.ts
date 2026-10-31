@@ -148,6 +148,7 @@ import {
 } from './browser-params'
 import { ScreencastUnsubscribe } from './browser-screencast-params'
 import { BrowserOpenUrlParams, BrowserTabCreateParams } from './browser-tab-create-params'
+import { ClaudeRemoteSessionResolveUrl } from './claude-remote-session-params'
 import { ClientEventsUnsubscribeParams } from './client-events-params'
 import {
   NativeChatSessionOptionsMutation,
@@ -900,6 +901,7 @@ export const RPC_PARAMS_BY_METHOD = {
   'browser.upload': Upload,
   'browser.viewport': Viewport,
   'browser.wait': Wait,
+  'claudeRemoteSession.resolveUrl': ClaudeRemoteSessionResolveUrl,
   'clipboard.abortImageUpload': AbortImageUpload,
   'clipboard.appendImageUploadChunk': AppendImageUploadChunk,
   'clipboard.commitImageUpload': CommitImageUpload,

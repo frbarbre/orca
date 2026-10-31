@@ -1,4 +1,4 @@
-name: Fork Release (macOS)
+name: Fork Release
 
 # Builds this fork and publishes a macOS release to THIS repo's releases, which is
 # where the packaged app's updater feed points (see src/main/updater/updater-setup.ts).
@@ -48,6 +48,9 @@ jobs:
   build:
     runs-on: macos-15
     timeout-minutes: 120
+    outputs:
+      version: ${{ steps.release.outputs.version }}
+      tag: ${{ steps.release.outputs.tag }}
     env:
       NODE_OPTIONS: --max-old-space-size=4096
     steps:
@@ -183,3 +186,60 @@ jobs:
             dist/*-mac.zip.blockmap
 
           gh release view "$tag" --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[].name' | sort
+
+  # Why: Linux servers run this fork headless (`orca serve`), and paired desktops call fork-only
+  # runtime methods on them. Without an orcad template, serve runs the runtime inside Electron.
+  linux:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      NODE_OPTIONS: --max-old-space-size=4096
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref || github.ref }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Enable pnpm
+        run: corepack enable
+
+      # Why: pnpm's bundled node-gyp is not executable on Linux runners (as in release-cut.yml).
+      - name: Use external node-gyp
+        run: |
+          npm install -g node-gyp@11.5.0
+          echo "npm_config_node_gyp=$(npm root -g)/node-gyp/bin/node-gyp.js" >> "$GITHUB_ENV"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - uses: ./.github/actions/install-mobile-dependencies
+
+      - name: Install Linux computer-use provider dependencies
+        run: sudo apt-get update && sudo apt-get install -y python3-gi gir1.2-atspi-2.0 at-spi2-core xclip xdotool
+
+      - name: Build the app
+        env:
+          VITE_ORCA_RELEASES_REPO: ${{ github.repository }}
+        run: pnpm build:release
+
+      - name: Package
+        env:
+          RELEASE_VERSION: ${{ needs.build.outputs.version }}
+        run: |
+          set -euo pipefail
+          node config/scripts/ensure-native-runtime.mjs --runtime=electron
+          pnpm exec electron-builder --config config/electron-builder.config.cjs --linux AppImage --x64 \
+            --publish never "-c.extraMetadata.version=$RELEASE_VERSION"
+
+      - name: Attach to the release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ needs.build.outputs.tag }}
+        run: |
+          set -euo pipefail
+          gh release upload "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --clobber \
+            dist/orca-linux.AppImage dist/latest-linux.yml

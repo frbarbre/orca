@@ -66,6 +66,7 @@ import { ARTIFACT_METHODS } from './artifacts'
 import { AGENT_HOOK_METHODS } from './agent-hooks'
 import { AGENT_NOTE_METHODS } from './agent-notes'
 import { SETTINGS_TRANSFER_METHODS } from './settings-transfer'
+import { CLAUDE_REMOTE_SESSION_METHODS } from './claude-remote-session'
 import { AGENT_LAUNCH_METHODS } from './agent-launch'
 import { CONNECTOR_METHODS } from './connector'
 import {
@@ -85,6 +86,7 @@ export const ALL_RPC_METHODS = [
   ...AGENT_HOOK_METHODS,
   ...AGENT_NOTE_METHODS,
   ...SETTINGS_TRANSFER_METHODS,
+  ...CLAUDE_REMOTE_SESSION_METHODS,
   ...AI_VAULT_METHODS,
   ...ARTIFACT_METHODS,
   ...AUTOMATION_METHODS,

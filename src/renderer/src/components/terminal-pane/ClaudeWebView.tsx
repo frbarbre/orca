@@ -7,6 +7,7 @@ import { moveFocusToRendererBeforeWebviewDetach } from '@/components/browser-pan
 import { Button } from '@/components/ui/button'
 import { translate } from '@/i18n/i18n'
 import { pollClaudeRemoteSessionUrl } from './claude-remote-session-poll'
+import { resolveClaudeRemoteSessionUrlForHost } from './resolve-claude-remote-session-url'
 import { ensureClaudeWebKeyReplay } from './claude-web-key-replay'
 import { FOCUS_CLAUDE_PROMPT_SCRIPT } from './claude-web-prompt-focus'
 import { claudeWebView } from './claude-web-view-state'
@@ -141,8 +142,7 @@ export function ClaudeWebView({
     setPageState('loading')
     void Promise.all([
       pollClaudeRemoteSessionUrl(
-        () =>
-          window.api.claudeRemoteSession.resolveUrl({ sessionId, ...(hostId ? { hostId } : {}) }),
+        () => resolveClaudeRemoteSessionUrlForHost(sessionId, hostId),
         controller.signal
       ),
       window.api.browser.sessionResolvePartition({ profileId: null })

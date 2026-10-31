@@ -1963,6 +1963,14 @@ port (`main/host/settings-transfer-cli-port.ts`) that the window relay registers
 The CLI reads and writes the file on the caller's machine. `notes` and `settings` are in
 `CLI_COMMAND_NAMES` so packaged Linux launches route them to the CLI.
 
+### 74. Claude web view on paired hosts, and a Linux release
+
+Claude Code writes a session's claude.ai link on the machine running it. For a workspace on a
+paired runtime host, the web view asks that host through `claudeRemoteSession.resolveUrl`
+(`resolve-claude-remote-session-url.ts`) instead of reading this machine's files. Only fork hosts
+answer, so `fork-release.yml` also attaches `orca-linux.AppImage` (x64, no orcad template, so
+`orca serve` runs the runtime in Electron) for headless servers to install.
+
 ## Verify
 
 Verify runs on GitHub, not locally: `fork-verify.yml` runs it on every pull request against `main`,

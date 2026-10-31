@@ -113,12 +113,21 @@ function scrubPrivateFields(value: unknown): unknown {
   )
 }
 
-// Why only unscoped ones: a quick command scoped to a project points at this machine's project id.
-function isUnscopedQuickCommand(command: unknown): boolean {
-  return !(isRecord(command) && isRecord(command.scope) && 'repoId' in command.scope)
+// Why a remote replaces the repo id: the id is this machine's, the git remote finds the same
+// project on another one. A project without a remote has nothing to match, so its commands stay home.
+function toPortableQuickCommand(command: unknown, repos: readonly Repo[]): unknown[] {
+  if (!(isRecord(command) && isRecord(command.scope) && 'repoId' in command.scope)) {
+    return [command]
+  }
+  const { repoId } = command.scope
+  const remote = repos.find((repo) => repo.id === repoId)?.gitRemoteIdentity?.canonicalKey
+  return remote ? [{ ...command, scope: { type: 'project', remote } }] : []
 }
 
-export function pickPortableSettings(settings: SettingsSource): Record<string, unknown> {
+export function pickPortableSettings(
+  settings: SettingsSource,
+  repos: readonly Repo[] = []
+): Record<string, unknown> {
   const picked: Record<string, unknown> = {}
   for (const [key, value] of Object.entries(settings)) {
     if (!isPortableSettingKey(key)) {
@@ -126,10 +135,29 @@ export function pickPortableSettings(settings: SettingsSource): Record<string, u
     }
     picked[key] =
       key === 'terminalQuickCommands' && Array.isArray(value)
-        ? value.filter(isUnscopedQuickCommand).map(scrubPrivateFields)
+        ? value
+            .flatMap((command) => toPortableQuickCommand(command, repos))
+            .map(scrubPrivateFields)
         : scrubPrivateFields(value)
   }
   return picked
+}
+
+export function resolveImportedQuickCommands(
+  commands: unknown,
+  repos: readonly Repo[]
+): unknown[] {
+  if (!Array.isArray(commands)) {
+    return []
+  }
+  return commands.flatMap((command) => {
+    if (!(isRecord(command) && isRecord(command.scope) && command.scope.type === 'project')) {
+      return [command]
+    }
+    const remote = command.scope.remote
+    const repo = repos.find((entry) => entry.gitRemoteIdentity?.canonicalKey === remote)
+    return repo ? [{ ...command, scope: { type: 'repo', repoId: repo.id } }] : []
+  })
 }
 
 // Why these go: project ids, the handled-PR ledger and the "since" timestamp describe this machine's
@@ -180,7 +208,7 @@ export function buildSettingsTransferBundle(input: {
     format: SETTINGS_TRANSFER_FORMAT,
     version: SETTINGS_TRANSFER_VERSION,
     exportedAt: (input.now ?? new Date()).toISOString(),
-    settings: pickPortableSettings(input.settings),
+    settings: pickPortableSettings(input.settings, input.repos),
     ui: pickPortableUi(input.ui),
     projects: pickPortableProjects(input.repos),
     keybindings: input.files.keybindings,

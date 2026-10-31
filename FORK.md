@@ -716,7 +716,8 @@ a colleague imports on their machine. `src/shared/settings-transfer.ts` (+ test)
   secrets, paths and dirs, machine, proxy, runtime, WSL, devices, telemetry, pairing, repo and host
   ids, migration/defaulted/dismissed bookkeeping, internal terminal switches), applied at every
   nesting level, so a portable object still loses a private field such as a sound file's path.
-  Quick commands scoped to a project are dropped; unscoped ones travel.
+  Quick commands scoped to a project travel by the project's git remote and land on the
+  importer's project with the same remote; with no such project (or no remote) they are dropped.
 - **UI**: preferences only — board columns, sidebar and agents-view grouping and filters, card
   properties, status bar, zoom, browser defaults, pet — and the status rules minus `repoIds`, the
   handled-PR ledger and `newWorkspaceStatusSince`. `settings-transfer-ui-fields.ts` lists every

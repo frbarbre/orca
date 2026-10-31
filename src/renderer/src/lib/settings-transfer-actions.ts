@@ -6,6 +6,7 @@ import {
   buildSettingsTransferBundle,
   mergeImportedSettings,
   mergeImportedStatusRules,
+  resolveImportedQuickCommands,
   type SettingsTransferBundle
 } from '../../../shared/settings-transfer'
 
@@ -71,10 +72,16 @@ export async function applySettingsImport(bundle: SettingsTransferBundle): Promi
       Date.now()
     )
   }
-  const currentSettings = await window.api.settings.get()
-  await window.api.settings.set(mergeImportedSettings(currentSettings, bundle.settings))
-  await window.api.ui.set(ui)
   const { repos, updateRepo } = useAppStore.getState()
+  const settings = mergeImportedSettings(await window.api.settings.get(), bundle.settings)
+  if ('terminalQuickCommands' in settings) {
+    settings.terminalQuickCommands = resolveImportedQuickCommands(
+      settings.terminalQuickCommands,
+      repos
+    )
+  }
+  await window.api.settings.set(settings)
+  await window.api.ui.set(ui)
   for (const project of bundle.projects) {
     for (const repo of findReposForProject(repos, project)) {
       await updateRepo(repo.id, project.settings, { hostId: getRepoExecutionHostId(repo) })

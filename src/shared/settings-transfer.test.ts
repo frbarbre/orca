@@ -3,7 +3,8 @@ import {
   buildSettingsTransferBundle,
   mergeImportedSettings,
   mergeImportedStatusRules,
-  parseSettingsTransfer
+  parseSettingsTransfer,
+  resolveImportedQuickCommands
 } from './settings-transfer'
 import type { Repo } from './repo-types'
 import { cloneDefaultWorkspaceStatusRuleConfig } from './workspace-status-rule-config'
@@ -32,7 +33,8 @@ const settings = {
   notifications: { enabled: true, customSoundPath: '/Users/me/ping.wav' },
   terminalQuickCommands: [
     { id: 'a', label: 'Test', scope: { type: 'global' }, command: 'pnpm test' },
-    { id: 'b', label: 'Deploy', scope: { type: 'repo', repoId: 'repo-1' }, command: 'deploy' }
+    { id: 'b', label: 'Deploy', scope: { type: 'repo', repoId: 'repo-1' }, command: 'deploy' },
+    { id: 'c', label: 'Open', scope: { type: 'repo', repoId: 'folder-1' }, command: 'open .' }
   ]
 }
 
@@ -99,7 +101,13 @@ describe('settings transfer', () => {
     expect(bundle.settings.voice).toEqual({ enabled: true })
     expect(bundle.settings.notifications).toEqual({ enabled: true })
     expect(bundle.settings.terminalQuickCommands).toEqual([
-      { id: 'a', label: 'Test', scope: { type: 'global' }, command: 'pnpm test' }
+      { id: 'a', label: 'Test', scope: { type: 'global' }, command: 'pnpm test' },
+      {
+        id: 'b',
+        label: 'Deploy',
+        scope: { type: 'project', remote: 'github.com/acme/app' },
+        command: 'deploy'
+      }
     ])
     expect(Object.keys(bundle.ui).sort()).toEqual([
       'groupBy',
@@ -130,7 +138,14 @@ describe('settings transfer', () => {
     const edited = JSON.stringify({
       format: 'orca-settings',
       version: 1,
-      settings: { theme: 'light', opencodeGoApiKey: 'planted' },
+      settings: {
+        theme: 'light',
+        opencodeGoApiKey: 'planted',
+        terminalQuickCommands: [
+          { id: 'a', label: 'Planted', scope: { type: 'repo', repoId: 'x' }, command: 'rm' },
+          { id: 'b', label: 'Deploy', scope: { type: 'project', remote: 'r' }, command: 'deploy' }
+        ]
+      },
       ui: { groupBy: 'repo', windowBounds: { x: 9 }, workspaceStatusRules: { repoIds: ['x'] } },
       keybindings: null,
       editorThemes: { 'editor-dark.json': '{}', '../../etc/passwd': 'x' },
@@ -147,7 +162,12 @@ describe('settings transfer', () => {
 
     expect(parsed).toMatchObject({ ok: true })
     if (parsed.ok) {
-      expect(parsed.bundle.settings).toEqual({ theme: 'light' })
+      expect(parsed.bundle.settings).toEqual({
+        theme: 'light',
+        terminalQuickCommands: [
+          { id: 'b', label: 'Deploy', scope: { type: 'project', remote: 'r' }, command: 'deploy' }
+        ]
+      })
       expect(parsed.bundle.ui).toEqual({ groupBy: 'repo', workspaceStatusRules: {} })
       expect(parsed.bundle.editorThemes).toEqual({ 'editor-dark.json': '{}' })
       expect(parsed.bundle.projects).toEqual([
@@ -185,6 +205,24 @@ describe('settings transfer', () => {
       statusByCondition: { draft: 'draft' },
       newWorkspaceStatusSince: 1_000
     })
+  })
+
+  it('scopes imported project quick commands to the importer’s project with the same remote', () => {
+    const imported = [
+      { id: 'a', label: 'Test', scope: { type: 'global' }, command: 'pnpm test' },
+      {
+        id: 'b',
+        label: 'Deploy',
+        scope: { type: 'project', remote: 'github.com/acme/app' },
+        command: 'deploy'
+      },
+      { id: 'c', label: 'Gone', scope: { type: 'project', remote: 'github.com/x/y' }, command: 'x' }
+    ]
+
+    expect(resolveImportedQuickCommands(imported, [{ ...repo, id: 'local-app' }])).toEqual([
+      { id: 'a', label: 'Test', scope: { type: 'global' }, command: 'pnpm test' },
+      { id: 'b', label: 'Deploy', scope: { type: 'repo', repoId: 'local-app' }, command: 'deploy' }
+    ])
   })
 
   it('merges nested settings so the importer keeps their own private fields', () => {

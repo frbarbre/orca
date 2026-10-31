@@ -22,6 +22,13 @@ import { useShortcutKeyComboDetails } from '@/hooks/useShortcutLabel'
 import { useTabBarQuickCommandsShortcut } from './tab-bar-quick-commands-shortcut'
 import { TabBarQuickCommandAddActions } from './TabBarQuickCommandAddActions'
 import { TabBarQuickCommandHostLoadStatus } from './TabBarQuickCommandHostLoadStatus'
+import { TabBarQuickCommandHostFilter } from './TabBarQuickCommandHostFilter'
+import {
+  hideQuickCommandsOfHiddenHosts,
+  readHiddenQuickCommandHosts,
+  toggleQuickCommandHost,
+  writeHiddenQuickCommandHosts
+} from './quick-command-host-visibility'
 import { searchHostedTerminalQuickCommands } from './hosted-terminal-quick-command-search'
 import { useTabBarQuickCommandSearchInput } from './use-tab-bar-quick-command-search-input'
 import type {
@@ -69,13 +76,36 @@ export function TabBarQuickCommandsMenu({
   // Suppress tooltip reopening when closing the menu restores focus to its chevron.
   const suppressMoreCommandsTooltipRef = useRef(false)
   const showSearch = repoCommands.length + globalCommands.length > 1
+  const [hiddenHosts, setHiddenHosts] = useState(readHiddenQuickCommandHosts)
+  const showHostFilter = addHosts.length > 1
+  const shownHosts = useMemo(
+    () => (showHostFilter ? hiddenHosts : []),
+    [showHostFilter, hiddenHosts]
+  )
+  const toggleHost = (hostId: string): void => {
+    const next = toggleQuickCommandHost(
+      hiddenHosts,
+      hostId,
+      addHosts.map((host) => host.hostId)
+    )
+    setHiddenHosts(next)
+    writeHiddenQuickCommandHosts(next)
+  }
   const filteredRepoCommands = useMemo(
-    () => searchHostedTerminalQuickCommands(repoCommands, query),
-    [repoCommands, query]
+    () =>
+      searchHostedTerminalQuickCommands(
+        hideQuickCommandsOfHiddenHosts(repoCommands, shownHosts),
+        query
+      ),
+    [repoCommands, shownHosts, query]
   )
   const filteredGlobalCommands = useMemo(
-    () => searchHostedTerminalQuickCommands(globalCommands, query),
-    [globalCommands, query]
+    () =>
+      searchHostedTerminalQuickCommands(
+        hideQuickCommandsOfHiddenHosts(globalCommands, shownHosts),
+        query
+      ),
+    [globalCommands, shownHosts, query]
   )
   const filteredVisibleCommands = useMemo(
     () => [...filteredRepoCommands, ...filteredGlobalCommands],
@@ -355,6 +385,13 @@ export function TabBarQuickCommandsMenu({
                 className="h-9 py-2 text-[12px]"
                 wrapperClassName="border-b border-border/50 px-2"
                 iconClassName="h-3.5 w-3.5"
+              />
+            ) : null}
+            {showHostFilter ? (
+              <TabBarQuickCommandHostFilter
+                hosts={addHosts}
+                hidden={hiddenHosts}
+                onToggle={toggleHost}
               />
             ) : null}
             <TabBarQuickCommandsList

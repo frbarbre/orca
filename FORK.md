@@ -1971,6 +1971,13 @@ paired runtime host, the web view asks that host through `claudeRemoteSession.re
 answer, so `fork-release.yml` also attaches `orca-linux.AppImage` (x64, no orcad template, so
 `orca serve` runs the runtime in Electron) for headless servers to install.
 
+### 75. Quick command host filter
+
+When the tab bar's quick command menu lists commands from more than one host, a row of host
+toggles under the search hides a host's commands (`TabBarQuickCommandHostFilter.tsx`,
+`quick-command-host-visibility.ts`). The last visible host cannot be hidden. The choice is kept in
+this machine's local storage, since host ids name its own paired environments.
+
 ## Verify
 
 Verify runs on GitHub, not locally: `fork-verify.yml` runs it on every pull request against `main`,

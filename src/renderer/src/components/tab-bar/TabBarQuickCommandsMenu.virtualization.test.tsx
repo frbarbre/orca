@@ -219,4 +219,22 @@ describe('quick command dropdown virtualization', () => {
     expect(onDeleteCommand).toHaveBeenCalledExactlyOnceWith(commands[250])
     expect(onRunCommand).not.toHaveBeenCalled()
   })
+
+  it('hides the commands of a host switched off in the host filter', async () => {
+    localStorage.clear()
+    const { list } = await openMenu(0, 500)
+    const thisMac = screen.getByRole('button', { name: 'This Mac' })
+    expect(thisMac.getAttribute('aria-pressed')).toBe('true')
+
+    fireEvent.click(thisMac)
+
+    await waitFor(() =>
+      expect(list.querySelector('[role="option"]')?.textContent).toContain('Command 250')
+    )
+    expect(thisMac.getAttribute('aria-pressed')).toBe('false')
+    fireEvent.click(screen.getByRole('button', { name: 'Remote' }))
+    expect(screen.getByRole('button', { name: 'Remote' }).getAttribute('aria-pressed')).toBe(
+      'true'
+    )
+  })
 })

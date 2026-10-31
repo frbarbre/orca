@@ -1975,8 +1975,9 @@ answer, so `fork-release.yml` also attaches `orca-linux.AppImage` (x64, no orcad
 
 When the tab bar's quick command menu lists commands from more than one host, a row of host
 toggles under the search hides a host's commands (`TabBarQuickCommandHostFilter.tsx`,
-`quick-command-host-visibility.ts`). The last visible host cannot be hidden. The choice is kept in
-this machine's local storage, since host ids name its own paired environments.
+`quick-command-host-visibility.ts`). The last visible host cannot be hidden. The choice is global,
+kept in this machine's local storage (host ids name its own paired environments), and every
+worktree's menu reads it again each time it opens.
 
 ## Verify
 

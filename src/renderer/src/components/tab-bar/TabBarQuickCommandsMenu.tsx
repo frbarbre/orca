@@ -162,6 +162,8 @@ export function TabBarQuickCommandsMenu({
     (next: boolean): void => {
       setMenuOpen(next)
       if (next) {
+        // Why: another worktree's menu may have changed the filter since this one mounted.
+        setHiddenHosts(readHiddenQuickCommandHosts())
         onMenuOpen()
         suppressMoreCommandsTooltipRef.current = false
         setMoreCommandsTooltipOpen(false)

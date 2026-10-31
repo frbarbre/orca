@@ -237,4 +237,23 @@ describe('quick command dropdown virtualization', () => {
       'true'
     )
   })
+
+  it('applies a host hidden in another worktree’s menu when it opens', async () => {
+    localStorage.clear()
+    const { list } = await openMenu(0, 500)
+    fireEvent.keyDown(list, { key: 'Escape' })
+    await waitFor(() => expect(screen.queryByRole('listbox')).toBeNull())
+
+    localStorage.setItem('orca.quickCommands.hiddenHostIds', JSON.stringify(['local']))
+    fireEvent.pointerDown(screen.getByRole('button', { name: 'More quick commands' }), {
+      button: 0,
+      ctrlKey: false,
+      pointerType: 'mouse'
+    })
+
+    const reopened = await screen.findByRole('listbox')
+    await waitFor(() =>
+      expect(reopened.querySelector('[role="option"]')?.textContent).toContain('Command 250')
+    )
+  })
 })

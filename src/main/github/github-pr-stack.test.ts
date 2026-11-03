@@ -64,6 +64,7 @@ describe('hydrateGitHubPRStack', () => {
                         mergeable: 'MERGEABLE',
                         reviewDecision: 'APPROVED',
                         mergeStateStatus: 'CLEAN',
+                        isInMergeQueue: true,
                         statusCheckRollup: { state: 'SUCCESS' }
                       }
                     },
@@ -107,7 +108,8 @@ describe('hydrateGitHubPRStack', () => {
           number: 202,
           position: 2,
           checksStatus: 'success',
-          reviewDecision: 'APPROVED'
+          reviewDecision: 'APPROVED',
+          inMergeQueue: true
         }
       ]
     })

@@ -37,6 +37,7 @@ type GraphQLStackEntry = {
     mergeable?: unknown
     reviewDecision?: unknown
     mergeStateStatus?: unknown
+    isInMergeQueue?: unknown
     statusCheckRollup?: { state?: unknown } | null
   } | null
 }
@@ -147,6 +148,7 @@ function mapStackEntry(entry: GraphQLStackEntry): GitHubPRStackEntry | null {
     mergeable: mapStackMergeable(pr.mergeable),
     ...(reviewDecision !== undefined ? { reviewDecision } : {}),
     ...(typeof pr.mergeStateStatus === 'string' ? { mergeStateStatus: pr.mergeStateStatus } : {}),
+    ...(pr.isInMergeQueue === true ? { inMergeQueue: true } : {}),
     ...(typeof pr.headRefName === 'string' ? { headRefName: pr.headRefName } : {}),
     ...(typeof pr.headRefOid === 'string' ? { headSha: pr.headRefOid } : {})
   }
@@ -200,6 +202,7 @@ query($owner: String!, $repo: String!, $pr: Int!, $baseRef: String!) {
               mergeable
               reviewDecision
               mergeStateStatus
+              isInMergeQueue
               statusCheckRollup { state }
             }
           }

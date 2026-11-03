@@ -36,6 +36,8 @@ export type GitHubPRStackEntry = {
   mergeable: PRMergeableState
   reviewDecision?: PRReviewDecision | null
   mergeStateStatus?: string | null
+  /** Fork: true while GitHub's merge queue holds this PR. */
+  inMergeQueue?: boolean
   headRefName?: string
   headSha?: string
 }

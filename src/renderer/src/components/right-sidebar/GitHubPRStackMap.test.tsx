@@ -108,7 +108,8 @@ describe('GitHubPRStackMap', () => {
               entry(1, { state: 'merged' }),
               entry(2, { checksStatus: 'pending', mergeStateStatus: 'CLEAN' }),
               entry(3, { mergeable: 'CONFLICTING', mergeStateStatus: 'DIRTY' }),
-              entry(4, { checksStatus: 'neutral', mergeStateStatus: 'BLOCKED' })
+              entry(4, { checksStatus: 'neutral', mergeStateStatus: 'BLOCKED' }),
+              entry(5, { mergeStateStatus: 'CLEAN', inMergeQueue: true })
             ]
           }}
           currentPRNumber={2}
@@ -124,6 +125,7 @@ describe('GitHubPRStackMap', () => {
       (badge) => [badge.textContent, badge.dataset.stackPrStatus]
     )
     expect(badges).toEqual([
+      ['Queued', 'queued'],
       ['Not ready', 'pending'],
       ['Conflicts', 'blocked'],
       ['Ready', 'ready'],
@@ -159,6 +161,9 @@ describe('GitHubPRStackMap', () => {
       container.querySelector<HTMLButtonElement>('button[data-merge-whole-stack]')
 
     render([entry(1, { state: 'merged' }), entry(2, {}), entry(3, { mergeStateStatus: 'BLOCKED' })])
+    expect(mergeButton()).toBeNull()
+
+    render([entry(1, { inMergeQueue: true }), entry(2, {}), entry(3, {})])
     expect(mergeButton()).toBeNull()
 
     render([entry(1, { state: 'merged' }), entry(2, {}), entry(3, { checksStatus: 'pending' })])

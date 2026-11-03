@@ -4,7 +4,13 @@ import type {
 } from '../../../../shared/github/pull-request-types'
 import { translate } from '@/i18n/i18n'
 
-export type GitHubPRStackEntryTone = 'ready' | 'pending' | 'blocked' | 'merged' | 'neutral'
+export type GitHubPRStackEntryTone =
+  | 'ready'
+  | 'queued'
+  | 'pending'
+  | 'blocked'
+  | 'merged'
+  | 'neutral'
 
 export type GitHubPRStackEntryStatus = { label: string; tone: GitHubPRStackEntryTone }
 
@@ -20,6 +26,7 @@ export function getGitHubPRStackMergeTarget(stack: GitHubPRStack): {
   const ready = open.every(
     (entry) =>
       entry.state === 'open' &&
+      entry.inMergeQueue !== true &&
       entry.mergeStateStatus != null &&
       READY_MERGE_STATES.has(entry.mergeStateStatus)
   )
@@ -50,6 +57,12 @@ export function getGitHubPRStackEntryStatus(entry: GitHubPRStackEntry): GitHubPR
     return {
       label: translate('auto.components.right.sidebar.GitHubPRStackMap.568c647ccd', 'Draft'),
       tone: 'neutral'
+    }
+  }
+  if (entry.inMergeQueue === true) {
+    return {
+      label: translate('auto.components.right.sidebar.GitHubPRStackMap.queued', 'Queued'),
+      tone: 'queued'
     }
   }
   if (entry.mergeStateStatus && READY_MERGE_STATES.has(entry.mergeStateStatus)) {

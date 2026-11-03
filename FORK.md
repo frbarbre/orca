@@ -1979,6 +1979,12 @@ toggles under the search hides a host's commands (`TabBarQuickCommandHostFilter.
 kept in this machine's local storage (host ids name its own paired environments), and every
 worktree's menu reads it again each time it opens.
 
+### 76. Merge queue status in the stack map
+
+The stack details query asks GitHub for `isInMergeQueue` (`github-pr-stack.ts`), and the stack map
+badges a queued PR "Queued" instead of "Ready" (`github-pr-stack-entry-status.ts`). While any open
+PR in the stack is queued, "Merge stack" is hidden so it cannot be queued twice.
+
 ## Verify
 
 Verify runs on GitHub, not locally: `fork-verify.yml` runs it on every pull request against `main`,

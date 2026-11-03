@@ -22,6 +22,7 @@ export type GitHubPRStackMapNavigationModifiers = Pick<
 
 const STACK_ENTRY_TONE_CLASS: Record<GitHubPRStackEntryTone, string> = {
   ready: 'border-emerald-500/30 bg-emerald-500/15 text-emerald-600 dark:text-emerald-400',
+  queued: 'border-orange-500/30 bg-orange-500/15 text-orange-600 dark:text-orange-400',
   pending: 'border-amber-500/30 bg-amber-500/15 text-amber-600 dark:text-amber-400',
   blocked: 'border-rose-500/30 bg-rose-500/15 text-rose-600 dark:text-rose-400',
   merged: 'border-violet-500/30 bg-violet-500/15 text-violet-600 dark:text-violet-400',

@@ -58,4 +58,29 @@ describe('useSubmitReviewVerdict', () => {
     await act(async () => resolveB(context('bob')))
     expect(result.current.reviewers?.map((r) => r.login)).toEqual(['bob'])
   })
+
+  it('requests and removes reviewers, then reloads who is asked', async () => {
+    const requestPRReviewers = vi.fn(async () => ({ ok: true }))
+    const removePRReviewers = vi.fn(async () => ({ ok: true }))
+    Object.assign(window.api, { gh: { requestPRReviewers, removePRReviewers } })
+    mocks.context.mockResolvedValue(context('alice'))
+    const { result } = renderHook(() => useSubmitReviewVerdict('wt-a', QUEUE))
+    await act(async () => undefined)
+    expect(result.current.repo).toEqual({ id: 'r', path: '/repo' })
+
+    await act(async () => {
+      await result.current.requestReviewers(['bob', 'acme/frontend'])
+    })
+    await act(async () => {
+      await result.current.removeReviewer('alice')
+    })
+
+    const target = { repoPath: '/repo', repoId: 'r', prNumber: 1, prRepo: null }
+    expect(requestPRReviewers).toHaveBeenCalledWith({
+      ...target,
+      reviewers: ['bob', 'acme/frontend']
+    })
+    expect(removePRReviewers).toHaveBeenCalledWith({ ...target, reviewers: ['alice'] })
+    expect(mocks.context).toHaveBeenCalledTimes(3)
+  })
 })

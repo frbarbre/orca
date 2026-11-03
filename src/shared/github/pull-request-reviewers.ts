@@ -17,10 +17,13 @@ export type PullRequestReviewer = {
   state: PullRequestReviewerState
   /** A reviewer who has already reviewed can be asked to review again. */
   canRerequest: boolean
+  /** Fork: GitHub keeps a submitted review on the pull request, so only an unanswered request can be removed. */
+  canRemove: boolean
 }
 
 export type RawReviewRequest =
   | { kind: 'user'; login: string; name: string | null; avatarUrl: string | null }
+  /** Fork: a team's login is `org/slug`, the form `gh pr edit --remove-reviewer` takes. */
   | { kind: 'team'; login: string; name: string | null }
 
 export type RawReview = {
@@ -74,7 +77,8 @@ export function buildPullRequestReviewers(input: {
       name: request.name,
       avatarUrl,
       state: hasReviewed ? 're-requested' : 'pending',
-      canRerequest: false
+      canRerequest: false,
+      canRemove: !hasReviewed
     })
   }
 
@@ -95,7 +99,8 @@ export function buildPullRequestReviewers(input: {
       name: null,
       avatarUrl: review.avatarUrl ?? standing.avatarUrl,
       state,
-      canRerequest: true
+      canRerequest: true,
+      canRemove: false
     })
   }
   return reviewers

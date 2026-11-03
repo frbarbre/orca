@@ -26,6 +26,7 @@ function asRecord(value: unknown): Record<string, unknown> | null {
 type PullRequestFacts = {
   id: string
   viewerDidAuthor: boolean
+  authorLogin: string | null
   /** APPROVED | CHANGES_REQUESTED | COMMENTED | DISMISSED, or null when never reviewed. */
   viewerLatestReviewState: string | null
   /** True while the reviewer is on the hook for a review they have not submitted. */
@@ -73,6 +74,7 @@ async function resolvePullRequestFacts(
   const facts: PullRequestFacts = {
     id,
     viewerDidAuthor: pullRequest?.viewerDidAuthor === true,
+    authorLogin: readString(asRecord(pullRequest?.author)?.login),
     viewerLatestReviewState: typeof latest?.state === 'string' ? latest.state : null,
     viewerHasReviewRequest: asRecord(pullRequest?.viewerLatestReviewRequest) !== null,
     viewerLatestReviewCommit:
@@ -125,7 +127,7 @@ function readReviewRequests(connection: unknown): RawReviewRequest[] {
         : []
     }
     if (reviewer?.__typename === 'Team') {
-      const slug = readString(reviewer.slug)
+      const slug = readString(reviewer.combinedSlug) ?? readString(reviewer.slug)
       return slug ? [{ kind: 'team', login: slug, name: readString(reviewer.name) }] : []
     }
     return []
@@ -143,15 +145,7 @@ function readReviews(connection: unknown): RawReview[] {
 
 export async function getPullRequestReviewContext(
   request: Pick<SubmitReviewVerdictRequest, 'repoPath' | 'prNumber' | 'prRepo' | 'connectionId'>
-): Promise<{
-  viewerDidAuthor: boolean
-  viewerLatestReviewState: string | null
-  viewerHasReviewRequest: boolean
-  viewerLatestReviewCommit: string | null
-  reviewers: PullRequestReviewer[]
-  commits: PullRequestCommitSummary[]
-  viewerReviews: ViewerReviewSummary[]
-}> {
+): Promise<Omit<PullRequestFacts, 'id'>> {
   const { ownerRepo, ghOptions } = await resolveGitHubRepoExecution(
     request.repoPath,
     request.prRepo,
@@ -160,6 +154,7 @@ export async function getPullRequestReviewContext(
   if (!ownerRepo) {
     return {
       viewerDidAuthor: false,
+      authorLogin: null,
       viewerLatestReviewState: null,
       viewerHasReviewRequest: false,
       viewerLatestReviewCommit: null,
@@ -177,6 +172,7 @@ export async function getPullRequestReviewContext(
     )
     return {
       viewerDidAuthor: facts?.viewerDidAuthor === true,
+      authorLogin: facts?.authorLogin ?? null,
       viewerLatestReviewState: facts?.viewerLatestReviewState ?? null,
       viewerHasReviewRequest: facts?.viewerHasReviewRequest === true,
       viewerLatestReviewCommit: facts?.viewerLatestReviewCommit ?? null,
@@ -189,6 +185,7 @@ export async function getPullRequestReviewContext(
     // reviewer is entitled to press.
     return {
       viewerDidAuthor: false,
+      authorLogin: null,
       viewerLatestReviewState: null,
       viewerHasReviewRequest: false,
       viewerLatestReviewCommit: null,

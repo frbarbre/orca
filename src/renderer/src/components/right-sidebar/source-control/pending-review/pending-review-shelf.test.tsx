@@ -55,7 +55,7 @@ function ToggleableShelf(props: { queue: PendingReviewQueue; submitter: ReviewVe
 function renderShelf(
   collapsed: boolean | 'toggleable',
   comments: PendingReviewQueue['comments'] = [],
-  reviewer: { canRerequest?: boolean; state?: string } = {}
+  reviewer: { canRerequest?: boolean; canRemove?: boolean; state?: string } = {}
 ) {
   const queue = {
     comments,
@@ -76,6 +76,10 @@ function renderShelf(
       }
     ],
     rerequest: vi.fn(),
+    repo: { path: '/repo', id: 'repo-1' },
+    authorLogin: 'frbarbre',
+    requestReviewers: vi.fn(),
+    removeReviewer: vi.fn(async () => true),
     viewerDidAuthor: false,
     viewerLatestReviewState: null,
     viewerHasReviewRequest: false,
@@ -99,14 +103,23 @@ function renderShelf(
       )}
     </TooltipProvider>
   )
+  return submitter
 }
 
 describe('SourceControlPendingReviewShelf', () => {
   it('is one Review section holding the reviewers and the review form', () => {
     renderShelf(false)
-    expect(screen.getByRole('button', { name: /Review/ })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Review' })).toBeInTheDocument()
     expect(screen.getByText('MartinBernstorff')).toBeInTheDocument()
     expect(screen.getByPlaceholderText('Add review summary…')).toBeInTheDocument()
+  })
+
+  it('edits who is asked to review from the Review section', () => {
+    const submitter = renderShelf(false, [], { canRemove: true })
+    expect(screen.getByRole('button', { name: 'Reviewer' })).toBeEnabled()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Remove MartinBernstorff' }))
+    expect(submitter.removeReviewer).toHaveBeenCalledWith('MartinBernstorff')
   })
 
   it('leaves your unsent review comments to their own Pending review section', () => {

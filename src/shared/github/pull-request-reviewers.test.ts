@@ -22,8 +22,29 @@ describe('buildPullRequestReviewers', () => {
         name: null,
         avatarUrl: 'z.png',
         state: 'pending',
-        canRerequest: false
+        canRerequest: false,
+        canRemove: true
       }
+    ])
+  })
+
+  it('lets only a request nobody has answered be removed', () => {
+    expect(
+      buildPullRequestReviewers({
+        ...NONE,
+        requests: [
+          { kind: 'user', login: 'fresh', name: null, avatarUrl: null },
+          { kind: 'user', login: 'again', name: null, avatarUrl: null },
+          { kind: 'team', login: 'acme/frontend', name: 'Frontend' }
+        ],
+        latestOpinionatedReviews: [{ login: 'again', avatarUrl: null, state: 'APPROVED' }],
+        latestReviews: [{ login: 'done', avatarUrl: null, state: 'COMMENTED' }]
+      }).map((reviewer) => [reviewer.login, reviewer.canRemove])
+    ).toEqual([
+      ['fresh', true],
+      ['again', false],
+      ['acme/frontend', true],
+      ['done', false]
     ])
   })
 

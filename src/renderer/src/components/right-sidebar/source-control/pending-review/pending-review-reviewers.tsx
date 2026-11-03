@@ -87,11 +87,14 @@ function PendingReviewReviewersLoading({
 export function PendingReviewReviewers({
   reviewers,
   onRerequest,
+  onRemove,
   showHeading = true,
   uncommittedChanges = 0
 }: {
   reviewers: readonly PullRequestReviewer[] | null
   onRerequest: (login: string) => Promise<boolean>
+  /** Fork: drops a review request nobody has answered yet. */
+  onRemove?: (login: string) => Promise<boolean>
   /** Fork: off inside the Review section, whose header already names it. */
   showHeading?: boolean
   /** Fork: files changed but not committed; a re-request waits until there are none. */
@@ -105,10 +108,13 @@ export function PendingReviewReviewers({
     return null
   }
 
-  const rerequest = async (login: string): Promise<void> => {
+  const runFor = async (
+    login: string,
+    action: (login: string) => Promise<boolean>
+  ): Promise<void> => {
     setRequesting(login)
     try {
-      await onRerequest(login)
+      await action(login)
     } finally {
       setRequesting(null)
     }
@@ -151,7 +157,7 @@ export function PendingReviewReviewers({
                         { login: reviewer.login }
                       )}
                       disabled={requesting !== null || uncommittedChanges > 0}
-                      onClick={() => void rerequest(reviewer.login)}
+                      onClick={() => void runFor(reviewer.login, onRerequest)}
                     >
                       {requesting === reviewer.login ? (
                         <LoaderCircle className="size-3.5 animate-spin" />
@@ -174,6 +180,26 @@ export function PendingReviewReviewers({
                       )}
                 </TooltipContent>
               </Tooltip>
+            ) : null}
+            {reviewer.canRemove && onRemove ? (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-xs"
+                aria-label={translate(
+                  'auto.components.sourceControl.reviewers.remove',
+                  'Remove {{name}}',
+                  { name: reviewer.name ?? reviewer.login }
+                )}
+                disabled={requesting !== null}
+                onClick={() => void runFor(reviewer.login, onRemove)}
+              >
+                {requesting === reviewer.login ? (
+                  <LoaderCircle className="size-3.5 animate-spin" />
+                ) : (
+                  <X className="size-3.5" />
+                )}
+              </Button>
             ) : null}
             <Tooltip>
               <TooltipTrigger asChild>

@@ -40,6 +40,7 @@ export function createWebPendingReviewApi(): Pick<PreloadApi, 'pendingReview'> {
       context: () =>
         Promise.resolve({
           viewerDidAuthor: false,
+          authorLogin: null,
           viewerLatestReviewState: null,
           viewerHasReviewRequest: false,
           viewerLatestReviewCommit: null,

@@ -1985,6 +1985,15 @@ The stack details query asks GitHub for `isInMergeQueue` (`github-pr-stack.ts`),
 badges a queued PR "Queued" instead of "Ready" (`github-pr-stack-entry-status.ts`). While any open
 PR in the stack is queued, "Merge stack" is hidden so it cannot be queued twice.
 
+### 77. Editing reviewers from the Review section
+
+The Review section's header has the pull request page's reviewer picker
+(`pending-review-reviewer-picker.tsx`): it requests assignable people, or a typed `org/team`, and
+unrequests a pending one. Each request nobody has answered gets a remove button. GitHub keeps a
+submitted review, so anyone who already reviewed can only be re-requested, and the author is never
+offered (`canRemove` in `pull-request-reviewers.ts`). A requested team is named by its
+`combinedSlug`, the form `gh pr edit --remove-reviewer` takes.
+
 ## Verify
 
 Verify runs on GitHub, not locally: `fork-verify.yml` runs it on every pull request against `main`,

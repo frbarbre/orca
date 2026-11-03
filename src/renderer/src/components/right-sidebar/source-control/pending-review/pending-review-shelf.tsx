@@ -12,6 +12,7 @@ import type { PendingReviewQueue } from '@/components/pending-review/use-pending
 import type { ReviewVerdictSubmitter } from '@/components/pending-review/use-submit-review-verdict'
 import { SectionHeader } from '../listing/section-header'
 import { PendingReviewReviewers } from './pending-review-reviewers'
+import { PendingReviewReviewerPicker } from './pending-review-reviewer-picker'
 import { useReviewDiffBase } from '@/components/pending-review/use-review-diff-base'
 import { usePendingReviewSummary } from '@/components/pending-review/pending-review-summary-store'
 import { useReviewSummaryFocus } from '@/components/pending-review/review-summary-focus'
@@ -158,6 +159,15 @@ export function SourceControlPendingReviewShelf({
       label={translate('sourceControlSections.review', 'Review')}
       isCollapsed={collapsed}
       onToggle={onToggle}
+      actions={
+        <PendingReviewReviewerPicker
+          repo={submitter.repo}
+          authorLogin={submitter.authorLogin}
+          reviewers={submitter.reviewers ?? []}
+          onRequest={submitter.requestReviewers}
+          onRemove={submitter.removeReviewer}
+        />
+      }
     />
   )
   if (collapsed) {
@@ -170,6 +180,7 @@ export function SourceControlPendingReviewShelf({
       <PendingReviewReviewers
         reviewers={submitter.reviewers}
         onRerequest={submitter.rerequest}
+        onRemove={submitter.removeReviewer}
         showHeading={false}
         uncommittedChanges={uncommittedChanges}
       />

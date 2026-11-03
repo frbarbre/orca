@@ -31,6 +31,12 @@ export type ReviewVerdictSubmitter = {
   viewerReviews: ViewerReviewSummary[]
   /** Asks a reviewer who already reviewed to look again. */
   rerequest: (login: string) => Promise<boolean>
+  /** Fork: the repository the reviewer picker lists assignable people from. */
+  repo: { path: string; id: string } | null
+  authorLogin: string | null
+  /** Fork: users by login, teams as `org/slug`. */
+  requestReviewers: (logins: string[]) => Promise<boolean>
+  removeReviewer: (login: string) => Promise<boolean>
   submit: (verdict: ReviewVerdict, body: string) => Promise<{ ok: boolean; error?: string }>
 }
 
@@ -41,6 +47,7 @@ const NO_REVIEWS: ViewerReviewSummary[] = []
 
 const EMPTY_CONTEXT: PendingReviewContext = {
   viewerDidAuthor: false,
+  authorLogin: null,
   viewerLatestReviewState: null,
   viewerHasReviewRequest: false,
   viewerLatestReviewCommit: null,
@@ -90,32 +97,64 @@ export function useSubmitReviewVerdict(
     }
   }, [contextKey, contextNonce, prNumber, prRepo, repo])
 
-  const rerequest = useCallback(
-    async (login: string) => {
+  const editReviewers = useCallback(
+    async (
+      action: 'request' | 'remove',
+      logins: string[],
+      failure: (reason: string | undefined) => string
+    ) => {
       if (!repo || prNumber === null) {
         return false
       }
-      const result = await window.api.gh.requestPRReviewers({
-        repoPath: repo.path,
-        repoId: repo.id,
-        prNumber,
-        reviewers: [login],
-        prRepo
-      })
+      const request = { repoPath: repo.path, repoId: repo.id, prNumber, reviewers: logins, prRepo }
+      const result =
+        action === 'request'
+          ? await window.api.gh.requestPRReviewers(request)
+          : await window.api.gh.removePRReviewers(request)
       if (!result.ok) {
-        toast.error(
-          translate(
-            'auto.components.pendingReview.rerequestFailed',
-            'Could not ask {{login}} to review again: {{reason}}',
-            { login, reason: result.error }
-          )
-        )
+        toast.error(failure(result.error))
         return false
       }
       setContextNonce((value) => value + 1)
       return true
     },
     [prNumber, prRepo, repo]
+  )
+
+  const rerequest = useCallback(
+    (login: string) =>
+      editReviewers('request', [login], (reason) =>
+        translate(
+          'auto.components.pendingReview.rerequestFailed',
+          'Could not ask {{login}} to review again: {{reason}}',
+          { login, reason }
+        )
+      ),
+    [editReviewers]
+  )
+
+  const requestReviewers = useCallback(
+    (logins: string[]) =>
+      editReviewers('request', logins, (reason) =>
+        translate(
+          'auto.components.pendingReview.requestFailed',
+          'Could not request {{logins}}: {{reason}}',
+          { logins: logins.join(', '), reason }
+        )
+      ),
+    [editReviewers]
+  )
+
+  const removeReviewer = useCallback(
+    (login: string) =>
+      editReviewers('remove', [login], (reason) =>
+        translate(
+          'auto.components.pendingReview.removeFailed',
+          'Could not remove {{login}}: {{reason}}',
+          { login, reason }
+        )
+      ),
+    [editReviewers]
   )
 
   const submit = useCallback(
@@ -175,6 +214,10 @@ export function useSubmitReviewVerdict(
     commits: context?.commits ?? NO_COMMITS,
     viewerReviews: context?.viewerReviews ?? NO_REVIEWS,
     rerequest,
+    repo: repo ? { path: repo.path, id: repo.id } : null,
+    authorLogin: context?.authorLogin ?? null,
+    requestReviewers,
+    removeReviewer,
     submit
   }
 }

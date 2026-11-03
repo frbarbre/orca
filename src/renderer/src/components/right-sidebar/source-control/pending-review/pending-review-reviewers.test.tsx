@@ -21,17 +21,19 @@ function reviewer(overrides: Partial<PullRequestReviewer>): PullRequestReviewer 
     avatarUrl: null,
     state: 'pending',
     canRerequest: false,
+    canRemove: false,
     ...overrides
   }
 }
 
 function renderList(
   reviewers: PullRequestReviewer[] | null,
-  onRerequest = vi.fn(async () => true)
+  onRerequest = vi.fn(async () => true),
+  onRemove = vi.fn(async () => true)
 ) {
   render(
     <TooltipProvider>
-      <PendingReviewReviewers reviewers={reviewers} onRerequest={onRerequest} />
+      <PendingReviewReviewers reviewers={reviewers} onRerequest={onRerequest} onRemove={onRemove} />
     </TooltipProvider>
   )
   return onRerequest
@@ -65,6 +67,25 @@ describe('PendingReviewReviewers', () => {
       screen.getByRole('button', { name: 'Re-request review from MartinBernstorff' })
     )
     expect(onRerequest).toHaveBeenCalledWith('MartinBernstorff')
+  })
+
+  it('removes a request nobody has answered, and offers no removal once someone reviewed', async () => {
+    const onRemove = vi.fn(async () => true)
+    renderList(
+      [
+        reviewer({ login: 'zahlio', state: 'pending', canRemove: true }),
+        reviewer({ kind: 'team', login: 'acme/frontend', name: 'Frontend', canRemove: true }),
+        reviewer({ login: 'MartinBernstorff', state: 'approved', canRerequest: true })
+      ],
+      undefined,
+      onRemove
+    )
+
+    expect(screen.queryByRole('button', { name: 'Remove MartinBernstorff' })).toBeNull()
+    await userEvent.click(screen.getByRole('button', { name: 'Remove Frontend' }))
+    expect(onRemove).toHaveBeenCalledWith('acme/frontend')
+    await userEvent.click(screen.getByRole('button', { name: 'Remove zahlio' }))
+    expect(onRemove).toHaveBeenCalledWith('zahlio')
   })
 
   it('holds back a re-request while the workspace has changes that are not committed', async () => {

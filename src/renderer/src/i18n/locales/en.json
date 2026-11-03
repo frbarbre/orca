@@ -17877,6 +17877,8 @@
         "badgeTitle": "{{count}} review comments waiting to be submitted",
         "sectionTitle": "Pending review",
         "rerequestFailed": "Could not ask {{login}} to review again: {{reason}}",
+        "requestFailed": "Could not request {{logins}}: {{reason}}",
+        "removeFailed": "Could not remove {{login}}: {{reason}}",
         "noPullRequest": "This workspace has no pull request to review.",
         "submittedWithState": "Review submitted ({{state}}).",
         "submitted": "Review submitted.",
@@ -17919,7 +17921,8 @@
           "loading": "Loading reviewers",
           "rerequest": "Re-request review from {{login}}",
           "rerequestUncommitted": "Commit your changes before asking for another review ({{files}} uncommitted)",
-          "rerequestTip": "Re-request review"
+          "rerequestTip": "Re-request review",
+          "remove": "Remove {{name}}"
         }
       },
       "workspaceActions": {

@@ -48,6 +48,8 @@ export type PendingReviewApi = {
   /** What the viewer is allowed to do on this pull request. */
   context: (request: PendingReviewContextRequest) => Promise<{
     viewerDidAuthor: boolean
+    /** Fork: GitHub refuses a review request to the author, so the reviewer picker leaves them out. */
+    authorLogin: string | null
     viewerLatestReviewState: string | null
     viewerHasReviewRequest: boolean
     viewerLatestReviewCommit: string | null

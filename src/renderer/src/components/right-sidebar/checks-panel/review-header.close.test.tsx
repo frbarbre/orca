@@ -39,11 +39,11 @@ vi.mock('@/components/ui/dropdown-menu', () => ({
 
 afterEach(cleanup)
 
-function renderHeader(state: 'open' | 'draft' | 'merged', closeReview = true) {
+function renderHeader(state: 'open' | 'draft' | 'merged', closeReview = true, inMergeQueue = false) {
   render(
     <TooltipProvider>
       <ChecksPanelReviewHeader
-        review={{ provider: 'github', number: 42, state } as never}
+        review={{ provider: 'github', number: 42, state, inMergeQueue } as never}
         isRefreshing={false}
         canUnlinkReview
         modifierHintDestination={null as never}
@@ -64,6 +64,14 @@ function renderHeader(state: 'open' | 'draft' | 'merged', closeReview = true) {
     </TooltipProvider>
   )
 }
+
+describe('ChecksPanelReviewHeader state badge', () => {
+  it('says queued while the merge queue holds an open PR', () => {
+    renderHeader('open', true, true)
+    expect(screen.getByText('queued')).toBeInTheDocument()
+    expect(screen.queryByText('open')).toBeNull()
+  })
+})
 
 describe('ChecksPanelReviewHeader close action', () => {
   it.each(['open', 'draft'] as const)(

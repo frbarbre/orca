@@ -38,6 +38,8 @@ export type ReviewSnapshotPullRequest = {
   url: string
   author: string | null
   isDraft: boolean
+  /** Fork: true while GitHub's merge queue holds the pull request. */
+  isInMergeQueue?: boolean
   state: ReviewSnapshotPRState
   mergeable?: ReviewSnapshotMergeable
   headRefName: string

@@ -8,10 +8,11 @@ export type GitHubPRAutoMergeAvailabilityInput = {
   autoMergeEnabled?: boolean
   autoMergeAllowed?: boolean | null
   mergeQueueRequired?: boolean | null
+  inMergeQueue?: boolean
 }
 
 export function canShowGitHubPRAutoMergeControl(item: GitHubPRAutoMergeAvailabilityInput): boolean {
-  if (item.state !== 'open') {
+  if (item.state !== 'open' || item.inMergeQueue === true) {
     return false
   }
   if (item.autoMergeEnabled === true) {

@@ -17,6 +17,7 @@ const PR_FIELDS_FRAGMENT = `fragment SnapshotPR on PullRequest {
   title
   url
   isDraft
+  isInMergeQueue
   state
   mergeable
   headRefName

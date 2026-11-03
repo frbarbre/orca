@@ -33,6 +33,13 @@ export function getPullRequestStatusRuleCopy(): Record<
         'Somebody else opened the pull request. Stays here until it merges.'
       )
     },
+    'merge-queue': {
+      label: translate('auto.components.settings.prRules.mergeQueue', 'In the merge queue'),
+      description: translate(
+        'auto.components.settings.prRules.mergeQueueDescription',
+        "GitHub's merge queue holds your pull request until it merges. Leave unset to skip."
+      )
+    },
     conflicts: {
       label: translate('auto.components.settings.prRules.conflicts', 'Has merge conflicts'),
       description: translate(
@@ -84,6 +91,7 @@ export function getPullRequestStatusRuleTabLabels(): Record<WorkspaceStatusRuleC
     merged: translate('auto.components.settings.prRules.tabMerged', 'Merged'),
     closed: translate('auto.components.settings.prRules.tabClosed', 'Closed'),
     reviewing: translate('auto.components.settings.prRules.tabReviewing', 'Reviewing'),
+    'merge-queue': translate('auto.components.settings.prRules.tabMergeQueue', 'Merge queue'),
     conflicts: translate('auto.components.settings.prRules.tabConflicts', 'Conflicts'),
     draft: translate('auto.components.settings.prRules.tabDraft', 'Draft'),
     'changes-requested': translate(

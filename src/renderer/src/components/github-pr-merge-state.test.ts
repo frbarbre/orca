@@ -25,6 +25,18 @@ describe('presentGitHubPRMergeState', () => {
     })
   })
 
+  it('says a queued pull request is in the merge queue, with nothing left to press', () => {
+    expect(
+      presentGitHubPRMergeState(
+        pr({ mergeQueueRequired: true, inMergeQueue: true, reviewDecision: 'REVIEW_REQUIRED' })
+      )
+    ).toMatchObject({
+      label: 'In merge queue',
+      directMergeAvailable: false,
+      autoMergeAction: null
+    })
+  })
+
   it('uses the merge-queue label for auto-merge when a queue is required', () => {
     expect(presentGitHubPRMergeState(pr({ mergeQueueRequired: true }))).toMatchObject({
       label: 'Merge when ready',

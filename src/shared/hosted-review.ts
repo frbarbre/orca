@@ -43,6 +43,8 @@ export type HostedReviewInfo = {
   autoMergeEnabled?: boolean
   autoMergeAllowed?: boolean | null
   mergeQueueRequired?: boolean | null
+  /** Fork: true while GitHub's merge queue holds the PR. */
+  inMergeQueue?: boolean
   mergeStateStatus?: string | null
   headSha?: string
   /** GitHub repository that owns the PR; absent on older runtimes and other providers. */

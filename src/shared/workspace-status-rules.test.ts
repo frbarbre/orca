@@ -35,6 +35,23 @@ const pmTeam = lowercaseLoginSet(['PmPerson'])
 const viewer = 'frbarbre'
 
 describe('resolveWorkspaceStatusRuleCondition', () => {
+  it('reports your queued pull request as in the merge queue, ahead of every open-state condition', () => {
+    const pr = makePR({ isInMergeQueue: true, isDraft: true, mergeable: 'CONFLICTING' })
+    const withQueue = { ...config, statusByCondition: { 'merge-queue': 'queued' } }
+
+    expect(resolveWorkspaceStatusRuleCondition(pr, withQueue, noPmTeam, viewer)).toBe(
+      'merge-queue'
+    )
+    expect(
+      resolveWorkspaceStatusRuleCondition(pr, withQueue, noPmTeam, 'someone-else')
+    ).toBe('reviewing')
+  })
+
+  it('leaves a queued pull request to the other conditions while merge queue has no column', () => {
+    const pr = makePR({ isInMergeQueue: true })
+    expect(resolveWorkspaceStatusRuleCondition(pr, config, noPmTeam, viewer)).toBe('review')
+  })
+
   it('reports a merged pull request before anything else', () => {
     const pr = makePR({
       state: 'MERGED',

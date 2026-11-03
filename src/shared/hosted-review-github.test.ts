@@ -30,6 +30,13 @@ describe('hostedReviewInfoFromGitHubPRInfo', () => {
     })
   })
 
+  it('carries whether the merge queue holds the PR', () => {
+    expect(hostedReviewInfoFromGitHubPRInfo({ ...pr, inMergeQueue: true })).toMatchObject({
+      inMergeQueue: true
+    })
+    expect(hostedReviewInfoFromGitHubPRInfo(pr)).not.toHaveProperty('inMergeQueue')
+  })
+
   it('carries the stack the PR belongs to, so cards can show its position', () => {
     const stack = { number: 3716, position: 2, size: 3, baseRefName: 'main' }
     expect(hostedReviewInfoFromGitHubPRInfo({ ...pr, stack })).toMatchObject({ stack })

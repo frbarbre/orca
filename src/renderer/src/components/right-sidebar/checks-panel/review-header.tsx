@@ -46,6 +46,7 @@ export function ChecksPanelReviewHeader({
 }: ChecksPanelReviewHeaderProps): React.JSX.Element {
   const reviewNumberLabel = review.provider === 'gitlab' ? `!${review.number}` : `#${review.number}`
   const ReviewIcon = review.provider === 'gitlab' ? GitMerge : PullRequestIcon
+  const queued = review.state === 'open' && review.inMergeQueue === true
   const reviewHostLabel = review.provider === 'gitlab' ? 'GitLab' : 'GitHub'
   const moreActionsLabel =
     review.provider === 'gitlab'
@@ -78,10 +79,14 @@ export function ChecksPanelReviewHeader({
       <span
         className={cn(
           'text-[9px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded border',
-          prStateColor(review.state)
+          queued
+            ? 'bg-orange-500/15 text-orange-500 border-orange-500/20'
+            : prStateColor(review.state)
         )}
       >
-        {review.state}
+        {queued
+          ? translate('auto.components.right.sidebar.ChecksPanel.queued', 'queued')
+          : review.state}
       </span>
       <div className="flex-1" />
       <button

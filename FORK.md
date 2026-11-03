@@ -1994,6 +1994,15 @@ submitted review, so anyone who already reviewed can only be re-requested, and t
 offered (`canRemove` in `pull-request-reviewers.ts`). A requested team is named by its
 `combinedSlug`, the form `gh pr edit --remove-reviewer` takes.
 
+### 78. Merge queue state for a pull request
+
+`gh pr view --json` has no merge queue field, so when a PR's base uses a merge queue the lookup asks
+GitHub's `isInMergeQueue` in one more query (`pr-merge-queue-membership.ts`). A queued PR's header
+badge reads "queued", its merge state reads "In merge queue" with no "Merge when ready" button, and
+the workspace status rules gain an "In the merge queue" condition (`merge-queue`), checked right
+after "You are the reviewer". It only applies once it has a column, so an unmapped queue leaves the
+card where the other conditions put it.
+
 ## Verify
 
 Verify runs on GitHub, not locally: `fork-verify.yml` runs it on every pull request against `main`,

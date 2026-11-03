@@ -144,6 +144,7 @@ export function mapReviewSnapshotPullRequest(value: unknown): ReviewSnapshotPull
     url: asString(pr.url),
     author: asString(asRecord(pr.author)?.login) || null,
     isDraft: pr.isDraft === true,
+    isInMergeQueue: pr.isInMergeQueue === true,
     state: mapPRState(asString(pr.state)),
     mergeable: mapMergeable(asString(pr.mergeable)),
     headRefName: asString(pr.headRefName),

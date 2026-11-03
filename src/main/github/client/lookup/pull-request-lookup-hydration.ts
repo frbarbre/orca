@@ -2,6 +2,7 @@ import type { OwnerRepo } from '../../gh-utils'
 import type { GhExecOptions } from './../github-exec-scope'
 import { detectRepositoryMergeMetadata } from './../detect/repository-merge-metadata'
 import { mapPRState } from '../../mappers'
+import { isPullRequestInMergeQueue } from '../../pr-merge-queue-membership'
 import {
   normalizePullRequestLookupData,
   type PullRequestLookupData
@@ -24,9 +25,14 @@ export async function hydratePullRequestLookupData(
           executionScope
         )
       : undefined
+  const inMergeQueue =
+    mergeMetadata?.mergeQueueRequired === true
+      ? await isPullRequestInMergeQueue(ownerRepo, normalized.number, ghOptions)
+      : undefined
   return {
     ...normalized,
     ...(mergeMetadata ? { mergeQueueRequired: mergeMetadata.mergeQueueRequired } : {}),
+    ...(inMergeQueue !== undefined ? { inMergeQueue } : {}),
     ...(mergeMetadata ? { autoMergeAllowed: mergeMetadata.autoMergeAllowed } : {}),
     ...(mergeMetadata?.mergeMethodSettings
       ? { mergeMethodSettings: mergeMetadata.mergeMethodSettings }

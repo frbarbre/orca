@@ -12,6 +12,7 @@ export const WORKSPACE_STATUS_RULE_CONDITIONS = [
   'merged',
   'closed',
   'reviewing',
+  'merge-queue',
   'conflicts',
   'draft',
   'changes-requested',

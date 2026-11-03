@@ -156,6 +156,7 @@ export function ConditionSettings({
           }
         />
       )
+    case 'merge-queue':
     case 'draft':
     case 'changes-requested':
       return null

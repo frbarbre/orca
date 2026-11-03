@@ -13,6 +13,7 @@ export type GitHubPRMergeStateKind =
   | 'merged'
   | 'closed'
   | 'draft'
+  | 'in_merge_queue'
   | 'review_required'
   | 'changes_requested'
   | 'conflicts'
@@ -74,6 +75,9 @@ function resolveMergeStateKind(item: GitHubPRMergeStateInput): GitHubPRMergeStat
   }
   if (item.state === 'draft') {
     return 'draft'
+  }
+  if (item.inMergeQueue === true) {
+    return 'in_merge_queue'
   }
   if (item.reviewDecision === 'REVIEW_REQUIRED') {
     return 'review_required'

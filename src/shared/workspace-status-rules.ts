@@ -86,6 +86,10 @@ export function resolveWorkspaceStatusRuleCondition(
   if (viewerLogin && pr.author && pr.author.toLowerCase() !== viewerLogin.toLowerCase()) {
     return 'reviewing'
   }
+  // Why only when mapped: a queue without its own column falls through to the column it had before.
+  if (pr.isInMergeQueue === true && config.statusByCondition?.['merge-queue']) {
+    return 'merge-queue'
+  }
   if (config.statusByCondition?.conflicts) {
     if (pr.mergeable === 'CONFLICTING') {
       return 'conflicts'

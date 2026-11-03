@@ -15,6 +15,7 @@ const payload = {
         title: 'Tidy the timeline',
         url: 'https://github.com/flowbasedk/flowbase/pull/3145',
         isDraft: false,
+        isInMergeQueue: true,
         state: 'OPEN',
         headRefName: 'fix/timeline',
         baseRefName: 'main',
@@ -100,6 +101,8 @@ describe('mapReviewStatusSnapshotResponse', () => {
     expect(snapshot.viewerLogin).toBe('frbarbre')
     expect(snapshot.linkedPullRequests).toHaveLength(1)
     expect(snapshot.reviewRequestedPullRequests.map((pr) => pr.number)).toEqual([12])
+    expect(snapshot.linkedPullRequests[0]?.isInMergeQueue).toBe(true)
+    expect(snapshot.reviewRequestedPullRequests[0]?.isInMergeQueue).toBe(false)
   })
 
   it('keeps a team reviewer that upstream mapping would drop', () => {
@@ -152,6 +155,7 @@ describe('buildReviewStatusSnapshotQuery', () => {
     expect(query).toContain(`${snapshotLinkedPRAlias(0)}: repository(owner: "flowbasedk"`)
     expect(query).toContain(`${snapshotLinkedPRAlias(1)}: repository(owner: "frbarbre"`)
     expect(query).not.toContain('inbox: search')
+    expect(query).toContain('isInMergeQueue')
   })
 
   it('caps the number of aliases so the document stays bounded', () => {

@@ -24,7 +24,8 @@ const MUTED_TONE = 'border-border/60 bg-background/70 text-muted-foreground'
 const SUCCESS_TONE =
   'border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-200'
 const WARNING_TONE = 'border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-200'
-const DANGER_TONE = 'border-rose-500/30 bg-rose-500/10 text-rose-700 dark:text-rose-200'
+const QUEUED_TONE = 'border-orange-500/30 bg-orange-500/10 text-orange-700 dark:text-orange-200'
+const DANGER_TONE ='border-rose-500/30 bg-rose-500/10 text-rose-700 dark:text-rose-200'
 
 function presentAutoMergeAction(
   intent: GitHubPRAutoMergeActionIntent | null
@@ -91,6 +92,15 @@ function presentMergeStateKind(
         tooltip: translate(
           'auto.components.github.pr.merge.state.f03028e055',
           'This pull request is still a draft'
+        )
+      }
+    case 'in_merge_queue':
+      return {
+        label: translate('auto.components.github.pr.merge.state.inMergeQueue', 'In merge queue'),
+        tone: QUEUED_TONE,
+        tooltip: translate(
+          'auto.components.github.pr.merge.state.inMergeQueueTooltip',
+          "GitHub's merge queue holds this pull request and merges it once its checks pass"
         )
       }
     case 'review_required':

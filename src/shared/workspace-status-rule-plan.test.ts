@@ -350,9 +350,84 @@ describe('closing a workspace once you have reviewed', () => {
         worktreeId: 'repo::/w/one',
         executionHostId: 'local',
         displayName: 'one',
-        forgetHandledKey: 'flowbasedk/flowbase#1'
+        forgetHandledKey: 'flowbasedk/flowbase#1',
+        force: true
       }
     ])
+  })
+
+  const inboxHandled = {
+    ...config,
+    reviewInbox: { ...config.reviewInbox, enabled: true },
+    handledPullRequests: ['flowbasedk/flowbase#1']
+  }
+
+  it('removes a workspace the inbox opened once your review request is taken back', () => {
+    const unassigned = makePR({ author: 'colleague' })
+    const plan = buildWorkspaceStatusRulePlan({
+      targets: [makeTarget()],
+      snapshot: makeSnapshot({ linkedPullRequests: [unassigned] }),
+      config: inboxHandled,
+      existingBranches: new Set()
+    })
+    expect(plan.removals).toStrictEqual([
+      {
+        worktreeId: 'repo::/w/one',
+        executionHostId: 'local',
+        displayName: 'one',
+        forgetHandledKey: 'flowbasedk/flowbase#1',
+        force: true
+      }
+    ])
+  })
+
+  it('keeps a workspace while a team you belong to may still owe the review', () => {
+    const viaTeam = makePR({
+      author: 'colleague',
+      requestedReviewers: [{ kind: 'team', slug: 'frontend' }]
+    })
+    const handled = inboxHandled
+    const stillOwed = buildWorkspaceStatusRulePlan({
+      targets: [makeTarget()],
+      snapshot: makeSnapshot({
+        linkedPullRequests: [makePR({ author: 'colleague' })],
+        reviewRequestedPullRequests: [makePR({ author: 'colleague' })]
+      }),
+      config: handled,
+      existingBranches: new Set()
+    })
+    const teamPending = buildWorkspaceStatusRulePlan({
+      targets: [makeTarget()],
+      snapshot: makeSnapshot({ linkedPullRequests: [viaTeam] }),
+      config: handled,
+      existingBranches: new Set()
+    })
+    expect(stillOwed.removals).toStrictEqual([])
+    expect(teamPending.removals).toStrictEqual([])
+  })
+
+  it('keeps a workspace you opened yourself on a pull request you were never asked to review', () => {
+    const plan = buildWorkspaceStatusRulePlan({
+      targets: [makeTarget()],
+      snapshot: makeSnapshot({ linkedPullRequests: [makePR({ author: 'colleague' })] }),
+      config,
+      existingBranches: new Set()
+    })
+    expect(plan.removals).toStrictEqual([])
+  })
+
+  it('keeps a workspace whose review request is taken back after you only commented', () => {
+    const commented = makePR({
+      author: 'colleague',
+      latestReviews: [{ login: 'frbarbre', state: 'COMMENTED', commitOid: 'sha' }]
+    })
+    const plan = buildWorkspaceStatusRulePlan({
+      targets: [makeTarget()],
+      snapshot: makeSnapshot({ linkedPullRequests: [commented] }),
+      config: inboxHandled,
+      existingBranches: new Set()
+    })
+    expect(plan.removals).toStrictEqual([])
   })
 
   it('keeps the workspace while a review is still owed', () => {

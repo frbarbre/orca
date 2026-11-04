@@ -12635,7 +12635,7 @@
           "rereviewPrompt": "Prompt when you are asked again",
           "rereviewPromptDescription": "Used when a pull request you already reviewed comes back to you. Same variables, plus {{sinceCommit}} — the commit you last reviewed, which the diff is pointed at.",
           "deleteOnReviewed": "Close a review workspace once you have reviewed",
-          "deleteOnReviewedDescription": "Applies to pull requests you did not write, once you have approved or requested changes. A workspace holding unsent review comments, uncommitted work or a running agent is kept. If the author asks you again, the workspace comes back with the diff pointed at the commit you last reviewed.",
+          "deleteOnReviewedDescription": "Applies to pull requests you did not write, once you have approved or requested changes, or when your review request is taken back before you reviewed. The delete is forced: uncommitted changes and running agents go with it, and only unsent review comments keep the workspace. If the author asks you again, the workspace comes back with the diff pointed at the commit you last reviewed.",
           "merged": "Pull request is merged",
           "mergedDescription": "Already landed on the base branch. Only used when the workspace is kept — deleting on merge takes precedence.",
           "closed": "Pull request was closed",

@@ -22,12 +22,12 @@ async function applyRemovals(plan: WorkspaceStatusRulePlan): Promise<void> {
   const { removeWorktree, forgetPullRequestHandled } = useAppStore.getState()
   const forget: string[] = []
   for (const removal of plan.removals) {
-    // Why force stays off: Git refuses a checkout holding uncommitted work or a
-    // live agent session, and that refusal is the safety net for an automatic
-    // delete. The archive hook runs either way.
+    // Why force is off unless the plan says otherwise: Git refuses a checkout holding uncommitted
+    // work or a live agent session, and that refusal is the safety net for an automatic
+    // delete of your own work. The archive hook runs either way.
     const result = await removeWorktree(
       { id: removal.worktreeId, executionHostId: removal.executionHostId },
-      false
+      removal.force === true
     )
     if (!result.ok) {
       toast.error(

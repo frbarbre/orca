@@ -433,6 +433,13 @@ inline comments, conversation comments and review summaries alike.
 approved or requested changes on it, and a later re-request opens it again with the diff
 pointed at the commit you last reviewed.
 
+It also removes one the inbox opened once your request is taken back before you reviewed
+(`wasUnassigned` in `workspace-status-rule-plan.ts`): only with the inbox on, the pull request
+gone from `review-requested:@me`, no team still asked (a team request names no user) and no
+review of yours (a comment-only review drops the request too). Both removals are forced, so
+uncommitted changes and running agents do not keep a reviewing workspace; unsent review comments
+still do. Removals of your own merged or closed work stay unforced.
+
 The mechanics are all in the ledger. `handledPullRequests` is what stops the inbox rebuilding
 a workspace it already made, so a removal that should be reversible has to **forget** its key —
 but only when the pull request is no longer listed as owed on that same tick, otherwise the

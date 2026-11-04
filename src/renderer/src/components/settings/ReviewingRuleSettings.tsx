@@ -117,7 +117,7 @@ export function ReviewingRuleSettings({
         )}
         description={translate(
           'auto.components.settings.prRules.deleteOnReviewedDescription',
-          'Applies to pull requests you did not write, once you have approved or requested changes. A workspace holding unsent review comments, uncommitted work or a running agent is kept. If the author asks you again, the workspace comes back with the diff pointed at the commit you last reviewed.'
+          'Applies to pull requests you did not write, once you have approved or requested changes, or when your review request is taken back before you reviewed. The delete is forced: uncommitted changes and running agents go with it, and only unsent review comments keep the workspace. If the author asks you again, the workspace comes back with the diff pointed at the commit you last reviewed.'
         )}
         checked={config.onReviewed === 'delete'}
         onChange={() => patch({ onReviewed: config.onReviewed === 'delete' ? 'none' : 'delete' })}

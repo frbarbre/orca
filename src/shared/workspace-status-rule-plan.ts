@@ -5,6 +5,7 @@ import type {
   ReviewStatusSnapshot
 } from './github/review-status-snapshot-types'
 import {
+  isHandledKeyForPullRequest,
   makeHandledPullRequestKey,
   type WorkspaceStatusRuleCondition,
   type WorkspaceStatusRuleConfig
@@ -40,13 +41,15 @@ export type WorkspaceStatusRulePlan = {
     status: WorkspaceStatus
     condition: WorkspaceStatusRuleCondition
   }[]
-  /** Attempted with force off, so Git refuses one holding uncommitted work or a live agent. */
+  /** Attempted with force off unless `force`, so Git refuses one holding uncommitted work or a live agent. */
   removals: {
     worktreeId: string
     executionHostId: ExecutionHostId
     displayName: string
     /** Set when the pull request should be eligible for the inbox again later. */
     forgetHandledKey?: string
+    /** Fork: a workspace for someone else's pull request holds nothing worth keeping, so its delete is forced. */
+    force?: true
   }[]
   creations: {
     pr: ReviewSnapshotPullRequest
@@ -72,6 +75,34 @@ function indexSnapshotPRs(
   pullRequests: readonly ReviewSnapshotPullRequest[]
 ): Map<string, ReviewSnapshotPullRequest> {
   return new Map(pullRequests.map((pr) => [snapshotKey(pr.repo, pr.number), pr]))
+}
+
+// Why the ledger and no review of yours: only a workspace the inbox opened for a request
+// counts, and a comment-only review also drops the request without the request being taken back.
+// Why the inbox and teams: a request through a team names no user, so only its absence from
+// review-requested:@me, with no team still asked, shows the request is gone.
+function wasUnassigned(
+  pr: ReviewSnapshotPullRequest,
+  viewerLogin: string | null,
+  config: WorkspaceStatusRuleConfig,
+  stillRequested: boolean
+): boolean {
+  const viewer = viewerLogin?.toLowerCase()
+  if (
+    !viewer ||
+    !config.reviewInbox.enabled ||
+    stillRequested ||
+    pr.requestedReviewers.some((reviewer) => reviewer.kind === 'team') ||
+    readViewerReviewStanding(pr, viewerLogin).isOwed
+  ) {
+    return false
+  }
+  const byViewer = (review: { login: string }): boolean => review.login.toLowerCase() === viewer
+  if (pr.latestReviews.some(byViewer) || pr.latestOpinionatedReviews?.some(byViewer)) {
+    return false
+  }
+  const key = makeHandledPullRequestKey(pr.repo, pr.number)
+  return config.handledPullRequests.some((entry) => isHandledKeyForPullRequest(entry, key))
 }
 
 export function buildWorkspaceStatusRulePlan(args: {
@@ -119,7 +150,13 @@ export function buildWorkspaceStatusRulePlan(args: {
       condition === 'reviewing' &&
       config.onReviewed === 'delete' &&
       !target.hasPendingReviewComments &&
-      readViewerReviewStanding(pr, snapshot.viewerLogin).isFinished
+      (readViewerReviewStanding(pr, snapshot.viewerLogin).isFinished ||
+        wasUnassigned(
+          pr,
+          snapshot.viewerLogin,
+          config,
+          inboxKeys.has(snapshotKey(pr.repo, pr.number))
+        ))
     ) {
       plan.removals.push({
         worktreeId: target.worktreeId,
@@ -130,7 +167,8 @@ export function buildWorkspaceStatusRulePlan(args: {
         // have it cloned straight back. A later re-request brings it back on its own.
         forgetHandledKey: inboxKeys.has(snapshotKey(pr.repo, pr.number))
           ? undefined
-          : makeHandledPullRequestKey(pr.repo, pr.number)
+          : makeHandledPullRequestKey(pr.repo, pr.number),
+        force: true
       })
       continue
     }

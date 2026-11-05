@@ -29,7 +29,7 @@ const OPTIONS = [
         'List each stack from the PR on main up'
       )
   }
-] as const satisfies readonly { id: StackOrder }[]
+] as const
 
 export function SidebarStackOrderToggle({
   stackOrder,

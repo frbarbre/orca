@@ -20,6 +20,7 @@ function makeBaseline(overrides: Partial<PersistedUIWriteBaseline> = {}): Persis
     groupBy: 'repo',
     sortBy: 'recent',
     projectOrderBy: 'manual',
+    stackOrder: 'desc',
     showSleepingWorkspaces: true,
     workspaceHostScope: 'all',
     visibleWorkspaceHostIds: null,

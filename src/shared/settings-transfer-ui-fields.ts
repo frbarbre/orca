@@ -21,6 +21,7 @@ export const UI_STATE_EXPORT: Record<keyof PersistedUIState, boolean> = {
   groupBy: true,
   sortBy: true,
   projectOrderBy: true,
+  stackOrder: true,
   showActiveOnly: true,
   hideSleepingWorkspaces: true,
   workspaceHostScope: false,

@@ -58,6 +58,9 @@ export function createUiPreferenceActions(set: UISliceSet, get: UISliceGet): Par
     projectOrderBy: 'manual',
     setProjectOrderBy: (p) => set({ projectOrderBy: p }),
 
+    stackOrder: 'desc',
+    setStackOrder: (order) => set({ stackOrder: order }),
+
     showActiveOnly: false,
     setShowActiveOnly: (v) => set({ showActiveOnly: v }),
 

@@ -87,6 +87,7 @@ export function useSidebarSectionRows(args: SectionRowsArgs) {
   const worktreesByRepo = useAppStore((s) => selectWorktreesByRepo(s))
   const workspaceHostOrder = useAppStore((s) => s.workspaceHostOrder)
   const reviewingStatus = useAppStore(selectStackReviewingStatus)
+  const stackOrder = useAppStore((s) => s.stackOrder)
   const setWorkspaceHostOrder = useAppStore((s) => s.setWorkspaceHostOrder)
 
   // Why: manual header order is bound to state.repos; Recent/Smart derive order from the sorted worktree stream.
@@ -146,6 +147,7 @@ export function useSidebarSectionRows(args: SectionRowsArgs) {
         repoMap,
         prGroupOf: createSidebarPRGroupReader(repoMap, args.prCache),
         stackOf: createSidebarStackReader(repoMap, args.prCache, reviewingStatus),
+        stackOrder,
         repoOrder,
         workspaceStatuses: args.workspaceStatuses,
         projectOrderBy: args.projectOrderBy,
@@ -170,6 +172,7 @@ export function useSidebarSectionRows(args: SectionRowsArgs) {
       repoMap,
       args.prCache,
       reviewingStatus,
+      stackOrder,
       defaultHostId,
       repoOrder,
       args.workspaceStatuses,

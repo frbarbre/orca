@@ -23,6 +23,7 @@ import type { ReleaseChannel } from '../../../../../shared/release-channel'
 import type { ChangelogData, UpdateStatus } from '../../../../../shared/update-status-types'
 import type { StatusBarUsageMode } from '../../../../../shared/status-bar-usage-mode'
 import type { PersistedUIWriteBaseline } from '../persisted-ui-write-baseline'
+import type { StackOrder } from '../../../../../shared/sidebar-list/stack-groups'
 import type { UISliceCore } from './ui-slice-contract-core'
 
 export type UISlicePreferences = {
@@ -35,6 +36,8 @@ export type UISlicePreferences = {
   setSortBy: (s: UISlicePreferences['sortBy']) => void
   projectOrderBy: ProjectOrderBy
   setProjectOrderBy: (p: ProjectOrderBy) => void
+  stackOrder: StackOrder
+  setStackOrder: (order: StackOrder) => void
   showActiveOnly: boolean
   setShowActiveOnly: (v: boolean) => void
   showSleepingWorkspaces: boolean

@@ -39,6 +39,7 @@ import {
 } from '../../../../shared/workspace-view/workspace-view-options'
 import { translate } from '@/i18n/i18n'
 import { SidebarGroupByToggle } from './SidebarGroupByToggle'
+import { SidebarStackOrderToggle } from './SidebarStackOrderToggle'
 
 export function useWorkspaceOptionsFilterBadge(): {
   hasAnyFilter: boolean
@@ -90,9 +91,14 @@ function HostsOptionItem({
 function GroupByOptionItem(): JSX.Element {
   const groupBy = useAppStore((s) => s.groupBy)
   const setGroupBy = useAppStore((s) => s.setGroupBy)
+  const stackOrder = useAppStore((s) => s.stackOrder)
+  const setStackOrder = useAppStore((s) => s.setStackOrder)
   return (
-    <div className="px-2 pt-0.5 pb-1">
+    <div className="flex flex-col gap-1 px-2 pt-0.5 pb-1">
       <SidebarGroupByToggle groupBy={groupBy} setGroupBy={setGroupBy} />
+      {groupBy === 'stack' && (
+        <SidebarStackOrderToggle stackOrder={stackOrder} setStackOrder={setStackOrder} />
+      )}
     </div>
   )
 }

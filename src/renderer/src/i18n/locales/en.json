@@ -5737,6 +5737,12 @@
           "b7e4d2a19c": "Onboarding",
           "c4f8e1b72a": "X"
         },
+        "SidebarStackOrderToggle": {
+          "desc": "Desc",
+          "descTitle": "List each stack from the PR furthest from main down",
+          "asc": "Asc",
+          "ascTitle": "List each stack from the PR on main up"
+        },
         "SidebarToolbar": {
           "87d0064026": "Workspace board moved to the bottom bar",
           "a30e34eb5c": "Close workspace board",

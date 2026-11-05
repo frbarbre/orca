@@ -138,6 +138,7 @@ export const UiUpdateFields = z
     showWorkspaceLineage: z.boolean().optional(),
     sortBy: z.enum(['name', 'smart', 'recent', 'repo', 'manual']).optional(),
     projectOrderBy: z.enum(['manual', 'recent']).optional(),
+    stackOrder: z.enum(['asc', 'desc']).optional(),
     showActiveOnly: z.boolean().optional(),
     hideSleepingWorkspaces: z.boolean().optional(),
     showSleepingWorkspaces: z.boolean().optional(),

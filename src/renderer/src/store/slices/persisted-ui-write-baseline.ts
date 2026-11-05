@@ -13,6 +13,7 @@ export type PersistedUIWriteBaseline = {
   groupBy: PersistedUIState['groupBy']
   sortBy: PersistedUIState['sortBy']
   projectOrderBy: PersistedUIState['projectOrderBy']
+  stackOrder: NonNullable<PersistedUIState['stackOrder']>
   showSleepingWorkspaces: boolean
   workspaceHostScope: PersistedUIState['workspaceHostScope']
   visibleWorkspaceHostIds: PersistedUIState['visibleWorkspaceHostIds']
@@ -44,6 +45,7 @@ const PERSISTED_UI_WRITE_BASELINE_FIELD_SET = {
   groupBy: true,
   sortBy: true,
   projectOrderBy: true,
+  stackOrder: true,
   showSleepingWorkspaces: true,
   workspaceHostScope: true,
   visibleWorkspaceHostIds: true,

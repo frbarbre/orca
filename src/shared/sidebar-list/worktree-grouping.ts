@@ -10,7 +10,12 @@ import {
 } from './folder-workspace-lanes'
 import { PR_GROUP_ORDER, getPRLaneKey } from './group-keys'
 import type { OrderedGroupEntry, WorktreeGroupEntry } from './worktree-group-entry'
-import { getStackLaneKey, orderStackGroups, type SidebarStackReader } from './stack-groups'
+import {
+  getStackLaneKey,
+  orderStackGroups,
+  type SidebarStackReader,
+  type StackOrder
+} from './stack-groups'
 import { buildProjectSections, type ProjectGroupingIndex } from '../project-section-grouping'
 import { orderProjectSections } from '../project-section-order'
 import type {
@@ -27,6 +32,7 @@ export function buildOrderedGroups(args: {
   repoMap: Map<string, Repo>
   prGroupOf: SidebarPRGroupReader
   stackOf?: SidebarStackReader
+  stackOrder?: StackOrder
   workspaceStatuses: readonly WorkspaceStatusDefinition[]
   projectIndex: ProjectGroupingIndex | null
   displayRootByIdentity?: ReadonlyMap<string, Worktree>
@@ -44,6 +50,7 @@ export function buildOrderedGroups(args: {
     repoMap,
     prGroupOf,
     stackOf,
+    stackOrder,
     workspaceStatuses,
     projectIndex,
     displayRootByIdentity,
@@ -117,7 +124,7 @@ export function buildOrderedGroups(args: {
     )
   }
   if (groupBy === 'stack') {
-    return orderStackGroups(grouped, stackOf, workspaceStatuses)
+    return orderStackGroups(grouped, stackOf, workspaceStatuses, stackOrder)
   }
   const orderedGroups: OrderedGroupEntry[] = []
   if (groupBy === 'pr-status') {

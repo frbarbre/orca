@@ -28,6 +28,7 @@ import type {
 } from './ui-chrome-types'
 import type { WorkspaceStatusDefinition } from './worktree/types'
 import type { WorkspaceStatusRuleConfig } from './workspace-status-rule-config'
+import type { StackOrder } from './sidebar-list/stack-groups'
 import type { PersistedAutomationHostFilter } from './automation-host-filter'
 import type { PendingRuntimeRepoRemoval } from './pending-runtime-repo-removal'
 
@@ -52,6 +53,8 @@ export type PersistedUIState = {
   sortBy: 'name' | 'smart' | 'recent' | 'repo' | 'manual'
   /** Project-header order in repo grouping, independent of workspace sort: manual permits drag, recent follows visible activity. */
   projectOrderBy: ProjectOrderBy
+  /** Order of worktrees inside each Stack section; absent means 'desc'. */
+  stackOrder?: StackOrder
   /** Deprecated; the Active only filter is retired and ignored on hydration. */
   showActiveOnly: boolean
   /** Hide sleeping/inactive workspaces from workspace navigation. Off by default. */

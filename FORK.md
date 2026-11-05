@@ -1912,6 +1912,11 @@ display gains "Workspace status", a chip styled like the project chip on its own
 Linear title (the title row is already full with a long branch name and the stack position), so the
 status lane stays visible under any grouping.
 
+With Stack selected, a Desc / Asc toggle appears under Group by in Workspace options. Desc (the
+default) lists each stack from the PR furthest from main down; Asc lists it from the PR on main up.
+Stack order between stacks is unchanged. The choice persists as the UI field `stackOrder`
+(`SidebarStackOrderToggle.tsx`, `orderStackGroups`).
+
 | File                                                                  | What is ours                                   |
 | --------------------------------------------------------------------- | ---------------------------------------------- |
 | `src/shared/sidebar-list/stack-groups.ts`, `grouping/stack-key.ts`    | Stack lane keys, order, and the cache reader.  |

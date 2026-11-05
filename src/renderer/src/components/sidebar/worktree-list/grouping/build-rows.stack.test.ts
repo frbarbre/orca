@@ -60,6 +60,43 @@ describe('groupBy stack', () => {
     expect(rows[6]).toMatchObject({ type: 'header', icon: { kind: 'stack', stack: null } })
   })
 
+  it('lists each stack from the PR on main up when the stack order is ascending', () => {
+    const worktrees = [loose, bottom, top, other, middle]
+    const rows = planSidebarRows({
+      groupBy: 'stack',
+      stackOrder: 'asc',
+      worktrees,
+      repoMap,
+      prGroupOf: () => 'in-progress',
+      stackOf: createSidebarStackReader(repoMap, prCache),
+      workspaceStatuses: cloneDefaultWorkspaceStatuses(),
+      projectOrderBy: 'manual',
+      lineageById: {},
+      worktreeMap: new Map(worktrees.map((w) => [w.id, w])),
+      nestLineage: false,
+      projectGroups: [],
+      placeholderRepoIds: new Set(),
+      importedWorktreesByRepo: new Map(),
+      newExternalWorktreesInboxByRepo: new Map(),
+      pendingCreations: [],
+      folderWorkspaces: [],
+      defaultHostId: LOCAL_EXECUTION_HOST_ID,
+      pinnedDisplayPolicy: 'single-location',
+      filterRepoIds: []
+    }).render(new Set())
+
+    expect(summary(rows)).toEqual([
+      '# stack:repo-1:9 1',
+      'other',
+      '# stack:repo-1:7 3',
+      'bottom',
+      'middle',
+      'top',
+      '# stack:none 1',
+      'loose'
+    ])
+  })
+
   it('puts every worktree outside a stack while PR data is missing', () => {
     expect(summary(buildRows('stack', [bottom, loose], repoMap, null, new Set()))).toEqual([
       '# stack:none 2',

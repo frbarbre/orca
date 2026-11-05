@@ -50,7 +50,7 @@ import type {
 import { orderMainWorktreeFirst, getRenderedNaturalAnchorRepoIds } from './section-order'
 import { withRepoSectionDisplayLabels } from '../project-section-order'
 import { buildOrderedGroups } from './worktree-grouping'
-import type { SidebarStackReader } from './stack-groups'
+import type { SidebarStackReader, StackOrder } from './stack-groups'
 
 type SidebarOccurrenceSection = WorktreeOccurrenceSection<Worktree> & { group: WorktreeGroupEntry }
 
@@ -65,6 +65,7 @@ export type SidebarRowPlanInputs = {
   prGroupOf: SidebarPRGroupReader
   /** Clients without stack facts leave it out; every worktree then sits outside a stack. */
   stackOf?: SidebarStackReader
+  stackOrder?: StackOrder
   repoOrder?: Map<string, number>
   workspaceStatuses: readonly WorkspaceStatusDefinition[]
   projectOrderBy: ProjectOrderBy
@@ -93,6 +94,7 @@ export function planSidebarRows(inputs: SidebarRowPlanInputs) {
     repoOfWorktree,
     prGroupOf,
     stackOf,
+    stackOrder,
     repoOrder,
     workspaceStatuses,
     projectOrderBy,
@@ -146,6 +148,7 @@ export function planSidebarRows(inputs: SidebarRowPlanInputs) {
               repoMap,
               prGroupOf,
               stackOf,
+              stackOrder,
               workspaceStatuses,
               projectIndex,
               displayRootByIdentity,

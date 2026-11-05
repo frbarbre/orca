@@ -71,6 +71,20 @@ describe('PendingReviewReviewerPicker', () => {
     expect(onRemove).toHaveBeenCalledWith('zahlio')
   })
 
+  it('closes on a click outside it', async () => {
+    renderPicker()
+    const outside = document.createElement('div')
+    document.body.appendChild(outside)
+    await userEvent.click(screen.getByRole('button', { name: 'Reviewer' }))
+    await screen.findByRole('combobox')
+    await new Promise((resolve) => setTimeout(resolve, 0))
+
+    await userEvent.click(outside)
+
+    expect(screen.queryByRole('combobox')).toBeNull()
+    outside.remove()
+  })
+
   it('requests a typed team by org and slug', async () => {
     const { onRequest } = renderPicker()
     await userEvent.click(screen.getByRole('button', { name: 'Reviewer' }))

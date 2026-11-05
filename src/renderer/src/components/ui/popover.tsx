@@ -5,12 +5,40 @@ import * as PopoverPrimitive from 'radix-ui/popover'
 
 import { cn } from '@/lib/utils'
 import { handleImeOverlayEscape } from '@/lib/ime-overlay-escape'
+import { watchClicklessOutsidePress } from './popover-clickless-dismiss'
 
 // React delegates wheel passively, so native defaultPrevented may not reflect synthetic cancellation.
 const consumerPreventedWheelEvents = new WeakSet<WheelEvent>()
 
-function Popover(props: React.ComponentProps<typeof PopoverPrimitive.Root>) {
-  return <PopoverPrimitive.Root data-slot="popover" {...props} />
+const PopoverDismissContext = React.createContext<(() => void) | null>(null)
+
+function Popover({
+  open: openProp,
+  defaultOpen = false,
+  onOpenChange,
+  ...props
+}: React.ComponentProps<typeof PopoverPrimitive.Root>) {
+  const [uncontrolledOpen, setUncontrolledOpen] = React.useState(defaultOpen)
+  const handleOpenChange = React.useCallback(
+    (next: boolean) => {
+      if (openProp === undefined) {
+        setUncontrolledOpen(next)
+      }
+      onOpenChange?.(next)
+    },
+    [onOpenChange, openProp]
+  )
+  const dismiss = React.useCallback(() => handleOpenChange(false), [handleOpenChange])
+  return (
+    <PopoverDismissContext.Provider value={dismiss}>
+      <PopoverPrimitive.Root
+        data-slot="popover"
+        open={openProp ?? uncontrolledOpen}
+        onOpenChange={handleOpenChange}
+        {...props}
+      />
+    </PopoverDismissContext.Provider>
+  )
 }
 
 function PopoverTrigger(props: React.ComponentProps<typeof PopoverPrimitive.Trigger>) {
@@ -116,12 +144,29 @@ function PopoverContent({
   style,
   onWheel,
   onWheelCapture,
+  onPointerDownCapture,
   ref: forwardedRef,
   ...props
 }: React.ComponentProps<typeof PopoverPrimitive.Content> & {
   portalContainer?: HTMLElement | null
   wheelScroll?: boolean
 }) {
+  const dismiss = React.useContext(PopoverDismissContext)
+  const dismissRef = React.useRef(dismiss)
+  React.useLayoutEffect(() => {
+    dismissRef.current = dismiss
+  }, [dismiss])
+  const pressInsideRef = React.useRef(false)
+  // Why opt out: a popover with its own outside-press rules may mean to stay open.
+  const dismissesClicklessPress =
+    dismiss !== null && !props.onInteractOutside && !props.onPointerDownOutside
+  const handlePointerDownCapture = React.useCallback(
+    (event: React.PointerEvent<HTMLDivElement>): void => {
+      pressInsideRef.current = true
+      onPointerDownCapture?.(event)
+    },
+    [onPointerDownCapture]
+  )
   const handleConsumerWheel = React.useCallback(
     (event: React.WheelEvent<HTMLDivElement>): void => {
       onWheel?.(event)
@@ -144,7 +189,22 @@ function PopoverContent({
   const setContentRef = React.useCallback(
     (node: HTMLDivElement | null) => {
       if (node) {
-        return attachPopoverContent(node, portalContainer, forwardedRef)
+        const detach = attachPopoverContent(node, portalContainer, forwardedRef)
+        const unwatch = dismissesClicklessPress
+          ? watchClicklessOutsidePress({
+              content: node,
+              consumePressInsideReactTree: () => {
+                const inside = pressInsideRef.current
+                pressInsideRef.current = false
+                return inside
+              },
+              dismiss: () => dismissRef.current?.()
+            })
+          : undefined
+        return () => {
+          unwatch?.()
+          detach()
+        }
       }
       if (typeof forwardedRef === 'function') {
         forwardedRef(null)
@@ -153,7 +213,7 @@ function PopoverContent({
       }
       return undefined
     },
-    [forwardedRef, portalContainer]
+    [dismissesClicklessPress, forwardedRef, portalContainer]
   )
 
   return (
@@ -178,6 +238,7 @@ function PopoverContent({
         }
         onWheel={handleConsumerWheel}
         onWheelCapture={handleConsumerWheelCapture}
+        onPointerDownCapture={handlePointerDownCapture}
         {...props}
         onEscapeKeyDown={(event) => handleImeOverlayEscape(event, props.onEscapeKeyDown)}
       />

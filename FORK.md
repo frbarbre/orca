@@ -2010,6 +2010,14 @@ the workspace status rules gain an "In the merge queue" condition (`merge-queue`
 after "You are the reviewer". It only applies once it has a column, so an unmapped queue leaves the
 card where the other conditions put it.
 
+### 79. Popovers close on an outside press that fires no click
+
+Radix closes a popover on the click that follows an outside press, but a press on a scrollbar, or
+one a drag overlay ends (the sidebar resize handle), fires no click, so the popover stayed open.
+`Popover` now owns its open state and hands `PopoverContent` a dismiss, which
+`popover-clickless-dismiss.ts` calls a task after mouseup when the outside press brought no click.
+A popover with its own `onInteractOutside` or `onPointerDownOutside` keeps Radix's behavior.
+
 ## Verify
 
 Verify runs on GitHub, not locally: `fork-verify.yml` runs it on every pull request against `main`,

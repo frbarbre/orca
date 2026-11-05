@@ -15,19 +15,45 @@ const TARGET = {
   worktreeId: 'wt-1',
   worktreePath: '/work/review',
   agentTabId: 'agent-tab',
-  baseRef: 'origin/main'
+  baseRef: 'origin/main',
+  prUrl: 'https://github.com/acme/app/pull/42'
 }
 
+type FakeTab = { id: string; groupId: string; contentType?: string; entityId?: string }
+
 function fakeStore() {
+  const tabs: FakeTab[] = [{ id: 'agent-tab', groupId: 'group-left' }]
   return {
-    unifiedTabsByWorktree: { 'wt-1': [{ id: 'agent-tab', groupId: 'group-left' }] },
+    unifiedTabsByWorktree: { 'wt-1': tabs },
     ensureWorktreeRootGroup: vi.fn(() => 'group-root'),
     createEmptySplitGroup: vi.fn(() => 'group-right'),
     beginGitBranchCompareRequest: vi.fn(),
     setGitBranchCompareResult: vi.fn(),
     openBranchWorktreeDiff: vi.fn(),
+    createBrowserTab: vi.fn(
+      (_worktreeId: string, _url: string, options: { targetGroupId: string }) => {
+        tabs.push({
+          id: 'browser-tab',
+          groupId: options.targetGroupId,
+          contentType: 'browser',
+          entityId: 'browser-workspace'
+        })
+        return { id: 'browser-workspace' }
+      }
+    ),
     activateTab: vi.fn()
   }
+}
+
+const BROWSER_TAB_SELECTED = ['browser-tab', { worktreeId: 'wt-1', recordFocus: false }]
+
+function expectPullRequestOpenedOnTheRight(store: ReturnType<typeof fakeStore>): void {
+  expect(store.createBrowserTab).toHaveBeenCalledWith(
+    'wt-1',
+    'https://github.com/acme/app/pull/42',
+    { targetGroupId: 'group-right', activate: false }
+  )
+  expect(store.activateTab).toHaveBeenCalledWith(...BROWSER_TAB_SELECTED)
 }
 
 const LOCAL_TARGET = { kind: 'local' as const }
@@ -75,23 +101,46 @@ describe('openReviewWorkspaceLayout', () => {
     )
   })
 
-  it('still shows the agent, on its own, when the PR has no changed files or the compare fails', async () => {
+  it('opens the PR on GitHub as the selected tab beside the first file', async () => {
     const store = fakeStore()
     await openReviewWorkspaceLayout(TARGET, {
       getState: () => store as never,
       resolveTarget: () => LOCAL_TARGET,
-      branchCompare: async () => ({ summary: SUMMARY, entries: [] })
+      branchCompare: async () => ({
+        summary: SUMMARY,
+        entries: [{ path: 'src/a.ts', status: 'added' as const }]
+      })
     })
+
+    expectPullRequestOpenedOnTheRight(store)
+    expect(store.createEmptySplitGroup).toHaveBeenCalledTimes(1)
+    expect(store.createBrowserTab.mock.invocationCallOrder[0]).toBeGreaterThan(
+      store.openBranchWorktreeDiff.mock.invocationCallOrder[0]
+    )
+    expect(store.activateTab).toHaveBeenLastCalledWith(...AGENT_TAB_SELECTED)
+  })
+
+  it.each([
+    ['the PR has no changed files', async () => ({ summary: SUMMARY, entries: [] })],
+    [
+      'the compare fails',
+      async () => {
+        throw new Error('no base')
+      }
+    ]
+  ])('still opens the PR on the right when %s', async (_case, branchCompare) => {
+    const store = fakeStore()
     await openReviewWorkspaceLayout(TARGET, {
       getState: () => store as never,
       resolveTarget: () => LOCAL_TARGET,
-      branchCompare: async () => {
-        throw new Error('no base')
-      }
+      branchCompare: branchCompare as never
     })
-    expect(store.createEmptySplitGroup).not.toHaveBeenCalled()
+
     expect(store.openBranchWorktreeDiff).not.toHaveBeenCalled()
-    expect(store.activateTab).toHaveBeenCalledTimes(2)
+    expect(store.createEmptySplitGroup).toHaveBeenCalledWith('wt-1', 'group-left', 'right', {
+      activate: false
+    })
+    expectPullRequestOpenedOnTheRight(store)
     expect(store.activateTab).toHaveBeenLastCalledWith(...AGENT_TAB_SELECTED)
   })
 })

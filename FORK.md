@@ -1638,15 +1638,17 @@ When the review inbox creates a "Reviewing" workspace (`workspace-status-rules/c
 after the review agent launches it fetches the PR's changed files against the workspace's base (in the
 background, since the Source Control panel only loads the compare for the active worktree), seeds the
 store with them, splits the agent's group to the right and opens the first file's diff there
-(`workspace-status-rules/open-review-workspace-layout.ts`). A PR with no changed files, or a compare
-that fails, leaves the agent on its own. Either way it ends by selecting the agent's tab in its group
-(scoped to the review worktree), since the setup and default tabs open in that group too and would
-otherwise be the one shown.
+(`workspace-status-rules/open-review-workspace-layout.ts`). It then opens the PR on GitHub as an Orca
+browser tab in that same right-hand group and selects it there, so the right side shows the PR page
+with the first file's diff one tab over. A PR with no changed files, or a compare that fails, still
+gets the right-hand split with just the browser tab. Either way it ends by selecting the agent's tab
+in its group (scoped to the review worktree, never stealing focus), since the setup and default tabs
+open in that group too and would otherwise be the one shown.
 
-| File                                                     | What is ours                         |
-| -------------------------------------------------------- | ------------------------------------ |
-| `workspace-status-rules/open-review-workspace-layout.ts` | The split and the first file.        |
-| `workspace-status-rules/create-review-workspace.ts`      | Running it after the agent launches. |
+| File                                                     | What is ours                                  |
+| -------------------------------------------------------- | --------------------------------------------- |
+| `workspace-status-rules/open-review-workspace-layout.ts` | The split, the first file and the PR browser. |
+| `workspace-status-rules/create-review-workspace.ts`      | Running it after the agent launches.          |
 
 ### 51. No Create PR in the Source Control header
 

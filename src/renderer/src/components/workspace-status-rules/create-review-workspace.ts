@@ -150,7 +150,8 @@ export async function createReviewWorkspace(
         worktreeId: created.worktree.id,
         worktreePath: created.worktree.path,
         agentTabId: launched.tabId,
-        baseRef
+        baseRef,
+        prUrl: pr.url
       })
     }
     return { ok: true, worktreeId: created.worktree.id }

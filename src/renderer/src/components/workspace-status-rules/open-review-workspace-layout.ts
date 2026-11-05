@@ -13,6 +13,7 @@ type LayoutState = Pick<
   | 'beginGitBranchCompareRequest'
   | 'setGitBranchCompareResult'
   | 'openBranchWorktreeDiff'
+  | 'createBrowserTab'
   | 'activateTab'
 >
 
@@ -21,6 +22,7 @@ type LayoutTarget = {
   worktreePath: string
   agentTabId: string
   baseRef: string
+  prUrl: string
 }
 
 type LayoutDeps = {
@@ -35,14 +37,15 @@ const defaultDeps: LayoutDeps = {
   branchCompare: getRuntimeGitBranchCompare
 }
 
-// Fork: a review workspace opens as the review agent with the PR's first changed file beside it,
-// split to the right, so the review and the code it is about are both on screen.
+// Fork: a review workspace opens as the review agent with the PR's first changed file and the PR
+// on GitHub beside it, split to the right, so the review and the code it is about are both on screen.
 export async function openReviewWorkspaceLayout(
   target: LayoutTarget,
   deps: LayoutDeps = defaultDeps
 ): Promise<void> {
   try {
-    await openFirstFileBesideAgent(target, deps)
+    const rightGroupId = await openFirstFileBesideAgent(target, deps)
+    openPullRequestBesideAgent(target, deps, rightGroupId)
   } finally {
     // Why: the setup and default tabs open in the agent's group alongside it, so whichever of
     // them landed last would otherwise be the one shown there. Scoped, so it never steals focus.
@@ -52,13 +55,47 @@ export async function openReviewWorkspaceLayout(
   }
 }
 
+function createGroupBesideAgent(
+  { worktreeId, agentTabId }: LayoutTarget,
+  state: LayoutState
+): string | null {
+  const agentGroupId =
+    state.unifiedTabsByWorktree[worktreeId]?.find((tab) => tab.id === agentTabId)?.groupId ??
+    state.ensureWorktreeRootGroup(worktreeId)
+  return state.createEmptySplitGroup(worktreeId, agentGroupId, 'right', { activate: false })
+}
+
+function openPullRequestBesideAgent(
+  target: LayoutTarget,
+  deps: LayoutDeps,
+  rightGroupId: string | null
+): void {
+  const state = deps.getState()
+  const groupId = rightGroupId ?? createGroupBesideAgent(target, state)
+  if (!groupId) {
+    return
+  }
+  const browser = state.createBrowserTab(target.worktreeId, target.prUrl, {
+    targetGroupId: groupId,
+    activate: false
+  })
+  const latest = deps.getState()
+  const browserTab = latest.unifiedTabsByWorktree[target.worktreeId]?.find(
+    (tab) => tab.contentType === 'browser' && tab.entityId === browser.id
+  )
+  if (browserTab) {
+    latest.activateTab(browserTab.id, { worktreeId: target.worktreeId, recordFocus: false })
+  }
+}
+
 async function openFirstFileBesideAgent(
-  { worktreeId, worktreePath, agentTabId, baseRef }: LayoutTarget,
+  target: LayoutTarget,
   deps: LayoutDeps
-): Promise<void> {
+): Promise<string | null> {
+  const { worktreeId, worktreePath, baseRef } = target
   const ownerTarget = deps.resolveTarget(worktreeId)
   if (!ownerTarget) {
-    return
+    return null
   }
   let result: Awaited<ReturnType<typeof getRuntimeGitBranchCompare>>
   try {
@@ -69,11 +106,11 @@ async function openFirstFileBesideAgent(
     )
   } catch (error) {
     console.warn('[workspace-status-rules] review layout could not read the PR diff:', error)
-    return
+    return null
   }
   const [first] = [...result.entries].sort((a, b) => compareFileNames(a.path, b.path))
   if (result.summary.status !== 'ready' || !first) {
-    return
+    return null
   }
   const state = deps.getState()
   // Why seed the store: the Source Control panel only fetches the compare for the active
@@ -81,14 +118,9 @@ async function openFirstFileBesideAgent(
   const requestKey = `review-layout:${worktreeId}`
   state.beginGitBranchCompareRequest(worktreeId, requestKey, baseRef)
   state.setGitBranchCompareResult(worktreeId, requestKey, result)
-  const agentGroupId =
-    state.unifiedTabsByWorktree[worktreeId]?.find((tab) => tab.id === agentTabId)?.groupId ??
-    state.ensureWorktreeRootGroup(worktreeId)
-  const diffGroupId = state.createEmptySplitGroup(worktreeId, agentGroupId, 'right', {
-    activate: false
-  })
+  const diffGroupId = createGroupBesideAgent(target, state)
   if (!diffGroupId) {
-    return
+    return null
   }
   state.openBranchWorktreeDiff(
     worktreeId,
@@ -98,4 +130,5 @@ async function openFirstFileBesideAgent(
     detectLanguage(first.path),
     { targetGroupId: diffGroupId, preview: false }
   )
+  return diffGroupId
 }

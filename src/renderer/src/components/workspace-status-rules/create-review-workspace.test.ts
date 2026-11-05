@@ -178,7 +178,8 @@ describe('createReviewWorkspace', () => {
       worktreeId: 'wt-1',
       worktreePath: '/work/review-3170',
       agentTabId: 'agent-tab',
-      baseRef: 'origin/main'
+      baseRef: 'origin/main',
+      prUrl: 'https://github.com/flowbasedk/flowbase/pull/3170'
     })
   })
 

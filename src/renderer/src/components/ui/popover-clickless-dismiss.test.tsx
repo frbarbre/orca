@@ -6,7 +6,8 @@ import { Popover, PopoverContent, PopoverTrigger } from './popover'
 
 afterEach(cleanup)
 
-const nextTask = (): Promise<void> => act(() => new Promise((resolve) => setTimeout(resolve, 0)))
+const nextTask = (): Promise<void> =>
+  act(() => new Promise<void>((resolve) => setTimeout(resolve, 0)))
 
 async function renderOpen(contentProps: Parameters<typeof PopoverContent>[0] = {}) {
   render(

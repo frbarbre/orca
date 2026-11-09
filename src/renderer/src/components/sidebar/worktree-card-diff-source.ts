@@ -8,7 +8,7 @@ export type WorktreeCardDiff = {
 }
 
 export function resolveWorktreeCardDiff(
-  localTotal: GitBranchLineTotal | undefined,
+  localTotal: GitBranchLineTotal | null | undefined,
   prDisplay: WorktreeCardPrDisplay | null | undefined
 ): WorktreeCardDiff | undefined {
   if (localTotal) {

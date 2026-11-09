@@ -24,6 +24,8 @@ export function hostedReviewInfoFromGitHubPRInfo(pr: PRInfo): HostedReviewInfo {
       ? { confirmedContainedHeadOid: pr.confirmedContainedHeadOid }
       : {}),
     ...(pr.conflictSummary ? { conflictSummary: pr.conflictSummary } : {}),
-    ...(pr.stack ? { stack: pr.stack } : {})
+    ...(pr.stack ? { stack: pr.stack } : {}),
+    ...(pr.additions !== undefined ? { additions: pr.additions } : {}),
+    ...(pr.deletions !== undefined ? { deletions: pr.deletions } : {})
   }
 }

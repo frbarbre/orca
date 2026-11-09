@@ -54,12 +54,11 @@ export function useWorktreeCardController(props: ResolvedWorktreeCardProps) {
   const prStack =
     review.prDisplay && 'stack' in review.prDisplay ? review.prDisplay.stack : undefined
   const showPrDiff = foundation.cardProps.includes('pr-diff')
+  const prDiffSource =
+    review.prDisplay && 'additions' in review.prDisplay ? review.prDisplay : undefined
   const prDiff =
-    review.prDisplay &&
-    'additions' in review.prDisplay &&
-    typeof review.prDisplay.additions === 'number' &&
-    typeof review.prDisplay.deletions === 'number'
-      ? { additions: review.prDisplay.additions, deletions: review.prDisplay.deletions }
+    typeof prDiffSource?.additions === 'number' && typeof prDiffSource.deletions === 'number'
+      ? { additions: prDiffSource.additions, deletions: prDiffSource.deletions }
       : undefined
   const shouldRefreshHostedReview = foundation.newCardStyle ? showStatus : showPR
   const detailsHoverControl = useWorktreeCardDetailsHoverControl()

@@ -56,6 +56,9 @@ export type HostedReviewInfo = {
   conflictSummary?: PRConflictSummary
   /** Fork: the GitHub stack the PR sits in, for the card's stack position. */
   stack?: GitHubPRStack
+  /** Fork: total lines the PR adds and removes, for the card's PR diff. */
+  additions?: number
+  deletions?: number
 }
 
 export type HostedReviewForBranchArgs = {

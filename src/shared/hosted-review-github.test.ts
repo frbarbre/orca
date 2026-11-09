@@ -43,6 +43,14 @@ describe('hostedReviewInfoFromGitHubPRInfo', () => {
     expect(hostedReviewInfoFromGitHubPRInfo(pr)).not.toHaveProperty('stack')
   })
 
+  it("carries the PR's diff totals for the card's PR diff", () => {
+    expect(hostedReviewInfoFromGitHubPRInfo({ ...pr, additions: 40, deletions: 0 })).toMatchObject({
+      additions: 40,
+      deletions: 0
+    })
+    expect(hostedReviewInfoFromGitHubPRInfo(pr)).not.toHaveProperty('additions')
+  })
+
   it("carries the card's check status, which ignores queued checks", () => {
     expect(hostedReviewInfoFromGitHubPRInfo({ ...pr, cardChecksStatus: 'running' })).toMatchObject({
       cardStatus: 'running'

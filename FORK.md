@@ -2040,6 +2040,13 @@ The comment filter tabs gain "Unresolved" after Bots (`pr-comment-audience.ts`):
 review threads that are still open, the ones a branch requiring conversation resolution waits on.
 A comment outside a review thread has nothing to resolve, so it never counts.
 
+### 82. Project card option
+
+Card display gains "Project" after Host (`card-properties.ts`, `fork-card-property-options.ts`):
+unticked, new-style cards drop the project chip (`worktree-card-presentation.tsx`). Compact cards
+keep it, since they have no Card display menu. Existing profiles get it ticked once on load
+(`_projectWorktreeCardPropertyDefaulted` in `normalize-loaded-ui-state.ts`), so unticking sticks.
+
 ## Verify
 
 Verify runs on GitHub, not locally: `fork-verify.yml` runs it on every pull request against `main`,

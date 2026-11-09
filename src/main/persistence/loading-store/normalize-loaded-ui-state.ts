@@ -80,6 +80,7 @@ export function normalizeLoadedUiState(
   const expandedCardPropsMigrated = parsed.ui?._expandedWorktreeCardPropertiesDefaulted === true
   const jiraIssueCardPropDefaulted = parsed.ui?._jiraIssueWorktreeCardPropertyDefaulted === true
   const hostCardPropDefaulted = parsed.ui?._hostWorktreeCardPropertyDefaulted === true
+  const projectCardPropDefaulted = parsed.ui?._projectWorktreeCardPropertyDefaulted === true
   const hadExperimentOn = readDeprecatedExperimentFlag(parsed)
   const deliberateUncheck =
     hadExperimentOn && Array.isArray(rawCardProps) && !rawCardProps.includes('inline-agents')
@@ -126,7 +127,12 @@ export function normalizeLoadedUiState(
       hostCardPropDefaulted || jiraCandidate.includes('host')
         ? jiraCandidate
         : [...jiraCandidate, 'host' as const]
-    const normalized = normalizeWorktreeCardProperties(hostCandidate)
+    // Fork: the project chip used to show unconditionally; keep it once when making it a property.
+    const projectCandidate =
+      projectCardPropDefaulted || hostCandidate.includes('project')
+        ? hostCandidate
+        : [...hostCandidate, 'project' as const]
+    const normalized = normalizeWorktreeCardProperties(projectCandidate)
     const changed =
       normalized.length !== rawCardProps.length ||
       normalized.some((property, index) => property !== rawCardProps[index])
@@ -137,7 +143,8 @@ export function normalizeLoadedUiState(
     !inlineAgentsMigrated ||
     !expandedCardPropsMigrated ||
     !jiraIssueCardPropDefaulted ||
-    !hostCardPropDefaulted
+    !hostCardPropDefaulted ||
+    !projectCardPropDefaulted
   ) {
     markNeedsSave()
   }
@@ -233,6 +240,7 @@ export function normalizeLoadedUiState(
     _inlineAgentsDefaultedForAllUsers: true,
     _expandedWorktreeCardPropertiesDefaulted: true,
     _jiraIssueWorktreeCardPropertyDefaulted: true,
-    _hostWorktreeCardPropertyDefaulted: true
+    _hostWorktreeCardPropertyDefaulted: true,
+    _projectWorktreeCardPropertyDefaulted: true
   }
 }

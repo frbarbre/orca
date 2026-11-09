@@ -119,6 +119,7 @@ export const UI_STATE_EXPORT: Record<keyof PersistedUIState, boolean> = {
   _expandedWorktreeCardPropertiesDefaulted: false,
   _jiraIssueWorktreeCardPropertyDefaulted: false,
   _hostWorktreeCardPropertyDefaulted: false,
+  _projectWorktreeCardPropertyDefaulted: false,
   starNagBaselineAgents: false,
   starNagAppVersion: false,
   starNagNextThreshold: false,

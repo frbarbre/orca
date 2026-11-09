@@ -226,6 +226,8 @@ export type PersistedUIState = {
   _jiraIssueWorktreeCardPropertyDefaulted?: boolean
   /** One-shot backfill flag for 'host', which became a toggleable property after earlier profiles were already stamped. */
   _hostWorktreeCardPropertyDefaulted?: boolean
+  /** Fork: one-shot backfill flag for 'project', so the formerly unconditional project chip stays until unchecked. */
+  _projectWorktreeCardPropertyDefaulted?: boolean
   /** Agent total when the star countdown began or was deferred; preserved across app updates. */
   starNagBaselineAgents?: number | null
   /** Legacy baseline version retained for older builds; no longer resets the countdown. */

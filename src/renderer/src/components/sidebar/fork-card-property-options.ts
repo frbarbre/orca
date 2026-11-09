@@ -57,6 +57,18 @@ const FORK_CARD_DISPLAY_OPTIONS: { after: WorktreeCardProperty; option: CardDisp
         return translate('auto.components.sidebar.SidebarWorkspaceOptionsMenu.prDiff', 'PR diff')
       }
     }
+  },
+  {
+    after: 'host',
+    option: {
+      id: 'project',
+      get label() {
+        return translate(
+          'auto.components.sidebar.SidebarWorkspaceOptionsMenu.2170d553cf',
+          'Project'
+        )
+      }
+    }
   }
 ]
 

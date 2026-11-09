@@ -44,6 +44,8 @@ export type WorktreeCardProperty =
   | 'stack'
   // Fork: the PR's added/removed line totals.
   | 'pr-diff'
+  // Fork: the project chip on new-style cards.
+  | 'project'
   // Fork: the workspace's status lane, for groupings other than Status.
   | 'workspace-status'
   | 'jira-issue'

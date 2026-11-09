@@ -89,8 +89,15 @@ export function buildWorktreeCardPresentation(card: WorktreeCardController) {
 
   // Why: pinned trees mix repos, so ordinary rows lead with the project chip; cross-repo children keep the regular project badge.
   const showPinnedRepoIcon = inPinnedSection && !!repo && !showProjectName
+  // Fork: only the new card style has the Card display menu that toggles the project chip.
+  const projectChipEnabled = !newCardStyle || cardProps.includes('project')
   const showInlineRepoBadge =
-    cardDetails.repoInTitle && !!repo && !hideRepoBadge && !isFolder && !showPinnedRepoIcon
+    cardDetails.repoInTitle &&
+    !!repo &&
+    !hideRepoBadge &&
+    !isFolder &&
+    !showPinnedRepoIcon &&
+    projectChipEnabled
   const showRepoBadgeInMetaRow =
     !cardDetails.repoInTitle && !!repo && !hideRepoBadge && !showPinnedRepoIcon
   const contextLabel = getVisibleContextLabel(

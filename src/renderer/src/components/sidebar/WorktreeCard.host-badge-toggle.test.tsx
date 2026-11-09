@@ -164,6 +164,7 @@ describe('WorktreeCard host badge toggle', () => {
         compactWorktreeCards: style === 'compact',
         experimentalNewWorktreeCardStyle: style === 'new'
       }
+      worktreeCardProperties = ['project']
       const owner = makeRepo({ displayName: 'Backend checkout' })
       const parentRepo = makeRepo({ id: 'parent-repo', displayName: 'Frontend checkout' })
       const parent = makeWorktree({

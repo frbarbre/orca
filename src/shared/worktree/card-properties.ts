@@ -20,7 +20,8 @@ export const DEFAULT_WORKTREE_CARD_PROPERTIES: WorktreeCardProperty[] = [
   'ports',
   // Default cards keep agent activity inline; Compact omits the extra row.
   'inline-agents',
-  'host'
+  'host',
+  'project'
 ]
 
 // Compact metadata stays opt-in through Show properties.
@@ -58,7 +59,8 @@ export const WORKTREE_CARD_PROPERTIES = [
   'comment',
   'ports',
   'inline-agents',
-  'host'
+  'host',
+  'project'
 ] as const satisfies readonly WorktreeCardProperty[]
 
 export function normalizeWorktreeCardProperties(

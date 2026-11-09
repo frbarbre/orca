@@ -110,6 +110,7 @@ describe('WorktreeCard project chip toggle', () => {
     settings = { compactWorktreeCards: false, experimentalNewWorktreeCardStyle: true }
   })
 
+  // The first WorktreeCard import transforms its whole module graph.
   it(
     'shows the project chip while the Project card property is on',
     async () => {
@@ -119,6 +120,7 @@ describe('WorktreeCard project chip toggle', () => {
     WORKTREE_CARD_IMPORT_TIMEOUT_MS
   )
 
+  // The first WorktreeCard import transforms its whole module graph.
   it(
     'hides the project chip once the Project card property is off',
     async () => {
@@ -128,6 +130,7 @@ describe('WorktreeCard project chip toggle', () => {
     WORKTREE_CARD_IMPORT_TIMEOUT_MS
   )
 
+  // The first WorktreeCard import transforms its whole module graph.
   it(
     'leaves compact cards, which have no Card display menu, as they were',
     async () => {

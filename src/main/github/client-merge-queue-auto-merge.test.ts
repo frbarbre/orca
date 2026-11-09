@@ -515,8 +515,13 @@ describe('GitHub GraphQL rate-limit guard', () => {
       mergePR('/repo-root', 7, 'squash', undefined, { owner: 'stablyai', repo: 'orca' })
     ).resolves.toMatchObject({ ok: false })
 
+    // Fork: the PR's own isInMergeQueue lookup is a separate query; only detection is cached.
     expect(
-      ghExecFileAsyncMock.mock.calls.filter((call) => call[0].includes('graphql'))
+      ghExecFileAsyncMock.mock.calls.filter(
+        (call) =>
+          call[0].includes('graphql') &&
+          !call[0].some((arg: string) => arg.includes('isInMergeQueue'))
+      )
     ).toHaveLength(1)
     expect(ghExecFileAsyncMock.mock.calls[2]?.[0]).toEqual(
       expect.arrayContaining(['-f', 'owner=stablyai', '-f', 'repo=orca', '-f', 'branch=true'])

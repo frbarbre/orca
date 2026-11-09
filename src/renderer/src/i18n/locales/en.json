@@ -5894,7 +5894,8 @@
           "ef18787206": "Queued for deletion",
           "prAuthor": "Pull request by {{login}}",
           "stackPosition": "Stack #{{stack}}, {{position}} of {{size}}",
-          "prDiff": "{{additions}} lines added, {{deletions}} lines removed",
+          "localDiff": "Local changes: {{additions}} lines added, {{deletions}} lines removed",
+          "githubDiff": "Pull request on GitHub: {{additions}} lines added, {{deletions}} lines removed",
           "workspaceStatus": "Status: {{status}}"
         },
         "WorktreeCardAgents": {

@@ -12,6 +12,7 @@ import { useWorktreeCardLinkedDetails } from './use-worktree-card-linked-details
 import { useWorktreeCardReviewDetails } from './use-worktree-card-review-details'
 import { useWorktreeCardSecondaryDetails } from './use-worktree-card-secondary-details'
 import { useWorktreeCardWorkspaceActions } from './use-worktree-card-workspace-actions'
+import { resolveWorktreeCardDiff } from './worktree-card-diff-source'
 
 export function useWorktreeCardController(props: ResolvedWorktreeCardProps) {
   const { worktree, repo } = props
@@ -54,12 +55,8 @@ export function useWorktreeCardController(props: ResolvedWorktreeCardProps) {
   const prStack =
     review.prDisplay && 'stack' in review.prDisplay ? review.prDisplay.stack : undefined
   const showPrDiff = foundation.cardProps.includes('pr-diff')
-  const prDiffSource =
-    review.prDisplay && 'additions' in review.prDisplay ? review.prDisplay : undefined
-  const prDiff =
-    typeof prDiffSource?.additions === 'number' && typeof prDiffSource.deletions === 'number'
-      ? { additions: prDiffSource.additions, deletions: prDiffSource.deletions }
-      : undefined
+  const localLineTotal = useAppStore((s) => s.gitBranchLineTotalByWorktree?.[worktree.id])
+  const prDiff = resolveWorktreeCardDiff(localLineTotal, review.prDisplay)
   const shouldRefreshHostedReview = foundation.newCardStyle ? showStatus : showPR
   const detailsHoverControl = useWorktreeCardDetailsHoverControl()
   const hoverDetailsOpen = detailsHoverControl.hoverOpen

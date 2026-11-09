@@ -2,8 +2,7 @@ import React from 'react'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { translate } from '@/i18n/i18n'
 import { cn } from '@/lib/utils'
-
-export type PrDiffStat = { additions: number; deletions: number }
+import type { WorktreeCardDiff } from './worktree-card-diff-source'
 
 export function WorktreeCardPrDiff({
   enabled,
@@ -11,7 +10,7 @@ export function WorktreeCardPrDiff({
   className
 }: {
   enabled: boolean
-  diff: PrDiffStat | undefined
+  diff: WorktreeCardDiff | undefined
   className?: string
 }): React.JSX.Element | null {
   if (!enabled || !diff) {
@@ -19,11 +18,18 @@ export function WorktreeCardPrDiff({
   }
   const additions = diff.additions.toLocaleString('en-US')
   const deletions = diff.deletions.toLocaleString('en-US')
-  const description = translate(
-    'auto.components.sidebar.WorktreeCard.prDiff',
-    '{{additions}} lines added, {{deletions}} lines removed',
-    { additions, deletions }
-  )
+  const description =
+    diff.source === 'local'
+      ? translate(
+          'auto.components.sidebar.WorktreeCard.localDiff',
+          'Local changes: {{additions}} lines added, {{deletions}} lines removed',
+          { additions, deletions }
+        )
+      : translate(
+          'auto.components.sidebar.WorktreeCard.githubDiff',
+          'Pull request on GitHub: {{additions}} lines added, {{deletions}} lines removed',
+          { additions, deletions }
+        )
   return (
     <Tooltip>
       <TooltipTrigger asChild>

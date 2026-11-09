@@ -75,7 +75,7 @@ export function ConversationTabActivity({
       </div>
 
       {item.type === 'pr' && comments.length > 0 && (
-        <div className="grid grid-cols-3 rounded-lg border border-border/50 bg-background p-0.5">
+        <div className="grid grid-cols-4 rounded-lg border border-border/50 bg-background p-0.5">
           {getPrCommentAudienceFilters().map((filter) => {
             const isActive = commentFilter === filter.value
             return (

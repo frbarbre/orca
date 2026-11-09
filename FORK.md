@@ -2038,7 +2038,9 @@ names the source. It stays hidden while neither is known.
 
 The comment filter tabs gain "Unresolved" after Bots (`pr-comment-audience.ts`): the comments in
 review threads that are still open, the ones a branch requiring conversation resolution waits on.
-A comment outside a review thread has nothing to resolve, so it never counts.
+A comment outside a review thread has nothing to resolve, so it never counts. The tab strips are
+four columns wide (`pr-comment-presentation.ts`, the PR page, the GitHub item dialog) so all four
+tabs sit on one row.
 
 ### 82. Project card option
 

@@ -110,6 +110,12 @@ describe('PRCommentsList as a PR panel section', () => {
       expect(screen.queryByText('Bot says hi.')).toBeNull()
     })
 
+    it('fit every audience on one row', () => {
+      renderList([comment])
+
+      expect(tab('All').parentElement?.className).toContain('grid-cols-4')
+    })
+
     it('say so when no review thread is left to resolve', () => {
       renderList([comment])
 

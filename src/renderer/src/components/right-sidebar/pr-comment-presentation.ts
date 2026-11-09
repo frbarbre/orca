@@ -184,7 +184,7 @@ export function getPRCommentPresentationClasses(
       sectionHeader: 'flex flex-col gap-2.5 border-b border-border px-3 py-2.5',
       sectionHeaderLabel: 'text-[11px] font-medium text-foreground',
       sectionCount: 'text-[10px] text-muted-foreground',
-      audienceTabs: 'grid grid-cols-3 rounded-md border border-border bg-background p-0.5',
+      audienceTabs: 'grid grid-cols-4 rounded-md border border-border bg-background p-0.5',
       audienceTab:
         'flex h-7 items-center justify-center gap-1 rounded-md px-1.5 text-[11px] font-medium text-muted-foreground transition-colors',
       audienceTabActive: 'bg-muted text-foreground',
@@ -243,7 +243,7 @@ export function getPRCommentPresentationClasses(
     sectionHeaderLabel: 'text-[11px] font-semibold uppercase tracking-wider text-muted-foreground',
     sectionCount:
       'rounded-full border border-border bg-muted px-1.5 py-px text-[10px] font-semibold tabular-nums text-muted-foreground',
-    audienceTabs: 'grid grid-cols-3 rounded-md border border-border bg-background p-0.5',
+    audienceTabs: 'grid grid-cols-4 rounded-md border border-border bg-background p-0.5',
     audienceTab:
       'flex h-7 items-center justify-center gap-1 rounded-md px-1.5 text-[11px] font-medium text-muted-foreground transition-colors',
     audienceTabActive: 'bg-muted text-foreground shadow-xs',

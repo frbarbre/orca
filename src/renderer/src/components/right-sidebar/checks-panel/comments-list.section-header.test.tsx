@@ -116,6 +116,16 @@ describe('PRCommentsList as a PR panel section', () => {
       expect(tab('All').parentElement?.className).toContain('grid-cols-4')
     })
 
+    it('show each audience as an icon and its count, the label kept for the tooltip', () => {
+      renderList([comment, bot])
+
+      for (const label of ['All', 'Humans', 'Bots', 'Unresolved']) {
+        expect(tab(label).querySelector('svg')).toBeTruthy()
+        expect(tab(label).textContent).not.toContain(label)
+      }
+      expect(tab('Humans').textContent).toBe('1')
+    })
+
     it('say so when no review thread is left to resolve', () => {
       renderList([comment])
 

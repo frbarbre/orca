@@ -1,5 +1,18 @@
 import React, { useMemo, useState } from 'react'
-import { LoaderCircle, MessageSquare, Plus, SendHorizontal, Sparkles, X } from 'lucide-react'
+import {
+  Bot,
+  LoaderCircle,
+  MessageSquare,
+  MessageSquareDot,
+  MessagesSquare,
+  Plus,
+  SendHorizontal,
+  Sparkles,
+  User,
+  X,
+  type LucideIcon
+} from 'lucide-react'
+import type { PRCommentAudienceFilter } from '../../../../../shared/pr-comment-audience'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
@@ -14,6 +27,13 @@ import { SectionHeader } from '../source-control/listing/section-header'
 import { type PRCommentsListProps, useCommentsListState } from './use-comments-list-state'
 import { CommentDisplayModeMenu } from './comment-display-mode-menu'
 import { withoutResolvedThreads } from './listed-comments'
+
+const AUDIENCE_ICONS: Record<PRCommentAudienceFilter, LucideIcon> = {
+  all: MessagesSquare,
+  human: User,
+  bot: Bot,
+  unresolved: MessageSquareDot
+}
 
 export function PRCommentsList(listProps: PRCommentsListProps): React.JSX.Element {
   const listedComments = useMemo(
@@ -264,20 +284,28 @@ export function PRCommentsList(listProps: PRCommentsListProps): React.JSX.Elemen
             <div className={presentation.audienceTabs}>
               {getPrCommentAudienceFilters().map((filter) => {
                 const isActive = commentFilter === filter.value
+                const Icon = AUDIENCE_ICONS[filter.value]
                 return (
-                  <button
-                    key={filter.value}
-                    type="button"
-                    className={cn(
-                      presentation.audienceTab,
-                      isActive && presentation.audienceTabActive
-                    )}
-                    aria-pressed={isActive}
-                    onClick={() => setCommentFilter(filter.value)}
-                  >
-                    <span>{filter.label}</span>
-                    <span className="tabular-nums">{commentCounts[filter.value]}</span>
-                  </button>
+                  <Tooltip key={filter.value}>
+                    <TooltipTrigger asChild>
+                      <button
+                        type="button"
+                        className={cn(
+                          presentation.audienceTab,
+                          isActive && presentation.audienceTabActive
+                        )}
+                        aria-label={filter.label}
+                        aria-pressed={isActive}
+                        onClick={() => setCommentFilter(filter.value)}
+                      >
+                        <Icon className="size-3.5 shrink-0" aria-hidden />
+                        <span className="tabular-nums">{commentCounts[filter.value]}</span>
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" sideOffset={4}>
+                      {filter.label}
+                    </TooltipContent>
+                  </Tooltip>
                 )
               })}
             </div>

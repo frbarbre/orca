@@ -2040,7 +2040,8 @@ The comment filter tabs gain "Unresolved" after Bots (`pr-comment-audience.ts`):
 review threads that are still open, the ones a branch requiring conversation resolution waits on.
 A comment outside a review thread has nothing to resolve, so it never counts. The tab strips are
 four columns wide (`pr-comment-presentation.ts`, the PR page, the GitHub item dialog) so all four
-tabs sit on one row.
+tabs sit on one row. In the narrow right sidebar each tab is an icon and its count, the label in a
+tooltip (`checks-panel/comments-list.tsx`).
 
 ### 82. Project card option
 

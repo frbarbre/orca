@@ -2029,8 +2029,10 @@ A popover with its own `onInteractOutside` or `onPointerDownOutside` keeps Radix
 
 The PR lookup asks `gh` for `additions` and `deletions` and keeps them on `PRInfo`. Card display
 gains "PR diff" (`pr-diff`, after Stack), which shows the PR's totals as a green +N and red −N in
-the card's title row (`worktree-card-pr-diff.tsx`), with the full counts in the tooltip. It stays
-hidden until the PR has been fetched with the totals.
+the card's title row (`worktree-card-pr-diff.tsx`), with the full counts in the tooltip. The chip
+prefers the worktree's local diff (merge base to working tree, the Source Control total) and falls
+back to the PR's GitHub totals until Orca has read it (`worktree-card-diff-source.ts`); the tooltip
+names the source. It stays hidden while neither is known.
 
 ### 81. Unresolved comments tab
 

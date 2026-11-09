@@ -41,10 +41,29 @@ describe('pr comment audience filtering', () => {
       comment({ id: 3, author: 'github-actions[bot]' })
     ]
 
-    expect(getPRCommentAudienceCounts(comments)).toEqual({ all: 3, human: 1, bot: 2 })
+    expect(getPRCommentAudienceCounts(comments)).toEqual({
+      all: 3,
+      human: 1,
+      bot: 2,
+      unresolved: 0
+    })
     expect(filterPRCommentsByAudience(comments, 'all')).toBe(comments)
     expect(filterPRCommentsByAudience(comments, 'human').map((item) => item.id)).toEqual([1])
     expect(filterPRCommentsByAudience(comments, 'bot').map((item) => item.id)).toEqual([2, 3])
+  })
+
+  it('counts and filters the comments in review threads still waiting to be resolved', () => {
+    const comments = [
+      comment({ id: 1, author: 'alice' }),
+      comment({ id: 2, author: 'alice', threadId: 'T1', isResolved: false }),
+      comment({ id: 3, author: 'coderabbitai', threadId: 'T2' }),
+      comment({ id: 4, author: 'bob', threadId: 'T3', isResolved: true })
+    ]
+
+    expect(getPRCommentAudienceCounts(comments).unresolved).toBe(2)
+    expect(filterPRCommentsByAudience(comments, 'unresolved').map((item) => item.id)).toEqual([
+      2, 3
+    ])
   })
 
   it('classifies manually overridden authors as bots regardless of heuristics', () => {
@@ -64,7 +83,12 @@ describe('pr comment audience filtering', () => {
       comment({ id: 3, author: 'github-actions[bot]' })
     ]
 
-    expect(getPRCommentAudienceCounts(comments, overrides)).toEqual({ all: 3, human: 1, bot: 2 })
+    expect(getPRCommentAudienceCounts(comments, overrides)).toEqual({
+      all: 3,
+      human: 1,
+      bot: 2,
+      unresolved: 0
+    })
     expect(filterPRCommentsByAudience(comments, 'human', overrides).map((item) => item.id)).toEqual(
       [1]
     )

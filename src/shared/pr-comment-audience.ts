@@ -1,7 +1,12 @@
 import type { PRComment } from './github/comment-types'
 import { normalizePRCommentAuthorLogin } from './pr-bot-author-overrides'
 
-export type PRCommentAudienceFilter = 'all' | 'human' | 'bot'
+// Fork: 'unresolved' narrows to open review threads, the ones a merge can wait on.
+export type PRCommentAudienceFilter = 'all' | 'human' | 'bot' | 'unresolved'
+
+function isUnresolvedThreadComment(comment: PRComment): boolean {
+  return Boolean(comment.threadId) && comment.isResolved !== true
+}
 
 const BOT_LOGIN_SUFFIX = '[bot]'
 const AUTOMATION_LOGIN_PATTERNS = [
@@ -56,12 +61,16 @@ export function getPRCommentAudienceCounts(
   botAuthorOverrides?: ReadonlySet<string>
 ): Record<PRCommentAudienceFilter, number> {
   let bot = 0
+  let unresolved = 0
   comments.forEach((comment) => {
     if (isBotPRComment(comment, botAuthorOverrides)) {
       bot += 1
     }
+    if (isUnresolvedThreadComment(comment)) {
+      unresolved += 1
+    }
   })
-  return { all: comments.length, human: comments.length - bot, bot }
+  return { all: comments.length, human: comments.length - bot, bot, unresolved }
 }
 
 export function filterPRCommentsByAudience(
@@ -74,6 +83,9 @@ export function filterPRCommentsByAudience(
   }
   if (filter === 'human') {
     return comments.filter((comment) => !isBotPRComment(comment, botAuthorOverrides))
+  }
+  if (filter === 'unresolved') {
+    return comments.filter(isUnresolvedThreadComment)
   }
   return comments
 }

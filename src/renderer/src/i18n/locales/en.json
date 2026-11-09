@@ -1251,10 +1251,12 @@
             "64deee36a9": "Bots",
             "a7150a17bc": "Humans",
             "27ce73211c": "All",
+            "unresolved": "Unresolved",
             "empty": {
               "bot": "No bot comments.",
               "human": "No human comments.",
-              "all": "No comments yet."
+              "all": "No comments yet.",
+              "unresolved": "No unresolved threads."
             }
           }
         },

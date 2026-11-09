@@ -93,6 +93,30 @@ describe('PRCommentsList as a PR panel section', () => {
       expect(screen.getByRole('button', { name: /^Comments/ }).textContent).toContain('2')
     })
 
+    it('list the open review threads under Unresolved', () => {
+      const open: PRComment = {
+        ...comment,
+        id: 5,
+        body: 'Still open.',
+        threadId: 'T5',
+        isResolved: false
+      }
+      renderList([comment, bot, open])
+
+      expect(tab('Unresolved').textContent).toContain('1')
+      fireEvent.click(tab('Unresolved'))
+      expect(screen.getByText('Still open.')).toBeTruthy()
+      expect(screen.queryByText('Please update this.')).toBeNull()
+      expect(screen.queryByText('Bot says hi.')).toBeNull()
+    })
+
+    it('say so when no review thread is left to resolve', () => {
+      renderList([comment])
+
+      fireEvent.click(tab('Unresolved'))
+      expect(screen.getByText('No unresolved threads.')).toBeTruthy()
+    })
+
     it('say so when the chosen audience has nothing left', () => {
       renderList([bot, resolved])
 

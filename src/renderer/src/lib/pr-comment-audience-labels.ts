@@ -6,7 +6,11 @@ export const getPrCommentAudienceFilters = createLocalizedCatalog(
   (): { value: PRCommentAudienceFilter; label: string }[] => [
     { value: 'all', label: translate('auto.lib.pr.comment.audience.27ce73211c', 'All') },
     { value: 'human', label: translate('auto.lib.pr.comment.audience.a7150a17bc', 'Humans') },
-    { value: 'bot', label: translate('auto.lib.pr.comment.audience.64deee36a9', 'Bots') }
+    { value: 'bot', label: translate('auto.lib.pr.comment.audience.64deee36a9', 'Bots') },
+    {
+      value: 'unresolved',
+      label: translate('auto.lib.pr.comment.audience.unresolved', 'Unresolved')
+    }
   ]
 )
 
@@ -16,6 +20,8 @@ export function getPRCommentAudienceEmptyLabel(filter: PRCommentAudienceFilter):
       return translate('auto.lib.pr.comment.audience.empty.bot', 'No bot comments.')
     case 'human':
       return translate('auto.lib.pr.comment.audience.empty.human', 'No human comments.')
+    case 'unresolved':
+      return translate('auto.lib.pr.comment.audience.empty.unresolved', 'No unresolved threads.')
     case 'all':
       return translate('auto.lib.pr.comment.audience.empty.all', 'No comments yet.')
   }

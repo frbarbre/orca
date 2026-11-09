@@ -2032,6 +2032,12 @@ gains "PR diff" (`pr-diff`, after Stack), which shows the PR's totals as a green
 the card's title row (`worktree-card-pr-diff.tsx`), with the full counts in the tooltip. It stays
 hidden until the PR has been fetched with the totals.
 
+### 81. Unresolved comments tab
+
+The comment filter tabs gain "Unresolved" after Bots (`pr-comment-audience.ts`): the comments in
+review threads that are still open, the ones a branch requiring conversation resolution waits on.
+A comment outside a review thread has nothing to resolve, so it never counts.
+
 ## Verify
 
 Verify runs on GitHub, not locally: `fork-verify.yml` runs it on every pull request against `main`,

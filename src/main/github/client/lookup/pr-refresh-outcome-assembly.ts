@@ -60,6 +60,8 @@ export function assemblePRRefreshFoundOutcome(args: {
         : {}),
       ...(data.mergeStateStatus !== undefined ? { mergeStateStatus: data.mergeStateStatus } : {}),
       ...(stack ? { stack } : {}),
+      ...(typeof data.additions === 'number' ? { additions: data.additions } : {}),
+      ...(typeof data.deletions === 'number' ? { deletions: data.deletions } : {}),
       headSha: data.headRefOid,
       ...(confirmedContainedHeadOid ? { confirmedContainedHeadOid } : {}),
       ...(headDivergedFromMergedPRAtOid ? { headDivergedFromMergedPRAtOid } : {}),

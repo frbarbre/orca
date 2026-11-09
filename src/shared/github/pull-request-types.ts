@@ -72,6 +72,9 @@ export type PRInfo = {
   mergeStateStatus?: string | null
   /** GitHub-registered stack metadata. Absent for ordinary dependent PR chains. */
   stack?: GitHubPRStack
+  /** Fork: total lines the PR adds and removes against its base. */
+  additions?: number
+  deletions?: number
   // Checks key by head commit; cache the SHA to poll without GitHub re-queries or mutable-branch guesses.
   headSha?: string
   // Keep merged PRs visible for contained worktree heads, including behind update/web commits; cache validation honors this proof.

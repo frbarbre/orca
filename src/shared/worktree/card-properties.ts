@@ -51,6 +51,7 @@ export const WORKTREE_CARD_PROPERTIES = [
   'pr',
   'pr-author',
   'stack',
+  'pr-diff',
   'workspace-status',
   'automation',
   'cli',

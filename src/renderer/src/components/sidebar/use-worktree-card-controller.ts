@@ -53,6 +53,14 @@ export function useWorktreeCardController(props: ResolvedWorktreeCardProps) {
   const workspaceStatuses = useAppStore((s) => s.workspaceStatuses)
   const prStack =
     review.prDisplay && 'stack' in review.prDisplay ? review.prDisplay.stack : undefined
+  const showPrDiff = foundation.cardProps.includes('pr-diff')
+  const prDiff =
+    review.prDisplay &&
+    'additions' in review.prDisplay &&
+    typeof review.prDisplay.additions === 'number' &&
+    typeof review.prDisplay.deletions === 'number'
+      ? { additions: review.prDisplay.additions, deletions: review.prDisplay.deletions }
+      : undefined
   const shouldRefreshHostedReview = foundation.newCardStyle ? showStatus : showPR
   const detailsHoverControl = useWorktreeCardDetailsHoverControl()
   const hoverDetailsOpen = detailsHoverControl.hoverOpen
@@ -179,6 +187,8 @@ export function useWorktreeCardController(props: ResolvedWorktreeCardProps) {
     showPrAuthor,
     showStack,
     prStack,
+    showPrDiff,
+    prDiff,
     showWorkspaceStatus,
     workspaceStatuses,
     showJiraIssue,

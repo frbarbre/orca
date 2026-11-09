@@ -5823,6 +5823,7 @@
           "linearTitle": "Linear title",
           "prAuthor": "PR author",
           "stack": "Stack",
+          "prDiff": "PR diff",
           "workspaceStatus": "Workspace status"
         },
         "SshTargetRow": {
@@ -5891,6 +5892,7 @@
           "ef18787206": "Queued for deletion",
           "prAuthor": "Pull request by {{login}}",
           "stackPosition": "Stack #{{stack}}, {{position}} of {{size}}",
+          "prDiff": "{{additions}} lines added, {{deletions}} lines removed",
           "workspaceStatus": "Status: {{status}}"
         },
         "WorktreeCardAgents": {

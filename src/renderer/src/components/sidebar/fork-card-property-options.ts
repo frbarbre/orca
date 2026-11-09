@@ -48,6 +48,15 @@ const FORK_CARD_DISPLAY_OPTIONS: { after: WorktreeCardProperty; option: CardDisp
         return translate('auto.components.sidebar.SidebarWorkspaceOptionsMenu.stack', 'Stack')
       }
     }
+  },
+  {
+    after: 'jira-issue',
+    option: {
+      id: 'pr-diff',
+      get label() {
+        return translate('auto.components.sidebar.SidebarWorkspaceOptionsMenu.prDiff', 'PR diff')
+      }
+    }
   }
 ]
 

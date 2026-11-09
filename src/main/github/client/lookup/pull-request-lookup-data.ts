@@ -43,6 +43,8 @@ export type PullRequestLookupData = {
   headDefaultBranchName?: string
   stack?: GitHubPRStack
   stackMetadataChecked?: boolean
+  additions?: number
+  deletions?: number
 }
 
 export type PullRequestLookupPolicy = {
@@ -63,6 +65,8 @@ export type RestPullRequest = {
   mergeable?: boolean | null
   mergeable_state?: string | null
   auto_merge?: unknown
+  additions?: number
+  deletions?: number
   base?: { ref?: string; sha?: string }
   head?: {
     ref?: string
@@ -79,10 +83,10 @@ export type RestPullRequest = {
 }
 
 export const PR_LOOKUP_JSON_FIELDS =
-  'number,title,state,url,statusCheckRollup,updatedAt,isDraft,mergeable,reviewDecision,mergeStateStatus,autoMergeRequest,baseRefName,headRefName,baseRefOid,headRefOid,headRepositoryOwner,headRepository'
+  'number,title,state,url,statusCheckRollup,updatedAt,isDraft,mergeable,reviewDecision,mergeStateStatus,autoMergeRequest,baseRefName,headRefName,baseRefOid,headRefOid,headRepositoryOwner,headRepository,additions,deletions'
 
 export const PR_BRANCH_LIST_JSON_FIELDS =
-  'number,title,state,url,statusCheckRollup,updatedAt,isDraft,mergeable,baseRefName,headRefName,baseRefOid,headRefOid,headRepositoryOwner,headRepository'
+  'number,title,state,url,statusCheckRollup,updatedAt,isDraft,mergeable,baseRefName,headRefName,baseRefOid,headRefOid,headRepositoryOwner,headRepository,additions,deletions'
 
 export type GitHubPRBranchLookupOptions = HostedReviewExecutionOptions & {
   acceptMergedFallbackPR?: boolean
@@ -136,6 +140,8 @@ export function mapRestPullRequest(pr: RestPullRequest): PullRequestLookupData {
       ? { mergeStateStatus: pr.mergeable_state?.toUpperCase() ?? null }
       : {}),
     ...('auto_merge' in pr ? { autoMergeRequest: pr.auto_merge } : {}),
+    ...(typeof pr.additions === 'number' ? { additions: pr.additions } : {}),
+    ...(typeof pr.deletions === 'number' ? { deletions: pr.deletions } : {}),
     baseRefName: pr.base?.ref,
     headRefName: pr.head?.ref,
     baseRefOid: pr.base?.sha,

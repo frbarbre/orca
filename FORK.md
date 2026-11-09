@@ -2025,6 +2025,13 @@ one a drag overlay ends (the sidebar resize handle), fires no click, so the popo
 `popover-clickless-dismiss.ts` calls a task after mouseup when the outside press brought no click.
 A popover with its own `onInteractOutside` or `onPointerDownOutside` keeps Radix's behavior.
 
+### 80. PR diff on the workspace card
+
+The PR lookup asks `gh` for `additions` and `deletions` and keeps them on `PRInfo`. Card display
+gains "PR diff" (`pr-diff`, after Stack), which shows the PR's totals as a green +N and red −N in
+the card's title row (`worktree-card-pr-diff.tsx`), with the full counts in the tooltip. It stays
+hidden until the PR has been fetched with the totals.
+
 ## Verify
 
 Verify runs on GitHub, not locally: `fork-verify.yml` runs it on every pull request against `main`,

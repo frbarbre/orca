@@ -137,12 +137,14 @@ export function mapReviewSnapshotPullRequest(value: unknown): ReviewSnapshotPull
   if (!pr || !owner || !repo || !number) {
     return null
   }
+  const authorAvatarUrl = asString(asRecord(pr.author)?.avatarUrl)
   return {
     repo: { owner, repo },
     number,
     title: asString(pr.title),
     url: asString(pr.url),
     author: asString(asRecord(pr.author)?.login) || null,
+    ...(authorAvatarUrl ? { authorAvatarUrl } : {}),
     isDraft: pr.isDraft === true,
     isInMergeQueue: pr.isInMergeQueue === true,
     state: mapPRState(asString(pr.state)),

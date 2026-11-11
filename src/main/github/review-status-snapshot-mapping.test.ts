@@ -125,6 +125,24 @@ describe('mapReviewStatusSnapshotResponse', () => {
     ])
   })
 
+  it('keeps the avatar GitHub serves for the author, which a bot needs', () => {
+    const avatarUrl = 'https://avatars.githubusercontent.com/in/5510139?v=4'
+    const linked0 = {
+      pullRequest: {
+        ...payload.data.linked0.pullRequest,
+        author: { login: 'flowbase-farm-bot', avatarUrl }
+      }
+    }
+    const [pr] = mapReviewStatusSnapshotResponse({
+      data: { ...payload.data, linked0 }
+    }).linkedPullRequests
+
+    expect(pr.authorAvatarUrl).toBe(avatarUrl)
+    expect(
+      buildReviewStatusSnapshotQuery({ linkedPullRequests: [], reviewInboxRepos: [] })
+    ).toContain('author { login avatarUrl }')
+  })
+
   it('drops reviews with no author', () => {
     const [pr] = mapReviewStatusSnapshotResponse(payload).linkedPullRequests
 

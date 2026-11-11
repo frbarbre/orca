@@ -555,7 +555,8 @@ Each PR-rules tick also does three smaller things, all in `workspace-status-rule
   checks the path is a registered worktree first.
 - **PR author avatars.** `pr-author-store.ts` keeps each linked pull request's author from the
   snapshot; Card display → "PR author" shows it (`worktree-card-pr-author.tsx`). Only for
-  projects the PR rules cover.
+  projects the PR rules cover. The snapshot asks for the author's `avatarUrl` too, because a bot
+  (a GitHub App) has no `github.com/<login>.png` and would fall back to initials.
 - **Conflict agent.** With "Resolve conflicts with an agent" on, a workspace entering Conflicts
   gets an agent on `buildConflictAgentPrompt` — upstream's pull-request conflict prompt with its
   no-push rule swapped for "push, never force-push" (`launch-conflict-agents.ts`).

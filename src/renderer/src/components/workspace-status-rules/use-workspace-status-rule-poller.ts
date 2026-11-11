@@ -83,13 +83,15 @@ async function runWorkspaceStatusRuleTick(): Promise<void> {
   setPullRequestAuthors(
     new Map(
       scope.targets.flatMap((target) => {
-        const author = snapshot.linkedPullRequests.find(
-          (pr) =>
-            pr.number === target.prNumber &&
-            pr.repo.owner.toLowerCase() === target.repo.owner.toLowerCase() &&
-            pr.repo.repo.toLowerCase() === target.repo.repo.toLowerCase()
-        )?.author
-        return author ? [[target.worktreeId, author] as const] : []
+        const pr = snapshot.linkedPullRequests.find(
+          (candidate) =>
+            candidate.number === target.prNumber &&
+            candidate.repo.owner.toLowerCase() === target.repo.owner.toLowerCase() &&
+            candidate.repo.repo.toLowerCase() === target.repo.repo.toLowerCase()
+        )
+        return pr?.author
+          ? [[target.worktreeId, { login: pr.author, avatarUrl: pr.authorAvatarUrl }] as const]
+          : []
       })
     )
   )

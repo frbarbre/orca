@@ -27,12 +27,22 @@ describe('WorktreeCardPrAuthor', () => {
     const { container } = renderAvatar(true)
     expect(avatar(container)).toBeNull()
 
-    act(() => setPullRequestAuthors(new Map([['wt', 'madsenmm']])))
+    act(() => setPullRequestAuthors(new Map([['wt', { login: 'madsenmm' }]])))
     expect(avatar(container)).toBeInTheDocument()
   })
 
   it('stays hidden while the card option is off', () => {
-    setPullRequestAuthors(new Map([['wt', 'madsenmm']]))
+    setPullRequestAuthors(new Map([['wt', { login: 'madsenmm' }]]))
     expect(avatar(renderAvatar(false).container)).toBeNull()
+  })
+
+  it('uses the avatar GitHub serves, since a bot has no github.com/<login>.png', () => {
+    const avatarUrl = 'https://avatars.githubusercontent.com/in/5510139?v=4'
+    setPullRequestAuthors(new Map([['wt', { login: 'flowbase-farm-bot', avatarUrl }]]))
+
+    expect(avatar(renderAvatar(true).container)?.querySelector('img')).toHaveAttribute(
+      'src',
+      avatarUrl
+    )
   })
 })

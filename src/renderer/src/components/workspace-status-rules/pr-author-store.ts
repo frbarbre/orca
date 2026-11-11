@@ -1,11 +1,17 @@
 import { useSyncExternalStore } from 'react'
 
-let authors: ReadonlyMap<string, string> = new Map()
+export type PullRequestAuthor = { login: string; avatarUrl?: string }
+
+let authors: ReadonlyMap<string, PullRequestAuthor> = new Map()
 const listeners = new Set<() => void>()
 
-export function setPullRequestAuthors(next: ReadonlyMap<string, string>): void {
+export function setPullRequestAuthors(next: ReadonlyMap<string, PullRequestAuthor>): void {
   const unchanged =
-    next.size === authors.size && [...next].every(([id, login]) => authors.get(id) === login)
+    next.size === authors.size &&
+    [...next].every(([id, author]) => {
+      const current = authors.get(id)
+      return current?.login === author.login && current.avatarUrl === author.avatarUrl
+    })
   if (unchanged) {
     return
   }
@@ -22,7 +28,7 @@ function subscribe(listener: () => void): () => void {
   }
 }
 
-export function usePullRequestAuthor(worktreeId: string): string | null {
-  const read = (): string | null => authors.get(worktreeId) ?? null
+export function usePullRequestAuthor(worktreeId: string): PullRequestAuthor | null {
+  const read = (): PullRequestAuthor | null => authors.get(worktreeId) ?? null
   return useSyncExternalStore(subscribe, read, read)
 }

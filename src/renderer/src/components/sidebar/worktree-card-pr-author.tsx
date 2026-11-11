@@ -14,20 +14,20 @@ export function WorktreeCardPrAuthor({
   enabled: boolean
   className?: string
 }): React.JSX.Element | null {
-  const login = usePullRequestAuthor(worktreeId)
-  if (!enabled || !login) {
+  const author = usePullRequestAuthor(worktreeId)
+  if (!enabled || !author) {
     return null
   }
   return (
     <Tooltip>
       <TooltipTrigger asChild>
         <span className={cn('inline-flex shrink-0', className)} data-worktree-card-pr-author="">
-          <GitHubUserAvatar login={login} className="size-4" />
+          <GitHubUserAvatar login={author.login} avatarUrl={author.avatarUrl} className="size-4" />
         </span>
       </TooltipTrigger>
       <TooltipContent side="right" sideOffset={8}>
         {translate('auto.components.sidebar.WorktreeCard.prAuthor', 'Pull request by {{login}}', {
-          login
+          login: author.login
         })}
       </TooltipContent>
     </Tooltip>

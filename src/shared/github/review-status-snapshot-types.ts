@@ -37,6 +37,8 @@ export type ReviewSnapshotPullRequest = {
   title: string
   url: string
   author: string | null
+  /** Fork: a bot has no github.com/<login>.png, only this. */
+  authorAvatarUrl?: string
   isDraft: boolean
   /** Fork: true while GitHub's merge queue holds the pull request. */
   isInMergeQueue?: boolean

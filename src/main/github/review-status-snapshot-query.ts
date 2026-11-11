@@ -23,7 +23,7 @@ const PR_FIELDS_FRAGMENT = `fragment SnapshotPR on PullRequest {
   headRefName
   baseRefName
   headRefOid
-  author { login }
+  author { login avatarUrl }
   repository { name owner { login } }
   reviewRequests(first: 20) {
     nodes {

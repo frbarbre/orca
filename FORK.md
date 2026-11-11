@@ -1017,7 +1017,9 @@ plus `pull-request-page/mentions/textarea.emoji.test.tsx`.
 
 Our PRs get a bot comment per push ("Preview deployment for `sha`: url"). `PreviewDeploymentButton.tsx`
 sits next to the right sidebar toggle and opens the newest one; its tooltip names the commit, its age,
-and whether it is behind the PR head. Parsing is `src/renderer/src/lib/preview-deployment.ts` (+ test).
+and whether it is behind the PR head. Each app posts its own ("Frontend preview deployment", "Insights
+preview deployment"); the button opens the newest frontend (or unnamed) one, and another app's only
+when there is none. Parsing is `src/renderer/src/lib/preview-deployment.ts` (+ test).
 It loads the active PR's comments itself (cached), again when the head moves and on hover.
 
 To fit it and the other header buttons, `getTopActivityBarLayout` (`activity-bar-overflow.ts`) first

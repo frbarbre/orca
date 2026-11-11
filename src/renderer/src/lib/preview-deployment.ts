@@ -4,35 +4,49 @@ import { translate } from '@/i18n/i18n'
 
 export type PreviewDeployment = { url: string; sha: string | null; createdAt: string }
 
-const PREVIEW_HEADING = /preview deployment/i
+const PREVIEW_HEADING = /(\w*)\s*preview deployment/i
 const PREVIEW_URL = /https?:\/\/[^\s)>\]]+/
 const PREVIEW_SHA = /`([0-9a-f]{7,40})`/i
 
-function parsePreviewComment(comment: PRComment): PreviewDeployment | null {
-  if (!comment.isBot || comment.path || comment.threadId || !PREVIEW_HEADING.test(comment.body)) {
+type ParsedPreview = { deployment: PreviewDeployment; isFrontend: boolean }
+
+function parsePreviewComment(comment: PRComment): ParsedPreview | null {
+  const heading = comment.body.match(PREVIEW_HEADING)
+  if (!comment.isBot || comment.path || comment.threadId || !heading) {
     return null
   }
   const url = comment.body.match(PREVIEW_URL)?.[0]
   if (!url) {
     return null
   }
-  return { url, sha: comment.body.match(PREVIEW_SHA)?.[1] ?? null, createdAt: comment.createdAt }
+  const app = heading[1].toLowerCase()
+  return {
+    deployment: {
+      url,
+      sha: comment.body.match(PREVIEW_SHA)?.[1] ?? null,
+      createdAt: comment.createdAt
+    },
+    isFrontend: app === '' || app === 'frontend'
+  }
+}
+
+function newest(previews: readonly PreviewDeployment[]): PreviewDeployment | null {
+  let latest: PreviewDeployment | null = null
+  for (const deployment of previews) {
+    if (!latest || Date.parse(deployment.createdAt) > Date.parse(latest.createdAt)) {
+      latest = deployment
+    }
+  }
+  return latest
 }
 
 export function findLatestPreviewDeployment(
   comments: readonly PRComment[]
 ): PreviewDeployment | null {
-  let latest: PreviewDeployment | null = null
-  for (const comment of comments) {
-    const deployment = parsePreviewComment(comment)
-    if (
-      deployment &&
-      (!latest || Date.parse(deployment.createdAt) > Date.parse(latest.createdAt))
-    ) {
-      latest = deployment
-    }
-  }
-  return latest
+  const previews = comments.flatMap((comment) => parsePreviewComment(comment) ?? [])
+  // Why: each app (Frontend, Insights, ...) posts its own preview per push; the frontend is the one to open.
+  const frontend = previews.filter((p) => p.isFrontend).map((p) => p.deployment)
+  return newest(frontend) ?? newest(previews.map((p) => p.deployment))
 }
 
 export function previewDeploymentTooltip(

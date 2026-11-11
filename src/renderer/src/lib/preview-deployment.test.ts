@@ -45,6 +45,37 @@ describe('findLatestPreviewDeployment', () => {
 
     expect(findLatestPreviewDeployment(comments)).toBeNull()
   })
+
+  it('prefers the frontend preview over newer previews of other apps', () => {
+    const comments = [
+      comment(
+        1,
+        '2026-10-09T11:00:00Z',
+        '🔎 **Frontend preview deployment** for `d5c2fcb`: https://feature.flowbase.pages.dev'
+      ),
+      comment(
+        2,
+        '2026-10-09T11:00:30Z',
+        '🔎 **Insights preview deployment** for `d5c2fcb`: https://feature.flowbase-insights.pages.dev'
+      )
+    ]
+
+    expect(findLatestPreviewDeployment(comments)?.url).toBe('https://feature.flowbase.pages.dev')
+  })
+
+  it('falls back to another app preview when there is no frontend one', () => {
+    const comments = [
+      comment(
+        1,
+        '2026-10-09T11:00:30Z',
+        '🔎 **Insights preview deployment** for `d5c2fcb`: https://feature.flowbase-insights.pages.dev'
+      )
+    ]
+
+    expect(findLatestPreviewDeployment(comments)?.url).toBe(
+      'https://feature.flowbase-insights.pages.dev'
+    )
+  })
 })
 
 describe('previewDeploymentTooltip', () => {

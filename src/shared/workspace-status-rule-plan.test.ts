@@ -9,6 +9,7 @@ import {
 } from './workspace-status-rule-config'
 import {
   buildWorkspaceStatusRulePlan,
+  releasedWorkspaceStatusRuleTargets,
   type WorkspaceStatusRuleTarget
 } from './workspace-status-rule-plan'
 
@@ -324,6 +325,77 @@ describe('buildWorkspaceStatusRulePlan — review inbox', () => {
     })
 
     expect(plan.creations).toEqual([])
+  })
+})
+
+describe('a workspace in the hold column', () => {
+  const held = makeTarget({ currentStatus: 'on-hold' })
+  const holding = { ...enabled, holdStatus: 'on-hold', onResolved: 'delete' as const }
+
+  it('is never moved by a pull request state', () => {
+    const plan = buildWorkspaceStatusRulePlan({
+      targets: [held],
+      snapshot: makeSnapshot({ linkedPullRequests: [makePR({ isDraft: true })] }),
+      config: holding,
+      existingBranches: noBranches
+    })
+    expect(plan.statusUpdates).toStrictEqual([])
+  })
+
+  it('is never removed once its pull request merges', () => {
+    const plan = buildWorkspaceStatusRulePlan({
+      targets: [held],
+      snapshot: makeSnapshot({ linkedPullRequests: [makePR({ state: 'MERGED' })] }),
+      config: holding,
+      existingBranches: noBranches
+    })
+    expect(plan.removals).toStrictEqual([])
+  })
+
+  it('is never removed once you have reviewed', () => {
+    const plan = buildWorkspaceStatusRulePlan({
+      targets: [held],
+      snapshot: makeSnapshot({
+        linkedPullRequests: [
+          makePR({
+            author: 'colleague',
+            latestReviews: [{ login: 'frbarbre', state: 'APPROVED', commitOid: 'sha' }]
+          })
+        ]
+      }),
+      config: { ...holding, onReviewed: 'delete' as const },
+      existingBranches: noBranches
+    })
+    expect(plan.removals).toStrictEqual([])
+  })
+
+  it('still counts as the pull request having a workspace, so the inbox never clones it', () => {
+    const requested = makePR({ author: 'colleague', headRefName: 'feat/other' })
+    const plan = buildWorkspaceStatusRulePlan({
+      targets: [held],
+      snapshot: makeSnapshot({ reviewRequestedPullRequests: [requested] }),
+      config: { ...holding, reviewInbox: { ...holding.reviewInbox, enabled: true } },
+      existingBranches: noBranches
+    })
+    expect(plan.creations).toStrictEqual([])
+  })
+
+  it('moves again once it is put in any other column', () => {
+    const plan = buildWorkspaceStatusRulePlan({
+      targets: [makeTarget({ currentStatus: 'todo' })],
+      snapshot: makeSnapshot({ linkedPullRequests: [makePR({ isDraft: true })] }),
+      config: holding,
+      existingBranches: noBranches
+    })
+    expect(plan.statusUpdates.map((update) => update.status)).toStrictEqual(['draft-col'])
+  })
+
+  it('is left out of the head sync', () => {
+    expect(
+      releasedWorkspaceStatusRuleTargets([held, makeTarget({ worktreeId: 'two' })], holding).map(
+        (target) => target.worktreeId
+      )
+    ).toStrictEqual(['two'])
   })
 })
 

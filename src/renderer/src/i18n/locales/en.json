@@ -12616,6 +12616,8 @@
           "noColumn": "Do nothing",
           "newWorkspace": "New workspaces start in",
           "newWorkspaceDescription": "Where a workspace Orca creates in these projects goes before it has a pull request. Workspaces that already exist keep their column.",
+          "hold": "Hold workspaces in",
+          "holdDescription": "The rules never move, remove or update a workspace in this column. Move it to any other column to hand it back to the rules.",
           "deleteOnMerge": "Delete the workspace when its pull request is merged or closed",
           "deleteOnMergeDescription": "Runs your orca.yaml archive script first. A workspace with uncommitted work or a running agent is kept, and Orca says so. The branch itself stays on the remote.",
           "conflictPrompt": "Conflict prompt",

@@ -2051,6 +2051,15 @@ unticked, new-style cards drop the project chip (`worktree-card-presentation.tsx
 keep it, since they have no Card display menu. Existing profiles get it ticked once on load
 (`_projectWorktreeCardPropertyDefaulted` in `normalize-loaded-ui-state.ts`), so unticking sticks.
 
+### 83. Hold column
+
+PR rules → General → "Hold workspaces in" (`holdStatus` in `workspace-status-rule-config.ts`):
+a workspace in that column is skipped by every rule — no column moves, no delete on merge, close or
+review, and so no conflict agent or review-entered command, and no review head sync
+(`releasedWorkspaceStatusRuleTargets` in `workspace-status-rule-plan.ts`, used by the poller). It
+still counts as its pull request's workspace, so the review inbox never clones a held one again.
+Moving it to any other column hands it back to the rules on the next tick.
+
 ## Verify
 
 Verify runs on GitHub, not locally: `fork-verify.yml` runs it on every pull request against `main`,

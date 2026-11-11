@@ -105,6 +105,18 @@ function wasUnassigned(
   return config.handledPullRequests.some((entry) => isHandledKeyForPullRequest(entry, key))
 }
 
+function isHeld(target: WorkspaceStatusRuleTarget, config: WorkspaceStatusRuleConfig): boolean {
+  return config.holdStatus !== null && target.currentStatus === config.holdStatus
+}
+
+/** The targets outside the hold column, the only ones the rules may act on. */
+export function releasedWorkspaceStatusRuleTargets(
+  targets: readonly WorkspaceStatusRuleTarget[],
+  config: WorkspaceStatusRuleConfig
+): WorkspaceStatusRuleTarget[] {
+  return targets.filter((target) => !isHeld(target, config))
+}
+
 export function buildWorkspaceStatusRulePlan(args: {
   targets: readonly WorkspaceStatusRuleTarget[]
   snapshot: ReviewStatusSnapshot
@@ -124,7 +136,8 @@ export function buildWorkspaceStatusRulePlan(args: {
     snapshot.reviewRequestedPullRequests.map((pr) => snapshotKey(pr.repo, pr.number))
   )
 
-  for (const target of targets) {
+  // Why held targets still feed `linkedKeys` below: the inbox must not clone a held pull request again.
+  for (const target of releasedWorkspaceStatusRuleTargets(targets, config)) {
     const pr = byKey.get(snapshotKey(target.repo, target.prNumber))
     if (!pr) {
       continue

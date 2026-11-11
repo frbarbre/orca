@@ -3,7 +3,10 @@ import { useAppStore } from '@/store'
 import { installWindowVisibilityTimeoutPoller } from '@/lib/window-visibility-timeout-poller'
 import { getIndexedRepoMap } from '@/store/worktree-repo-index'
 import type { GitHubRepositoryIdentity } from '../../../../shared/github/pull-request-types'
-import { buildWorkspaceStatusRulePlan } from '../../../../shared/workspace-status-rule-plan'
+import {
+  buildWorkspaceStatusRulePlan,
+  releasedWorkspaceStatusRuleTargets
+} from '../../../../shared/workspace-status-rule-plan'
 import { applyWorkspaceStatusRulePlan } from './apply-workspace-status-rule-plan'
 import {
   collectNewWorkspaceStatusTargets,
@@ -104,7 +107,10 @@ async function runWorkspaceStatusRuleTick(): Promise<void> {
   await applyWorkspaceStatusRulePlan(plan, config)
   await launchConflictAgents(plan, scope.targets, snapshot, config)
   await runReviewEnteredCommands(plan, scope.targets, config)
-  await syncReviewWorkspaceHeads(scope.targets, snapshot)
+  await syncReviewWorkspaceHeads(
+    releasedWorkspaceStatusRuleTargets(scope.targets, config),
+    snapshot
+  )
 }
 
 async function syncReviewWorkspaceHeads(

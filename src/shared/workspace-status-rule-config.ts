@@ -52,6 +52,8 @@ export type WorkspaceStatusRuleConfig = {
   newWorkspaceStatus: WorkspaceStatus | null
   /** When `newWorkspaceStatus` was chosen; only workspaces created after it are moved. */
   newWorkspaceStatusSince: number | null
+  /** Column whose workspaces the rules never move, remove or sync; null when none is chosen. */
+  holdStatus: WorkspaceStatus | null
   /** `org/team-slug`, or null when PM approval is not in use. */
   pmApprovalTeam: string | null
   /** What to do once a pull request is merged or closed without merging. */
@@ -114,6 +116,7 @@ export function cloneDefaultWorkspaceStatusRuleConfig(): WorkspaceStatusRuleConf
     mergingCheckName: DEFAULT_MERGING_CHECK_NAME,
     newWorkspaceStatus: null,
     newWorkspaceStatusSince: null,
+    holdStatus: null,
     pmApprovalTeam: null,
     onResolved: 'none',
     onReviewed: 'none',
@@ -255,6 +258,8 @@ export function normalizeWorkspaceStatusRuleConfig(value: unknown): WorkspaceSta
       MAX_CHECK_NAME_LENGTH
     ),
     ...sanitizeNewWorkspaceStatus(raw.newWorkspaceStatus, raw.newWorkspaceStatusSince),
+    holdStatus:
+      typeof raw.holdStatus === 'string' && raw.holdStatus.trim() ? raw.holdStatus.trim() : null,
     pmApprovalTeam,
     onResolved: raw.onResolved === 'delete' ? 'delete' : 'none',
     onReviewed: raw.onReviewed === 'delete' ? 'delete' : 'none',

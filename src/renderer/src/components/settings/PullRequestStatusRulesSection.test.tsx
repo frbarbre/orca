@@ -44,6 +44,7 @@ describe('PR rules settings', () => {
     render(<PullRequestStatusRulesSection />)
 
     expect(screen.getByText('New workspaces start in')).toBeInTheDocument()
+    expect(screen.getByText('Hold workspaces in')).toBeInTheDocument()
     for (const tab of ['Reviewing', 'Conflicts', 'Review', 'Merge gate', 'PM approval']) {
       expect(screen.getByRole('tab', { name: tab })).toBeInTheDocument()
     }

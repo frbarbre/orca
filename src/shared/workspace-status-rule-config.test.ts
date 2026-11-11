@@ -110,6 +110,14 @@ describe('normalizeWorkspaceStatusRuleConfig', () => {
     expect(config.newWorkspaceStatusSince).toBe(1_700_000_000_000)
   })
 
+  it('keeps the hold column, and has none until one is chosen', () => {
+    expect(normalizeWorkspaceStatusRuleConfig({ holdStatus: ' on-hold ' }).holdStatus).toBe(
+      'on-hold'
+    )
+    expect(normalizeWorkspaceStatusRuleConfig({ holdStatus: '' }).holdStatus).toBeNull()
+    expect(normalizeWorkspaceStatusRuleConfig({}).holdStatus).toBeNull()
+  })
+
   it('clears the new-workspace time when no column is chosen', () => {
     const config = normalizeWorkspaceStatusRuleConfig({
       newWorkspaceStatus: '',

@@ -88,22 +88,49 @@ export function ConditionRow({
   )
 }
 
-export function NewWorkspaceStatusRow({
-  value,
-  statuses,
-  onChange
-}: {
+type StatusPickerRowProps = {
   value: string | null
   statuses: readonly WorkspaceStatusDefinition[]
   onChange: (status: string | undefined) => void
-}): React.JSX.Element {
+}
+
+export function NewWorkspaceStatusRow(props: StatusPickerRowProps): React.JSX.Element {
   return (
-    <SettingsRow
+    <StatusPickerRow
+      {...props}
       label={translate('auto.components.settings.prRules.newWorkspace', 'New workspaces start in')}
       description={translate(
         'auto.components.settings.prRules.newWorkspaceDescription',
         'Where a workspace Orca creates in these projects goes before it has a pull request. Workspaces that already exist keep their column.'
       )}
+    />
+  )
+}
+
+export function HoldStatusRow(props: StatusPickerRowProps): React.JSX.Element {
+  return (
+    <StatusPickerRow
+      {...props}
+      label={translate('auto.components.settings.prRules.hold', 'Hold workspaces in')}
+      description={translate(
+        'auto.components.settings.prRules.holdDescription',
+        'The rules never move, remove or update a workspace in this column. Move it to any other column to hand it back to the rules.'
+      )}
+    />
+  )
+}
+
+function StatusPickerRow({
+  value,
+  statuses,
+  onChange,
+  label,
+  description
+}: StatusPickerRowProps & { label: string; description: string }): React.JSX.Element {
+  return (
+    <SettingsRow
+      label={label}
+      description={description}
       control={
         <Select
           value={value ?? UNMAPPED}

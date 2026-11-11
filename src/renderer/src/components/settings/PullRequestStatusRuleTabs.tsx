@@ -7,7 +7,12 @@ import {
   type WorkspaceStatusRuleCondition,
   type WorkspaceStatusRuleConfig
 } from '../../../../shared/workspace-status-rule-config'
-import { ConditionRow, NewWorkspaceStatusRow, ProjectScopeRow } from './PullRequestStatusRuleRows'
+import {
+  ConditionRow,
+  HoldStatusRow,
+  NewWorkspaceStatusRow,
+  ProjectScopeRow
+} from './PullRequestStatusRuleRows'
 import { ConditionSettings } from './PullRequestStatusRuleStateSettings'
 import { getPullRequestStatusRuleTabLabels } from './pull-request-status-rule-copy'
 import { WorkspaceActionPromptsSection } from './WorkspaceActionPromptsSection'
@@ -65,6 +70,11 @@ export function PullRequestStatusRuleTabs({
               newWorkspaceStatusSince: status ? Date.now() : null
             })
           }
+        />
+        <HoldStatusRow
+          value={config.holdStatus}
+          statuses={statuses}
+          onChange={(status) => patch({ holdStatus: status ?? null })}
         />
         <WorkspaceActionPromptsSection />
       </TabsContent>

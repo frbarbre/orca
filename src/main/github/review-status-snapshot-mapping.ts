@@ -119,6 +119,15 @@ function mapReviews(nodes: unknown): ReviewSnapshotLatestReview[] {
   })
 }
 
+function mapViewerLatestReview(value: unknown): ReviewSnapshotPullRequest['viewerLatestReview'] {
+  const review = asRecord(value)
+  const state = asString(review?.state).toUpperCase()
+  if (!review || !state) {
+    return undefined
+  }
+  return { state, commitOid: asString(asRecord(review.commit)?.oid) || null }
+}
+
 function mapPRState(value: string): ReviewSnapshotPRState {
   const state = value.toUpperCase()
   return state === 'MERGED' || state === 'CLOSED' ? state : 'OPEN'
@@ -138,6 +147,7 @@ export function mapReviewSnapshotPullRequest(value: unknown): ReviewSnapshotPull
     return null
   }
   const authorAvatarUrl = asString(asRecord(pr.author)?.avatarUrl)
+  const viewerLatestReview = mapViewerLatestReview(pr.viewerLatestReview)
   return {
     repo: { owner, repo },
     number,
@@ -157,6 +167,7 @@ export function mapReviewSnapshotPullRequest(value: unknown): ReviewSnapshotPull
     // Why both: GitHub drops a reviewer from latestReviews as soon as they are re-requested, and
     // the re-request is exactly when the commit they last reviewed is needed.
     latestOpinionatedReviews: mapReviews(pr.latestOpinionatedReviews),
+    ...(viewerLatestReview ? { viewerLatestReview } : {}),
     checks: mapChecks(pr)
   }
 }

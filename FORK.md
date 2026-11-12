@@ -231,7 +231,9 @@ condition is skipped and nothing changes.
 
 The reviewed commit is read from `latestOpinionatedReviews` as well as `latestReviews`: GitHub
 leaves a re-requested reviewer out of `latestReviews`, and the re-request is exactly when that
-commit is needed. The inbox ledger keys a re-request on it (`owner/repo#n@<sha>`), so a pull request
+commit is needed. A comment-only review is in neither list after a re-request, so `viewerLatestReview`
+is the last fallback; without it the re-request rebuilt the first look's ledger key and was skipped.
+The inbox ledger keys a re-request on it (`owner/repo#n@<sha>`), so a pull request
 you reviewed is cloned again when it comes back; forgetting a pull request drops every such entry.
 
 Everything the rules need comes from **one GraphQL query this fork owns** rather than from

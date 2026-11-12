@@ -51,6 +51,8 @@ export type ReviewSnapshotPullRequest = {
   latestReviews: ReviewSnapshotLatestReview[]
   /** Each reviewer's last approve or request-changes review, kept after they are re-requested. */
   latestOpinionatedReviews?: ReviewSnapshotLatestReview[]
+  /** Fork: a re-requested viewer's comment-only review shows up only here. */
+  viewerLatestReview?: { state: string; commitOid: string | null }
   checks: ReviewSnapshotCheck[]
 }
 

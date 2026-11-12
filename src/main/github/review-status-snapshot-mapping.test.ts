@@ -143,6 +143,23 @@ describe('mapReviewStatusSnapshotResponse', () => {
     ).toContain('author { login avatarUrl }')
   })
 
+  it("keeps the viewer's own latest review, which a re-request drops from both review lists", () => {
+    const linked0 = {
+      pullRequest: {
+        ...payload.data.linked0.pullRequest,
+        viewerLatestReview: { state: 'COMMENTED', commit: { oid: 'commented-sha' } }
+      }
+    }
+    const [pr] = mapReviewStatusSnapshotResponse({
+      data: { ...payload.data, linked0 }
+    }).linkedPullRequests
+
+    expect(pr.viewerLatestReview).toEqual({ state: 'COMMENTED', commitOid: 'commented-sha' })
+    expect(
+      buildReviewStatusSnapshotQuery({ linkedPullRequests: [], reviewInboxRepos: [] })
+    ).toContain('viewerLatestReview { state commit { oid } }')
+  })
+
   it('drops reviews with no author', () => {
     const [pr] = mapReviewStatusSnapshotResponse(payload).linkedPullRequests
 

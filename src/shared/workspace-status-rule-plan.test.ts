@@ -654,6 +654,34 @@ describe('closing a workspace once you have reviewed', () => {
     ])
   })
 
+  it('clones a re-request after a comment-only review although the pull request was handled before', () => {
+    // Why this shape: GitHub lists a re-requested reviewer's comment review in neither list, only
+    // as the viewer's own latest review.
+    const plan = buildWorkspaceStatusRulePlan({
+      targets: [],
+      snapshot: makeSnapshot({
+        reviewRequestedPullRequests: [
+          {
+            ...reviewedPR,
+            latestReviews: [],
+            latestOpinionatedReviews: [],
+            viewerLatestReview: { state: 'COMMENTED', commitOid: 'commented-sha' },
+            requestedReviewers: [{ kind: 'user', login: 'frbarbre' }]
+          }
+        ]
+      }),
+      config: {
+        ...config,
+        reviewInbox: { ...config.reviewInbox, enabled: true },
+        handledPullRequests: [makeHandledPullRequestKey(reviewedPR.repo, reviewedPR.number)]
+      },
+      existingBranches: new Set()
+    })
+    expect(plan.creations.map((entry) => entry.handledKey)).toStrictEqual([
+      makeHandledPullRequestKey(reviewedPR.repo, reviewedPR.number, 'commented-sha')
+    ])
+  })
+
   it('does not clone the same re-request twice', () => {
     const plan = buildWorkspaceStatusRulePlan({
       targets: [],

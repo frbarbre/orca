@@ -145,7 +145,11 @@ export function readViewerReviewStanding(
   return {
     isFinished: !isOwed && (verdict === 'APPROVED' || verdict === 'CHANGES_REQUESTED'),
     isOwed,
-    commitOid: review?.commitOid ?? pr.latestOpinionatedReviews?.find(byViewer)?.commitOid ?? null
+    commitOid:
+      review?.commitOid ??
+      pr.latestOpinionatedReviews?.find(byViewer)?.commitOid ??
+      pr.viewerLatestReview?.commitOid ??
+      null
   }
 }
 

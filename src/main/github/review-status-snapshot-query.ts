@@ -40,6 +40,7 @@ const PR_FIELDS_FRAGMENT = `fragment SnapshotPR on PullRequest {
   latestOpinionatedReviews(first: 20) {
     nodes { state author { login } commit { oid } }
   }
+  viewerLatestReview { state commit { oid } }
   commits(last: 1) {
     nodes {
       commit {

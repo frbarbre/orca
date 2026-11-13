@@ -15621,7 +15621,9 @@
           "03378aea75": "Send notes to",
           "bb9c69a0c9": "Notes sent.",
           "50f7e753ea": "Sending notes...",
-          "autoPicked": "Auto-picked"
+          "autoPicked": "Auto-picked",
+          "prefixLabel": "Message for the agent",
+          "prefixPlaceholder": "Add a message (optional)"
         },
         "RichMarkdownAnnotationOverlay": {
           "069b5677b8": "Selected text",

@@ -119,6 +119,39 @@ describe('ReviewNotesSendMenuContent auto-picked target', () => {
     )
   })
 
+  it('puts the typed text in front of the prompt', async () => {
+    renderMenu()
+    fireEvent.change(screen.getByRole('textbox', { name: 'Message for the agent' }), {
+      target: { value: 'Focus on the migration.' }
+    })
+
+    fireEvent.click(screen.getAllByRole('menuitem')[0])
+    await vi.waitFor(() =>
+      expect(harness.sendMessageToAgent).toHaveBeenCalledWith(
+        expect.objectContaining({ prompt: 'Focus on the migration.\n\nmy notes' })
+      )
+    )
+  })
+
+  it('takes focus, sends to the first target on Enter and moves into the list on ArrowDown', async () => {
+    renderMenu()
+    const input = screen.getByRole('textbox', { name: 'Message for the agent' })
+    await vi.waitFor(() => expect(document.activeElement).toBe(input))
+
+    fireEvent.keyDown(input, { key: 'ArrowDown' })
+    expect(document.activeElement).toBe(screen.getAllByRole('menuitem')[0])
+
+    fireEvent.change(input, { target: { value: 'Be brief.' } })
+    fireEvent.keyDown(input, { key: 'Enter' })
+    await vi.waitFor(() =>
+      expect(harness.sendMessageToAgent).toHaveBeenCalledWith({
+        worktreeId: 'wt-1',
+        prompt: 'Be brief.\n\nmy notes',
+        target: { kind: 'terminal', tabId: 'term-b', leafId: 'leaf' }
+      })
+    )
+  })
+
   it('is absent when no session can take notes', () => {
     harness.targets = harness.targets.map((target) => ({
       ...target,

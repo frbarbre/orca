@@ -68,6 +68,11 @@ vi.mock('react', async () => {
   }
 })
 
+vi.mock('./send-menu-prefix-input', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('./send-menu-prefix-input')>()),
+  SendMenuPrefixInput: () => null
+}))
+
 vi.mock('@/store', () => ({
   useAppStore: Object.assign(
     (selector: (state: Record<string, unknown>) => unknown) => selector(harness.storeState),

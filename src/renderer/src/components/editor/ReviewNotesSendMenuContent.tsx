@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react'
+import React, { useCallback, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { useShallow } from 'zustand/react/shallow'
 import { useAppStore } from '@/store'
@@ -36,6 +36,7 @@ import { agentRowDisplayDotState } from '@/lib/agent-row-dot-state'
 import { translate } from '@/i18n/i18n'
 import { Sparkles } from 'lucide-react'
 import { pickAutoSendTarget } from '@/lib/auto-send-target'
+import { SendMenuPrefixInput, withPromptPrefix } from './send-menu-prefix-input'
 
 type OrderedSendTarget = {
   target: NotesSendAgentTarget
@@ -61,6 +62,8 @@ export function ReviewNotesSendMenuContent({
   onPromptHandedOff?: (delivered: Promise<unknown>) => void
 }): React.JSX.Element {
   const hasPrompt = prompt.trim().length > 0
+  const [prefix, setPrefix] = useState('')
+  const sentPrompt = withPromptPrefix(prefix, prompt)
 
   // Include every workspace agent, not just the focused pane; memoize slice-derived targets to avoid fresh selector arrays.
   const agentStatusByPaneKey = useAppStore((s) => s.agentStatusByPaneKey)
@@ -189,7 +192,7 @@ export function ReviewNotesSendMenuContent({
       }
 
       runNotesSend(
-        () => sendMessageToAgent({ worktreeId, prompt, target: target.messageTarget }),
+        () => sendMessageToAgent({ worktreeId, prompt: sentPrompt, target: target.messageTarget }),
         () => {
           onPromptDelivered?.()
           // Match sidebar telemetry for follow-up notes sent through the dropdown.
@@ -202,11 +205,12 @@ export function ReviewNotesSendMenuContent({
         { explicitTarget: true }
       )
     },
-    [hasPrompt, runNotesSend, worktreeId, prompt, onPromptDelivered, launchSource]
+    [hasPrompt, runNotesSend, worktreeId, sentPrompt, onPromptDelivered, launchSource]
   )
 
   return (
     <>
+      <SendMenuPrefixInput value={prefix} onChange={setPrefix} />
       <DropdownMenuLabel>
         {translate('auto.components.editor.ReviewNotesSendMenuContent.03378aea75', 'Send notes to')}
       </DropdownMenuLabel>
@@ -236,7 +240,7 @@ export function ReviewNotesSendMenuContent({
         worktreeId={worktreeId}
         groupId={groupId}
         onFocusTerminal={focusTerminalTabSurface}
-        prompt={prompt}
+        prompt={sentPrompt}
         promptDelivery={promptDelivery}
         launchSource={launchSource}
         onPromptDelivered={onPromptDelivered}

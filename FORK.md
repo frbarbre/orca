@@ -2064,6 +2064,14 @@ review, and so no conflict agent or review-entered command, and no review head s
 still counts as its pull request's workspace, so the review inbox never clones a held one again.
 Moving it to any other column hands it back to the rules on the next tick.
 
+### 84. A message in front of a send
+
+Every "Send to an agent" menu (review notes, PR comments, browser annotations) opens with a text
+field (`components/editor/send-menu-prefix-input.tsx`, rendered by `ReviewNotesSendMenuContent`).
+It takes focus when the menu opens; what you type goes in front of the prompt, followed by a blank line,
+for an existing agent and a new one alike. Enter sends to the first target (the auto-picked agent),
+ArrowDown moves into the list, Escape closes the menu. Test: `ReviewNotesSendMenuContent.auto-picked.test.tsx`.
+
 ## Verify
 
 Verify runs on GitHub, not locally: `fork-verify.yml` runs it on every pull request against `main`,

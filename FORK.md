@@ -2072,6 +2072,11 @@ It takes focus when the menu opens; what you type goes in front of the prompt, f
 for an existing agent and a new one alike. Enter sends to the first target (the auto-picked agent),
 ArrowDown moves into the list, Escape closes the menu. Test: `ReviewNotesSendMenuContent.auto-picked.test.tsx`.
 
+Sending queued PR comments (the send button, ⌥⌘S or the status bar) first opens a dialog
+(`checks-panel/send-message-dialog.tsx`, mounted in `active-content.tsx`) with a focused message
+field: Enter sends, Shift+Enter adds a line, Escape cancels. The message goes in front of the
+resolve prompt (`handleResolveCommentsWithAI`'s `message`). Test: `send-message-dialog.test.tsx`.
+
 ## Verify
 
 Verify runs on GitHub, not locally: `fork-verify.yml` runs it on every pull request against `main`,

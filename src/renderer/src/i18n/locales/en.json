@@ -21237,7 +21237,12 @@
   "queuedComments": {
     "none": "No comments are queued.",
     "send": "Send {{count}} queued comments",
-    "badge": "{{count}} queued"
+    "badge": "{{count}} queued",
+    "messageDescription": "Add a message for the agent (optional). Enter sends, Shift+Enter adds a line.",
+    "messageLabel": "Message for the agent",
+    "messagePlaceholder": "Add a message (optional)",
+    "messageCancel": "Cancel",
+    "messageSend": "Send"
   },
   "allChanges": {
     "lineTotal": "{{added}} lines added, {{removed}} lines deleted in the listed files",

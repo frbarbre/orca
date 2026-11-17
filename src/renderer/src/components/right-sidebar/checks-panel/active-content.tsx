@@ -25,6 +25,7 @@ import { useChecksPanelRerun } from './use-checks-panel-rerun'
 import { translate } from '@/i18n/i18n'
 import type { ChecksPanelActiveContentModel } from './active-content-props'
 import { ChecksPanelReviewHeader } from './review-header'
+import { SendMessageDialog, useSendMessageRequest } from './send-message-dialog'
 
 export function ChecksPanelActiveContent({
   model
@@ -86,12 +87,13 @@ export function ChecksPanelActiveContent({
     titleSaving,
     setTitleDraft
   } = model
+  const commentsMessage = useSendMessageRequest(handleResolveCommentsWithAI)
   usePRCommentQueuePanel({
     worktreeId: activeWorktreeId,
     contextKey: stateRequestKey,
     comments,
     commentsLoading,
-    onSend: sourceControlAiActionsVisible ? handleResolveCommentsWithAI : undefined
+    onSend: sourceControlAiActionsVisible ? commentsMessage.ask : undefined
   })
   const pendingReviewCount = usePendingReviewQueue(activeWorktreeId).comments.length
   const { rerunChecks, isRerunningChecks } = useChecksPanelRerun({
@@ -174,7 +176,12 @@ export function ChecksPanelActiveContent({
   if (pendingReviewCount > 0) {
     prSections.push({ id: 'pr-pending-review', node: <PendingReviewPanelSection sectionHeader /> })
   }
-  prSections.push(...buildCommentSections(model, reviewShortLabel))
+  prSections.push(
+    ...buildCommentSections(
+      { ...model, handleResolveCommentsWithAI: commentsMessage.ask },
+      reviewShortLabel
+    )
+  )
   return (
     <div ref={setChecksPanelContentRef} className="flex-1 overflow-auto scrollbar-sleek">
       {/* Show background GitHub failures above cached PR data so outages cannot look like a healthy panel. */}
@@ -281,6 +288,7 @@ export function ChecksPanelActiveContent({
       </div>
 
       <PrPanelSections sections={prSections} />
+      <SendMessageDialog request={commentsMessage.request} onCancel={commentsMessage.cancel} />
       <SourceControlAgentActionDialog
         open={sourceControlAiActionsVisible && agentComposerState !== null}
         onOpenChange={(open) => {

@@ -16,6 +16,7 @@ import { buildGitHubPRStackRebasePrompt } from '../github-pr-stack-rebase-prompt
 import { parseGitHubIssueOrPRLink } from '../../../../../shared/github/links'
 import type { PRCommentGroup } from '../../../../../shared/pr-comment-groups'
 import { translate } from '@/i18n/i18n'
+import { withPromptPrefix } from '@/components/editor/send-menu-prefix-input'
 
 import type { ChecksPanelContextState } from './use-checks-panel-context-state'
 import type { ChecksPanelControllerState } from './use-checks-panel-controller-state'
@@ -175,7 +176,7 @@ export function useChecksPanelAiQueue(model: ChecksPanelAiQueueInput) {
     })
   }
 
-  const handleResolveCommentsWithAI = (selectedGroups: PRCommentGroup[]): void => {
+  const handleResolveCommentsWithAI = (selectedGroups: PRCommentGroup[], message = ''): void => {
     if (
       !sourceControlAiActionsVisible ||
       !activeWorktreeId ||
@@ -275,14 +276,17 @@ export function useChecksPanelAiQueue(model: ChecksPanelAiQueueInput) {
               'auto.components.right.sidebar.ChecksPanel.abf59262fb',
               'Review and edit the full command input before starting an agent.'
             ),
-      prompt: buildPRCommentsResolutionPrompt({
-        reviewKind: activeReview.provider === 'gitlab' ? 'MR' : 'PR',
-        reviewNumber: activeReview.number,
-        reviewTitle: activeReview.title,
-        reviewUrl: activeReview.url,
-        groups: selectedGroups,
-        worktreePath: activeWorktreePath
-      }),
+      prompt: withPromptPrefix(
+        message,
+        buildPRCommentsResolutionPrompt({
+          reviewKind: activeReview.provider === 'gitlab' ? 'MR' : 'PR',
+          reviewNumber: activeReview.number,
+          reviewTitle: activeReview.title,
+          reviewUrl: activeReview.url,
+          groups: selectedGroups,
+          worktreePath: activeWorktreePath
+        })
+      ),
       launchSource: 'task_page',
       commentResolution
     })

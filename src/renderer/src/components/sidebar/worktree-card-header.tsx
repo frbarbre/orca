@@ -16,6 +16,7 @@ import { WorktreeTitleInlineRename } from './WorktreeTitleInlineRename'
 import { WorktreeCardPrAuthor } from './worktree-card-pr-author'
 import { WorktreeCardStackPosition } from './worktree-card-stack-position'
 import { WorktreeCardPrDiff } from './worktree-card-pr-diff'
+import { WorktreeCardIndexShortcutHint } from './worktree-card-index-shortcut-hint'
 import type { WorktreeCardController } from './use-worktree-card-controller'
 
 function RepoIdentityChip({
@@ -345,6 +346,7 @@ export function WorktreeCardHeader({
           )}
         </div>
       )}
+      <WorktreeCardIndexShortcutHint worktreeId={worktree.id} />
     </div>
   )
 }

@@ -36,7 +36,11 @@ const mapped = {
 const unmapped = { mergingCheckName: DEFAULT_MERGING_CHECK_NAME, statusByCondition: {} }
 const passedGate = [{ name: DEFAULT_MERGING_CHECK_NAME, state: 'success' as const }]
 
-function resolve(pr: ReviewSnapshotPullRequest, config = mapped, login = viewer): string | null {
+function resolve(
+  pr: ReviewSnapshotPullRequest,
+  config: Parameters<typeof resolveWorkspaceStatusRuleCondition>[1] = mapped,
+  login = viewer
+): string | null {
   return resolveWorkspaceStatusRuleCondition(pr, config, noPmTeam, login)
 }
 

@@ -54,6 +54,13 @@ export function getPullRequestStatusRuleCopy(): Record<
         'Also applies when a ready pull request is put back into draft.'
       )
     },
+    'self-review': {
+      label: translate('auto.components.settings.prRules.selfReview', 'Ready for your own review'),
+      description: translate(
+        'auto.components.settings.prRules.selfReviewDescription',
+        'Your ready pull request has the label below and no human reviewer yet. Starts the review agent once. Leave unset to skip.'
+      )
+    },
     'changes-requested': {
       label: translate('auto.components.settings.prRules.changes', 'Changes requested'),
       description: translate(
@@ -94,6 +101,7 @@ export function getPullRequestStatusRuleTabLabels(): Record<WorkspaceStatusRuleC
     'merge-queue': translate('auto.components.settings.prRules.tabMergeQueue', 'Merge queue'),
     conflicts: translate('auto.components.settings.prRules.tabConflicts', 'Conflicts'),
     draft: translate('auto.components.settings.prRules.tabDraft', 'Draft'),
+    'self-review': translate('auto.components.settings.prRules.tabSelfReview', 'Self review'),
     'changes-requested': translate(
       'auto.components.settings.prRules.tabChangesRequested',
       'Changes requested'

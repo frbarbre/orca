@@ -2077,6 +2077,24 @@ Sending queued PR comments (the send button, ⌥⌘S or the status bar) first op
 field: Enter sends, Shift+Enter adds a line, Escape cancels. The message goes in front of the
 resolve prompt (`handleResolveCommentsWithAI`'s `message`). Test: `send-message-dialog.test.tsx`.
 
+### 85. Self review
+
+A trial flow where authors merge without an approval. The `self-review` condition ("Ready for
+your own review", tab "Self review") comes right after Draft. It matches your own ready pull request
+that has the self-review label (`selfReviewLabel`, default `reviewed-by-flowbase-agent`, matched
+ignoring case), has no requested reviewer (user or team), and has no review from anyone but you or a
+bot (`awaitsSelfReview` in `workspace-status-rules.ts`). It outranks changes requested, merge gate
+and PM approval, so the card stays put until it merges. Merge queue, conflicts and draft still win.
+Once a human is requested or reviews, the usual conditions decide again.
+The condition only applies while it is mapped to a column, so with it unmapped the old flow is
+unchanged. The snapshot query fetches `labels` and each review author's `__typename`, so a `Bot`
+review is marked `isBot` (`review-status-snapshot-mapping.ts`).
+On entering the column, `launch-self-review-agents.ts` starts the review inbox's agent with its
+first-review prompt in the workspace you already have. It applies the inbox's view and opens the
+review layout: the first changed file against `origin/<base>`, with the pull request beside it. It
+runs once per entry and never deletes the workspace.
+Tests: `workspace-status-rules.self-review.test.ts`, `launch-self-review-agents.test.ts`.
+
 ## Verify
 
 Verify runs on GitHub, not locally: `fork-verify.yml` runs it on every pull request against `main`,

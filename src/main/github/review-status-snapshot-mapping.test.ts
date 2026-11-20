@@ -160,6 +160,33 @@ describe('mapReviewStatusSnapshotResponse', () => {
     ).toContain('viewerLatestReview { state commit { oid } }')
   })
 
+  it('keeps the labels and marks reviews left by bots', () => {
+    const linked0 = {
+      pullRequest: {
+        ...payload.data.linked0.pullRequest,
+        labels: { nodes: [{ name: 'reviewed-by-flowbase-agent' }, { name: '' }] },
+        latestReviews: {
+          nodes: [
+            { state: 'COMMENTED', author: { __typename: 'Bot', login: 'flowbase-farm-bot' } },
+            { state: 'APPROVED', author: { __typename: 'User', login: 'reviewer' } }
+          ]
+        }
+      }
+    }
+    const [pr] = mapReviewStatusSnapshotResponse({
+      data: { ...payload.data, linked0 }
+    }).linkedPullRequests
+    const query = buildReviewStatusSnapshotQuery({ linkedPullRequests: [], reviewInboxRepos: [] })
+
+    expect(pr.labels).toEqual(['reviewed-by-flowbase-agent'])
+    expect(pr.latestReviews).toEqual([
+      { login: 'flowbase-farm-bot', state: 'COMMENTED', commitOid: null, isBot: true },
+      { login: 'reviewer', state: 'APPROVED', commitOid: null }
+    ])
+    expect(query).toContain('labels(first: 20) { nodes { name } }')
+    expect(query).toContain('author { __typename login }')
+  })
+
   it('drops reviews with no author', () => {
     const [pr] = mapReviewStatusSnapshotResponse(payload).linkedPullRequests
 

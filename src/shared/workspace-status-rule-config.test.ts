@@ -127,4 +127,24 @@ describe('normalizeWorkspaceStatusRuleConfig', () => {
     expect(config.newWorkspaceStatus).toBeNull()
     expect(config.newWorkspaceStatusSince).toBeNull()
   })
+
+  it('keeps the self-review label, falling back to the agent label', () => {
+    expect(normalizeWorkspaceStatusRuleConfig({ selfReviewLabel: ' self ' }).selfReviewLabel).toBe(
+      'self'
+    )
+    expect(normalizeWorkspaceStatusRuleConfig({ selfReviewLabel: '' }).selfReviewLabel).toBe(
+      'reviewed-by-flowbase-agent'
+    )
+    expect(normalizeWorkspaceStatusRuleConfig({}).selfReviewLabel).toBe(
+      'reviewed-by-flowbase-agent'
+    )
+  })
+
+  it('keeps a self-review column mapping', () => {
+    const config = normalizeWorkspaceStatusRuleConfig({
+      statusByCondition: { 'self-review': 'self' }
+    })
+
+    expect(config.statusByCondition['self-review']).toBe('self')
+  })
 })

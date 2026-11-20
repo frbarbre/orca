@@ -156,6 +156,23 @@ export function ConditionSettings({
           }
         />
       )
+    case 'self-review':
+      return (
+        <SettingsRow
+          label={translate('auto.components.settings.prRules.selfReviewLabel', 'Self review label')}
+          description={translate(
+            'auto.components.settings.prRules.selfReviewLabelDescription',
+            'The label your pull request needs before it counts as ready for your own review.'
+          )}
+          control={
+            <Input
+              value={config.selfReviewLabel}
+              onChange={(event) => patch({ selfReviewLabel: event.target.value })}
+              className="h-7 w-[220px]"
+            />
+          }
+        />
+      )
     case 'merge-queue':
     case 'draft':
     case 'changes-requested':

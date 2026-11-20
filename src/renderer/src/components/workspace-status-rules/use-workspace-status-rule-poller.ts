@@ -16,6 +16,7 @@ import {
 import { planReviewHeadSyncs } from '../../../../shared/github/review-head-sync'
 import { setPullRequestAuthors } from './pr-author-store'
 import { launchConflictAgents } from './launch-conflict-agents'
+import { launchSelfReviewAgents } from './launch-self-review-agents'
 import { runReviewEnteredCommands } from './run-review-entered-commands'
 import { planNewWorkspaceStatusUpdates } from '../../../../shared/workspace-new-status-plan'
 import { loadPendingReviewDrafts } from '../pending-review/pending-review-draft-store'
@@ -106,6 +107,7 @@ async function runWorkspaceStatusRuleTick(): Promise<void> {
   })
   await applyWorkspaceStatusRulePlan(plan, config)
   await launchConflictAgents(plan, scope.targets, snapshot, config)
+  await launchSelfReviewAgents(plan, scope.targets, snapshot, config)
   await runReviewEnteredCommands(plan, scope.targets, config)
   await syncReviewWorkspaceHeads(
     releasedWorkspaceStatusRuleTargets(scope.targets, config),

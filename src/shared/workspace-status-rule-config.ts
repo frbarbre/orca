@@ -15,6 +15,7 @@ export const WORKSPACE_STATUS_RULE_CONDITIONS = [
   'merge-queue',
   'conflicts',
   'draft',
+  'self-review',
   'changes-requested',
   'merging',
   'pm-approval',
@@ -56,6 +57,8 @@ export type WorkspaceStatusRuleConfig = {
   holdStatus: WorkspaceStatus | null
   /** `org/team-slug`, or null when PM approval is not in use. */
   pmApprovalTeam: string | null
+  /** Fork: the label that marks your pull request as ready for its own review. */
+  selfReviewLabel: string
   /** What to do once a pull request is merged or closed without merging. */
   onResolved: 'delete' | 'none'
   /** What to do once you have approved or requested changes on someone else's pull request. */
@@ -76,6 +79,8 @@ export type WorkspaceStatusRuleConfig = {
 }
 
 export const DEFAULT_MERGING_CHECK_NAME = 'Reviews satisfied'
+
+export const DEFAULT_SELF_REVIEW_LABEL = 'reviewed-by-flowbase-agent'
 
 export const DEFAULT_REVIEW_PROMPT_TEMPLATE = `You are reviewing pull request #{{prNumber}} — "{{title}}" by {{author}} ({{url}}).
 The branch {{branch}} is checked out and the diff is pointed at {{baseRef}}.
@@ -118,6 +123,7 @@ export function cloneDefaultWorkspaceStatusRuleConfig(): WorkspaceStatusRuleConf
     newWorkspaceStatusSince: null,
     holdStatus: null,
     pmApprovalTeam: null,
+    selfReviewLabel: DEFAULT_SELF_REVIEW_LABEL,
     onResolved: 'none',
     onReviewed: 'none',
     resolveConflictsWithAgent: false,
@@ -261,6 +267,11 @@ export function normalizeWorkspaceStatusRuleConfig(value: unknown): WorkspaceSta
     holdStatus:
       typeof raw.holdStatus === 'string' && raw.holdStatus.trim() ? raw.holdStatus.trim() : null,
     pmApprovalTeam,
+    selfReviewLabel: sanitizeString(
+      raw.selfReviewLabel,
+      defaults.selfReviewLabel,
+      MAX_CHECK_NAME_LENGTH
+    ),
     onResolved: raw.onResolved === 'delete' ? 'delete' : 'none',
     onReviewed: raw.onReviewed === 'delete' ? 'delete' : 'none',
     resolveConflictsWithAgent: raw.resolveConflictsWithAgent === true,

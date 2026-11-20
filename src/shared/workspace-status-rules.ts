@@ -1,7 +1,8 @@
 import type { ReviewSnapshotPullRequest } from './github/review-status-snapshot-types'
-import type {
-  WorkspaceStatusRuleCondition,
-  WorkspaceStatusRuleConfig
+import {
+  DEFAULT_SELF_REVIEW_LABEL,
+  type WorkspaceStatusRuleCondition,
+  type WorkspaceStatusRuleConfig
 } from './workspace-status-rule-config'
 import type { WorkspaceStatus } from './worktree/types'
 
@@ -67,10 +68,24 @@ function isApprovedByPmAndEveryone(
   )
 }
 
+// Fork: your own ready pull request the agent has reviewed, with no human asked or answering yet.
+function awaitsSelfReview(pr: ReviewSnapshotPullRequest, label: string): boolean {
+  const wanted = label.trim().toLowerCase()
+  const author = pr.author?.toLowerCase()
+  return (
+    !!wanted &&
+    (pr.labels ?? []).some((name) => name.toLowerCase() === wanted) &&
+    pr.requestedReviewers.length === 0 &&
+    ![...pr.latestReviews, ...(pr.latestOpinionatedReviews ?? [])].some(
+      (review) => !review.isBot && review.login.toLowerCase() !== author
+    )
+  )
+}
+
 export function resolveWorkspaceStatusRuleCondition(
   pr: ReviewSnapshotPullRequest,
   config: Pick<WorkspaceStatusRuleConfig, 'mergingCheckName'> &
-    Partial<Pick<WorkspaceStatusRuleConfig, 'statusByCondition'>>,
+    Partial<Pick<WorkspaceStatusRuleConfig, 'statusByCondition' | 'selfReviewLabel'>>,
   pmTeamLogins: ReadonlySet<string>,
   viewerLogin: string | null
 ): WorkspaceStatusRuleCondition | null {
@@ -101,6 +116,14 @@ export function resolveWorkspaceStatusRuleCondition(
   }
   if (pr.isDraft) {
     return 'draft'
+  }
+  // Why only when mapped and ahead of merging: the trial flow lets authors merge unreviewed, so
+  // the merge gate passes at once; unmapped, the old flow is untouched.
+  if (
+    config.statusByCondition?.['self-review'] &&
+    awaitsSelfReview(pr, config.selfReviewLabel ?? DEFAULT_SELF_REVIEW_LABEL)
+  ) {
+    return 'self-review'
   }
   if (hasUnansweredChangeRequest(pr)) {
     return 'changes-requested'

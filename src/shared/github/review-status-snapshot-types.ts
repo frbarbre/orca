@@ -20,6 +20,8 @@ export type ReviewSnapshotLatestReview = {
   state: ReviewSnapshotReviewState
   /** The commit that review was left on, which a re-opened workspace can diff against. */
   commitOid: string | null
+  /** Fork: an app's review is not a human one, so it never ends a self-review. */
+  isBot?: true
 }
 
 // Why: the shared rollup normalizer rewrites every name to `check-<index>`, so a
@@ -54,6 +56,8 @@ export type ReviewSnapshotPullRequest = {
   /** Fork: a re-requested viewer's comment-only review shows up only here. */
   viewerLatestReview?: { state: string; commitOid: string | null }
   checks: ReviewSnapshotCheck[]
+  /** Fork: label names, which the self-review condition matches on. */
+  labels?: string[]
 }
 
 export type ReviewStatusSnapshotRequest = {

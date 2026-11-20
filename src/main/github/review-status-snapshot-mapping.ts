@@ -112,11 +112,20 @@ function isReviewState(value: string): value is ReviewSnapshotReviewState {
 
 function mapReviews(nodes: unknown): ReviewSnapshotLatestReview[] {
   return asNodes(nodes).flatMap((review) => {
-    const login = asString(asRecord(review.author)?.login)
+    const author = asRecord(review.author)
+    const login = asString(author?.login)
     const state = asString(review.state).toUpperCase()
     const commitOid = asString(asRecord(review.commit)?.oid)
-    return login && isReviewState(state) ? [{ login, state, commitOid: commitOid || null }] : []
+    if (!login || !isReviewState(state)) {
+      return []
+    }
+    const mapped: ReviewSnapshotLatestReview = { login, state, commitOid: commitOid || null }
+    return author?.__typename === 'Bot' ? [{ ...mapped, isBot: true }] : [mapped]
   })
+}
+
+function mapLabels(pr: RawNode): string[] {
+  return asNodes(pr.labels).flatMap((label) => asString(label.name) || [])
 }
 
 function mapViewerLatestReview(value: unknown): ReviewSnapshotPullRequest['viewerLatestReview'] {
@@ -168,7 +177,8 @@ export function mapReviewSnapshotPullRequest(value: unknown): ReviewSnapshotPull
     // the re-request is exactly when the commit they last reviewed is needed.
     latestOpinionatedReviews: mapReviews(pr.latestOpinionatedReviews),
     ...(viewerLatestReview ? { viewerLatestReview } : {}),
-    checks: mapChecks(pr)
+    checks: mapChecks(pr),
+    labels: mapLabels(pr)
   }
 }
 

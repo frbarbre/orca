@@ -11,4 +11,6 @@ export type ClaudeWebReplayedKey = {
   ctrlKey: boolean
   altKey: boolean
   shiftKey: boolean
+  /** Fork: the page kept this key; Orca only watches it for its held-modifier hints. */
+  observed?: true
 }

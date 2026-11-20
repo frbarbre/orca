@@ -62,6 +62,9 @@ export function installClaudeWebGuestShortcuts(
   // Why: hold-to-switch chords (Ctrl+Tab) commit on the modifier's release, which the page
   // receives; once a chord went to Orca, its modifier releases must follow it there.
   let forwardingModifierReleases = false
+  // Fork: the sidebar's workspace number hints follow held modifiers, which the page otherwise keeps.
+  const observe = (input: Electron.Input, type: ClaudeWebReplayedKey['type']): void =>
+    replayInRenderer({ ...toReplayedKey(input, type), observed: true })
   guest.on('before-input-event', (event, input) => {
     if (guest.isDestroyed()) {
       return
@@ -70,6 +73,8 @@ export function installClaudeWebGuestShortcuts(
       if (forwardingModifierReleases && MODIFIER_KEYS.has(input.key)) {
         replayInRenderer(toReplayedKey(input, 'keyup'))
         forwardingModifierReleases = input.meta || input.control || input.alt || input.shift
+      } else if (MODIFIER_KEYS.has(input.key)) {
+        observe(input, 'keyup')
       }
       return
     }
@@ -108,6 +113,13 @@ export function installClaudeWebGuestShortcuts(
       event.preventDefault()
       forwardingModifierReleases = true
       replayInRenderer(toReplayedKey(input, 'keydown'))
+      return
+    }
+    if (
+      !input.isAutoRepeat &&
+      (MODIFIER_KEYS.has(input.key) || input.meta || input.control || input.alt)
+    ) {
+      observe(input, 'keydown')
     }
   })
 }

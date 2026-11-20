@@ -1,10 +1,15 @@
 import type { ClaudeWebReplayedKey } from '../../../../shared/claude-remote-session'
+import { observeWorkspaceIndexShortcutKey } from '../sidebar/workspace-index-shortcut-hint'
 
 let installed = false
 
 // Why replay rather than call actions: Orca's shortcuts live in window keydown listeners, so a
 // replayed key reaches every one of them, with the user's rebinds, exactly as if typed in Orca.
 export function replayClaudeWebKey(key: ClaudeWebReplayedKey, target: EventTarget): void {
+  if (key.observed) {
+    observeWorkspaceIndexShortcutKey(key)
+    return
+  }
   target.dispatchEvent(
     new KeyboardEvent(key.type, {
       key: key.key,

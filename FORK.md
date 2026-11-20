@@ -2098,12 +2098,16 @@ Tests: `workspace-status-rules.self-review.test.ts`, `launch-self-review-agents.
 ### 86. Workspace number hints
 
 Holding the modifiers of "Select Workspace 1–9" (`workspace.selectByIndex`, ⌘ or Ctrl by default)
-for 400 ms shows each of the first nine sidebar cards' shortcut in its header, drawn with
+for 150 ms shows each of the first nine sidebar cards' shortcut in its header, drawn with
 `ShortcutKeyCombo`, the same way ⌥ reveals the delete button. It follows a remapped binding and the
 same visible order the jump uses (`getVisibleWorktreeShortcutTargets`). It stays hidden outside the
 workspace view, where the jump does nothing, and when another key is pressed with the modifier
 (⌘C, ⌘S) until the modifiers are released. Store: `workspace-index-shortcut-hint.ts`; render:
 `worktree-card-index-shortcut-hint.tsx`. Test: `workspace-index-shortcut-hint.test.ts`.
+A focused Claude web view keeps its keys, so `claude-web-guest-shortcuts.ts` also sends the modifier
+presses and releases, and keys typed with ⌘/Ctrl/⌥, to the renderer marked `observed`. The page
+still gets them, and `claude-web-key-replay.ts` hands them to the hint store instead of dispatching
+them. Tests: `claude-web-guest-shortcuts.test.ts`, `claude-web-key-replay.test.ts`.
 
 ## Verify
 

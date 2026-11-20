@@ -12,7 +12,7 @@ import { useAppStore } from '@/store'
 import { getVisibleWorktreeShortcutTargets } from './visible-worktrees'
 
 // Why: a short hold keeps the hints from flashing on every Mod+C or Mod+S.
-export const WORKSPACE_INDEX_SHORTCUT_HINT_DELAY_MS = 400
+export const WORKSPACE_INDEX_SHORTCUT_HINT_DELAY_MS = 150
 const MAX_DIGIT_INDEX = 9
 const MODIFIER_KEYS = new Set(['Meta', 'Control', 'Alt', 'Shift', 'OS'])
 
@@ -180,6 +180,17 @@ function subscribeHint(listener: () => void): () => void {
     if (hintStore.listenerCount() === 0) {
       uninstallListeners()
     }
+  }
+}
+
+/** Feeds a key a focused page kept, which the window's listeners never see. */
+export function observeWorkspaceIndexShortcutKey(
+  key: HeldModifiers & Pick<KeyboardEvent, 'key' | 'type'>
+): void {
+  if (key.type === 'keydown') {
+    hintStore.keyDown(key)
+  } else {
+    hintStore.keyUp(key)
   }
 }
 

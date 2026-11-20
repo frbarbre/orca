@@ -107,23 +107,43 @@ describe('installClaudeWebGuestShortcuts', () => {
     expect(send({ key: 'v', code: 'KeyV', meta: true })).toBe(false)
     expect(send({ key: 'z', code: 'KeyZ', meta: true })).toBe(false)
     expect(send({ key: 'g', code: 'KeyG' })).toBe(false)
-    expect(replayed).toEqual([])
+    expect(replayed.filter((key) => !key.observed)).toEqual([])
   })
 
   it('follows a forwarded chord with its modifier releases, and only then', () => {
     const { send, replayed } = install()
 
+    const forwarded = () =>
+      replayed.filter((key) => !key.observed).map((key) => [key.type, key.key])
+
     send({ type: 'keyUp', key: 'Meta', code: 'MetaLeft' })
-    expect(replayed).toEqual([])
+    expect(forwarded()).toEqual([])
 
     send({ key: 'G', code: 'KeyG', meta: true, shift: true })
     send({ type: 'keyUp', key: 'Shift', code: 'ShiftLeft', meta: true })
     send({ type: 'keyUp', key: 'Meta', code: 'MetaLeft' })
     send({ type: 'keyUp', key: 'Meta', code: 'MetaLeft' })
-    expect(replayed.map((key) => [key.type, key.key])).toEqual([
+    expect(forwarded()).toEqual([
       ['keydown', 'G'],
       ['keyup', 'Shift'],
       ['keyup', 'Meta']
+    ])
+  })
+
+  it('lets Orca watch held modifiers and the keys typed with them, leaving them to the page', () => {
+    const { send, replayed } = install()
+
+    expect(send({ key: 'Meta', code: 'MetaLeft', meta: true })).toBe(false)
+    expect(send({ key: 'c', code: 'KeyC', meta: true })).toBe(false)
+    send({ type: 'keyUp', key: 'Meta', code: 'MetaLeft' })
+    expect(send({ key: 'g', code: 'KeyG' })).toBe(false)
+    send({ type: 'keyUp', key: 'g', code: 'KeyG' })
+    send({ key: 'Meta', code: 'MetaLeft', meta: true, isAutoRepeat: true })
+
+    expect(replayed).toEqual([
+      expect.objectContaining({ type: 'keydown', key: 'Meta', metaKey: true, observed: true }),
+      expect.objectContaining({ type: 'keydown', key: 'c', metaKey: true, observed: true }),
+      expect.objectContaining({ type: 'keyup', key: 'Meta', metaKey: false, observed: true })
     ])
   })
 

@@ -43,6 +43,10 @@ describe('workspace index shortcut hint', () => {
     vi.useRealTimers()
   })
 
+  it('shows soon enough to feel immediate', () => {
+    expect(WORKSPACE_INDEX_SHORTCUT_HINT_DELAY_MS).toBeLessThanOrEqual(150)
+  })
+
   it('shows the digit shortcut on the first nine workspaces once Mod is held', () => {
     const store = createStore()
     store.keyDown(key({ key: 'Meta', metaKey: true }))

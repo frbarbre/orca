@@ -2098,7 +2098,7 @@ Tests: `workspace-status-rules.self-review.test.ts`, `launch-self-review-agents.
 ### 86. Workspace number hints
 
 Holding the modifiers of "Select Workspace 1–9" (`workspace.selectByIndex`, ⌘ or Ctrl by default)
-for 150 ms shows each of the first nine sidebar cards' shortcut in its header, drawn with
+shows each of the first nine sidebar cards' shortcut in its header, drawn with
 `ShortcutKeyCombo`, the same way ⌥ reveals the delete button. It follows a remapped binding and the
 same visible order the jump uses (`getVisibleWorktreeShortcutTargets`). It stays hidden outside the
 workspace view, where the jump does nothing, and when another key is pressed with the modifier

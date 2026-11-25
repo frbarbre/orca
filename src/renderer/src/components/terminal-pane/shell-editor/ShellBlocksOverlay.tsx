@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useReducer, useSyncExternalStore } from 'react'
+import { useEffect, useLayoutEffect, useState, useSyncExternalStore } from 'react'
 import { createPortal } from 'react-dom'
 import type { Terminal } from '@xterm/xterm'
 import { EllipsisVertical } from 'lucide-react'
@@ -39,16 +39,19 @@ function readGeometry(terminal: Terminal): Geometry | null {
   }
 }
 
-/** Repaints on every terminal frame, scroll and resize, and each second while a command runs. */
+/**
+ * Repaints on every terminal frame, scroll and resize, and each second while a command runs.
+ * Returns the time of the last repaint, so render stays free of clock reads.
+ */
 function useTerminalFrame(terminal: Terminal, running: boolean): number {
-  const [frame, bump] = useReducer((count: number) => count + 1, 0)
+  const [now, setNow] = useState(() => Date.now())
   useEffect(() => {
     let scheduled = 0
     const schedule = (): void => {
       if (!scheduled) {
         scheduled = requestAnimationFrame(() => {
           scheduled = 0
-          bump()
+          setNow(Date.now())
         })
       }
     }
@@ -68,10 +71,10 @@ function useTerminalFrame(terminal: Terminal, running: boolean): number {
     if (!running) {
       return
     }
-    const timer = setInterval(bump, 1000)
+    const timer = setInterval(() => setNow(Date.now()), 1000)
     return () => clearInterval(timer)
   }, [running])
-  return frame
+  return now
 }
 
 function copy(text: string): void {
@@ -136,7 +139,7 @@ export function ShellBlocksOverlay({
 }): React.JSX.Element | null {
   const blocks = useSyncExternalStore(tracker.subscribe, tracker.getBlocks)
   const running = blocks.at(-1)?.endedAt === null
-  useTerminalFrame(terminal, running)
+  const now = useTerminalFrame(terminal, running)
   const buffer = terminal.buffer.active
   const normalBuffer = buffer.type === 'normal'
 
@@ -170,7 +173,6 @@ export function ShellBlocksOverlay({
   if (!geometry || !terminal.element) {
     return null
   }
-  const now = Date.now()
   const visible = layoutVisibleBlocks({
     blocks: blocks.filter((block) => isBlockIntact(buffer, block)),
     viewportY: buffer.viewportY,

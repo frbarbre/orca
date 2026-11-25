@@ -1,9 +1,7 @@
-import { execFile } from 'node:child_process'
 import { open } from 'node:fs/promises'
 import { isAbsolute, join } from 'node:path'
-import { promisify } from 'node:util'
+import { runProcess } from '@orca/process-host'
 
-const run = promisify(execFile)
 const GIT_TIMEOUT_MS = 3000
 const MAX_UNTRACKED_FILES = 500
 const MAX_UNTRACKED_BYTES = 2 * 1024 * 1024
@@ -20,11 +18,16 @@ export function parseShortstat(text: string): GitDiffStat {
 }
 
 // Why fsmonitor off: the folder is wherever the user cd'd, and its config must not get to run a command.
-function git(cwd: string, args: string[]): Promise<string> {
-  return run('git', ['-c', 'core.fsmonitor=false', '-C', cwd, ...args], {
-    timeout: GIT_TIMEOUT_MS,
-    maxBuffer: 8 * 1024 * 1024
-  }).then((result) => result.stdout)
+async function git(cwd: string, args: string[]): Promise<string> {
+  const result = await runProcess({
+    program: 'git',
+    args: ['-c', 'core.fsmonitor=false', '-C', cwd, ...args],
+    timeoutMs: GIT_TIMEOUT_MS
+  })
+  if (result.code !== 0 || result.timedOut || result.outputTruncated) {
+    throw new Error(`git ${args[0]} failed`)
+  }
+  return result.stdout
 }
 
 async function countLines(path: string): Promise<number> {

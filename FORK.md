@@ -2147,6 +2147,31 @@ A Warp-style text field docked under a zsh terminal's output while zsh is at a p
   terminal move to the box. ⌘V is excluded from the terminal's paste listeners.
 - Tests: `shell-startup-feature-channel.test.ts` (live zsh), `zsh-history.test.ts`, `shell-editor-*.test.ts`.
 
+### 88. Shell blocks
+
+Warp-style command blocks for shell-editor terminals.
+
+- **zsh side.** The editor's prompt is a lone newline, which leaves a blank row above each command
+  for its header. `zle_highlight=(default:bold)` draws the typed command bold. The prompt report is
+  `orca-shell-editor2;<branch>;<HISTFILE>;<node -v>;<PWD>`, with `node -v` cached per `$PWD|$PATH`.
+  The parser still reads the old report from an older daemon.
+- **Tracking** (`shell-blocks-model.ts`). Per terminal, from markers made in
+  `observeShellEditorOsc133`: `A` (header row), `C` (output start), `D;<code>` (end, exit code). It
+  only runs while the pane's editor session is on. The prompt report gives folder, branch and node.
+  Diff stats (`shellEditor:gitDiffStat`, `git-diff-stat.ts`: changes against HEAD plus untracked files
+  and their lines, fsmonitor off) are read per prompt (`promptCount`).
+- **Drawing** (`ShellBlocksOverlay.tsx`, inside xterm's root). A header on each block's blank row
+  ("node ~/folder git:(branch) files • +ins -del (duration)", live while running) with a separator.
+  It is pinned to the top when its block fills the top of the viewport. A failed block gets a red
+  tint and left bar. The ⋮ menu copies the command, the output, both, the folder or the branch
+  (`shell-blocks-view.ts` reads them from the buffer). Blocks whose rows were wiped (`clear`) are
+  dropped (`isBlockIntact`). Short output is pushed down so the newest block sits on the input
+  (`bottomAnchorRows`, a transform on xterm's root that the overlay shares). The box also shows node
+  and diff-stat chips.
+- Not yet: Warp's download/filter buttons. Blocks of a parked tab are lost, since its markers die
+  with the terminal.
+- Tests: `shell-blocks-*.test.ts`, `git-diff-stat.test.ts`, e2e in `tests/e2e/shell-editor.spec.ts`.
+
 ## Verify
 
 Verify runs on GitHub, not locally: `fork-verify.yml` runs it on every pull request against `main`,

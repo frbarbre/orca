@@ -104,7 +104,7 @@ test.describe('shell editor', () => {
 
   test('draws a block per command, marks failures and grows up from the input', async ({
     orcaPage
-  }) => {
+  }, testInfo) => {
     const field = orcaPage.locator(FIELD)
     await expect(field).toBeVisible({ timeout: 30_000 })
     await field.fill('echo block-ok')
@@ -126,6 +126,8 @@ test.describe('shell editor', () => {
       .first()
       .evaluate((element) => (element as HTMLElement).style.transform)
     expect(transform).toMatch(/^translateY\(\d+(\.\d+)?px\)$/)
+    // Why: blocks are visual, so the report keeps a picture of them for review.
+    await testInfo.attach('blocks', { body: await orcaPage.screenshot(), contentType: 'image/png' })
   })
 
   test('copies a block’s output from its menu', async ({ electronApp, orcaPage }) => {

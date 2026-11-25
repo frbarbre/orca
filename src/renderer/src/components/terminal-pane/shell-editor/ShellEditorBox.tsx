@@ -12,7 +12,7 @@ import {
   SHELL_EDITOR_NUDGE,
   type ShellEditorHistory
 } from './shell-editor-model'
-import type { ShellEditorPhase, ShellEditorSession } from './shell-editor-session'
+import type { ShellEditorSession } from './shell-editor-session'
 import { useAppStore } from '@/store'
 import {
   displayShellEditorCwd,
@@ -33,12 +33,31 @@ type ShellEditorBoxProps = {
   isFocusTarget: boolean
 }
 
+/** The text field has the caret, so the terminal's own cursor is hidden while the box is up. */
+function useHiddenTerminalCursor(terminal: Terminal, boxShown: boolean): void {
+  useEffect(() => {
+    if (!boxShown) {
+      return
+    }
+    // Why local: it only changes what this xterm draws; zsh and a later program set their own.
+    terminal.write('\u001b[?25l')
+    return () => {
+      try {
+        terminal.write('\u001b[?25h')
+      } catch {
+        // The pane's terminal may already be disposed.
+      }
+    }
+  }, [terminal, boxShown])
+}
+
 /** Re-checks the shell when the pane is shown, since markers printed while hidden never arrive. */
 function useResyncWhenShown(
   session: ShellEditorSession,
   transport: ShellEditorBoxProps['transport'],
   isShown: boolean,
-  phase: ShellEditorPhase
+  // Why not the phase: re-checking on every phase change races a quick command's own prompt report.
+  gaveUp: boolean
 ): void {
   const enabled = useAppStore((state) => state.settings?.terminalShellEditor ?? false)
   useEffect(() => {
@@ -65,7 +84,7 @@ function useResyncWhenShown(
     return () => {
       cancelled = true
     }
-  }, [session, transport, isShown, enabled, phase])
+  }, [session, transport, isShown, enabled, gaveUp])
 }
 
 /** Reserves the editor's height at the bottom of its pane so the terminal refits above it. */
@@ -137,7 +156,8 @@ export function ShellEditorBox({
   isFocusTarget
 }: ShellEditorBoxProps): React.JSX.Element | null {
   const snapshot = useSyncExternalStore(session.subscribe, session.getSnapshot)
-  useResyncWhenShown(session, transport, isShown, snapshot.phase)
+  useResyncWhenShown(session, transport, isShown, snapshot.phase === 'off')
+  useHiddenTerminalCursor(terminal, snapshot.phase === 'starting' || snapshot.phase === 'prompt')
   const rootRef = useRef<HTMLDivElement>(null)
   const fieldRef = useRef<HTMLTextAreaElement>(null)
   const [text, setText] = useState('')

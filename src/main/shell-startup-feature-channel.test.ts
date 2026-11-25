@@ -50,7 +50,7 @@ async function runZshUntil(
       const timer = setTimeout(() => reject(new Error(`timed out:\n${output}`)), 20_000)
       proc.onData((data) => {
         output += data
-        if (!sent && output.includes(']777;orca-shell-editor;')) {
+        if (!sent && output.includes(']777;orca-shell-editor')) {
           sent = true
           setTimeout(() => proc.write(`${command}\r`), 200)
         }
@@ -216,14 +216,19 @@ describePosix('zsh launch config', () => {
 
     const output = await runZshUntil(
       { env: { ...env, ...config.env }, cwd: repo },
-      'print -r -- "P=<$PROMPT|$RPROMPT|${+ORCA_SHELL_EDITOR}>"',
+      'print -r -- "P=<${(V)PROMPT}|$RPROMPT|${+ORCA_SHELL_EDITOR}|$zle_highlight>"',
       /P=<[^$>\n]*>/
     )
 
-    expect(output).toContain(
-      `\u001b]777;orca-shell-editor;feat/editor;${join(userDataPath, '.zsh_history')};${repo}\u0007`
+    const histfile = join(userDataPath, '.zsh_history')
+    const report = `\u001b]777;orca-shell-editor2;feat/editor;${histfile};`
+    const reported = output.slice(output.indexOf(report) + report.length).split('\u0007', 1)[0]
+    // Why any version: the login shell's PATH can pick a different node than this process.
+    expect(reported).toMatch(
+      new RegExp(`^v\\d+\\.\\d+\\.\\d+;${repo.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`)
     )
-    expect(/P=<([^$\n]*?)>/.exec(output)?.[1]).toBe('||0')
+    // Why a newline: it leaves a blank row above each command for the block's header.
+    expect(/P=<([^$\n]*?)>/.exec(output)?.[1]).toBe('\\n||0|default:bold')
   })
 
   it('publishes exactly the selected features, whatever process.env holds', async () => {

@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react'
 import type { Terminal } from '@xterm/xterm'
-import { Folder, GitBranch, Hourglass } from 'lucide-react'
+import { FileDiff, Folder, GitBranch, Hexagon, Hourglass } from 'lucide-react'
 import { translate } from '@/i18n/i18n'
 import type { PtyTransport } from '../pty-transport-types'
 import {
@@ -13,6 +13,8 @@ import {
   type ShellEditorHistory
 } from './shell-editor-model'
 import type { ShellEditorSession } from './shell-editor-session'
+import type { ShellDiffStat } from './shell-blocks-model'
+import { getShellBlockTracker } from './shell-editor-registry'
 import { useAppStore } from '@/store'
 import {
   displayShellEditorCwd,
@@ -31,6 +33,31 @@ type ShellEditorBoxProps = {
   transport: Pick<PtyTransport, 'sendInput' | 'getPtyId'> | undefined
   isShown: boolean
   isFocusTarget: boolean
+}
+
+/** Changes against HEAD for the folder of each prompt; the next block's header shows them too. */
+function useDiffStatPerPrompt(
+  terminal: Terminal,
+  cwd: string | null,
+  promptCount: number
+): ShellDiffStat | null {
+  const [diffStat, setDiffStat] = useState<ShellDiffStat | null>(null)
+  useEffect(() => {
+    if (!cwd || promptCount === 0) {
+      return
+    }
+    let cancelled = false
+    void window.api.shellEditor.gitDiffStat({ cwd }).then((stat) => {
+      if (!cancelled) {
+        setDiffStat(stat)
+        getShellBlockTracker(terminal)?.setDiffStat(stat)
+      }
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [terminal, cwd, promptCount])
+  return diffStat
 }
 
 /** The text field has the caret, so the terminal's own cursor is hidden while the box is up. */
@@ -158,6 +185,7 @@ export function ShellEditorBox({
   const snapshot = useSyncExternalStore(session.subscribe, session.getSnapshot)
   useResyncWhenShown(session, transport, isShown, snapshot.phase === 'off')
   useHiddenTerminalCursor(terminal, snapshot.phase === 'starting' || snapshot.phase === 'prompt')
+  const diffStat = useDiffStatPerPrompt(terminal, snapshot.cwd, snapshot.promptCount)
   const rootRef = useRef<HTMLDivElement>(null)
   const fieldRef = useRef<HTMLTextAreaElement>(null)
   const [text, setText] = useState('')
@@ -330,6 +358,12 @@ export function ShellEditorBox({
       }}
     >
       <div className="shell-editor-chips">
+        {snapshot.node ? (
+          <span className="shell-editor-chip" style={{ borderColor: outline, color: muted }}>
+            <Hexagon aria-hidden="true" />
+            {snapshot.node}
+          </span>
+        ) : null}
         {snapshot.cwd ? (
           <span className="shell-editor-chip" style={{ borderColor: outline, color: muted }}>
             <Folder aria-hidden="true" />
@@ -340,6 +374,15 @@ export function ShellEditorBox({
           <span className="shell-editor-chip" style={{ borderColor: outline, color: muted }}>
             <GitBranch aria-hidden="true" />
             {snapshot.branch}
+          </span>
+        ) : null}
+        {diffStat?.files ? (
+          <span className="shell-editor-chip" style={{ borderColor: outline, color: muted }}>
+            <FileDiff aria-hidden="true" />
+            {diffStat.files} •<span style={{ color: theme.green }}>+{diffStat.insertions}</span>
+            {diffStat.deletions ? (
+              <span style={{ color: theme.red }}>-{diffStat.deletions}</span>
+            ) : null}
           </span>
         ) : null}
         {snapshot.phase === 'starting' ? (

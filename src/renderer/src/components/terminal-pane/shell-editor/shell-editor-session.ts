@@ -11,8 +11,11 @@ export type ShellEditorSnapshot = {
   phase: ShellEditorPhase
   branch: string | null
   histfile: string | null
+  node: string | null
   cwd: string | null
   queued: string | null
+  /** Bumped by every prompt report, so a prompt in the same folder still reads as new. */
+  promptCount: number
 }
 
 export type ShellEditorSession = {
@@ -39,8 +42,10 @@ export function createShellEditorSession(): ShellEditorSession {
     phase: 'off',
     branch: null,
     histfile: null,
+    node: null,
     cwd: null,
-    queued: null
+    queued: null,
+    promptCount: 0
   }
   let timer: ReturnType<typeof setTimeout> | null = null
   let nudged = false
@@ -100,7 +105,7 @@ export function createShellEditorSession(): ShellEditorSession {
     promptInfo(info) {
       clearTimer()
       nudged = false
-      update({ phase: 'prompt', ...info })
+      update({ phase: 'prompt', ...info, promptCount: snapshot.promptCount + 1 })
     },
     markNudged() {
       nudged = true

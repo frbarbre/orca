@@ -50,9 +50,10 @@ const CONTRACT_GLOBALS = new Set([
   // Exported only in the claude function's subshell.
   'CLAUDE_CONFIG_DIR',
   'HISTFILE',
-  // Fork: the shell editor blanks zsh's prompt and draws its own.
+  // Fork: the shell editor blanks zsh's prompt and draws its own, with the command in bold.
   'PROMPT',
   'RPROMPT',
+  'zle_highlight',
   'MIMOCODE_CONFIG_DIR',
   'OPENCODE_CONFIG_DIR',
   'OPENCODE_AUTH_CONTENT',

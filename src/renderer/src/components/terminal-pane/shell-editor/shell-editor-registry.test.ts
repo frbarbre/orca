@@ -3,6 +3,7 @@ import type { Terminal } from '@xterm/xterm'
 import {
   attachShellEditorSession,
   cancelShellEditorRequest,
+  getShellBlockTracker,
   getShellEditorSession,
   observeShellEditorOsc133,
   requestShellEditor
@@ -10,15 +11,23 @@ import {
 
 function fakeTerminal() {
   const handlers = new Map<number, (data: string) => boolean>()
+  let cursorLine = 0
   const terminal = {
     parser: {
       registerOscHandler: (id: number, handler: (data: string) => boolean) => {
         handlers.set(id, handler)
         return { dispose: () => handlers.delete(id) }
       }
-    }
+    },
+    registerMarker: (offset = 0) => ({ line: cursorLine + offset, isDisposed: false })
   } as unknown as Terminal
-  return { terminal, osc: (id: number, data: string) => handlers.get(id)?.(data) ?? false }
+  return {
+    terminal,
+    osc: (id: number, data: string) => handlers.get(id)?.(data) ?? false,
+    setCursor: (line: number) => {
+      cursorLine = line
+    }
+  }
 }
 
 describe('shell editor registry', () => {
@@ -60,6 +69,40 @@ describe('shell editor registry', () => {
     attachShellEditorSession(terminal, 'tab:leaf-f')
     osc(777, 'orca-shell-editor;main;;/repo')
     expect(seenByBox.getSnapshot().phase).toBe('prompt')
+  })
+
+  it('records a block per command from the prompt, report, start and finish markers', () => {
+    const { terminal, osc, setCursor } = fakeTerminal()
+    requestShellEditor('tab:leaf-h')
+    attachShellEditorSession(terminal, 'tab:leaf-h')
+    setCursor(4)
+    observeShellEditorOsc133(terminal, 'A')
+    osc(777, 'orca-shell-editor2;main;;v24.14.0;/repo')
+    setCursor(6)
+    observeShellEditorOsc133(terminal, 'C')
+    setCursor(9)
+    observeShellEditorOsc133(terminal, 'D;2')
+
+    expect(getShellBlockTracker(terminal)?.getBlocks()).toEqual([
+      expect.objectContaining({
+        headerLine: 4,
+        outputLine: 6,
+        endLine: 9,
+        exitCode: 2,
+        cwd: '/repo',
+        branch: 'main',
+        node: 'v24.14.0'
+      })
+    ])
+  })
+
+  it('records no blocks for a terminal without the editor', () => {
+    const { terminal, setCursor } = fakeTerminal()
+    attachShellEditorSession(terminal, 'tab:leaf-i')
+    setCursor(1)
+    observeShellEditorOsc133(terminal, 'A')
+    observeShellEditorOsc133(terminal, 'C')
+    expect(getShellBlockTracker(terminal)?.getBlocks()).toEqual([])
   })
 
   it('keeps the pane’s state when its terminal is rebuilt after parking', () => {

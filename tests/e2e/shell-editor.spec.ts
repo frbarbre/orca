@@ -81,8 +81,66 @@ test.describe('shell editor', () => {
 
     const screen = await readActiveTerminal(orcaPage)
     const lines = screen.lines.slice(screen.lines.indexOf('echo one'))
-    expect(lines.slice(0, 6)).toEqual(['echo one', 'one', 'echo two', 'two', 'echo three', 'three'])
+    // Why the blank rows: each one holds the next block's header.
+    expect(lines.slice(0, 8)).toEqual([
+      'echo one',
+      'one',
+      '',
+      'echo two',
+      'two',
+      '',
+      'echo three',
+      'three'
+    ])
     expect(screen.cursorHidden).toBe(true)
+  })
+
+  test('draws a block per command, marks failures and grows up from the input', async ({
+    orcaPage
+  }) => {
+    const field = orcaPage.locator(FIELD)
+    await expect(field).toBeVisible({ timeout: 30_000 })
+    await field.fill('echo block-ok')
+    await field.press('Enter')
+    await waitForTerminalOutput(orcaPage, '\nblock-ok', 15_000)
+    await expect(field).toBeVisible({ timeout: 15_000 })
+    await field.fill('false')
+    await field.press('Enter')
+    await expect(field).toBeVisible({ timeout: 15_000 })
+
+    const blocks = orcaPage.locator('.pane:not([hidden]) [data-shell-block]')
+    await expect(blocks).toHaveCount(2, { timeout: 15_000 })
+    await expect(blocks.nth(0)).not.toHaveAttribute('data-failed')
+    await expect(blocks.nth(1)).toHaveAttribute('data-failed', 'true')
+    await expect(blocks.nth(0).locator('.shell-block-label')).toHaveText(/\(\d+\.\d{3}s\)$/)
+
+    const transform = await orcaPage
+      .locator('.pane:not([hidden]) .xterm-container > .xterm')
+      .first()
+      .evaluate((element) => (element as HTMLElement).style.transform)
+    expect(transform).toMatch(/^translateY\(\d+(\.\d+)?px\)$/)
+  })
+
+  test('copies a block’s output from its menu', async ({ electronApp, orcaPage }) => {
+    const field = orcaPage.locator(FIELD)
+    await expect(field).toBeVisible({ timeout: 30_000 })
+    await field.fill('echo copy-$((6 * 7))')
+    await field.press('Enter')
+    await waitForTerminalOutput(orcaPage, '\ncopy-42', 15_000)
+    await expect(field).toBeVisible({ timeout: 15_000 })
+
+    const block = orcaPage.locator('.pane:not([hidden]) [data-shell-block]').last()
+    await block.locator('.shell-block-menu-button').click()
+    await orcaPage.getByRole('menuitem', { name: 'Copy output' }).click()
+    await expect
+      .poll(() => electronApp.evaluate(({ clipboard }) => clipboard.readText()))
+      .toBe('copy-42')
+
+    await block.locator('.shell-block-menu-button').click()
+    await orcaPage.getByRole('menuitem', { name: 'Copy command and output' }).click()
+    await expect
+      .poll(() => electronApp.evaluate(({ clipboard }) => clipboard.readText()))
+      .toBe('echo copy-$((6 * 7))\ncopy-42')
   })
 
   test('is back after its tab was parked and shown again', async ({ orcaPage }) => {

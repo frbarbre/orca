@@ -3,22 +3,33 @@ import { wrapTerminalBracketedPasteText } from '../../../../../shared/terminal-b
 export type ShellEditorPromptInfo = {
   branch: string | null
   histfile: string | null
+  node: string | null
   cwd: string
 }
 
 const PROMPT_INFO_PREFIX = 'orca-shell-editor;'
+// Why a second prefix: a daemon from an older install still prints the report without node.
+const PROMPT_INFO_V2_PREFIX = 'orca-shell-editor2;'
 const CLEAR_LINE = '\u0015'
 
-/** Reads the `branch;histfile;cwd` payload Orca's zsh hook prints before each editor prompt. */
+/** Reads the report Orca's zsh hook prints before each editor prompt; the folder comes last and may hold `;`. */
 export function parseShellEditorPromptInfo(payload: string): ShellEditorPromptInfo | null {
-  if (!payload.startsWith(PROMPT_INFO_PREFIX)) {
+  const v2 = payload.startsWith(PROMPT_INFO_V2_PREFIX)
+  if (!v2 && !payload.startsWith(PROMPT_INFO_PREFIX)) {
     return null
   }
-  const [branch, histfile, ...cwd] = payload.slice(PROMPT_INFO_PREFIX.length).split(';')
+  const fields = payload.slice((v2 ? PROMPT_INFO_V2_PREFIX : PROMPT_INFO_PREFIX).length).split(';')
+  const [branch, histfile, ...rest] = fields
+  const [node, ...cwd] = v2 ? rest : [null, ...rest]
   if (cwd.length === 0) {
     return null
   }
-  return { branch: branch || null, histfile: histfile || null, cwd: cwd.join(';') }
+  return {
+    branch: branch || null,
+    histfile: histfile || null,
+    node: node || null,
+    cwd: cwd.join(';')
+  }
 }
 
 // Why Ctrl+U first: anything typed straight into the terminal would otherwise prefix the command.

@@ -5,7 +5,7 @@ import {
   SHELL_EDITOR_STARTUP_TIMEOUT_MS
 } from './shell-editor-session'
 
-const INFO = { branch: 'main', histfile: '/h/.zsh_history', cwd: '/repo' }
+const INFO = { branch: 'main', histfile: '/h/.zsh_history', node: 'v24.14.0', cwd: '/repo' }
 
 describe('shell editor session', () => {
   beforeEach(() => {
@@ -82,12 +82,20 @@ describe('shell editor session', () => {
     expect(session.getSnapshot().phase).toBe('prompt')
   })
 
+  it('counts prompts, so the same folder still reads as a new prompt', () => {
+    const session = createShellEditorSession()
+    session.promptInfo(INFO)
+    session.commandStart()
+    session.promptInfo(INFO)
+    expect(session.getSnapshot().promptCount).toBe(2)
+  })
+
   it('notifies subscribers only when something changed', () => {
     const session = createShellEditorSession()
     const listener = vi.fn()
     session.subscribe(listener)
     session.promptInfo(INFO)
-    session.promptInfo(INFO)
+    session.commandStart()
     session.commandStart()
     expect(listener).toHaveBeenCalledTimes(2)
   })

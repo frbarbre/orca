@@ -168,6 +168,10 @@ export type PreloadApi = {
   /** Fork: the terminal's shell editor. */
   shellEditor: {
     readHistory: (args: { path: string }) => Promise<string[]>
+    /** Changes against HEAD, untracked files included; null outside a repo. */
+    gitDiffStat: (args: {
+      cwd: string
+    }) => Promise<{ files: number; insertions: number; deletions: number } | null>
   }
   languageServer: LanguageServerApi
   lint: {

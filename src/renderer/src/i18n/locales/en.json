@@ -19923,6 +19923,14 @@
       "queued": "Runs when zsh is ready",
       "starting": "Starting zsh"
     },
+    "shellBlocks": {
+      "actions": "Block actions",
+      "copyBoth": "Copy command and output",
+      "copyBranch": "Copy git branch",
+      "copyCommand": "Copy command",
+      "copyCwd": "Copy working directory",
+      "copyOutput": "Copy output"
+    },
     "sessionSaveFailure": {
       "title": "Could not save terminal session",
       "capacity": "The device saving this terminal reported full storage or an exceeded storage quota. Free space on that device, then try again.",

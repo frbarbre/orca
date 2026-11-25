@@ -12,15 +12,23 @@ describe('parseShellEditorPromptInfo', () => {
   it('reads the branch, history file and folder, keeping semicolons in the folder', () => {
     expect(
       parseShellEditorPromptInfo('orca-shell-editor;feat/x;/Users/me/.zsh_history;/a;b')
-    ).toEqual({ branch: 'feat/x', histfile: '/Users/me/.zsh_history', cwd: '/a;b' })
+    ).toEqual({ branch: 'feat/x', histfile: '/Users/me/.zsh_history', node: null, cwd: '/a;b' })
+  })
+
+  it('reads the node version from the newer report', () => {
+    expect(
+      parseShellEditorPromptInfo('orca-shell-editor2;main;/h/.zsh_history;v24.14.0;/a;b')
+    ).toEqual({ branch: 'main', histfile: '/h/.zsh_history', node: 'v24.14.0', cwd: '/a;b' })
   })
 
   it('treats empty fields as missing', () => {
     expect(parseShellEditorPromptInfo('orca-shell-editor;;;/tmp')).toEqual({
       branch: null,
       histfile: null,
+      node: null,
       cwd: '/tmp'
     })
+    expect(parseShellEditorPromptInfo('orca-shell-editor2;;;;/tmp')).toMatchObject({ node: null })
   })
 
   it('ignores other OSC 777 messages', () => {

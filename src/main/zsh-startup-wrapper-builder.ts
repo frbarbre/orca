@@ -64,15 +64,22 @@ const ZSH_OSC133_FUNCTION_BLOCK = `__orca_osc133_precmd() {
 }
 # Fork: the shell editor draws the prompt, so zsh's is blanked after every other hook set it.
 __orca_shell_editor_precmd() {
-  PROMPT='' RPROMPT=''
+  # A lone newline leaves a blank row above each command for its block header.
+  PROMPT=$'\\n' RPROMPT=''
+  builtin typeset -ga zle_highlight
+  zle_highlight=(default:bold)
+  if [[ "$PWD|$PATH" != "\${__orca_node_key-}" ]]; then
+    builtin typeset -g __orca_node_key="$PWD|$PATH"
+    builtin typeset -g __orca_node_version="$(command node -v 2>/dev/null)"
+  fi
   local __orca_branch="$(command git branch --show-current 2>/dev/null)"
-  builtin printf "\\033]777;orca-shell-editor;%s;%s;%s\\007" "\${__orca_branch//;/}" "\${HISTFILE//;/}" "$PWD"
+  builtin printf "\\033]777;orca-shell-editor2;%s;%s;%s;%s\\007" "\${__orca_branch//;/}" "\${HISTFILE//;/}" "\${__orca_node_version//;/}" "$PWD"
 }
 # zsh runs a copy of the hook list, so hooks after Orca's can still set the first prompt.
 __orca_shell_editor_first_line() {
   add-zle-hook-widget -d line-init __orca_shell_editor_first_line
-  [[ -n "$PROMPT$RPROMPT" ]] || return 0
-  PROMPT='' RPROMPT=''
+  [[ "$PROMPT" == $'\\n' && -z "$RPROMPT" ]] && return 0
+  PROMPT=$'\\n' RPROMPT=''
   zle reset-prompt
 }
 __orca_osc133_preexec() {

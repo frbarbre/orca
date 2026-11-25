@@ -2132,7 +2132,11 @@ A Warp-style text field docked under a zsh terminal's output while zsh is at a p
   `pty.getForegroundProcess`. If zsh is idle but the session lost track (`off`/`running`), it sends
   one empty line (Ctrl+U, Enter) so zsh reports a fresh prompt, once until it does. If another
   program took over, the box hides. Never during `starting` or `handoff`
-  (`resolveShellEditorResync`). E2E: `tests/e2e/shell-editor.spec.ts`.
+  (`resolveShellEditorResync`). It runs only when the pane is shown or the session gave up, never
+  on each phase change: a quick command's own report would lose that race and get a blank line.
+  E2E: `tests/e2e/shell-editor.spec.ts`.
+- **Cursor.** While the box is up, the terminal's own cursor is hidden with a local `CSI ?25l`
+  written to xterm only (`useHiddenTerminalCursor`), and shown again when the box goes.
 - **Box** (`ShellEditorBox.tsx`, portaled per pane). A textarea plus folder and branch chips in the
   terminal theme's colours and font. Enter runs (Ctrl+U first; multi-line as one bracketed paste),
   Shift+Enter adds a line. ↑/↓ on the first or last line walk zsh's history, filtered by what is

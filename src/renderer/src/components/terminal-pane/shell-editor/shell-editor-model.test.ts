@@ -4,7 +4,8 @@ import {
   encodeShellEditorCommand,
   encodeShellEditorHandoff,
   parseShellEditorPromptInfo,
-  resolveShellEditorKey
+  resolveShellEditorKey,
+  resolveShellEditorResync
 } from './shell-editor-model'
 
 describe('parseShellEditorPromptInfo', () => {
@@ -84,6 +85,31 @@ describe('resolveShellEditorKey', () => {
     }
     expect(resolveShellEditorKey({ ...base, key: 'a', ctrlKey: true })).toBeNull()
     expect(resolveShellEditorKey({ ...base, key: 'Tab', shiftKey: true })).toBeNull()
+  })
+})
+
+describe('resolveShellEditorResync', () => {
+  type Phase = Parameters<typeof resolveShellEditorResync>[0]['phase']
+  const resync = (phase: Phase, foregroundProcess: string | null, nudged = false) =>
+    resolveShellEditorResync({ phase, foregroundProcess, nudged })
+
+  it('asks an idle zsh for a fresh prompt report once when the box lost track of it', () => {
+    expect(resync('off', 'zsh')).toBe('nudge')
+    expect(resync('running', 'zsh')).toBe('nudge')
+    expect(resync('off', '-zsh')).toBe('nudge')
+    expect(resync('off', '/bin/zsh', true)).toBeNull()
+  })
+
+  it('hides the box when a command took over while the pane was hidden', () => {
+    expect(resync('prompt', 'vim')).toBe('running')
+  })
+
+  it('leaves zsh alone while it starts, holds a handed-off line, or is already known', () => {
+    expect(resync('starting', 'zsh')).toBeNull()
+    expect(resync('handoff', 'zsh')).toBeNull()
+    expect(resync('prompt', 'zsh')).toBeNull()
+    expect(resync('off', 'node')).toBeNull()
+    expect(resync('off', null)).toBeNull()
   })
 })
 

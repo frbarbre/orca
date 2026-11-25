@@ -82,6 +82,32 @@ export function resolveShellEditorKey(input: {
   return null
 }
 
+/** Runs an empty line, so an idle zsh prints a fresh prompt report. */
+export const SHELL_EDITOR_NUDGE = `${CLEAR_LINE}\r`
+
+function isZshProcess(name: string): boolean {
+  return name.split('/').pop()?.replace(/^-/, '') === 'zsh'
+}
+
+// Why: markers printed while a pane is hidden or parked never reach its terminal, so a revealed pane checks the shell.
+export function resolveShellEditorResync(input: {
+  phase: 'off' | 'starting' | 'prompt' | 'running' | 'handoff'
+  foregroundProcess: string | null
+  nudged: boolean
+}): 'nudge' | 'running' | null {
+  if (!input.foregroundProcess) {
+    return null
+  }
+  const idle = isZshProcess(input.foregroundProcess)
+  if (input.phase === 'prompt') {
+    return idle ? null : 'running'
+  }
+  if ((input.phase === 'off' || input.phase === 'running') && idle && !input.nudged) {
+    return 'nudge'
+  }
+  return null
+}
+
 export type ShellEditorHistory = {
   /** The entry before the current one that starts with the draft, or null at the oldest. */
   previous: (current: string) => string | null

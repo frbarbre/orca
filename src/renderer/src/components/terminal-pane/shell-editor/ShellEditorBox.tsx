@@ -8,9 +8,12 @@ import {
   encodeShellEditorCommand,
   encodeShellEditorHandoff,
   resolveShellEditorKey,
+  resolveShellEditorResync,
+  SHELL_EDITOR_NUDGE,
   type ShellEditorHistory
 } from './shell-editor-model'
-import type { ShellEditorSession } from './shell-editor-session'
+import type { ShellEditorPhase, ShellEditorSession } from './shell-editor-session'
+import { useAppStore } from '@/store'
 import {
   displayShellEditorCwd,
   readShellEditorCaret,
@@ -25,8 +28,44 @@ type ShellEditorBoxProps = {
   session: ShellEditorSession
   terminal: Terminal
   paneContainer: HTMLElement
-  transport: Pick<PtyTransport, 'sendInput'> | undefined
+  transport: Pick<PtyTransport, 'sendInput' | 'getPtyId'> | undefined
+  isShown: boolean
   isFocusTarget: boolean
+}
+
+/** Re-checks the shell when the pane is shown, since markers printed while hidden never arrive. */
+function useResyncWhenShown(
+  session: ShellEditorSession,
+  transport: ShellEditorBoxProps['transport'],
+  isShown: boolean,
+  phase: ShellEditorPhase
+): void {
+  const enabled = useAppStore((state) => state.settings?.terminalShellEditor ?? false)
+  useEffect(() => {
+    const ptyId = transport?.getPtyId()
+    if (!isShown || !enabled || !ptyId) {
+      return
+    }
+    let cancelled = false
+    void window.api.pty.getForegroundProcess(ptyId).then((foregroundProcess) => {
+      if (cancelled) {
+        return
+      }
+      const action = resolveShellEditorResync({
+        phase: session.getSnapshot().phase,
+        foregroundProcess,
+        nudged: session.wasNudged()
+      })
+      if (action === 'running') {
+        session.commandStart()
+      } else if (action === 'nudge' && transport?.sendInput(SHELL_EDITOR_NUDGE, 'driving')) {
+        session.markNudged()
+      }
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [session, transport, isShown, enabled, phase])
 }
 
 /** Reserves the editor's height at the bottom of its pane so the terminal refits above it. */
@@ -94,9 +133,11 @@ export function ShellEditorBox({
   terminal,
   paneContainer,
   transport,
+  isShown,
   isFocusTarget
 }: ShellEditorBoxProps): React.JSX.Element | null {
   const snapshot = useSyncExternalStore(session.subscribe, session.getSnapshot)
+  useResyncWhenShown(session, transport, isShown, snapshot.phase)
   const rootRef = useRef<HTMLDivElement>(null)
   const fieldRef = useRef<HTMLTextAreaElement>(null)
   const [text, setText] = useState('')

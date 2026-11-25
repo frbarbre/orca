@@ -24,6 +24,9 @@ export type ShellEditorSession = {
   promptStart: () => void
   promptInfo: (info: ShellEditorPromptInfo) => void
   commandStart: () => void
+  /** An empty line was sent so an idle zsh reports its prompt again; sent once per lost track. */
+  markNudged: () => void
+  wasNudged: () => boolean
   handOff: () => void
   queue: (command: string) => void
   /** The queued command once zsh is at a prompt; null before then or when nothing is queued. */
@@ -40,6 +43,7 @@ export function createShellEditorSession(): ShellEditorSession {
     queued: null
   }
   let timer: ReturnType<typeof setTimeout> | null = null
+  let nudged = false
   const listeners = new Set<() => void>()
 
   function update(patch: Partial<ShellEditorSnapshot>): void {
@@ -95,8 +99,13 @@ export function createShellEditorSession(): ShellEditorSession {
     },
     promptInfo(info) {
       clearTimer()
+      nudged = false
       update({ phase: 'prompt', ...info })
     },
+    markNudged() {
+      nudged = true
+    },
+    wasNudged: () => nudged,
     commandStart() {
       if (snapshot.phase !== 'off') {
         update({ phase: 'running' })

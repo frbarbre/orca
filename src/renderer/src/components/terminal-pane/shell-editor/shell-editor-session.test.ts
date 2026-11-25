@@ -107,6 +107,15 @@ describe('shell editor session', () => {
     expect(prompted.getSnapshot().phase).toBe('prompt')
   })
 
+  it('nudges once until zsh reports a prompt again', () => {
+    const session = createShellEditorSession()
+    expect(session.wasNudged()).toBe(false)
+    session.markNudged()
+    expect(session.wasNudged()).toBe(true)
+    session.promptInfo(INFO)
+    expect(session.wasNudged()).toBe(false)
+  })
+
   it('stops its timers when disposed', () => {
     const session = createShellEditorSession()
     session.markRequested()

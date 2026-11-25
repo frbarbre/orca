@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { Terminal } from '@xterm/xterm'
 import {
   attachShellEditorSession,
+  cancelShellEditorRequest,
   getShellEditorSession,
   observeShellEditorOsc133,
   requestShellEditor
@@ -26,13 +27,13 @@ describe('shell editor registry', () => {
     attachShellEditorSession(terminal, 'tab:leaf-a')
 
     expect(osc(777, 'orca-shell-editor;main;/h/.zsh_history;/repo')).toBe(true)
-    expect(getShellEditorSession(terminal)?.getSnapshot()).toMatchObject({
+    expect(getShellEditorSession('tab:leaf-a').getSnapshot()).toMatchObject({
       phase: 'prompt',
       cwd: '/repo'
     })
 
     observeShellEditorOsc133(terminal, 'C')
-    expect(getShellEditorSession(terminal)?.getSnapshot().phase).toBe('running')
+    expect(getShellEditorSession('tab:leaf-a').getSnapshot().phase).toBe('running')
   })
 
   it('leaves other OSC 777 messages to other handlers', () => {
@@ -43,21 +44,38 @@ describe('shell editor registry', () => {
 
   it('marks a pane as starting whether the spawn request comes before or after the pane', () => {
     requestShellEditor('tab:leaf-c')
-    const early = fakeTerminal()
-    attachShellEditorSession(early.terminal, 'tab:leaf-c')
-    expect(getShellEditorSession(early.terminal)?.getSnapshot().phase).toBe('starting')
+    attachShellEditorSession(fakeTerminal().terminal, 'tab:leaf-c')
+    expect(getShellEditorSession('tab:leaf-c').getSnapshot().phase).toBe('starting')
 
-    const late = fakeTerminal()
-    attachShellEditorSession(late.terminal, 'tab:leaf-d')
+    attachShellEditorSession(fakeTerminal().terminal, 'tab:leaf-d')
     requestShellEditor('tab:leaf-d')
-    expect(getShellEditorSession(late.terminal)?.getSnapshot().phase).toBe('starting')
+    expect(getShellEditorSession('tab:leaf-d').getSnapshot().phase).toBe('starting')
+    cancelShellEditorRequest('tab:leaf-d')
+    expect(getShellEditorSession('tab:leaf-d').getSnapshot().phase).toBe('off')
   })
 
-  it('forgets the pane when detached', () => {
+  it('hands the box the same session whether it renders before or after the pane attaches', () => {
     const { terminal, osc } = fakeTerminal()
-    const attached = attachShellEditorSession(terminal, 'tab:leaf-e')
+    const seenByBox = getShellEditorSession('tab:leaf-f')
+    attachShellEditorSession(terminal, 'tab:leaf-f')
+    osc(777, 'orca-shell-editor;main;;/repo')
+    expect(seenByBox.getSnapshot().phase).toBe('prompt')
+  })
+
+  it('keeps the pane’s state when its terminal is rebuilt after parking', () => {
+    const first = fakeTerminal()
+    const attached = attachShellEditorSession(first.terminal, 'tab:leaf-g')
+    first.osc(777, 'orca-shell-editor;main;;/repo')
     attached.dispose()
-    expect(getShellEditorSession(terminal)).toBeUndefined()
-    expect(osc(777, 'orca-shell-editor;;;/repo')).toBe(false)
+    expect(first.osc(777, 'orca-shell-editor;main;;/elsewhere')).toBe(false)
+
+    const second = fakeTerminal()
+    attachShellEditorSession(second.terminal, 'tab:leaf-g')
+    expect(getShellEditorSession('tab:leaf-g').getSnapshot()).toMatchObject({
+      phase: 'prompt',
+      cwd: '/repo'
+    })
+    observeShellEditorOsc133(second.terminal, 'C')
+    expect(getShellEditorSession('tab:leaf-g').getSnapshot().phase).toBe('running')
   })
 })

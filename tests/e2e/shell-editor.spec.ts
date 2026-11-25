@@ -143,6 +143,8 @@ test.describe('shell editor', () => {
       .poll(() => electronApp.evaluate(({ clipboard }) => clipboard.readText()))
       .toBe('copy-42')
 
+    // Why: reopening while the first menu still animates out hands its items to the old menu.
+    await expect(orcaPage.getByRole('menu')).toHaveCount(0)
     await block.locator('.shell-block-menu-button').click()
     await orcaPage.getByRole('menuitem', { name: 'Copy command and output' }).click()
     await expect

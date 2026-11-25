@@ -41,7 +41,7 @@ export function parseZshHistory(buffer: Buffer): string[] {
       latestFirst.push(entries[index])
     }
   }
-  return latestFirst.reverse()
+  return latestFirst.toReversed()
 }
 
 // Why: the path comes from the renderer, so only a regular file that is named like a history file is read.

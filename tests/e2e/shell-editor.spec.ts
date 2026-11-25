@@ -9,6 +9,10 @@ import { waitForActiveTerminalManager, waitForTerminalOutput } from './helpers/t
 import { parkHiddenTabBehindDecoy } from './helpers/terminal-hidden-parking'
 
 const FIELD = '[data-shell-editor-root] textarea'
+const PARK_DELAY_MS = 2_000
+
+// Why: parking is what rebuilds a hidden tab's terminal, and only runs in e2e with a delay set.
+test.use({ orcaAppExtraEnv: { ORCA_E2E_TERMINAL_PARKING_DELAY_MS: String(PARK_DELAY_MS) } })
 
 test.describe('shell editor', () => {
   test.skip(process.platform === 'win32', 'the shell editor is zsh only')
@@ -39,7 +43,7 @@ test.describe('shell editor', () => {
     const tabId = await getActiveTabId(orcaPage)
     expect(tabId).toBeTruthy()
 
-    await parkHiddenTabBehindDecoy(orcaPage, worktreeId, tabId!)
+    await parkHiddenTabBehindDecoy(orcaPage, worktreeId, tabId!, { parkDelayMs: PARK_DELAY_MS })
     await orcaPage.evaluate((id) => window.__store?.getState().setActiveTab(id), tabId!)
     await waitForActiveTerminalManager(orcaPage, 30_000)
 

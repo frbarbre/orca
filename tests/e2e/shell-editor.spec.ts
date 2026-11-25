@@ -1,6 +1,12 @@
 import { test, expect } from './helpers/orca-app'
-import { ensureTerminalVisible, waitForActiveWorktree, waitForSessionReady } from './helpers/store'
+import {
+  ensureTerminalVisible,
+  getActiveTabId,
+  waitForActiveWorktree,
+  waitForSessionReady
+} from './helpers/store'
 import { waitForActiveTerminalManager, waitForTerminalOutput } from './helpers/terminal'
+import { parkHiddenTabBehindDecoy } from './helpers/terminal-hidden-parking'
 
 const FIELD = '[data-shell-editor-root] textarea'
 
@@ -24,5 +30,23 @@ test.describe('shell editor', () => {
     await waitForTerminalOutput(orcaPage, 'shell-editor-42', 15_000)
     await expect(field).toBeVisible({ timeout: 15_000 })
     await expect(field).toHaveValue('')
+  })
+
+  test('is back after its tab was parked and shown again', async ({ orcaPage }) => {
+    const field = orcaPage.locator(FIELD)
+    await expect(field).toBeVisible({ timeout: 30_000 })
+    const worktreeId = await waitForActiveWorktree(orcaPage)
+    const tabId = await getActiveTabId(orcaPage)
+    expect(tabId).toBeTruthy()
+
+    await parkHiddenTabBehindDecoy(orcaPage, worktreeId, tabId!)
+    await orcaPage.evaluate((id) => window.__store?.getState().setActiveTab(id), tabId!)
+    await waitForActiveTerminalManager(orcaPage, 30_000)
+
+    const shownField = orcaPage.locator(`.pane:not([hidden]) ${FIELD}`).first()
+    await expect(shownField).toBeVisible({ timeout: 15_000 })
+    await shownField.fill('echo parked-$((20 + 1))')
+    await shownField.press('Enter')
+    await waitForTerminalOutput(orcaPage, 'parked-21', 15_000)
   })
 })

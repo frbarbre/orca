@@ -10,24 +10,20 @@ import { ShellEditorBox } from './ShellEditorBox'
 
 function PaneShellBlocks({
   session,
-  terminal,
-  paneContainer
+  terminal
 }: {
   session: ShellEditorSession
   terminal: Terminal
-  paneContainer: HTMLElement
 }): React.JSX.Element | null {
   const { phase } = useSyncExternalStore(session.subscribe, session.getSnapshot)
   const tracker = getShellBlockTracker(terminal)
-  const container = paneContainer.querySelector<HTMLElement>(':scope > .xterm-container')
-  if (phase === 'off' || !tracker || !container) {
+  if (phase === 'off' || !tracker) {
     return null
   }
   return (
     <ShellBlocksOverlay
       terminal={terminal}
       tracker={tracker}
-      container={container}
       atPrompt={phase === 'prompt' || phase === 'starting'}
     />
   )
@@ -45,11 +41,7 @@ export function TerminalPaneShellEditorPortals({
         const session = getShellEditorSession(makePaneKey(tabId, pane.leafId))
         return createPortal(
           <>
-            <PaneShellBlocks
-              session={session}
-              terminal={pane.terminal}
-              paneContainer={pane.container}
-            />
+            <PaneShellBlocks session={session} terminal={pane.terminal} />
             <ShellEditorBox
               session={session}
               terminal={pane.terminal}

@@ -45,6 +45,13 @@ async function readActiveTerminal(
   }, tabId)
 }
 
+/** Waits for a whole row with this text; the serialized screen can hold style codes between rows. */
+async function waitForOutputLine(page: Page, text: string): Promise<void> {
+  await expect
+    .poll(async () => (await readActiveTerminal(page)).lines, { timeout: 15_000 })
+    .toContain(text)
+}
+
 test.describe('shell editor', () => {
   test.skip(process.platform === 'win32', 'the shell editor is zsh only')
 
@@ -75,7 +82,7 @@ test.describe('shell editor', () => {
     for (const word of ['one', 'two', 'three']) {
       await field.fill(`echo ${word}`)
       await field.press('Enter')
-      await waitForTerminalOutput(orcaPage, `\n${word}`, 15_000)
+      await waitForOutputLine(orcaPage, word)
       await expect(field).toBeVisible({ timeout: 15_000 })
     }
 
@@ -102,7 +109,7 @@ test.describe('shell editor', () => {
     await expect(field).toBeVisible({ timeout: 30_000 })
     await field.fill('echo block-ok')
     await field.press('Enter')
-    await waitForTerminalOutput(orcaPage, '\nblock-ok', 15_000)
+    await waitForOutputLine(orcaPage, 'block-ok')
     await expect(field).toBeVisible({ timeout: 15_000 })
     await field.fill('false')
     await field.press('Enter')
@@ -126,7 +133,7 @@ test.describe('shell editor', () => {
     await expect(field).toBeVisible({ timeout: 30_000 })
     await field.fill('echo copy-$((6 * 7))')
     await field.press('Enter')
-    await waitForTerminalOutput(orcaPage, '\ncopy-42', 15_000)
+    await waitForOutputLine(orcaPage, 'copy-42')
     await expect(field).toBeVisible({ timeout: 15_000 })
 
     const block = orcaPage.locator('.pane:not([hidden]) [data-shell-block]').last()

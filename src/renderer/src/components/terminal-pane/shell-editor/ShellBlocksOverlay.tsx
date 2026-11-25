@@ -23,18 +23,19 @@ import {
 
 type Geometry = { top: number; left: number; cellHeight: number }
 
-/** Where xterm's rows sit inside the pane's terminal container, read live because fits and transforms move them. */
-function readGeometry(terminal: Terminal, container: HTMLElement): Geometry | null {
+/**
+ * Where xterm's rows sit inside its root element. Layout offsets, not client rects, so the
+ * bottom-anchor transform on that root, which the overlay shares, never skews them.
+ */
+function readGeometry(terminal: Terminal): Geometry | null {
   const screen = terminal.element?.querySelector<HTMLElement>('.xterm-screen')
   if (!screen || terminal.rows === 0) {
     return null
   }
-  const screenRect = screen.getBoundingClientRect()
-  const containerRect = container.getBoundingClientRect()
   return {
-    top: screenRect.top - containerRect.top,
-    left: screenRect.left - containerRect.left,
-    cellHeight: screenRect.height / terminal.rows
+    top: screen.offsetTop,
+    left: screen.offsetLeft,
+    cellHeight: screen.offsetHeight / terminal.rows
   }
 }
 
@@ -127,12 +128,10 @@ function BlockMenu({
 export function ShellBlocksOverlay({
   terminal,
   tracker,
-  container,
   atPrompt
 }: {
   terminal: Terminal
   tracker: ShellBlockTracker
-  container: HTMLElement
   atPrompt: boolean
 }): React.JSX.Element | null {
   const blocks = useSyncExternalStore(tracker.subscribe, tracker.getBlocks)
@@ -144,7 +143,7 @@ export function ShellBlocksOverlay({
   // Why: Warp keeps the newest block on the input, so short output grows up from the bottom.
   useLayoutEffect(() => {
     const element = terminal.element
-    const geometry = readGeometry(terminal, container)
+    const geometry = readGeometry(terminal)
     if (!element || !geometry) {
       return
     }
@@ -167,8 +166,8 @@ export function ShellBlocksOverlay({
     }
   }, [terminal])
 
-  const geometry = normalBuffer ? readGeometry(terminal, container) : null
-  if (!geometry) {
+  const geometry = normalBuffer ? readGeometry(terminal) : null
+  if (!geometry || !terminal.element) {
     return null
   }
   const now = Date.now()
@@ -225,6 +224,7 @@ export function ShellBlocksOverlay({
         )
       })}
     </div>,
-    container
+    // Why inside xterm's root: it moves with the bottom-anchor transform.
+    terminal.element
   )
 }

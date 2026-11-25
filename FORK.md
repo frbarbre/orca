@@ -2127,6 +2127,12 @@ A Warp-style text field docked under a zsh terminal's output while zsh is at a p
   OSC 133 handler reports `A`/`C`. The session is `starting` (typing queues until the first prompt),
   `prompt`, `running` or `handoff`. It gives up and leaves the plain terminal when the shell prompts
   without the report (not zsh) or never prompts. A reattach cancels the request.
+- **Parking and hidden panes.** Sessions are kept per pane key, not per xterm, because a parked tab
+  rebuilds its terminal. Markers printed while a pane is hidden never reach it, so a shown pane asks
+  `pty.getForegroundProcess`. If zsh is idle but the session lost track (`off`/`running`), it sends
+  one empty line (Ctrl+U, Enter) so zsh reports a fresh prompt, once until it does. If another
+  program took over, the box hides. Never during `starting` or `handoff`
+  (`resolveShellEditorResync`). E2E: `tests/e2e/shell-editor.spec.ts`.
 - **Box** (`ShellEditorBox.tsx`, portaled per pane). A textarea plus folder and branch chips in the
   terminal theme's colours and font. Enter runs (Ctrl+U first; multi-line as one bracketed paste),
   Shift+Enter adds a line. ↑/↓ on the first or last line walk zsh's history, filtered by what is

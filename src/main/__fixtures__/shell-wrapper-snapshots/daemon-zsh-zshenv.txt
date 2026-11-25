@@ -19,7 +19,7 @@ builtin unset ORCA_ORIG_ZDOTDIR ORCA_ZSHENV_SOURCE_DIR
 builtin unfunction __orca_usable_zdotdir
 builtin typeset -ga _orca_shell_features
 _orca_shell_features=(${(s:,:)${ORCA_SHELL_FEATURES:-}})
-builtin unset ORCA_SHELL_FEATURES
+builtin unset ORCA_SHELL_FEATURES ORCA_SHELL_EDITOR
 # Consume now: user config can drop the deferred hook, leaving exported history state to leak into children.
 builtin typeset -g _orca_histfile="${ORCA_HISTFILE:-}"
 builtin unset ORCA_HISTFILE
@@ -32,6 +32,19 @@ __orca_osc133_precmd() {
     builtin unset __orca_in_command
   fi
   builtin printf "\033]133;A\007"
+}
+# Fork: the shell editor draws the prompt, so zsh's is blanked after every other hook set it.
+__orca_shell_editor_precmd() {
+  PROMPT='' RPROMPT=''
+  local __orca_branch="$(command git branch --show-current 2>/dev/null)"
+  builtin printf "\033]777;orca-shell-editor;%s;%s;%s\007" "${__orca_branch//;/}" "${HISTFILE//;/}" "$PWD"
+}
+# zsh runs a copy of the hook list, so hooks after Orca's can still set the first prompt.
+__orca_shell_editor_first_line() {
+  add-zle-hook-widget -d line-init __orca_shell_editor_first_line
+  [[ -n "$PROMPT$RPROMPT" ]] || return 0
+  PROMPT='' RPROMPT=''
+  zle reset-prompt
 }
 __orca_osc133_preexec() {
   builtin printf "\033]133;C\007"
@@ -189,6 +202,11 @@ __orca_deferred_init() {
 
     # Restore the runtime CODEX_HOME after user rc files.
     [[ -n "${ORCA_CODEX_HOME:-}" ]] && export CODEX_HOME="${ORCA_CODEX_HOME}"
+  fi
+  if __orca_has_feature editor; then
+    precmd_functions+=(__orca_shell_editor_precmd)
+    __orca_shell_editor_precmd
+    builtin autoload -Uz add-zle-hook-widget && add-zle-hook-widget line-init __orca_shell_editor_first_line
   fi
   # Why: a typed alias expands inside the shell, after pane launch prep.
   # Why unalias inside the substitution: an alias named codex makes command -v

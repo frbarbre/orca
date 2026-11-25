@@ -238,6 +238,25 @@ export function TerminalInteractionSection({
         </SearchableSetting>
 
         <SearchableSetting
+          title={translate('settings.terminal.shellEditor.title', 'Shell Editor')}
+          description={translate(
+            'settings.terminal.shellEditor.description',
+            'Type zsh commands in a text field docked under the output, with normal selection, shortcuts and undo. It replaces your zsh prompt. Applies to new terminals.'
+          )}
+          keywords={['shell', 'editor', 'input', 'prompt', 'zsh', 'warp', 'select', 'undo']}
+        >
+          <SettingsSwitchRow
+            label={translate('settings.terminal.shellEditor.title', 'Shell Editor')}
+            description={translate(
+              'settings.terminal.shellEditor.description',
+              'Type zsh commands in a text field docked under the output, with normal selection, shortcuts and undo. It replaces your zsh prompt. Applies to new terminals.'
+            )}
+            checked={settings.terminalShellEditor}
+            onChange={() => updateSettings({ terminalShellEditor: !settings.terminalShellEditor })}
+          />
+        </SearchableSetting>
+
+        <SearchableSetting
           title={translate('auto.components.settings.TerminalPane.902f5dee1f', 'Copy on Select')}
           description={translate(
             'components.settings.TerminalInteraction.copyOnSelectDescription',

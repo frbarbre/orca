@@ -530,6 +530,76 @@
   height: calc(100% - var(--orca-pane-title-height) - var(--orca-pane-top-banner-height, 0px));
 }
 
+/* Fork: the shell editor docks at the pane's bottom and the terminal refits above it. */
+.shell-editor {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 12px 10px;
+  cursor: text;
+}
+
+.pane:has(> .shell-editor) .xterm-container {
+  height: calc(
+    100% - var(--pane-padding-y, 4px) - var(--orca-pane-top-banner-height, 0px) -
+      var(--orca-pane-bottom-editor-height, 0px)
+  );
+}
+
+.pane[data-has-title]:has(> .shell-editor) .xterm-container {
+  height: calc(
+    100% - var(--orca-pane-title-height) - var(--orca-pane-top-banner-height, 0px) -
+      var(--orca-pane-bottom-editor-height, 0px)
+  );
+}
+
+.shell-editor-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.shell-editor-chips:empty {
+  display: none;
+}
+
+.shell-editor-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  max-width: 100%;
+  padding: 1px 7px;
+  border: 1px solid;
+  border-radius: 4px;
+  font-size: 0.85em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.shell-editor-chip svg {
+  width: 1em;
+  height: 1em;
+  flex-shrink: 0;
+}
+
+.shell-editor-field {
+  width: 100%;
+  resize: none;
+  border: 0;
+  outline: none;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  line-height: 1.4;
+}
+
 /* Ghostty-style URL hover: glued to the pane's true bottom-left corner. */
 .pane-link-tooltip {
   position: absolute;

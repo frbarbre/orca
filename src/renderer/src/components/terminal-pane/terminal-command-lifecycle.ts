@@ -1,5 +1,6 @@
 import type { Terminal, IDisposable } from '@xterm/xterm'
 import { createOsc133CommandFinishedScanner } from '../../../../shared/terminal-osc133-command-finished'
+import { observeShellEditorOsc133 } from './shell-editor/shell-editor-registry'
 
 type TerminalCommandLifecycleOptions = {
   onCommandFinished: (bestEffortExitCode: number | null) => void
@@ -22,7 +23,11 @@ export function createTerminalCommandLifecycle(options: TerminalCommandLifecycle
     handlePtyData: scanner.scan,
     attachXtermConsumer(terminal) {
       // Consume OSC 133 even without side-effect authority so integration markers never paint.
-      const disposable = terminal.parser.registerOscHandler(133, () => true)
+      const disposable = terminal.parser.registerOscHandler(133, (data) => {
+        // Fork: the shell editor follows prompts and commands through these markers.
+        observeShellEditorOsc133(terminal, data)
+        return true
+      })
       disposables.push(disposable)
       return disposable
     },

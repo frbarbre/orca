@@ -10,8 +10,12 @@ export const SHELL_STARTUP_FEATURES = [
   'markers',
   'ready',
   'identity',
-  'startup'
+  'startup',
+  'editor'
 ] as const
+
+/** Fork: set on a spawn by the renderer when the Settings → Terminal shell editor is on. */
+export const SHELL_EDITOR_REQUEST_ENV = 'ORCA_SHELL_EDITOR'
 
 export type ShellStartupFeature = (typeof SHELL_STARTUP_FEATURES)[number]
 
@@ -46,8 +50,10 @@ export function selectShellStartupFeatures(input: ShellStartupFeatureInput): She
   const wrappedBefore = overlay || input.hasStartupCommand
   const ready = input.waitsForShellReady
   // System zshrc overwrites HISTFILE; bash needs no wrapper for history alone.
-  const history =
-    shellName(input.shellPath) === 'zsh' && (Boolean(input.env.ORCA_HISTFILE) || wrappedBefore)
+  const isZsh = shellName(input.shellPath) === 'zsh'
+  const history = isZsh && (Boolean(input.env.ORCA_HISTFILE) || wrappedBefore)
+  // Fork: the editor finds the prompt through the command markers.
+  const editor = isZsh && input.env[SHELL_EDITOR_REQUEST_ENV] === '1'
 
   const features: ShellStartupFeature[] = []
   if (overlay) {
@@ -57,7 +63,7 @@ export function selectShellStartupFeatures(input: ShellStartupFeatureInput): She
     features.push('history')
   }
   // History-only panes must not gain command-marker output.
-  if (wrappedBefore) {
+  if (wrappedBefore || editor) {
     features.push('markers')
   }
   if (ready) {
@@ -65,6 +71,9 @@ export function selectShellStartupFeatures(input: ShellStartupFeatureInput): She
   }
   if (input.emitsStartupIdentity) {
     features.push('identity')
+  }
+  if (editor) {
+    features.push('editor')
   }
   return features
 }

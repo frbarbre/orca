@@ -70,6 +70,7 @@ import { statsApi } from './api/stats-bridge'
 import { memoryApi } from './api/memory-bridge'
 import { claudeUsageApi } from './api/claude-usage-bridge'
 import { claudeRemoteSessionApi } from './api/claude-remote-session-bridge'
+import { shellEditorApi } from './api/shell-editor-bridge'
 import { languageServerApi } from './api/language-server-bridge'
 import { lintApi } from './api/lint-bridge'
 import { formatterApi } from './api/formatter-bridge'
@@ -182,6 +183,7 @@ const api = {
   memory: memoryApi,
   claudeUsage: claudeUsageApi,
   claudeRemoteSession: claudeRemoteSessionApi,
+  shellEditor: shellEditorApi,
   languageServer: languageServerApi,
   lint: lintApi,
   formatter: formatterApi,

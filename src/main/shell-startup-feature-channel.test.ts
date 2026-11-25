@@ -1,10 +1,11 @@
 import { execFileSync, spawnSync } from 'node:child_process'
 import { chmodSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import * as pty from 'node-pty'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { POSIX_SHELL_STARTUP_COMMAND_ENV } from './pty/posix-shell-startup-command'
-import { selectShellStartupFeatures } from './shell-startup-features'
+import { selectShellStartupFeatures, SHELL_EDITOR_REQUEST_ENV } from './shell-startup-features'
 import { prependOrcaCliDirToChildPath } from './cli/orca-cli-child-path'
 import { runZshPty } from './zsh-startup-hook-pty-harness'
 import { ZSH_WRAPPER_DIR_MARKER_FILE } from './shell-templates'
@@ -27,6 +28,41 @@ const PLAIN_PANE = {
   hasStartupCommand: false,
   waitsForShellReady: false,
   emitsStartupIdentity: false
+}
+
+/** Waits for the editor's first prompt report, runs one command, and returns everything printed. */
+async function runZshUntil(
+  options: { env: Record<string, string>; cwd: string },
+  command: string,
+  done: RegExp
+): Promise<string> {
+  const proc = pty.spawn(ZSH_PATH, ['-l', '-i'], {
+    name: 'xterm-256color',
+    cols: 200,
+    rows: 40,
+    cwd: options.cwd,
+    env: options.env
+  })
+  let output = ''
+  let sent = false
+  try {
+    return await new Promise<string>((resolve, reject) => {
+      const timer = setTimeout(() => reject(new Error(`timed out:\n${output}`)), 20_000)
+      proc.onData((data) => {
+        output += data
+        if (!sent && output.includes(']777;orca-shell-editor;')) {
+          sent = true
+          setTimeout(() => proc.write(`${command}\r`), 200)
+        }
+        if (sent && done.test(output.slice(output.indexOf(command) + command.length))) {
+          clearTimeout(timer)
+          resolve(output)
+        }
+      })
+    })
+  } finally {
+    proc.kill()
+  }
 }
 
 describe('shell startup feature selection', () => {
@@ -68,6 +104,26 @@ describe('shell startup feature selection', () => {
         ...PLAIN_PANE
       })
     ).toContain('markers')
+  })
+
+  it('turns on the shell editor and its command markers for a zsh pane that asks for it', () => {
+    const features = selectShellStartupFeatures({
+      shellPath: '/bin/zsh',
+      env: { [SHELL_EDITOR_REQUEST_ENV]: '1' },
+      ...PLAIN_PANE
+    })
+    expect(features).toContain('editor')
+    expect(features).toContain('markers')
+  })
+
+  it('leaves the shell editor off for other shells', () => {
+    expect(
+      selectShellStartupFeatures({
+        shellPath: '/bin/bash',
+        env: { [SHELL_EDITOR_REQUEST_ENV]: '1' },
+        ...PLAIN_PANE
+      })
+    ).toEqual([])
   })
 
   it('does not wrap bash for history alone', () => {
@@ -140,6 +196,35 @@ describePosix('zsh launch config', () => {
       expect(result.values.ORCA_LOOKUP).toBe(launcher)
     }
   )
+
+  itWithZsh('blanks the prompt for the shell editor and reports where zsh is', async () => {
+    writeFileSync(
+      join(userDataPath, '.zshrc'),
+      `HISTFILE="$HOME/.zsh_history"\nPROMPT='custom> '\nRPROMPT='right'\nprecmd_functions+=(__user_precmd)\n__user_precmd() { PROMPT='late> ' }\n`
+    )
+    const repo = join(userDataPath, 'repo;dir')
+    mkdirSync(repo)
+    execFileSync('git', ['init', '-q', '-b', 'feat/editor'], { cwd: repo })
+    const env: Record<string, string> = {
+      ...(process.env as Record<string, string>),
+      HOME: userDataPath,
+      [SHELL_EDITOR_REQUEST_ENV]: '1'
+    }
+    const features = selectShellStartupFeatures({ shellPath: ZSH_PATH, env, ...PLAIN_PANE })
+    const { getShellLaunchConfig } = await importFreshLocalPtyShellReady()
+    const config = getShellLaunchConfig(ZSH_PATH, features)
+
+    const output = await runZshUntil(
+      { env: { ...env, ...config.env }, cwd: repo },
+      'print -r -- "P=<$PROMPT|$RPROMPT|${+ORCA_SHELL_EDITOR}>"',
+      /P=<[^$>\n]*>/
+    )
+
+    expect(output).toContain(
+      `\u001b]777;orca-shell-editor;feat/editor;${join(userDataPath, '.zsh_history')};${repo}\u0007`
+    )
+    expect(/P=<([^$\n]*?)>/.exec(output)?.[1]).toBe('||0')
+  })
 
   it('publishes exactly the selected features, whatever process.env holds', async () => {
     process.env.ORCA_SHELL_FEATURES = 'overlay,markers,ready,identity'

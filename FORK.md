@@ -2109,6 +2109,34 @@ presses and releases, and keys typed with ⌘/Ctrl/⌥, to the renderer marked `
 still gets them, and `claude-web-key-replay.ts` hands them to the hint store instead of dispatching
 them. Tests: `claude-web-guest-shortcuts.test.ts`, `claude-web-key-replay.test.ts`.
 
+### 87. Shell editor
+
+A Warp-style text field docked under a zsh terminal's output while zsh is at a prompt
+(Settings → Terminal → Shell Editor, `terminalShellEditor`, on by default, new terminals only).
+
+- **Request.** `ipc-pty-spawn-request.ts` adds `ORCA_SHELL_EDITOR=1` to a fresh local shell's spawn
+  (not agents, commands, SSH, reattach or Windows, `shell-editor-spawn.ts`). Main turns it into the
+  zsh wrapper's `editor` feature, which also turns on the command markers
+  (`selectShellStartupFeatures`).
+- **zsh side** (`zsh-startup-wrapper-builder.ts`). `__orca_shell_editor_precmd` runs last at each
+  prompt: it blanks `PROMPT`/`RPROMPT` and prints `OSC 777;orca-shell-editor;<branch>;<HISTFILE>;<PWD>`.
+  zsh runs a copy of the hook list, so the first prompt also gets a one-shot `line-init` hook that
+  blanks a prompt set by later hooks and redraws.
+- **Renderer state** (`shell-editor/`). `attachShellEditorSession` (from
+  `terminal-pane-pane-created.ts`) registers the OSC 777 handler. `terminal-command-lifecycle.ts`'s
+  OSC 133 handler reports `A`/`C`. The session is `starting` (typing queues until the first prompt),
+  `prompt`, `running` or `handoff`. It gives up and leaves the plain terminal when the shell prompts
+  without the report (not zsh) or never prompts. A reattach cancels the request.
+- **Box** (`ShellEditorBox.tsx`, portaled per pane). A textarea plus folder and branch chips in the
+  terminal theme's colours and font. Enter runs (Ctrl+U first; multi-line as one bracketed paste),
+  Shift+Enter adds a line. ↑/↓ on the first or last line walk zsh's history, filtered by what is
+  typed, read through `shellEditor:readHistory` (`zsh-history.ts`: only regular files named like a
+  history file). Ctrl+C clears, Ctrl+D on empty exits, Ctrl+L clears the screen. Tab and Ctrl+R hand
+  the line to zsh until the next prompt. History swaps are one undoable edit. The box reserves
+  `--orca-pane-bottom-editor-height` so the terminal refits above it. Printable keys typed into the
+  terminal move to the box. ⌘V is excluded from the terminal's paste listeners.
+- Tests: `shell-startup-feature-channel.test.ts` (live zsh), `zsh-history.test.ts`, `shell-editor-*.test.ts`.
+
 ## Verify
 
 Verify runs on GitHub, not locally: `fork-verify.yml` runs it on every pull request against `main`,

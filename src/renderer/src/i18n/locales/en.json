@@ -334,6 +334,10 @@
       "optionLayoutCompose": "layout uses Option to compose characters like @, €, [, ]",
       "optionLayoutUnknown": "unknown layout — Option composes characters (safe default)",
       "optionShortcutHint": "Choose Both for Option shortcuts, Off for accents and symbols, or Left/Right to use one Option key for each.",
+      "shellEditor": {
+        "description": "Type zsh commands in a text field docked under the output, with normal selection, shortcuts and undo. It replaces your zsh prompt. Applies to new terminals.",
+        "title": "Shell Editor"
+      },
       "windows": {
         "checkingAdministrator": "Checking…",
         "unknownAdministrator": "Unable to determine",
@@ -19914,6 +19918,11 @@
     "cancel": "Cancel"
   },
   "terminal": {
+    "shellEditor": {
+      "label": "Command",
+      "queued": "Runs when zsh is ready",
+      "starting": "Starting zsh"
+    },
     "sessionSaveFailure": {
       "title": "Could not save terminal session",
       "capacity": "The device saving this terminal reported full storage or an exceeded storage quota. Free space on that device, then try again.",

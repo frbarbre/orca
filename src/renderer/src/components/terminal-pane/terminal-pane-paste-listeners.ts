@@ -17,6 +17,8 @@ import {
 import { isEditableTarget } from '@/lib/editable-target'
 import { copyTerminalSelection } from './terminal-selection-copy'
 import { isInsideNativeChatCover } from './native-chat-covered-pane'
+// Fork: the shell editor's text field owns its own paste.
+import { isInsideShellEditor } from './shell-editor/shell-editor-dom'
 import type { TerminalPaneCloseController } from './use-terminal-pane-close-actions'
 import {
   formatClipboardImagePasteError,
@@ -63,7 +65,8 @@ export function registerTerminalPanePasteListeners({
     const target = event.target
     if (
       (target instanceof Element && target.closest('[data-terminal-search-root]')) ||
-      isInsideNativeChatCover(target)
+      isInsideNativeChatCover(target) ||
+      isInsideShellEditor(target)
     ) {
       return
     }
@@ -115,7 +118,8 @@ export function registerTerminalPanePasteListeners({
     const target = event.target
     if (
       (target instanceof Element && target.closest('[data-terminal-search-root]')) ||
-      isInsideNativeChatCover(target)
+      isInsideNativeChatCover(target) ||
+      isInsideShellEditor(target)
     ) {
       return
     }
@@ -158,7 +162,8 @@ export function registerTerminalPanePasteListeners({
       !(activeElementAtDispatch instanceof Element) ||
       !container.contains(activeElementAtDispatch) ||
       activeElementAtDispatch.closest('[data-terminal-search-root]') ||
-      isInsideNativeChatCover(activeElementAtDispatch)
+      isInsideNativeChatCover(activeElementAtDispatch) ||
+      isInsideShellEditor(activeElementAtDispatch)
     ) {
       return
     }
@@ -199,7 +204,8 @@ export function registerTerminalPanePasteListeners({
       !container.contains(activeElement) ||
       isEditableTarget(activeElement) ||
       activeElement.closest('[data-terminal-search-root]') ||
-      isInsideNativeChatCover(activeElement)
+      isInsideNativeChatCover(activeElement) ||
+      isInsideShellEditor(activeElement)
     ) {
       return
     }

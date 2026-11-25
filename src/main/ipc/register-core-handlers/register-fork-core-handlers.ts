@@ -5,6 +5,7 @@ import { registerMaterialIconHandlers } from '../material-icons'
 import { registerAgentTurnHandlers } from '../agent-turns'
 import { registerCiTriageLogHandlers } from '../ci-triage-log'
 import { registerClaudeRemoteSessionHandlers } from '../claude-remote-session'
+import { registerShellEditorHandlers } from '../shell-editor'
 
 /** Fork: the fork's own IPC surfaces, kept out of upstream's handler list for its line cap. */
 export function registerForkCoreHandlers(
@@ -16,4 +17,5 @@ export function registerForkCoreHandlers(
   registerMaterialIconHandlers()
   registerAgentTurnHandlers()
   registerCiTriageLogHandlers()
+  registerShellEditorHandlers()
 }

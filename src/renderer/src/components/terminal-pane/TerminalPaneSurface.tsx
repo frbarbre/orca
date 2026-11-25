@@ -28,6 +28,7 @@ import {
   TerminalPaneRecoveryPortals,
   TerminalPaneSshReconnectPortals
 } from './TerminalPaneRuntimePortals'
+import { TerminalPaneShellEditorPortals } from './shell-editor/TerminalPaneShellEditorPortals'
 import type { TerminalPaneController } from './use-terminal-pane-controller'
 import { canCloseTerminalPane, terminalPaneCloseLabel } from './terminal-pane-close-affordance'
 import { useAppStore } from '@/store'
@@ -226,6 +227,7 @@ export function TerminalPaneSurface({
         : null}
       <TerminalPaneProcessExitPortals controller={controller} />
       <TerminalPaneSshReconnectPortals controller={controller} />
+      <TerminalPaneShellEditorPortals controller={controller} />
       <DaemonActionDialog api={daemonActions} />
       {isActive && (
         <TerminalSessionStateSaveFailureDialog

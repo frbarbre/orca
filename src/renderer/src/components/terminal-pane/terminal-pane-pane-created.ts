@@ -33,6 +33,7 @@ import type { TerminalPaneManagerOptionsContext } from './terminal-pane-mount-co
 import { installTerminalPaneInputHandling } from './terminal-pane-pane-input'
 import { installTerminalPaneLinkHandling } from './terminal-pane-pane-links'
 import { scheduleRuntimeGraphSync } from '@/runtime/sync-runtime-graph'
+import { attachShellEditorSession } from './shell-editor/shell-editor-registry'
 
 export type PaneCreatedSetupContext = TerminalPaneManagerOptionsContext
 
@@ -145,7 +146,14 @@ export function createTerminalPaneCreatedHandler(
         return true
       })
     )
-    refs.osc7DisposablesRef.current.set(pane.id, osc7Disposable)
+    // Fork: the shell editor's prompt reports share the OSC handlers' lifetime.
+    const shellEditor = attachShellEditorSession(pane.terminal, paneKey)
+    refs.osc7DisposablesRef.current.set(pane.id, {
+      dispose: () => {
+        osc7Disposable.dispose()
+        shellEditor.dispose()
+      }
+    })
 
     installTerminalPaneInputHandling({
       pane,

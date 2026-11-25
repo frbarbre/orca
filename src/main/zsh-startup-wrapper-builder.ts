@@ -62,6 +62,19 @@ const ZSH_OSC133_FUNCTION_BLOCK = `__orca_osc133_precmd() {
   fi
   builtin printf "\\033]133;A\\007"
 }
+# Fork: the shell editor draws the prompt, so zsh's is blanked after every other hook set it.
+__orca_shell_editor_precmd() {
+  PROMPT='' RPROMPT=''
+  local __orca_branch="$(command git branch --show-current 2>/dev/null)"
+  builtin printf "\\033]777;orca-shell-editor;%s;%s;%s\\007" "\${__orca_branch//;/}" "\${HISTFILE//;/}" "$PWD"
+}
+# zsh runs a copy of the hook list, so hooks after Orca's can still set the first prompt.
+__orca_shell_editor_first_line() {
+  add-zle-hook-widget -d line-init __orca_shell_editor_first_line
+  [[ -n "$PROMPT$RPROMPT" ]] || return 0
+  PROMPT='' RPROMPT=''
+  zle reset-prompt
+}
 __orca_osc133_preexec() {
   builtin printf "\\033]133;C\\007"
   # Declare explicitly to avoid warn_create_global output above every command.
@@ -135,6 +148,13 @@ ${joinBlocks([
   spec.restores.managedWslCli ? indentBlock(WSL_MANAGED_CLI_PATH_RESTORE, '  ') : null,
   indentBlock(ORCA_CLI_POSIX_PATH_RESTORE, '  ').replace(/\n$/, ''),
   featureGuard('overlay', getOverlayRestoreBlocks(spec)),
+  spec.osc133CommandMarkers
+    ? featureGuard('editor', [
+        `precmd_functions+=(__orca_shell_editor_precmd)
+__orca_shell_editor_precmd
+builtin autoload -Uz add-zle-hook-widget && add-zle-hook-widget line-init __orca_shell_editor_first_line`
+      ])
+    : null,
   // A system-default Codex home has no overlay key, but still needs the launch preflight.
   indentBlock(getPosixCodexShellLaunchPreflight() + getPosixClaudeShellFunction(), '  ').replace(
     /\n$/,

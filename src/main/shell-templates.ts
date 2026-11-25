@@ -1,4 +1,4 @@
-import { SHELL_STARTUP_FEATURE_ENV } from './shell-startup-features'
+import { SHELL_EDITOR_REQUEST_ENV, SHELL_STARTUP_FEATURE_ENV } from './shell-startup-features'
 import { POSIX_SHELL_STARTUP_COMMAND_ENV } from './pty/posix-shell-startup-command'
 
 export const ZSH_WRAPPER_DIR_MARKER_FILE = '.orca-shell-wrapper'
@@ -11,7 +11,7 @@ export const ZSH_WRAPPER_DIR_MARKER_CONTENT = `# Orca-generated zsh startup wrap
 // Consume feature env before user config so children cannot inherit the selection.
 export const ZSH_FEATURE_CHANNEL_BLOCK = `builtin typeset -ga _orca_shell_features
 _orca_shell_features=(\${(s:,:)\${${SHELL_STARTUP_FEATURE_ENV}:-}})
-builtin unset ${SHELL_STARTUP_FEATURE_ENV}
+builtin unset ${SHELL_STARTUP_FEATURE_ENV} ${SHELL_EDITOR_REQUEST_ENV}
 # Consume now: user config can drop the deferred hook, leaving exported history state to leak into children.
 builtin typeset -g _orca_histfile="\${ORCA_HISTFILE:-}"
 builtin unset ORCA_HISTFILE

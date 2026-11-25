@@ -6,6 +6,10 @@ import {
 } from '../../runtime/agent-session-create-operation'
 import { callRuntimeRpc } from '../../runtime/runtime-rpc-client'
 import { toRuntimeTerminalWorktreeSelector } from '../../runtime/runtime-worktree-selector'
+import { useAppStore } from '../../store'
+import { makePaneKey } from '../../../../shared/stable-pane-id'
+import { shellEditorSpawnEnv } from './shell-editor/shell-editor-spawn'
+import { cancelShellEditorRequest, requestShellEditor } from './shell-editor/shell-editor-registry'
 
 type PtyConnectOptions = Parameters<PtyTransport['connect']>[0]
 const modelLaunchOperations = new WeakMap<IpcPtyTransportOptions, AgentSessionCreateOperation>()
@@ -96,11 +100,25 @@ export async function spawnIpcPty(
     resumesAgent && !admittedSessionId ? connectOptions.resumeSpawnIntent : undefined
   // Why: a reattach under an admitted session id must never stop the PTY it is reattaching.
   const replacesPtyId = admittedSessionId ? null : (connectOptions.claimReplacedPtyId?.() ?? null)
-  return window.api.pty.spawn({
+  const editorEnv = shellEditorSpawnEnv({
+    enabled: useAppStore.getState().settings?.terminalShellEditor ?? false,
+    isWindows: navigator.userAgent.includes('Windows'),
+    connectionId,
+    command: connectOptions.command ?? command,
+    launchAgent: connectOptions.launchAgent ?? launchAgent,
+    launchConfig: connectOptions.launchConfig ?? launchConfig,
+    admittedSessionId,
+    env: connectOptions.env ?? env
+  })
+  const editorPaneKey = editorEnv && tabId && leafId ? makePaneKey(tabId, leafId) : null
+  if (editorPaneKey) {
+    requestShellEditor(editorPaneKey)
+  }
+  const spawned = await window.api.pty.spawn({
     cols: connectOptions.cols ?? 80,
     rows: connectOptions.rows ?? 24,
     cwd,
-    env: connectOptions.env ?? env,
+    env: editorEnv ?? connectOptions.env ?? env,
     ...((connectOptions.envToDelete ?? envToDelete)
       ? { envToDelete: connectOptions.envToDelete ?? envToDelete }
       : {}),
@@ -145,4 +163,8 @@ export async function spawnIpcPty(
     ...(telemetry ? { telemetry } : {}),
     ...(agentLaunch && !admittedSessionId ? { agentLaunch } : {})
   })
+  if (editorPaneKey && spawned.isReattach) {
+    cancelShellEditorRequest(editorPaneKey)
+  }
+  return spawned
 }

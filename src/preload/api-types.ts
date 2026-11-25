@@ -165,6 +165,10 @@ export type PreloadApi = {
     attachGuest: (args: { webContentsId: number }) => Promise<void>
     onReplayKey: (callback: (key: ClaudeWebReplayedKey) => void) => () => void
   }
+  /** Fork: the terminal's shell editor. */
+  shellEditor: {
+    readHistory: (args: { path: string }) => Promise<string[]>
+  }
   languageServer: LanguageServerApi
   lint: {
     sync: (args: LintRequest) => Promise<DiagnosticsSyncResult>

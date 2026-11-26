@@ -453,6 +453,50 @@ test.describe('shell editor', () => {
     })
   }
 
+  for (const away of [
+    { label: 'briefly', parked: false },
+    { label: 'until parked', parked: true }
+  ]) {
+    test(`keeps a running quick command’s block after switching away ${away.label}`, async ({
+      orcaPage
+    }) => {
+      await expect(orcaPage.locator(FIELD)).toBeVisible({ timeout: 30_000 })
+      const worktreeId = await waitForActiveWorktree(orcaPage)
+      const runTabId = await orcaPage.evaluate((id) => {
+        const state = window.__store!.getState()
+        const tab = state.createTab(id, undefined, undefined, {
+          quickCommandLabel: 'Run',
+          pendingStartup: {
+            command: 'for i in $(seq 1 600); do echo running-$i; sleep 0.1; done'
+          }
+        })
+        state.activateTab(tab.id)
+        return tab.id
+      }, worktreeId)
+      await waitForOutputLine(orcaPage, 'running-3')
+      const blocks = orcaPage.locator('.pane:not([hidden]) [data-shell-block]')
+      await expect(blocks).toHaveCount(1, { timeout: 15_000 })
+
+      if (away.parked) {
+        await parkHiddenTabBehindDecoy(orcaPage, worktreeId, runTabId, {
+          parkDelayMs: PARK_DELAY_MS
+        })
+      } else {
+        await orcaPage.evaluate((id) => {
+          const state = window.__store!.getState()
+          const other = state.createTab(id, undefined, undefined, { activate: true })
+          state.setActiveTab(other.id)
+        }, worktreeId)
+        await expect.poll(() => getActiveTabId(orcaPage)).not.toBe(runTabId)
+      }
+      await orcaPage.evaluate((id) => window.__store?.getState().setActiveTab(id), runTabId)
+      await waitForActiveTerminalManager(orcaPage, 30_000)
+
+      await expect(blocks).toHaveCount(1, { timeout: 15_000 })
+      await expect(blocks.locator('.shell-block-label')).toContainText(/\(\d+s\)/)
+    })
+  }
+
   test('copies a block’s output from its menu', async ({ electronApp, orcaPage }) => {
     const field = orcaPage.locator(FIELD)
     await expect(field).toBeVisible({ timeout: 30_000 })

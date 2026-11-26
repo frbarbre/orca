@@ -45,6 +45,7 @@ export function encodeShellEditorHandoff(text: string, key: string): string {
 
 const PANE_SHORTCUTS: ReadonlySet<TerminalShortcutAction['type']> = new Set([
   'splitActivePane',
+  'openTerminalGroup',
   'closeActivePane',
   'focusPane',
   'equalizePaneSizes',

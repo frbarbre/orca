@@ -1,3 +1,5 @@
+import { mkdirSync, writeFileSync } from 'node:fs'
+import path from 'node:path'
 import { test, expect } from './helpers/orca-app'
 import { readActiveTerminal, waitForOutputLine } from './helpers/shell-editor'
 import {
@@ -68,6 +70,58 @@ test.describe('shell editor', () => {
     await waitForPaneCount(orcaPage, 3)
     await expect.poll(focusedPane).toEqual({ index: 2, marked: [2] })
     await expect(orcaPage.locator(':focus')).toHaveAttribute('aria-label', 'Command')
+  })
+
+  test('opens a terminal in a new group with ⌘D and ⌘⇧D when bound, and ⌘⌥← goes back', async ({
+    orcaPage,
+    electronApp
+  }) => {
+    const field = orcaPage.locator(FIELD)
+    await expect(field).toBeVisible({ timeout: 30_000 })
+    const home = await electronApp.evaluate(({ app }) => app.getPath('home'))
+    mkdirSync(path.join(home, '.orca'), { recursive: true })
+    writeFileSync(
+      path.join(home, '.orca', 'keybindings.json'),
+      JSON.stringify({
+        version: 1,
+        keybindings: {
+          'terminal.splitRight': [],
+          'terminal.splitDown': [],
+          'terminal.openGroupRight': ['Mod+D'],
+          'terminal.openGroupDown': ['Mod+Shift+D']
+        }
+      })
+    )
+    await orcaPage.evaluate(() => window.__store!.getState().reloadKeybindings())
+    const layout = (): Promise<{ groups: number; activeGroup: number; focusedField: boolean }> =>
+      orcaPage.evaluate(() => {
+        const state = window.__store!.getState()
+        const worktreeId = state.activeWorktreeId!
+        const groups = state.groupsByWorktree[worktreeId] ?? []
+        const active = document.activeElement
+        return {
+          groups: groups.length,
+          activeGroup: groups.findIndex(
+            (group) => group.id === state.activeGroupIdByWorktree[worktreeId]
+          ),
+          focusedField:
+            active instanceof HTMLTextAreaElement &&
+            active.closest('[data-shell-editor-root]') !== null
+        }
+      })
+    await field.focus()
+    await expect.poll(layout).toEqual({ groups: 1, activeGroup: 0, focusedField: true })
+
+    await orcaPage.keyboard.press('Meta+d')
+    await expect.poll(layout).toEqual({ groups: 2, activeGroup: 1, focusedField: true })
+
+    await orcaPage.keyboard.press('Meta+Alt+ArrowLeft')
+    await expect.poll(layout).toEqual({ groups: 2, activeGroup: 0, focusedField: true })
+
+    await orcaPage.keyboard.press('Meta+Shift+d')
+    await expect.poll(layout).toMatchObject({ groups: 3, focusedField: true })
+    expect((await layout()).activeGroup).not.toBe(0)
+    await expect(orcaPage.locator('.pane:not([hidden])')).toHaveCount(3)
   })
 
   test('takes focus back when the output is clicked, but not when text is selected', async ({

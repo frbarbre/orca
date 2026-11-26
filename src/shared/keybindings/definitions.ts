@@ -12,6 +12,7 @@ import { KEYBINDING_DEFINITION_CORE_3 } from './definitions-core-3'
 import { KEYBINDING_DEFINITION_CORE_4 } from './definitions-core-4'
 import { KEYBINDING_DEFINITION_GROUP_DIRECTION } from './definitions-group-direction'
 import { KEYBINDING_DEFINITION_QUICK_COMMAND_RUN } from './definitions-quick-command-run'
+import { KEYBINDING_DEFINITION_TERMINAL_GROUP_SPLIT } from './definitions-terminal-group-split'
 
 export function agentTabActionId(agent: TuiAgent): AgentTabActionId {
   return `tab.newAgent.${agent}`
@@ -42,6 +43,7 @@ export const KEYBINDING_DEFINITIONS: readonly KeybindingDefinition[] = [
   ...KEYBINDING_DEFINITION_CORE_3,
   ...KEYBINDING_DEFINITION_GROUP_DIRECTION,
   ...KEYBINDING_DEFINITION_QUICK_COMMAND_RUN,
+  ...KEYBINDING_DEFINITION_TERMINAL_GROUP_SPLIT,
   ...KEYBINDING_DEFINITION_CORE_4,
   ...buildAgentTabKeybindingDefinitions()
 ]

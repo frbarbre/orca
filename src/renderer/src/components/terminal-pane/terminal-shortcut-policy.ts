@@ -60,6 +60,7 @@ export type TerminalShortcutAction =
   | { type: 'clearPaneTitle' }
   | { type: 'closeActivePane' }
   | { type: 'splitActivePane'; direction: 'vertical' | 'horizontal' }
+  | { type: 'openTerminalGroup'; direction: 'right' | 'down' }
   | { type: 'scrollViewport'; position: 'top' | 'bottom' }
   | {
       type: 'sendInput'
@@ -160,6 +161,15 @@ export function resolveTerminalShortcutAction(
 
     if (matches('terminal.splitDown')) {
       return { type: 'splitActivePane', direction: 'horizontal' }
+    }
+
+    // Fork: Warp-style splits open a terminal tab in a new group, reached with the group-focus keys.
+    if (matches('terminal.openGroupRight')) {
+      return { type: 'openTerminalGroup', direction: 'right' }
+    }
+
+    if (matches('terminal.openGroupDown')) {
+      return { type: 'openTerminalGroup', direction: 'down' }
     }
   }
 

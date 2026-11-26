@@ -3,6 +3,7 @@ import type { PaneCwdMap } from './resolve-split-cwd'
 import type { PtyTransport } from './pty-transport-types'
 import { copyTerminalSelection } from './terminal-selection-copy'
 import { splitTerminalPaneWithInheritedCwd } from './terminal-pane-split-with-inherited-cwd'
+import { openTerminalGroup } from './open-terminal-group'
 import {
   markTerminalFollowOutput,
   markTerminalPinnedViewport,
@@ -204,6 +205,23 @@ export function dispatchTerminalShortcutAction(
     const pane = manager.getActivePane() ?? manager.getPanes()[0]
     if (pane) {
       onRequestClosePane(pane.id)
+    }
+    return
+  }
+  if (action.type === 'openTerminalGroup') {
+    event.preventDefault()
+    event.stopImmediatePropagation()
+    const pane = manager.getActivePane() ?? manager.getPanes()[0]
+    if (pane) {
+      void openTerminalGroup({
+        worktreeId,
+        tabId,
+        direction: action.direction,
+        sourcePaneId: pane.id,
+        sourcePtyId: paneTransportsRef.current.get(pane.id)?.getPtyId() ?? null,
+        paneCwdMap: paneCwdRef.current,
+        fallbackCwd
+      })
     }
     return
   }

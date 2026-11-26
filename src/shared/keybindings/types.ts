@@ -61,6 +61,8 @@ export type KeybindingActionId =
   | 'tabGroup.focusRight'
   | 'tabGroup.focusUp'
   | 'tabGroup.focusDown'
+  | 'terminal.openGroupRight'
+  | 'terminal.openGroupDown'
   | 'worktree.history.forward'
   | 'tab.newTerminal'
   | 'tab.newAgent'

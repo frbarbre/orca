@@ -113,6 +113,7 @@ describe('isShellEditorPaneShortcut', () => {
   it('lets pane shortcuts through from the editor, but keeps text editing and pty input in it', () => {
     for (const type of [
       'splitActivePane',
+      'openTerminalGroup',
       'closeActivePane',
       'focusPane',
       'equalizePaneSizes',

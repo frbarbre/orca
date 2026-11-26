@@ -11,6 +11,13 @@ export const FORK_KEYBINDING_TITLE_COPY = {
     translate('keybindings.title.tabGroupFocusRight', 'Focus group to the right'),
   'tabGroup.focusUp': () => translate('keybindings.title.tabGroupFocusUp', 'Focus group above'),
   'tabGroup.focusDown': () => translate('keybindings.title.tabGroupFocusDown', 'Focus group below'),
+  'terminal.openGroupRight': () =>
+    translate(
+      'keybindings.title.terminalOpenGroupRight',
+      'Open terminal in a new group to the right'
+    ),
+  'terminal.openGroupDown': () =>
+    translate('keybindings.title.terminalOpenGroupDown', 'Open terminal in a new group below'),
   'editor.previousFile': () =>
     translate('keybindings.title.editorPreviousFile', 'Go to Previous Changed File'),
   'editor.nextFile': () => translate('keybindings.title.editorNextFile', 'Go to Next Changed File'),

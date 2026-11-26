@@ -2256,6 +2256,18 @@ Warp-style Tab completion in the shell editor box, with zsh's own candidates.
   the editor and blocks away from open terminals too (`TerminalPaneShellEditorPortals.tsx`).
 - Tests: `shell-editor-model.test.ts`, e2e in `tests/e2e/shell-editor.spec.ts`.
 
+### 92. Open a terminal in a new group
+
+Warp-style splits as windows: `terminal.openGroupRight` / `terminal.openGroupDown` open a new
+terminal tab in a new tab group beside or below the current tab's group, in the current pane's
+folder (`open-terminal-group.ts`, dispatched from `terminal-keyboard-action-dispatch.ts`). The
+group-focus keys (`tabGroup.focus*`, ⌘⌥+arrow) move between them.
+
+- No default keys, so upstream's ⌘D/⌘⇧D pane splits and the e2e that rely on them stay as they are.
+  Bind them in `~/.orca/keybindings.json` (and unbind `terminal.splitRight`/`splitDown`) to use
+  ⌘D/⌘⇧D for groups.
+- Tests: `terminal-shortcut-policy.test.ts`, e2e in `tests/e2e/shell-editor.spec.ts`.
+
 ## Verify
 
 Verify runs on GitHub, not locally: `fork-verify.yml` runs it on every pull request against `main`,

@@ -21051,6 +21051,8 @@
       "tabGroupFocusRight": "Focus group to the right",
       "tabGroupFocusUp": "Focus group above",
       "tabGroupFocusDown": "Focus group below",
+      "terminalOpenGroupRight": "Open terminal in a new group to the right",
+      "terminalOpenGroupDown": "Open terminal in a new group below",
       "editorPreviousFile": "Go to Previous Changed File",
       "editorNextFile": "Go to Next Changed File",
       "editorShowEdit": "Show File Editor",

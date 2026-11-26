@@ -2249,7 +2249,8 @@ Warp-style Tab completion in the shell editor box, with zsh's own candidates.
   `tab.close`.
 - Upstream e2e adjusted for the editor: `terminal-close-pane-focus.spec.ts` accepts focus in the
   neighbor's field. `terminal-shortcuts.spec.ts` checks xterm's own key encoding, so its
-  `beforeEach` turns the editor off and swaps in a fresh tab (`useTerminalWithoutShellEditor`).
+  `beforeEach` turns the editor off (`useTerminalWithoutShellEditor`). Turning the setting off takes
+  the editor and blocks away from open terminals too (`TerminalPaneShellEditorPortals.tsx`).
 - Tests: `shell-editor-model.test.ts`, e2e in `tests/e2e/shell-editor.spec.ts`.
 
 ## Verify

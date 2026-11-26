@@ -295,27 +295,12 @@ async function pressAndExpectWrite(
 }
 
 // Fork: these specs check xterm's own key encoding, and at an idle prompt the shell editor's field
-// takes the keys instead. The setting applies to new terminals, so swap the first tab for one.
+// takes the keys instead.
 async function useTerminalWithoutShellEditor(page: Page): Promise<void> {
-  const swapped = await page.evaluate(async () => {
-    const store = window.__store!
-    if (!store.getState().settings?.terminalShellEditor) {
-      return false
-    }
-    await store.getState().updateSettings({ terminalShellEditor: false })
-    const { activeWorktreeId, activeTabId } = store.getState()
-    const tab = store.getState().createTab(activeWorktreeId!)
-    store.getState().activateTab(tab.id)
-    if (activeTabId) {
-      store.getState().closeTab(activeTabId)
-    }
-    return true
-  })
-  if (swapped) {
-    await waitForActiveTerminalManager(page, 30_000)
-    await waitForPaneCount(page, 1, 30_000)
-    await waitForActivePanePtyId(page)
-  }
+  await page.evaluate(() =>
+    window.__store!.getState().updateSettings({ terminalShellEditor: false })
+  )
+  await expect(page.locator('[data-shell-editor-root]')).toHaveCount(0)
 }
 
 const isMac = process.platform === 'darwin'

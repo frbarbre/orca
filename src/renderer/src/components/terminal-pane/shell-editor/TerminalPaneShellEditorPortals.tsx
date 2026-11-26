@@ -2,6 +2,7 @@ import { useLayoutEffect, useSyncExternalStore } from 'react'
 import { createPortal } from 'react-dom'
 import type { Terminal } from '@xterm/xterm'
 import { makePaneKey } from '../../../../../shared/stable-pane-id'
+import { useAppStore } from '@/store'
 import type { TerminalPaneController } from '../use-terminal-pane-controller'
 import { getShellBlockTracker, getShellEditorSession } from './shell-editor-registry'
 import type { ShellEditorSession } from './shell-editor-session'
@@ -46,6 +47,8 @@ export function TerminalPaneShellEditorPortals({
   controller: TerminalPaneController
 }): React.JSX.Element {
   const { activePane, isActive, isVisible, managedPanes, paneTransportsRef, tabId } = controller
+  // Why: turning the setting off takes the editor away from open terminals too, not only new ones.
+  const editorEnabled = useAppStore((state) => state.settings?.terminalShellEditor ?? false)
   return (
     <>
       {managedPanes.map((pane) => {
@@ -61,19 +64,23 @@ export function TerminalPaneShellEditorPortals({
                 style={{ background: pane.terminal.options.theme?.blue ?? '#3b82f6' }}
               />
             ) : null}
-            <PaneShellBlocks
-              session={session}
-              terminal={pane.terminal}
-              paneContainer={pane.container}
-            />
-            <ShellEditorBox
-              session={session}
-              terminal={pane.terminal}
-              paneContainer={pane.container}
-              transport={paneTransportsRef.current.get(pane.id)}
-              isShown={isActive && isVisible}
-              isFocusTarget={isActive && isVisible && activePane?.id === pane.id}
-            />
+            {editorEnabled ? (
+              <>
+                <PaneShellBlocks
+                  session={session}
+                  terminal={pane.terminal}
+                  paneContainer={pane.container}
+                />
+                <ShellEditorBox
+                  session={session}
+                  terminal={pane.terminal}
+                  paneContainer={pane.container}
+                  transport={paneTransportsRef.current.get(pane.id)}
+                  isShown={isActive && isVisible}
+                  isFocusTarget={isActive && isVisible && activePane?.id === pane.id}
+                />
+              </>
+            ) : null}
           </>,
           pane.container,
           `shell-editor-${pane.id}`

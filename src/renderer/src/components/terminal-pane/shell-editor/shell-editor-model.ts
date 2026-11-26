@@ -51,6 +51,8 @@ export type ShellEditorKeyAction =
   | 'clearScreen'
   | 'handoffSearch'
   | 'handoffComplete'
+  | 'acceptSuggestion'
+  | 'acceptSuggestionWord'
 
 export function resolveShellEditorKey(input: {
   key: string
@@ -60,9 +62,20 @@ export function resolveShellEditorKey(input: {
   altKey: boolean
   caretOnFirstLine: boolean
   caretOnLastLine: boolean
+  caretAtEnd: boolean
+  hasSuggestion: boolean
   empty: boolean
 }): ShellEditorKeyAction | null {
   const plain = !input.shiftKey && !input.ctrlKey && !input.metaKey && !input.altKey
+  if (input.key === 'ArrowRight' && input.caretAtEnd && input.hasSuggestion) {
+    const altOnly = input.altKey && !input.shiftKey && !input.ctrlKey && !input.metaKey
+    if (plain) {
+      return 'acceptSuggestion'
+    }
+    if (altOnly) {
+      return 'acceptSuggestionWord'
+    }
+  }
   if (plain) {
     switch (input.key) {
       case 'Enter':
@@ -126,6 +139,11 @@ export type ShellEditorHistory = {
   next: () => string | null
   record: (command: string) => void
   replace: (entries: readonly string[]) => void
+  suggest: (typed: string) => string | null
+}
+
+export function nextSuggestionWord(suggestion: string): string {
+  return /^\s*\S*/.exec(suggestion)?.[0] ?? ''
 }
 
 export function createShellEditorHistory(initial: readonly string[]): ShellEditorHistory {
@@ -173,6 +191,19 @@ export function createShellEditorHistory(initial: readonly string[]): ShellEdito
       const fresh = new Set(next)
       fileEntries = [...next]
       recorded = recorded.filter((entry) => !fresh.has(entry))
+    },
+    suggest(typed) {
+      if (typed === '' || typed.includes('\n')) {
+        return null
+      }
+      const list = entries()
+      for (let at = list.length - 1; at >= 0; at--) {
+        const entry = list[at]
+        if (entry.startsWith(typed) && entry !== typed && !entry.includes('\n')) {
+          return entry.slice(typed.length)
+        }
+      }
+      return null
     }
   }
 }

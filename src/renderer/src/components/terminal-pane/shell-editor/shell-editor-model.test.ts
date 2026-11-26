@@ -3,6 +3,7 @@ import {
   createShellEditorHistory,
   encodeShellEditorCommand,
   encodeShellEditorHandoff,
+  nextSuggestionWord,
   parseShellEditorPromptInfo,
   resolveShellEditorKey,
   resolveShellEditorResync
@@ -62,8 +63,19 @@ describe('resolveShellEditorKey', () => {
     altKey: false,
     caretOnFirstLine: true,
     caretOnLastLine: true,
+    caretAtEnd: false,
+    hasSuggestion: false,
     empty: false
   }
+
+  it('accepts a suggestion with → and its next word with ⌥→, only from the end of the line', () => {
+    const atEnd = { ...base, key: 'ArrowRight', caretAtEnd: true, hasSuggestion: true }
+    expect(resolveShellEditorKey(atEnd)).toBe('acceptSuggestion')
+    expect(resolveShellEditorKey({ ...atEnd, altKey: true })).toBe('acceptSuggestionWord')
+    expect(resolveShellEditorKey({ ...atEnd, caretAtEnd: false })).toBeNull()
+    expect(resolveShellEditorKey({ ...atEnd, hasSuggestion: false })).toBeNull()
+    expect(resolveShellEditorKey({ ...atEnd, shiftKey: true })).toBeNull()
+  })
 
   it('runs on Enter and adds a line on Shift+Enter', () => {
     expect(resolveShellEditorKey({ ...base, key: 'Enter' })).toBe('submit')
@@ -118,6 +130,29 @@ describe('resolveShellEditorResync', () => {
     expect(resync('prompt', 'zsh')).toBeNull()
     expect(resync('off', 'node')).toBeNull()
     expect(resync('off', null)).toBeNull()
+  })
+})
+
+describe('suggestions', () => {
+  it('suggests the rest of the newest command that starts with what is typed', () => {
+    const history = createShellEditorHistory(['git status', 'git stash pop', 'ls'])
+    expect(history.suggest('git st')).toBe('ash pop')
+    history.record('git status --short')
+    expect(history.suggest('git st')).toBe('atus --short')
+  })
+
+  it('suggests nothing for an empty or multi-line draft, an exact match or a multi-line entry', () => {
+    const history = createShellEditorHistory(['ls', 'for f in a\ndo echo $f\ndone'])
+    expect(history.suggest('')).toBeNull()
+    expect(history.suggest('ls')).toBeNull()
+    expect(history.suggest('l\ns')).toBeNull()
+    expect(history.suggest('for')).toBeNull()
+  })
+
+  it('takes one word at a time, with the space in front of it', () => {
+    expect(nextSuggestionWord('ash pop --index')).toBe('ash')
+    expect(nextSuggestionWord(' pop --index')).toBe(' pop')
+    expect(nextSuggestionWord('')).toBe('')
   })
 })
 

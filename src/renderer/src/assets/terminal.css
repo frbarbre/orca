@@ -600,6 +600,29 @@
   line-height: 1.4;
 }
 
+.shell-editor-input {
+  position: relative;
+}
+
+.shell-editor-input .shell-editor-field {
+  position: relative;
+  display: block;
+}
+
+.shell-editor-suggestion {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  font: inherit;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+}
+
+.shell-editor-suggestion-typed {
+  visibility: hidden;
+}
+
 /* Fork: Warp-style command blocks drawn over the terminal's rows. */
 .shell-blocks-overlay {
   position: absolute;

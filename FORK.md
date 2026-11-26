@@ -2194,6 +2194,19 @@ Warp-style command blocks for shell-editor terminals.
 - Tests: `shell-blocks-*.test.ts`, `git-diff-stat.test.ts`, e2e in `tests/e2e/shell-editor.spec.ts`
   and `tests/e2e/shell-editor-restart.spec.ts`.
 
+### 89. Shell editor suggestions
+
+Fish/Warp-style history suggestions in the shell editor box.
+
+- `history.suggest(typed)` (`shell-editor-model.ts`) returns the rest of the newest one-line history
+  entry that starts with a one-line draft.
+- The box draws it as grey ghost text behind the transparent textarea (`.shell-editor-suggestion`,
+  with the typed part invisible so the suffix lines up).
+- With the caret at the end, → takes the whole suggestion and ⌥→ the next word
+  (`nextSuggestionWord`). Both type it with `execCommand`, so ⌘Z undoes it.
+- Tests: `shell-editor-model.test.ts`, `shell-editor-dom.test.ts`, e2e in
+  `tests/e2e/shell-editor.spec.ts`.
+
 ## Verify
 
 Verify runs on GitHub, not locally: `fork-verify.yml` runs it on every pull request against `main`,

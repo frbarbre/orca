@@ -37,6 +37,30 @@ test.describe('shell editor', () => {
     await expect(field).toHaveValue('')
   })
 
+  test('suggests the rest of an earlier command and takes it with →', async ({ orcaPage }) => {
+    const field = orcaPage.locator(FIELD)
+    await expect(field).toBeVisible({ timeout: 30_000 })
+    await field.fill('echo suggest-alpha beta')
+    await field.press('Enter')
+    await waitForOutputLine(orcaPage, 'suggest-alpha beta')
+    await expect(field).toBeVisible({ timeout: 15_000 })
+
+    await field.pressSequentially('echo sugg')
+    const ghost = orcaPage.locator('[data-shell-editor-suggestion]')
+    await expect(ghost).toHaveText('est-alpha beta')
+
+    await field.press('Alt+ArrowRight')
+    await expect(field).toHaveValue('echo suggest-alpha')
+    await expect(ghost).toHaveText(' beta')
+
+    await field.press('ArrowRight')
+    await expect(field).toHaveValue('echo suggest-alpha beta')
+    await expect(ghost).toHaveCount(0)
+
+    await field.press('Meta+z')
+    await expect(field).toHaveValue('echo suggest-alpha')
+  })
+
   test('keeps commands and their output together, with no terminal cursor', async ({
     orcaPage
   }) => {

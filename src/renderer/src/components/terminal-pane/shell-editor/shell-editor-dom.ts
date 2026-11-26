@@ -4,7 +4,11 @@ export function isInsideShellEditor(target: EventTarget | null): boolean {
   return target instanceof Element && target.closest(`[${SHELL_EDITOR_ROOT_ATTRIBUTE}]`) !== null
 }
 
-export type ShellEditorCaret = { caretOnFirstLine: boolean; caretOnLastLine: boolean }
+export type ShellEditorCaret = {
+  caretOnFirstLine: boolean
+  caretOnLastLine: boolean
+  caretAtEnd: boolean
+}
 
 /** History keys only act on a collapsed caret at the field's first or last line. */
 export function readShellEditorCaret(field: {
@@ -13,11 +17,22 @@ export function readShellEditorCaret(field: {
   selectionEnd: number
 }): ShellEditorCaret {
   if (field.selectionStart !== field.selectionEnd) {
-    return { caretOnFirstLine: false, caretOnLastLine: false }
+    return { caretOnFirstLine: false, caretOnLastLine: false, caretAtEnd: false }
   }
   return {
     caretOnFirstLine: !field.value.slice(0, field.selectionStart).includes('\n'),
-    caretOnLastLine: !field.value.slice(field.selectionEnd).includes('\n')
+    caretOnLastLine: !field.value.slice(field.selectionEnd).includes('\n'),
+    caretAtEnd: field.selectionEnd === field.value.length
+  }
+}
+
+/** Types at the end of the field as one undoable edit. */
+export function appendShellEditorText(field: HTMLTextAreaElement, text: string): void {
+  field.focus()
+  field.setSelectionRange(field.value.length, field.value.length)
+  if (!document.execCommand('insertText', false, text)) {
+    field.value += text
+    field.dispatchEvent(new Event('input', { bubbles: true }))
   }
 }
 

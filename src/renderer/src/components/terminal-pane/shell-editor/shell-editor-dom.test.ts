@@ -6,22 +6,29 @@ describe('readShellEditorCaret', () => {
     const value = 'one\ntwo\nthree'
     expect(readShellEditorCaret({ value, selectionStart: 2, selectionEnd: 2 })).toEqual({
       caretOnFirstLine: true,
-      caretOnLastLine: false
+      caretOnLastLine: false,
+      caretAtEnd: false
     })
     expect(readShellEditorCaret({ value, selectionStart: 5, selectionEnd: 5 })).toEqual({
       caretOnFirstLine: false,
-      caretOnLastLine: false
+      caretOnLastLine: false,
+      caretAtEnd: false
     })
     expect(readShellEditorCaret({ value, selectionStart: 10, selectionEnd: 10 })).toEqual({
       caretOnFirstLine: false,
-      caretOnLastLine: true
+      caretOnLastLine: true,
+      caretAtEnd: false
+    })
+    expect(readShellEditorCaret({ value, selectionStart: 13, selectionEnd: 13 })).toMatchObject({
+      caretAtEnd: true
     })
   })
 
   it('leaves the arrows to the text field while text is selected', () => {
     expect(readShellEditorCaret({ value: 'ls', selectionStart: 0, selectionEnd: 2 })).toEqual({
       caretOnFirstLine: false,
-      caretOnLastLine: false
+      caretOnLastLine: false,
+      caretAtEnd: false
     })
   })
 })

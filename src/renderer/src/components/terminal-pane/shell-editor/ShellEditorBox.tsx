@@ -5,10 +5,12 @@ import { translate } from '@/i18n/i18n'
 import {
   encodeShellEditorCommand,
   encodeShellEditorHandoff,
+  nextSuggestionWord,
   resolveShellEditorKey
 } from './shell-editor-model'
 import type { ShellEditorSession } from './shell-editor-session'
 import {
+  appendShellEditorText,
   displayShellEditorCwd,
   readShellEditorCaret,
   replaceShellEditorText,
@@ -149,6 +151,8 @@ export function ShellEditorBox({
     }
   }
 
+  const suggestion = history.suggest(text)
+
   const handOff = (key: string): void => {
     if (send(encodeShellEditorHandoff(text, key))) {
       session.handOff()
@@ -169,6 +173,7 @@ export function ShellEditorBox({
       metaKey: event.metaKey,
       altKey: event.altKey,
       empty: text.length === 0,
+      hasSuggestion: suggestion !== null,
       ...readShellEditorCaret(field)
     })
     if (!action) {
@@ -219,6 +224,12 @@ export function ShellEditorBox({
         return
       case 'handoffComplete':
         handOff('\t')
+        return
+      case 'acceptSuggestion':
+        appendShellEditorText(field, suggestion ?? '')
+        return
+      case 'acceptSuggestionWord':
+        appendShellEditorText(field, nextSuggestionWord(suggestion ?? ''))
     }
   }
 
@@ -284,22 +295,32 @@ export function ShellEditorBox({
           </span>
         ) : null}
       </div>
-      <textarea
-        ref={fieldRef}
-        className="shell-editor-field"
-        value={text}
-        rows={1}
-        spellCheck={false}
-        autoCapitalize="off"
-        autoComplete="off"
-        autoCorrect="off"
-        aria-label={translate('terminal.shellEditor.label', 'Command')}
-        placeholder={snapshot.queued ?? ''}
-        style={{ caretColor: theme.cursor ?? foreground }}
-        onChange={(event) => setText(event.target.value)}
-        onKeyDown={onKeyDown}
-        onFocus={reloadHistory}
-      />
+      <div className="shell-editor-input">
+        {suggestion ? (
+          <div className="shell-editor-suggestion" aria-hidden="true">
+            <span className="shell-editor-suggestion-typed">{text}</span>
+            <span data-shell-editor-suggestion="" style={{ color: muted }}>
+              {suggestion}
+            </span>
+          </div>
+        ) : null}
+        <textarea
+          ref={fieldRef}
+          className="shell-editor-field"
+          value={text}
+          rows={1}
+          spellCheck={false}
+          autoCapitalize="off"
+          autoComplete="off"
+          autoCorrect="off"
+          aria-label={translate('terminal.shellEditor.label', 'Command')}
+          placeholder={snapshot.queued ?? ''}
+          style={{ caretColor: theme.cursor ?? foreground }}
+          onChange={(event) => setText(event.target.value)}
+          onKeyDown={onKeyDown}
+          onFocus={reloadHistory}
+        />
+      </div>
     </div>
   )
 }

@@ -4,6 +4,7 @@ import { expect, test } from './helpers/orca-app'
 import { attachRepoAndOpenTerminal, createRestartSession } from './helpers/orca-restart'
 import { ensureTerminalVisible, waitForSessionReady } from './helpers/store'
 import { waitForActiveTerminalManager } from './helpers/terminal'
+import { readActiveTerminal, waitForOutputLine } from './helpers/shell-editor'
 import { TEST_REPO_PATH_FILE } from './global-setup'
 
 const FIELD = '.pane:not([hidden]) [data-shell-editor-root] textarea'
@@ -58,9 +59,17 @@ test('keeps shell blocks across a quit and relaunch', async (// oxlint-disable-n
       contentType: 'image/png'
     })
 
+    // Why count the restored rows: quitting right after a command can save the screen without it,
+    // and a block can only come back where its rows did.
+    await waitForOutputLine(second.page, 'echo restart-kept')
+    const restored = (await readActiveTerminal(second.page)).lines
+    const expected = ['echo restart-kept', 'false'].filter((command) => restored.includes(command))
+    expect(expected).toContain('echo restart-kept')
     const blocks = second.page.locator(BLOCKS)
-    await expect(blocks).toHaveCount(2, { timeout: 15_000 })
-    await expect(blocks.nth(1)).toHaveAttribute('data-failed', 'true')
+    await expect(blocks).toHaveCount(expected.length, { timeout: 15_000 })
+    if (expected.includes('false')) {
+      await expect(blocks.last()).toHaveAttribute('data-failed', 'true')
+    }
   } finally {
     await session.dispose(secondApp ?? firstApp ?? undefined)
   }

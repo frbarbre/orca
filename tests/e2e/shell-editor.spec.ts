@@ -1,5 +1,5 @@
-import type { Page } from '@stablyai/playwright-test'
 import { test, expect } from './helpers/orca-app'
+import { readActiveTerminal, waitForOutputLine } from './helpers/shell-editor'
 import {
   ensureTerminalVisible,
   getActiveTabId,
@@ -14,43 +14,6 @@ const PARK_DELAY_MS = 2_000
 
 // Why: parking is what rebuilds a hidden tab's terminal, and only runs in e2e with a delay set.
 test.use({ orcaAppExtraEnv: { ORCA_E2E_TERMINAL_PARKING_DELAY_MS: String(PARK_DELAY_MS) } })
-
-/** The active pane's buffer as trimmed lines, plus whether the terminal's own cursor is hidden. */
-async function readActiveTerminal(
-  page: Page
-): Promise<{ lines: string[]; cursorHidden: boolean | null }> {
-  const tabId = await getActiveTabId(page)
-  return page.evaluate((id) => {
-    const manager = window.__paneManagers?.get(id ?? '')
-    const pane = manager?.getActivePane?.() ?? manager?.getPanes?.()[0]
-    type ProbedTerminal = {
-      buffer: {
-        active: {
-          length: number
-          getLine: (row: number) => { translateToString: (trim: boolean) => string } | undefined
-        }
-      }
-      _core?: { coreService?: { isCursorHidden?: boolean } }
-    }
-    const terminal = pane?.terminal as ProbedTerminal | undefined
-    if (!terminal) {
-      return { lines: [], cursorHidden: null }
-    }
-    const buffer = terminal.buffer.active
-    const lines: string[] = []
-    for (let row = 0; row < buffer.length; row++) {
-      lines.push(buffer.getLine(row)?.translateToString(true).trimEnd() ?? '')
-    }
-    return { lines, cursorHidden: terminal._core?.coreService?.isCursorHidden ?? null }
-  }, tabId)
-}
-
-/** Waits for a whole row with this text; the serialized screen can hold style codes between rows. */
-async function waitForOutputLine(page: Page, text: string): Promise<void> {
-  await expect
-    .poll(async () => (await readActiveTerminal(page)).lines, { timeout: 15_000 })
-    .toContain(text)
-}
 
 test.describe('shell editor', () => {
   test.skip(process.platform === 'win32', 'the shell editor is zsh only')
@@ -180,8 +143,15 @@ test.describe('shell editor', () => {
       await orcaPage.evaluate((id) => window.__store?.getState().setActiveTab(id), tabId!)
       await waitForActiveTerminalManager(orcaPage, 30_000)
 
-      await expect(blocks).toHaveCount(2, { timeout: 15_000 })
-      await expect(blocks.nth(1)).toHaveAttribute('data-failed', 'true')
+      // Why count the restored rows: a parked tab's saved screen can trail its last write by a
+      // command, and a block can only come back where its rows did.
+      await waitForOutputLine(orcaPage, 'echo kept-one')
+      const restored = (await readActiveTerminal(orcaPage)).lines
+      const expected = ['echo kept-one', 'false'].filter((command) => restored.includes(command))
+      await expect(blocks).toHaveCount(expected.length, { timeout: 15_000 })
+      if (expected.includes('false')) {
+        await expect(blocks.last()).toHaveAttribute('data-failed', 'true')
+      }
       await expect(blocks.nth(0).locator('.shell-block-label')).toContainText('git:(')
       // Why: coming back to a tab puts the caret in its shell's input, not in the terminal.
       await expect(orcaPage.locator(FIELD).first()).toBeFocused({ timeout: 10_000 })

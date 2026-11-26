@@ -2266,7 +2266,7 @@ group-focus keys (`tabGroup.focus*`, ⌘⌥+arrow) move between them.
 - No default keys, so upstream's ⌘D/⌘⇧D pane splits and the e2e that rely on them stay as they are.
   Bind them in `~/.orca/keybindings.json` (and unbind `terminal.splitRight`/`splitDown`) to use
   ⌘D/⌘⇧D for groups.
-- Tests: `terminal-shortcut-policy.test.ts`, e2e in `tests/e2e/shell-editor.spec.ts`.
+- Tests: `terminal-shortcut-policy-open-group.test.ts`, e2e in `tests/e2e/shell-editor.spec.ts`.
 
 ## Verify
 

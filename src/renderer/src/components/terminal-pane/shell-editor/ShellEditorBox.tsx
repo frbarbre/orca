@@ -14,6 +14,7 @@ import { useShellCompletion } from './use-shell-completion'
 import {
   appendShellEditorText,
   displayShellEditorCwd,
+  isInsideShellEditor,
   readShellEditorCaret,
   replaceShellEditorText,
   SHELL_EDITOR_ROOT_ATTRIBUTE
@@ -100,13 +101,27 @@ export function ShellEditorBox({
         requestAnimationFrame(() => fieldRef.current?.focus())
       }
     }
+    // Why: as in Warp, a plain click in the output means "type here"; a drag that selects text does not.
+    const onClick = (event: MouseEvent): void => {
+      const target = event.target
+      if (
+        target instanceof Element &&
+        target.closest('.xterm-screen') &&
+        !isInsideShellEditor(target) &&
+        !terminal.hasSelection()
+      ) {
+        fieldRef.current?.focus()
+      }
+    }
     paneContainer.addEventListener('pointerdown', onPointerDown, true)
     paneContainer.addEventListener('focusin', onFocusIn)
+    paneContainer.addEventListener('click', onClick)
     return () => {
       paneContainer.removeEventListener('pointerdown', onPointerDown, true)
       paneContainer.removeEventListener('focusin', onFocusIn)
+      paneContainer.removeEventListener('click', onClick)
     }
-  }, [visible, paneContainer])
+  }, [visible, paneContainer, terminal])
 
   // Why: a click into the output focuses the terminal; typing there should still land in the editor.
   useEffect(() => {

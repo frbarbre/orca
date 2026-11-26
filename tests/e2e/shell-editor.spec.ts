@@ -158,7 +158,7 @@ test.describe('shell editor', () => {
     await field.fill('cd completion-')
     await field.press('End')
     await field.press('Tab')
-    await expect(options).toHaveCount(3)
+    await expect(options).toHaveText(['completion-alpha/', 'completion-beta/'])
     await field.pressSequentially('a')
     await expect(options).toHaveText(['completion-alpha/'])
     await field.press('Escape')

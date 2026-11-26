@@ -22,8 +22,6 @@ export type ShellEditorSession = {
   getSnapshot: () => ShellEditorSnapshot
   subscribe: (listener: () => void) => () => void
   markRequested: () => void
-  /** The spawn reattached to a shell that is past its first prompt. */
-  cancelRequest: () => void
   promptStart: () => void
   promptInfo: (info: ShellEditorPromptInfo) => void
   commandStart: () => void
@@ -87,14 +85,12 @@ export function createShellEditorSession(): ShellEditorSession {
       return () => listeners.delete(listener)
     },
     markRequested() {
+      // Why: zsh can report its first prompt before the spawn call that asked for it returns.
+      if (snapshot.phase === 'prompt' || snapshot.phase === 'running') {
+        return
+      }
       update({ phase: 'starting' })
       giveUpAfter(SHELL_EDITOR_STARTUP_TIMEOUT_MS)
-    },
-    cancelRequest() {
-      if (snapshot.phase === 'starting') {
-        clearTimer()
-        update({ phase: 'off' })
-      }
     },
     promptStart() {
       // Why only while starting: the editor's report follows this marker within the same prompt.

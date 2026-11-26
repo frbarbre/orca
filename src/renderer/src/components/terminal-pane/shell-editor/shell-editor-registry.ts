@@ -124,13 +124,12 @@ export function attachShellEditorSession(terminal: Terminal, paneKey: string): I
 }
 
 /** Called for a fresh shell spawned with the editor requested. */
-export function requestShellEditor(paneKey: string): void {
-  savedBlocks.forget(paneKey)
+export function requestShellEditor(paneKey: string, options: { keepBlocks?: boolean } = {}): void {
+  // Why keep them on a cold restore: its fresh shell comes with the old scrollback they sit in.
+  if (!options.keepBlocks) {
+    savedBlocks.forget(paneKey)
+  }
   getShellEditorSession(paneKey).markRequested()
-}
-
-export function cancelShellEditorRequest(paneKey: string): void {
-  sessionsByPaneKey.get(paneKey)?.cancelRequest()
 }
 
 export function observeShellEditorOsc133(terminal: Terminal, data: string): void {

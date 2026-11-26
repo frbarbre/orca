@@ -100,19 +100,14 @@ describe('shell editor session', () => {
     expect(listener).toHaveBeenCalledTimes(2)
   })
 
-  it('drops a request that reattached to a running shell, but keeps a prompt already seen', () => {
-    const reattached = createShellEditorSession()
-    reattached.markRequested()
-    reattached.cancelRequest()
-    expect(reattached.getSnapshot().phase).toBe('off')
-    vi.advanceTimersByTime(SHELL_EDITOR_STARTUP_TIMEOUT_MS)
-    expect(reattached.getSnapshot().phase).toBe('off')
-
-    const prompted = createShellEditorSession()
-    prompted.markRequested()
-    prompted.promptInfo(INFO)
-    prompted.cancelRequest()
-    expect(prompted.getSnapshot().phase).toBe('prompt')
+  it('does not send a pane zsh already reported back to starting', () => {
+    const session = createShellEditorSession()
+    session.promptInfo(INFO)
+    session.markRequested()
+    expect(session.getSnapshot().phase).toBe('prompt')
+    session.commandStart()
+    session.markRequested()
+    expect(session.getSnapshot().phase).toBe('running')
   })
 
   it('nudges once until zsh reports a prompt again', () => {

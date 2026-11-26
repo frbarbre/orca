@@ -2126,7 +2126,9 @@ A Warp-style text field docked under a zsh terminal's output while zsh is at a p
   `terminal-pane-pane-created.ts`) registers the OSC 777 handler. `terminal-command-lifecycle.ts`'s
   OSC 133 handler reports `A`/`C`. The session is `starting` (typing queues until the first prompt),
   `prompt`, `running` or `handoff`. It gives up and leaves the plain terminal when the shell prompts
-  without the report (not zsh) or never prompts. A reattach cancels the request.
+  without the report (not zsh) or never prompts. The pane is only marked `starting` after the spawn
+  returns, and only when it started a new zsh (no reattach, snapshot or replay). A parked tab's
+  rebuild spawns too, and must not drop back to `starting`. A cold restore keeps the saved blocks.
 - **Parking and hidden panes.** Sessions are kept per pane key, not per xterm, because a parked tab
   rebuilds its terminal. Markers printed while a pane is hidden never reach it, so a shown pane asks
   `pty.getForegroundProcess`. If zsh is idle but the session lost track (`off`/`running`), it sends

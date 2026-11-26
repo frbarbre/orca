@@ -2,7 +2,6 @@ import { describe, expect, it, vi } from 'vitest'
 import type { Terminal } from '@xterm/xterm'
 import {
   attachShellEditorSession,
-  cancelShellEditorRequest,
   getShellBlockTracker,
   getShellEditorSession,
   observeShellEditorOsc133,
@@ -57,6 +56,12 @@ function fakeTerminal(rows: string[] = []) {
   }
 }
 
+function commandsOf(terminal: Terminal): string[] | undefined {
+  return getShellBlockTracker(terminal)
+    ?.getBlocks()
+    .map((block) => block.command)
+}
+
 describe('shell editor registry', () => {
   it('follows the prompt report and command markers of its terminal', () => {
     const { terminal, osc } = fakeTerminal()
@@ -86,8 +91,6 @@ describe('shell editor registry', () => {
     attachShellEditorSession(fakeTerminal().terminal, 'tab:leaf-d')
     requestShellEditor('tab:leaf-d')
     expect(getShellEditorSession('tab:leaf-d').getSnapshot().phase).toBe('starting')
-    cancelShellEditorRequest('tab:leaf-d')
-    expect(getShellEditorSession('tab:leaf-d').getSnapshot().phase).toBe('off')
   })
 
   it('hands the box the same session whether it renders before or after the pane attaches', () => {
@@ -186,10 +189,7 @@ describe('shell editor registry', () => {
       rows.push('', '', 'pwd', '', '/r', '')
       rebuilt.setCursor(10)
       rebuilt.wrote()
-      expect(getShellBlockTracker(rebuilt.terminal)?.getBlocks().map((b) => b.command)).toEqual([
-        'ls',
-        'pwd'
-      ])
+      expect(commandsOf(rebuilt.terminal)).toEqual(['ls', 'pwd'])
 
       const partialRows: string[] = ['', '', 'pwd', '', '/r', '']
       const partial = fakeTerminal(partialRows)
@@ -198,12 +198,34 @@ describe('shell editor registry', () => {
       partial.wrote()
       expect(getShellBlockTracker(partial.terminal)?.getBlocks()).toEqual([])
       vi.advanceTimersByTime(SHELL_BLOCKS_RESTORE_SETTLE_MS)
-      expect(getShellBlockTracker(partial.terminal)?.getBlocks().map((b) => b.command)).toEqual([
-        'pwd'
-      ])
+      expect(commandsOf(partial.terminal)).toEqual(['pwd'])
     } finally {
       vi.useRealTimers()
     }
+  })
+
+  it('keeps saved blocks for a fresh shell that restored the old scrollback, and drops them otherwise', () => {
+    const first = fakeTerminal(['', '', 'ls', '', 'a', ''])
+    requestShellEditor('tab:leaf-m')
+    attachShellEditorSession(first.terminal, 'tab:leaf-m')
+    observeShellEditorOsc133(first.terminal, 'A')
+    first.osc(777, 'orca-shell-editor2;main;;;/repo')
+    first.setCursor(3)
+    observeShellEditorOsc133(first.terminal, 'C')
+    first.setCursor(5)
+    observeShellEditorOsc133(first.terminal, 'D;0')
+
+    requestShellEditor('tab:leaf-m', { keepBlocks: true })
+    const restored = fakeTerminal(['', '', 'ls', '', 'a', ''])
+    restored.setCursor(5)
+    attachShellEditorSession(restored.terminal, 'tab:leaf-m')
+    expect(getShellBlockTracker(restored.terminal)?.getBlocks()).toHaveLength(1)
+
+    requestShellEditor('tab:leaf-m')
+    const fresh = fakeTerminal(['', '', 'ls', '', 'a', ''])
+    fresh.setCursor(5)
+    attachShellEditorSession(fresh.terminal, 'tab:leaf-m')
+    expect(getShellBlockTracker(fresh.terminal)?.getBlocks()).toEqual([])
   })
 
   it('finds the blocks at once when the rebuilt terminal already holds the restored rows', () => {

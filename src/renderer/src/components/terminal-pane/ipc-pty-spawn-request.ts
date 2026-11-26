@@ -9,7 +9,7 @@ import { toRuntimeTerminalWorktreeSelector } from '../../runtime/runtime-worktre
 import { useAppStore } from '../../store'
 import { makePaneKey } from '../../../../shared/stable-pane-id'
 import { shellEditorSpawnEnv } from './shell-editor/shell-editor-spawn'
-import { cancelShellEditorRequest, requestShellEditor } from './shell-editor/shell-editor-registry'
+import { requestShellEditor } from './shell-editor/shell-editor-registry'
 
 type PtyConnectOptions = Parameters<PtyTransport['connect']>[0]
 const modelLaunchOperations = new WeakMap<IpcPtyTransportOptions, AgentSessionCreateOperation>()
@@ -111,9 +111,6 @@ export async function spawnIpcPty(
     env: connectOptions.env ?? env
   })
   const editorPaneKey = editorEnv && tabId && leafId ? makePaneKey(tabId, leafId) : null
-  if (editorPaneKey) {
-    requestShellEditor(editorPaneKey)
-  }
   const spawned = await window.api.pty.spawn({
     cols: connectOptions.cols ?? 80,
     rows: connectOptions.rows ?? 24,
@@ -163,8 +160,14 @@ export async function spawnIpcPty(
     ...(telemetry ? { telemetry } : {}),
     ...(agentLaunch && !admittedSessionId ? { agentLaunch } : {})
   })
-  if (editorPaneKey && spawned.isReattach) {
-    cancelShellEditorRequest(editorPaneKey)
+  // Why decide after: a parked tab's rebuild spawns too, and only the result says whether a new zsh started.
+  if (
+    editorPaneKey &&
+    !spawned.isReattach &&
+    spawned.snapshot === undefined &&
+    spawned.replay === undefined
+  ) {
+    requestShellEditor(editorPaneKey, { keepBlocks: spawned.coldRestore !== undefined })
   }
   return spawned
 }

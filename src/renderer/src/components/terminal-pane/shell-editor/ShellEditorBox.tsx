@@ -99,8 +99,9 @@ function useResyncWhenShown(
     let retry: ReturnType<typeof setTimeout> | undefined
     // Why retry: after a relaunch the pane shows before it reattaches, so it has no pty or process yet.
     const attempt = (tries: number): void => {
+      // Why only while unknown: once zsh reported, a late check would race its next command.
       const again = (): void => {
-        if (!cancelled && tries < RESYNC_MAX_TRIES) {
+        if (!cancelled && tries < RESYNC_MAX_TRIES && session.getSnapshot().phase === 'off') {
           retry = setTimeout(() => attempt(tries + 1), RESYNC_RETRY_MS)
         }
       }

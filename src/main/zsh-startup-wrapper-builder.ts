@@ -66,6 +66,8 @@ const ZSH_OSC133_FUNCTION_BLOCK = `__orca_osc133_precmd() {
 __orca_shell_editor_precmd() {
   # Two newlines leave a padding row and a header row above each command for its block.
   PROMPT=$'\\n\\n' RPROMPT=''
+  # The prompt's newline already ends a partial line, so zsh's reversed % marker is noise.
+  builtin setopt no_prompt_sp
   builtin typeset -ga zle_highlight
   zle_highlight=(default:bold)
   if [[ "$PWD|$PATH" != "\${__orca_node_key-}" ]]; then
@@ -195,6 +197,8 @@ export function buildZshStartupHook(spec: ZshStartupHookSpec): string {
     ZSH_FEATURE_CHANNEL_BLOCK,
     SHELL_STARTUP_IDENTITY_MARKER_BLOCK,
     spec.osc133CommandMarkers ? ZSH_OSC133_FUNCTION_BLOCK : null,
+    // Why here: the deferred init runs under emulate -L, which would undo it for the first prompt.
+    spec.osc133CommandMarkers ? '__orca_has_feature editor && builtin setopt no_prompt_sp' : null,
     ZSH_DEFERRED_LINE_INIT_BLOCK,
     buildDeferredInit(spec),
     ZSH_USER_ZSHENV_SOURCE_BLOCK

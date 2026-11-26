@@ -37,6 +37,8 @@ __orca_osc133_precmd() {
 __orca_shell_editor_precmd() {
   # Two newlines leave a padding row and a header row above each command for its block.
   PROMPT=$'\n\n' RPROMPT=''
+  # The prompt's newline already ends a partial line, so zsh's reversed % marker is noise.
+  builtin setopt no_prompt_sp
   builtin typeset -ga zle_highlight
   zle_highlight=(default:bold)
   if [[ "$PWD|$PATH" != "${__orca_node_key-}" ]]; then
@@ -62,6 +64,7 @@ __orca_osc133_preexec() {
   # Declare explicitly to avoid warn_create_global output above every command.
   builtin typeset -g __orca_in_command=1
 }
+__orca_has_feature editor && builtin setopt no_prompt_sp
 __orca_deferred_line_init() {
   builtin emulate -L zsh
   if [[ "${CONTEXT-}" != start ]]; then

@@ -2151,8 +2151,12 @@ A Warp-style text field docked under a zsh terminal's output while zsh is at a p
 
 Warp-style command blocks for shell-editor terminals.
 
-- **zsh side.** The editor's prompt is a lone newline, which leaves a blank row above each command
-  for its header. `zle_highlight=(default:bold)` draws the typed command bold. The prompt report is
+- **zsh side.** Warp's spacing comes from real rows. The editor's prompt is two newlines: a padding
+  row, where the separator runs, and a header row. `__orca_shell_editor_preexec` prints a gap row
+  between the command and its output. `no_prompt_sp` drops zsh's reversed `%` marker, since the
+  prompt's newline already ends a partial line. It is set at the top of `.zshenv` too, because the
+  deferred init's `emulate -L` would undo it for the first prompt.
+  `zle_highlight=(default:bold)` draws the typed command bold. The prompt report is
   `orca-shell-editor2;<branch>;<HISTFILE>;<node -v>;<PWD>`, with `node -v` cached per `$PWD|$PATH`.
   The parser still reads the old report from an older daemon.
 - **Tracking** (`shell-blocks-model.ts`). Per terminal, from markers made in
@@ -2160,10 +2164,12 @@ Warp-style command blocks for shell-editor terminals.
   only runs while the pane's editor session is on. The prompt report gives folder, branch and node.
   Diff stats (`shellEditor:gitDiffStat`, `git-diff-stat.ts`: changes against HEAD plus untracked files
   and their lines, fsmonitor off) are read per prompt (`promptCount`).
-- **Drawing** (`ShellBlocksOverlay.tsx`, inside xterm's root). A header on each block's blank row
-  ("node ~/folder git:(branch) files • +ins -del (duration)", live while running) with a separator.
-  It is pinned to the top when its block fills the top of the viewport. A failed block gets a red
-  tint and left bar. The ⋮ menu copies the command, the output, both, the folder or the branch
+- **Drawing** (`ShellBlocksOverlay.tsx`, inside xterm's root). A block runs from the middle of its
+  padding row to the middle of the next block's, with a separator at its top. The header goes on its
+  header row ("node ~/folder git:(branch) files • +ins -del (duration)", live while running) and is
+  pinned to the top when the block fills the top of the viewport. A failed block gets a red tint and
+  a 4px left bar. Editor panes (`data-shell-editor`) pad xterm's root 16px on the left, as in Warp;
+  the fit accounts for it. The ⋮ menu copies the command, the output, both, the folder or the branch
   (`shell-blocks-view.ts` reads them from the buffer). Blocks whose rows were wiped (`clear`) are
   dropped (`isBlockIntact`). Short output is pushed down so the newest block sits on the input
   (`bottomAnchorRows`, a transform on xterm's root that the overlay shares). The box also shows node

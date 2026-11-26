@@ -2181,6 +2181,11 @@ Warp-style command blocks for shell-editor terminals.
   terminal first. Each block records its command as echoed. The rebuilt terminal finds them again
   by content: two blank rows, then the command, newest first (`relocateShellBlocks`). This runs at
   attach, then on writes or paints until it matches, and the blocks keep their timing and result.
+- **Lost markers.** A terminal can also drop its markers while keeping the rows (seen after a
+  brief tab switch with a long-running command, once its output scrolled). The tracker keeps such
+  blocks out of the snapshot but remembers them (`lostBlockIds`); on the next write or paint the
+  registry finds them again by content from the saved copy, which it does not overwrite meanwhile,
+  or drops them (`forgetLost`). A running block found again still gets its end.
 - **Relaunch.** `shell-blocks-store.ts` keeps each pane's blocks in renderer `localStorage`
   (`orca.shellBlocks`, newest 40 panes, 150 blocks each), so a relaunched pane finds them again the
   same way. A fresh spawn forgets them. After a relaunch the pane shows before it reattaches, so the

@@ -50,8 +50,17 @@ export function TerminalPaneShellEditorPortals({
     <>
       {managedPanes.map((pane) => {
         const session = getShellEditorSession(makePaneKey(tabId, pane.leafId))
+        const focused = managedPanes.length > 1 && activePane?.id === pane.id
         return createPortal(
           <>
+            {focused ? (
+              <span
+                className="pane-focus-indicator"
+                data-pane-focus-indicator=""
+                aria-hidden="true"
+                style={{ background: pane.terminal.options.theme?.blue ?? '#3b82f6' }}
+              />
+            ) : null}
             <PaneShellBlocks
               session={session}
               terminal={pane.terminal}

@@ -1,7 +1,18 @@
+import type { TerminalShortcutAction } from '../terminal-shortcut-policy'
+import { isShellEditorPaneShortcut } from './shell-editor-model'
+
 export const SHELL_EDITOR_ROOT_ATTRIBUTE = 'data-shell-editor-root'
 
 export function isInsideShellEditor(target: EventTarget | null): boolean {
   return target instanceof Element && target.closest(`[${SHELL_EDITOR_ROOT_ATTRIBUTE}]`) !== null
+}
+
+/** The editor's field stands in for the terminal, so pane shortcuts still work from it. */
+export function isShellEditorPaneShortcutEvent(
+  target: EventTarget | null,
+  resolveAction: () => TerminalShortcutAction | null
+): boolean {
+  return isInsideShellEditor(target) && isShellEditorPaneShortcut(resolveAction())
 }
 
 export type ShellEditorCaret = {

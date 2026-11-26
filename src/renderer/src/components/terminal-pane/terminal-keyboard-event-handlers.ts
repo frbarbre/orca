@@ -21,6 +21,7 @@ import { getLayoutCharacterForCode } from '@/lib/keyboard-layout/layout-base-cha
 import { createTerminalKeyboardReleaseHandlers } from './terminal-keyboard-release-handlers'
 import { synchronizeTerminalKeyboardPane } from './terminal-keyboard-pane-resolution'
 import { isInsideNativeChatCover } from './native-chat-covered-pane'
+import { isShellEditorPaneShortcutEvent } from './shell-editor/shell-editor-dom'
 
 const MAX_OBSERVED_ENTER_KEYDOWNS_PER_CODE = 8
 
@@ -174,7 +175,8 @@ export function createTerminalKeyboardEventHandlers(context: EventContext) {
       return
     }
 
-    if (isEditableTarget(e.target)) {
+    const fromShellEditor = isShellEditorPaneShortcutEvent(e.target, () => resolveShortcutEvent(e))
+    if (isEditableTarget(e.target) && !fromShellEditor) {
       if (
         searchOpenRef.current &&
         e.target instanceof HTMLElement &&

@@ -1,4 +1,5 @@
 import { wrapTerminalBracketedPasteText } from '../../../../../shared/terminal-bracketed-paste-text'
+import type { TerminalShortcutAction } from '../terminal-shortcut-policy'
 
 export type ShellEditorPromptInfo = {
   branch: string | null
@@ -40,6 +41,21 @@ export function encodeShellEditorCommand(text: string): string {
 
 export function encodeShellEditorHandoff(text: string, key: string): string {
   return `${CLEAR_LINE}${text}${key}`
+}
+
+const PANE_SHORTCUTS: ReadonlySet<TerminalShortcutAction['type']> = new Set([
+  'splitActivePane',
+  'closeActivePane',
+  'focusPane',
+  'equalizePaneSizes',
+  'toggleExpandActivePane',
+  'clearActivePane',
+  'toggleSearch'
+])
+
+/** Terminal shortcuts that still act from the editor; the rest stay text editing or pty input. */
+export function isShellEditorPaneShortcut(action: TerminalShortcutAction | null): boolean {
+  return action !== null && PANE_SHORTCUTS.has(action.type)
 }
 
 export type ShellEditorKeyAction =

@@ -2232,6 +2232,17 @@ Warp-style Tab completion in the shell editor box, with zsh's own candidates.
 - Tests: `zsh-completion.test.ts` (live zsh), `shell-editor-completion.test.ts`, e2e in
   `tests/e2e/shell-editor.spec.ts`.
 
+### 91. Pane shortcuts from the shell editor and the focused-pane marker
+
+- Terminal shortcuts skip editable targets, which included the shell editor's field, so ⌘D/⌘⇧D did
+  nothing from it. Pane actions (split, close, move between panes, equalize, expand, clear,
+  search) now pass through from the field (`isShellEditorPaneShortcut`, checked in
+  `terminal-keyboard-event-handlers.ts`). Text editing (⌘A, ⌘C, ⌘Z) and keys that write to the pty
+  stay with the field. The new pane's field takes focus like any shown pane.
+- With more than one pane in a tab, the focused one gets Warp's blue triangle in its top-left
+  corner (`.pane-focus-indicator`, rendered from `TerminalPaneShellEditorPortals.tsx`).
+- Tests: `shell-editor-model.test.ts`, e2e in `tests/e2e/shell-editor.spec.ts`.
+
 ## Verify
 
 Verify runs on GitHub, not locally: `fork-verify.yml` runs it on every pull request against `main`,

@@ -3,6 +3,7 @@ import {
   createShellEditorHistory,
   encodeShellEditorCommand,
   encodeShellEditorHandoff,
+  isShellEditorPaneShortcut,
   nextSuggestionWord,
   parseShellEditorPromptInfo,
   resolveShellEditorKey,
@@ -105,6 +106,26 @@ describe('resolveShellEditorKey', () => {
     }
     expect(resolveShellEditorKey({ ...base, key: 'a', ctrlKey: true })).toBeNull()
     expect(resolveShellEditorKey({ ...base, key: 'Tab', shiftKey: true })).toBeNull()
+  })
+})
+
+describe('isShellEditorPaneShortcut', () => {
+  it('lets pane shortcuts through from the editor, but keeps text editing and pty input in it', () => {
+    for (const type of [
+      'splitActivePane',
+      'closeActivePane',
+      'focusPane',
+      'equalizePaneSizes',
+      'toggleExpandActivePane',
+      'clearActivePane',
+      'toggleSearch'
+    ] as const) {
+      expect(isShellEditorPaneShortcut({ type } as never)).toBe(true)
+    }
+    for (const type of ['copySelection', 'selectAll', 'sendInput', 'scrollViewport'] as const) {
+      expect(isShellEditorPaneShortcut({ type } as never)).toBe(false)
+    }
+    expect(isShellEditorPaneShortcut(null)).toBe(false)
   })
 })
 

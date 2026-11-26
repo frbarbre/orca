@@ -78,15 +78,31 @@ function carryBlocksIntoTerminal(
       settle = setTimeout(restoreFound, SHELL_BLOCKS_RESTORE_SETTLE_MS)
     }
   }
+  // Why: the terminal can drop its markers while the rows stay, so find those blocks again by content.
+  const recoverLost = (): void => {
+    const lost = new Set(blocks.lostBlockIds())
+    if (awaiting || lost.size === 0) {
+      return
+    }
+    const saved = (savedBlocks.load(paneKey) ?? []).filter((block) => lost.has(block.id))
+    const found = saved.length > 0 ? relocateShellBlocks(terminal.buffer.active, saved) : []
+    if (found.length > 0) {
+      blocks.restore(found, (line) => markerAt(terminal, line))
+    } else {
+      blocks.refresh()
+    }
+  }
+  const onTerminalUpdate = (): void => {
+    tryRestore()
+    recoverLost()
+  }
   const unsubscribe = blocks.subscribe(() => {
     if (!awaiting) {
       savedBlocks.save(paneKey, blocks.getBlocks())
     }
   })
   tryRestore()
-  if (awaiting) {
-    subscriptions.push(terminal.onWriteParsed(tryRestore), terminal.onRender(tryRestore))
-  }
+  subscriptions.push(terminal.onWriteParsed(onTerminalUpdate), terminal.onRender(onTerminalUpdate))
   return {
     dispose() {
       unsubscribe()

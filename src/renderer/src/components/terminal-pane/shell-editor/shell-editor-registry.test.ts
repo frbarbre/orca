@@ -12,6 +12,7 @@ import {
 function fakeTerminal(rows: string[] = []) {
   const handlers = new Map<number, (data: string) => boolean>()
   const writeListeners = new Set<() => void>()
+  const markers: { line: number; isDisposed: boolean }[] = []
   let cursorLine = 0
   const terminal = {
     parser: {
@@ -20,7 +21,11 @@ function fakeTerminal(rows: string[] = []) {
         return { dispose: () => handlers.delete(id) }
       }
     },
-    registerMarker: (offset = 0) => ({ line: cursorLine + offset, isDisposed: false }),
+    registerMarker: (offset = 0) => {
+      const marker = { line: cursorLine + offset, isDisposed: false }
+      markers.push(marker)
+      return marker
+    },
     onWriteParsed: (listener: () => void) => {
       writeListeners.add(listener)
       return { dispose: () => writeListeners.delete(listener) }
@@ -51,6 +56,11 @@ function fakeTerminal(rows: string[] = []) {
     wrote: () => {
       for (const listener of writeListeners) {
         listener()
+      }
+    },
+    disposeMarkers: () => {
+      for (const marker of markers) {
+        marker.isDisposed = true
       }
     }
   }
@@ -159,6 +169,36 @@ describe('shell editor registry', () => {
 
     expect(getShellBlockTracker(rebuilt.terminal)?.getBlocks()).toEqual([
       expect.objectContaining({ command: 'false', headerLine: 1, exitCode: 1, cwd: '/repo' })
+    ])
+  })
+
+  it('finds a running block again when its terminal loses the markers, and still closes it', () => {
+    const { terminal, osc, setCursor, wrote, disposeMarkers } = fakeTerminal([
+      '',
+      '',
+      'mise run fu',
+      '',
+      'building'
+    ])
+    requestShellEditor('tab:leaf-lost')
+    attachShellEditorSession(terminal, 'tab:leaf-lost')
+    setCursor(0)
+    observeShellEditorOsc133(terminal, 'A')
+    osc(777, 'orca-shell-editor2;main;;;/repo')
+    setCursor(3)
+    observeShellEditorOsc133(terminal, 'C')
+    expect(commandsOf(terminal)).toEqual(['mise run fu'])
+
+    disposeMarkers()
+    wrote()
+    expect(getShellBlockTracker(terminal)?.getBlocks()).toEqual([
+      expect.objectContaining({ command: 'mise run fu', headerLine: 0, endLine: null, cwd: '/repo' })
+    ])
+
+    setCursor(5)
+    observeShellEditorOsc133(terminal, 'D;0')
+    expect(getShellBlockTracker(terminal)?.getBlocks()).toEqual([
+      expect.objectContaining({ command: 'mise run fu', endLine: 5, exitCode: 0 })
     ])
   })
 

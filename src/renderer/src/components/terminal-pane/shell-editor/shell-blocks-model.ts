@@ -132,9 +132,14 @@ export function createShellBlockTracker(options: { maxBlocks?: number } = {}) {
           }
         ]
       })
-      tracked = [...restored, ...tracked]
+      tracked = [...restored, ...tracked.filter((block) => !block.header.isDisposed)].sort(
+        (a, b) => a.header.line - b.header.line
+      )
       publish()
     },
+    /** Ids of blocks whose rows the terminal no longer marks, e.g. after its buffer was replaced. */
+    lostBlockIds: (): number[] =>
+      tracked.filter((block) => block.header.isDisposed).map((block) => block.id),
     commandFinished(end: BlockMarker, exitCode: number | null, now: number): void {
       const open = tracked.at(-1)
       if (!open || open.end) {

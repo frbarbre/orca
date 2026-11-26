@@ -2179,8 +2179,18 @@ Warp-style command blocks for shell-editor terminals.
   terminal first. Each block records its command as echoed. The rebuilt terminal finds them again
   by content: two blank rows, then the command, newest first (`relocateShellBlocks`). This runs at
   attach, then on writes or paints until it matches, and the blocks keep their timing and result.
+- **Relaunch.** `shell-blocks-store.ts` keeps each pane's blocks in renderer `localStorage`
+  (`orca.shellBlocks`, newest 40 panes, 150 blocks each), so a relaunched pane finds them again the
+  same way. A fresh spawn forgets them. After a relaunch the pane shows before it reattaches, so the
+  shown-pane recheck retries every 250 ms for up to 10 s until the pty and its foreground process are
+  known.
+- **Paint and focus.** The header is placed from the screen's and xterm root's client rects, since
+  layout offsets miss the root's 16px inset. That inset uncovers xterm's black `.xterm-viewport`,
+  which takes the theme background. When the terminal's input takes focus while the box is up (a
+  tab or pane switch), focus moves to the box, unless a pointer press in the output came first.
 - Not yet: Warp's download/filter buttons.
-- Tests: `shell-blocks-*.test.ts`, `git-diff-stat.test.ts`, e2e in `tests/e2e/shell-editor.spec.ts`.
+- Tests: `shell-blocks-*.test.ts`, `git-diff-stat.test.ts`, e2e in `tests/e2e/shell-editor.spec.ts`
+  and `tests/e2e/shell-editor-restart.spec.ts`.
 
 ## Verify
 

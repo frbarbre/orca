@@ -10,6 +10,9 @@ const sessionsByPaneKey = new Map<string, ShellEditorSession>()
 const paneKeysByTerminal = new WeakMap<Terminal, string>()
 // Why per terminal: block rows are xterm markers, which die with the terminal they were made in.
 const blockTrackersByTerminal = new WeakMap<Terminal, ShellBlockTracker>()
+/** How long a partly found restore waits for more rows before re-anchoring what it found. */
+export const SHELL_BLOCKS_RESTORE_SETTLE_MS = 500
+
 function rendererStorage(): Storage | null {
   try {
     return globalThis.localStorage ?? null
@@ -50,17 +53,30 @@ function carryBlocksIntoTerminal(
   paneKey: string
 ): IDisposable {
   let awaiting = savedBlocks.load(paneKey)
+  let settle: ReturnType<typeof setTimeout> | undefined
   const subscriptions: IDisposable[] = []
+  const restoreFound = (): boolean => {
+    const found = awaiting ? relocateShellBlocks(terminal.buffer.active, awaiting) : []
+    if (found.length === 0) {
+      return false
+    }
+    awaiting = null
+    clearTimeout(settle)
+    blocks.restore(found, (line) => markerAt(terminal, line))
+    return true
+  }
+  // Why wait for all of them: the restored rows can arrive over several writes.
   const tryRestore = (): void => {
     if (!awaiting) {
       return
     }
     const found = relocateShellBlocks(terminal.buffer.active, awaiting)
-    if (found.length === 0) {
-      return
+    if (found.length === awaiting.length) {
+      restoreFound()
+    } else if (found.length > 0) {
+      clearTimeout(settle)
+      settle = setTimeout(restoreFound, SHELL_BLOCKS_RESTORE_SETTLE_MS)
     }
-    awaiting = null
-    blocks.restore(found, (line) => markerAt(terminal, line))
   }
   const unsubscribe = blocks.subscribe(() => {
     if (!awaiting) {
@@ -74,6 +90,7 @@ function carryBlocksIntoTerminal(
   return {
     dispose() {
       unsubscribe()
+      clearTimeout(settle)
       for (const subscription of subscriptions) {
         subscription.dispose()
       }

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import type { Terminal } from '@xterm/xterm'
 import {
   attachShellEditorSession,
@@ -6,7 +6,8 @@ import {
   getShellBlockTracker,
   getShellEditorSession,
   observeShellEditorOsc133,
-  requestShellEditor
+  requestShellEditor,
+  SHELL_BLOCKS_RESTORE_SETTLE_MS
 } from './shell-editor-registry'
 
 function fakeTerminal(rows: string[] = []) {
@@ -156,6 +157,53 @@ describe('shell editor registry', () => {
     expect(getShellBlockTracker(rebuilt.terminal)?.getBlocks()).toEqual([
       expect.objectContaining({ command: 'false', headerLine: 1, exitCode: 1, cwd: '/repo' })
     ])
+  })
+
+  it('waits for the rest of a restore that arrives in pieces before re-anchoring', () => {
+    vi.useFakeTimers()
+    try {
+      const first = fakeTerminal(['', '', 'ls', '', 'a', '', '', 'pwd', '', '/r', ''])
+      requestShellEditor('tab:leaf-l')
+      attachShellEditorSession(first.terminal, 'tab:leaf-l')
+      for (const [prompt, start, end] of [
+        [0, 3, 5],
+        [5, 8, 10]
+      ]) {
+        first.setCursor(prompt)
+        observeShellEditorOsc133(first.terminal, 'A')
+        first.osc(777, 'orca-shell-editor2;main;;;/repo')
+        first.setCursor(start)
+        observeShellEditorOsc133(first.terminal, 'C')
+        first.setCursor(end)
+        observeShellEditorOsc133(first.terminal, 'D;0')
+      }
+
+      const rows: string[] = ['', '', 'ls', '', 'a']
+      const rebuilt = fakeTerminal(rows)
+      rebuilt.setCursor(4)
+      attachShellEditorSession(rebuilt.terminal, 'tab:leaf-l')
+      rebuilt.wrote()
+      rows.push('', '', 'pwd', '', '/r', '')
+      rebuilt.setCursor(10)
+      rebuilt.wrote()
+      expect(getShellBlockTracker(rebuilt.terminal)?.getBlocks().map((b) => b.command)).toEqual([
+        'ls',
+        'pwd'
+      ])
+
+      const partialRows: string[] = ['', '', 'pwd', '', '/r', '']
+      const partial = fakeTerminal(partialRows)
+      partial.setCursor(5)
+      attachShellEditorSession(partial.terminal, 'tab:leaf-l')
+      partial.wrote()
+      expect(getShellBlockTracker(partial.terminal)?.getBlocks()).toEqual([])
+      vi.advanceTimersByTime(SHELL_BLOCKS_RESTORE_SETTLE_MS)
+      expect(getShellBlockTracker(partial.terminal)?.getBlocks().map((b) => b.command)).toEqual([
+        'pwd'
+      ])
+    } finally {
+      vi.useRealTimers()
+    }
   })
 
   it('finds the blocks at once when the rebuilt terminal already holds the restored rows', () => {

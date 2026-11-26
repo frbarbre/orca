@@ -24,18 +24,21 @@ import {
 type Geometry = { top: number; left: number; cellHeight: number }
 
 /**
- * Where xterm's rows sit inside its root element. Layout offsets, not client rects, so the
- * bottom-anchor transform on that root, which the overlay shares, never skews them.
+ * Where xterm's rows sit inside its root element, which the overlay fills. Both rects carry the
+ * bottom-anchor transform, so it cancels; layout offsets would miss the root's padding.
  */
 function readGeometry(terminal: Terminal): Geometry | null {
-  const screen = terminal.element?.querySelector<HTMLElement>('.xterm-screen')
-  if (!screen || terminal.rows === 0) {
+  const root = terminal.element
+  const screen = root?.querySelector<HTMLElement>('.xterm-screen')
+  if (!root || !screen || terminal.rows === 0) {
     return null
   }
+  const rootRect = root.getBoundingClientRect()
+  const screenRect = screen.getBoundingClientRect()
   return {
-    top: screen.offsetTop,
-    left: screen.offsetLeft,
-    cellHeight: screen.offsetHeight / terminal.rows
+    top: screenRect.top - rootRect.top,
+    left: screenRect.left - rootRect.left,
+    cellHeight: screenRect.height / terminal.rows
   }
 }
 
@@ -159,12 +162,20 @@ export function ShellBlocksOverlay({
         })
       : 0
     element.style.transform = rows > 0 ? `translateY(${rows * geometry.cellHeight}px)` : ''
+    // Why: xterm's viewport is black by default; the canvas hid it until the inset uncovered it.
+    const viewport = element.querySelector<HTMLElement>('.xterm-viewport')
+    if (viewport) {
+      viewport.style.backgroundColor = terminal.options.theme?.background ?? ''
+    }
   })
   useEffect(() => {
     const element = terminal.element
     return () => {
       if (element) {
         element.style.transform = ''
+        element
+          .querySelector<HTMLElement>('.xterm-viewport')
+          ?.style.removeProperty('background-color')
       }
     }
   }, [terminal])

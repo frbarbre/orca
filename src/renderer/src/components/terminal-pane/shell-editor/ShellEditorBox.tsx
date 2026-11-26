@@ -25,6 +25,8 @@ import {
 
 const MAX_ROWS = 8
 const HISTORY_RELOAD_MS = 5000
+/** Focus this soon after a click in the output belongs to that click, e.g. to select text. */
+const CLICK_FOCUS_WINDOW_MS = 400
 
 type ShellEditorBoxProps = {
   session: ShellEditorSession
@@ -212,6 +214,34 @@ export function ShellEditorBox({
       fieldRef.current?.focus()
     }
   }, [visible, isFocusTarget, snapshot.phase, paneContainer])
+
+  // Why: tab and pane switches focus the terminal after this box took focus; hand it back.
+  useEffect(() => {
+    if (!visible) {
+      return
+    }
+    let pointerAt = 0
+    const onPointerDown = (): void => {
+      pointerAt = performance.now()
+    }
+    const onFocusIn = (event: FocusEvent): void => {
+      const target = event.target
+      const fromClick = performance.now() - pointerAt < CLICK_FOCUS_WINDOW_MS
+      if (
+        !fromClick &&
+        target instanceof HTMLElement &&
+        target.classList.contains('xterm-helper-textarea')
+      ) {
+        requestAnimationFrame(() => fieldRef.current?.focus())
+      }
+    }
+    paneContainer.addEventListener('pointerdown', onPointerDown, true)
+    paneContainer.addEventListener('focusin', onFocusIn)
+    return () => {
+      paneContainer.removeEventListener('pointerdown', onPointerDown, true)
+      paneContainer.removeEventListener('focusin', onFocusIn)
+    }
+  }, [visible, paneContainer])
 
   // Why: a click into the output focuses the terminal; typing there should still land in the editor.
   useEffect(() => {

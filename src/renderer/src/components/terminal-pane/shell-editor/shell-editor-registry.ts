@@ -1,11 +1,8 @@
 import type { IDisposable, Terminal } from '@xterm/xterm'
 import { parseShellEditorPromptInfo } from './shell-editor-model'
 import { createShellEditorSession, type ShellEditorSession } from './shell-editor-session'
-import {
-  createShellBlockTracker,
-  type ShellBlock,
-  type ShellBlockTracker
-} from './shell-blocks-model'
+import { createShellBlockTracker, type ShellBlockTracker } from './shell-blocks-model'
+import { createShellBlocksStore } from './shell-blocks-store'
 import { blockCommandText, relocateShellBlocks } from './shell-blocks-view'
 
 // Why per pane: a parked tab rebuilds its terminal, and the shell's state must survive that.
@@ -13,8 +10,17 @@ const sessionsByPaneKey = new Map<string, ShellEditorSession>()
 const paneKeysByTerminal = new WeakMap<Terminal, string>()
 // Why per terminal: block rows are xterm markers, which die with the terminal they were made in.
 const blockTrackersByTerminal = new WeakMap<Terminal, ShellBlockTracker>()
-// Why kept on every change: parking can rebuild a pane's terminal without disposing the old one first.
-const latestBlocksByPaneKey = new Map<string, ShellBlock[]>()
+function rendererStorage(): Storage | null {
+  try {
+    return globalThis.localStorage ?? null
+  } catch {
+    return null
+  }
+}
+
+// Why kept on every change: parking can rebuild a pane's terminal without disposing the old one
+// first, and a relaunch restores the pane with none of this module's memory.
+const savedBlocks = createShellBlocksStore(rendererStorage())
 
 export function getShellBlockTracker(terminal: Terminal): ShellBlockTracker | undefined {
   return blockTrackersByTerminal.get(terminal)
@@ -43,7 +49,7 @@ function carryBlocksIntoTerminal(
   blocks: ShellBlockTracker,
   paneKey: string
 ): IDisposable {
-  let awaiting = latestBlocksByPaneKey.get(paneKey) ?? null
+  let awaiting = savedBlocks.load(paneKey)
   const subscriptions: IDisposable[] = []
   const tryRestore = (): void => {
     if (!awaiting) {
@@ -58,7 +64,7 @@ function carryBlocksIntoTerminal(
   }
   const unsubscribe = blocks.subscribe(() => {
     if (!awaiting) {
-      latestBlocksByPaneKey.set(paneKey, blocks.getBlocks())
+      savedBlocks.save(paneKey, blocks.getBlocks())
     }
   })
   tryRestore()
@@ -102,7 +108,7 @@ export function attachShellEditorSession(terminal: Terminal, paneKey: string): I
 
 /** Called for a fresh shell spawned with the editor requested. */
 export function requestShellEditor(paneKey: string): void {
-  latestBlocksByPaneKey.delete(paneKey)
+  savedBlocks.forget(paneKey)
   getShellEditorSession(paneKey).markRequested()
 }
 

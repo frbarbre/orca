@@ -476,8 +476,16 @@ test.describe('shell editor', () => {
         return tab.id
       }, worktreeId)
       await waitForOutputLine(orcaPage, 'running-3')
-      const blocks = orcaPage.locator('.pane:not([hidden]) [data-shell-block]')
-      await expect(blocks).toHaveCount(1, { timeout: 15_000 })
+      // Why the run tab's own pane: other tabs' panes stay in the DOM without [hidden].
+      const runBlocks = (): Promise<string[]> =>
+        orcaPage.evaluate((id) => {
+          const manager = window.__paneManagers?.get(id)
+          const pane = manager?.getActivePane?.() ?? manager?.getPanes?.()[0]
+          return [...(pane?.container.querySelectorAll('.shell-block-label') ?? [])].map(
+            (label) => label.textContent ?? ''
+          )
+        }, runTabId)
+      await expect.poll(runBlocks).toHaveLength(1)
 
       if (away.parked) {
         await parkHiddenTabBehindDecoy(orcaPage, worktreeId, runTabId, {
@@ -496,8 +504,7 @@ test.describe('shell editor', () => {
       // Why this far: the block went missing once its output scrolled the header off the screen.
       await waitForOutputLine(orcaPage, 'running-100')
 
-      await expect(blocks).toHaveCount(1, { timeout: 15_000 })
-      await expect(blocks.locator('.shell-block-label')).toContainText(/\(\d+s\)/)
+      await expect.poll(runBlocks).toEqual([expect.stringMatching(/\(\d+s\)/)])
     })
   }
 

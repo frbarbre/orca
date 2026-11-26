@@ -491,6 +491,8 @@ test.describe('shell editor', () => {
       }
       await orcaPage.evaluate((id) => window.__store?.getState().setActiveTab(id), runTabId)
       await waitForActiveTerminalManager(orcaPage, 30_000)
+      // Why this far: the block went missing once its output scrolled the header off the screen.
+      await waitForOutputLine(orcaPage, 'running-100')
 
       await expect(blocks).toHaveCount(1, { timeout: 15_000 })
       await expect(blocks.locator('.shell-block-label')).toContainText(/\(\d+s\)/)

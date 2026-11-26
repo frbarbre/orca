@@ -50,7 +50,7 @@ export type ShellEditorKeyAction =
   | 'eof'
   | 'clearScreen'
   | 'handoffSearch'
-  | 'handoffComplete'
+  | 'complete'
   | 'acceptSuggestion'
   | 'acceptSuggestionWord'
 
@@ -81,7 +81,7 @@ export function resolveShellEditorKey(input: {
       case 'Enter':
         return 'submit'
       case 'Tab':
-        return 'handoffComplete'
+        return 'complete'
       case 'ArrowUp':
         return input.caretOnFirstLine ? 'historyPrevious' : null
       case 'ArrowDown':

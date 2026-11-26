@@ -96,7 +96,7 @@ describe('resolveShellEditorKey', () => {
     expect(resolveShellEditorKey({ ...base, key: 'd', ctrlKey: true })).toBeNull()
     expect(resolveShellEditorKey({ ...base, key: 'l', ctrlKey: true })).toBe('clearScreen')
     expect(resolveShellEditorKey({ ...base, key: 'r', ctrlKey: true })).toBe('handoffSearch')
-    expect(resolveShellEditorKey({ ...base, key: 'Tab' })).toBe('handoffComplete')
+    expect(resolveShellEditorKey({ ...base, key: 'Tab' })).toBe('complete')
   })
 
   it('leaves normal editing keys to the text field', () => {

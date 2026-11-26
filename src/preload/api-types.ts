@@ -172,6 +172,12 @@ export type PreloadApi = {
     gitDiffStat: (args: {
       cwd: string
     }) => Promise<{ files: number; insertions: number; deletions: number } | null>
+    /** zsh's own Tab candidates for the end of the line, with their descriptions. */
+    complete: (args: {
+      cwd: string
+      line: string
+    }) => Promise<{ value: string; description: string | null }[]>
+    warmCompletion: () => Promise<void>
   }
   languageServer: LanguageServerApi
   lint: {

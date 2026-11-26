@@ -126,6 +126,46 @@ test.describe('shell editor', () => {
       .toEqual({ gapAboveInput: true, gapBeforeSidebar: 0 })
   })
 
+  test('completes with Tab from a menu over the input, as Warp does', async ({ orcaPage }) => {
+    const field = orcaPage.locator(FIELD)
+    await expect(field).toBeVisible({ timeout: 30_000 })
+    await field.fill('mkdir -p completion-alpha completion-beta && touch completion-solo.txt')
+    await field.press('Enter')
+    await expect(field).toBeVisible({ timeout: 15_000 })
+
+    await field.pressSequentially('cat completion-so')
+    await field.press('Tab')
+    // Why the long wait: the first Tab starts the hidden zsh that lists candidates.
+    await expect(field).toHaveValue('cat completion-solo.txt ', { timeout: 20_000 })
+
+    await field.fill('')
+    await field.pressSequentially('ls completion-')
+    await field.press('Tab')
+    const options = orcaPage.locator('[data-shell-editor-completion] [role="option"]')
+    await expect(options).toHaveText([
+      'completion-alpha/',
+      'completion-beta/',
+      'completion-solo.txt'
+    ])
+    await expect(field).toBeFocused()
+
+    await field.press('ArrowDown')
+    await expect(options.nth(1)).toHaveAttribute('aria-selected', 'true')
+    await field.press('Enter')
+    await expect(field).toHaveValue('ls completion-beta/')
+    await expect(options).toHaveCount(0)
+
+    await field.fill('cd completion-')
+    await field.press('End')
+    await field.press('Tab')
+    await expect(options).toHaveCount(3)
+    await field.pressSequentially('a')
+    await expect(options).toHaveText(['completion-alpha/'])
+    await field.press('Escape')
+    await expect(options).toHaveCount(0)
+    await expect(field).toHaveValue('cd completion-a')
+  })
+
   test('keeps commands and their output together, with no terminal cursor', async ({
     orcaPage
   }) => {

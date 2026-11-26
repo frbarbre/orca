@@ -9,6 +9,8 @@ import {
   resolveShellEditorKey
 } from './shell-editor-model'
 import type { ShellEditorSession } from './shell-editor-session'
+import { ShellEditorCompletionMenu } from './ShellEditorCompletionMenu'
+import { useShellCompletion } from './use-shell-completion'
 import {
   appendShellEditorText,
   displayShellEditorCwd,
@@ -54,6 +56,7 @@ export function ShellEditorBox({
   const fieldRef = useRef<HTMLTextAreaElement>(null)
   const [text, setText] = useState('')
   const { history, reload: reloadHistory } = useShellHistory(snapshot.histfile)
+  const completion = useShellCompletion(fieldRef, snapshot.cwd)
   const visible = snapshot.phase === 'starting' || snapshot.phase === 'prompt'
   useReservePaneBottomSpace(rootRef, paneContainer, visible)
 
@@ -166,6 +169,9 @@ export function ShellEditorBox({
       return
     }
     const field = event.currentTarget
+    if (completion.handleKey(event)) {
+      return
+    }
     const action = resolveShellEditorKey({
       key: event.key,
       shiftKey: event.shiftKey,
@@ -222,8 +228,8 @@ export function ShellEditorBox({
       case 'handoffSearch':
         handOff('\u0012')
         return
-      case 'handoffComplete':
-        handOff('\t')
+      case 'complete':
+        completion.request(field)
         return
       case 'acceptSuggestion':
         appendShellEditorText(field, suggestion ?? '')
@@ -295,8 +301,16 @@ export function ShellEditorBox({
           </span>
         ) : null}
       </div>
+      {completion.menu ? (
+        <ShellEditorCompletionMenu
+          menu={completion.menu}
+          typed={text.slice(completion.menu.wordStart).split(/\s/)[0]}
+          theme={theme}
+          onAccept={completion.accept}
+        />
+      ) : null}
       <div className="shell-editor-input">
-        {suggestion ? (
+        {suggestion && !completion.menu ? (
           <div className="shell-editor-suggestion" aria-hidden="true">
             <span className="shell-editor-suggestion-typed">{text}</span>
             <span data-shell-editor-suggestion="" style={{ color: muted }}>
@@ -316,9 +330,16 @@ export function ShellEditorBox({
           aria-label={translate('terminal.shellEditor.label', 'Command')}
           placeholder={snapshot.queued ?? ''}
           style={{ caretColor: theme.cursor ?? foreground }}
-          onChange={(event) => setText(event.target.value)}
+          onChange={(event) => {
+            setText(event.target.value)
+            completion.narrow(event.target)
+          }}
           onKeyDown={onKeyDown}
-          onFocus={reloadHistory}
+          onFocus={() => {
+            reloadHistory()
+            completion.warm()
+          }}
+          onBlur={completion.close}
         />
       </div>
     </div>

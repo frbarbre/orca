@@ -2211,6 +2211,27 @@ Fish/Warp-style history suggestions in the shell editor box.
 - Tests: `shell-editor-model.test.ts`, `shell-editor-dom.test.ts`, e2e in
   `tests/e2e/shell-editor.spec.ts`.
 
+### 90. Shell editor Tab completion
+
+Warp-style Tab completion in the shell editor box, with zsh's own candidates.
+
+- **Candidates** (`src/main/shell-editor/zsh-completion.ts`). One hidden zsh per app, started on
+  the box's first focus (`shellEditor:warmCompletion`). A `zsh -f` driver
+  (`zsh-completion-scripts.ts`) runs the user's interactive zsh in a `zpty`, so their functions,
+  aliases and completion setup load once. Tab there is rebound to a widget whose `compadd` prints
+  each candidate (`value␟description`) between markers instead of inserting it. A `zle-line-init`
+  marker shows the line editor is up before each request, since keys typed before it are lost. The
+  driver reads `cwd\nline\n`, `cd`s only when the folder changes, and clears the line afterwards.
+  Control characters are stripped so a request can never run anything. A request that does not
+  answer in time restarts the worker.
+- **Menu** (`shell-editor-completion.ts`, `use-shell-completion.ts`, `ShellEditorCompletionMenu.tsx`).
+  One candidate is inserted straight away. Several open a menu above the input with the typed part
+  bold, the pick highlighted and a detail card for its description. ↑/↓ and Tab/⇧Tab move, Enter
+  takes the pick, Escape closes, and typing narrows the list. A pick replaces the word before the
+  caret and adds a space unless it is a folder.
+- Tests: `zsh-completion.test.ts` (live zsh), `shell-editor-completion.test.ts`, e2e in
+  `tests/e2e/shell-editor.spec.ts`.
+
 ## Verify
 
 Verify runs on GitHub, not locally: `fork-verify.yml` runs it on every pull request against `main`,

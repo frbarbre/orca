@@ -604,6 +604,52 @@
   position: relative;
 }
 
+/* Fork: Warp-style Tab completion menu, opening upward from the input. */
+.shell-editor-completion {
+  position: absolute;
+  left: 12px;
+  bottom: calc(100% - 4px);
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  cursor: default;
+}
+
+.shell-editor-completion-list {
+  min-width: 260px;
+  max-width: 520px;
+  max-height: calc(8 * 1.9em);
+  overflow-y: auto;
+  border: 1px solid;
+  border-radius: 6px;
+  padding: 4px 0;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.18);
+}
+
+.shell-editor-completion-item {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  padding: 0.3em 12px;
+  white-space: nowrap;
+}
+
+.shell-editor-completion-description {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.shell-editor-completion-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-width: 320px;
+  border: 1px solid;
+  border-radius: 6px;
+  padding: 10px 12px;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.18);
+}
+
 .shell-editor-input .shell-editor-field {
   position: relative;
   display: block;

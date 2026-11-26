@@ -131,6 +131,21 @@ test.describe('shell editor', () => {
       .first()
       .evaluate((element) => (element as HTMLElement).style.transform)
     expect(transform).toMatch(/^translateY\(\d+(\.\d+)?px\)$/)
+
+    const paint = await orcaPage.evaluate(() => {
+      const xterm = document.querySelector('.pane:not([hidden]) .xterm') as HTMLElement
+      const screen = xterm.querySelector('.xterm-screen') as HTMLElement
+      const label = xterm.querySelector('.shell-block-label') as HTMLElement
+      const viewport = xterm.querySelector('.xterm-viewport') as HTMLElement
+      return {
+        labelLeft: label.getBoundingClientRect().left,
+        screenLeft: screen.getBoundingClientRect().left,
+        viewportBackground: getComputedStyle(viewport).backgroundColor
+      }
+    })
+    // Why: the header starts where the command does, and the padding never shows xterm's black.
+    expect(Math.abs(paint.labelLeft - paint.screenLeft)).toBeLessThan(2)
+    expect(paint.viewportBackground).not.toBe('rgb(0, 0, 0)')
     // Why: blocks are visual, so the report keeps a picture of them for review.
     await testInfo.attach('blocks', { body: await orcaPage.screenshot(), contentType: 'image/png' })
   })
@@ -168,6 +183,8 @@ test.describe('shell editor', () => {
       await expect(blocks).toHaveCount(2, { timeout: 15_000 })
       await expect(blocks.nth(1)).toHaveAttribute('data-failed', 'true')
       await expect(blocks.nth(0).locator('.shell-block-label')).toContainText('git:(')
+      // Why: coming back to a tab puts the caret in its shell's input, not in the terminal.
+      await expect(orcaPage.locator(FIELD).first()).toBeFocused({ timeout: 10_000 })
     })
   }
 

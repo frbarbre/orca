@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import type { Terminal } from '@xterm/xterm'
 import type { PtyTransport } from '../pty-transport-types'
+import { acquirePtyDeliveryInterest } from '../pty-delivery-interest'
 import {
   createShellEditorHistory,
   resolveShellEditorResync,
@@ -41,6 +42,12 @@ export function useDiffStatPerPrompt(
     }
   }, [terminal, cwd, promptCount])
   return diffStat
+}
+
+// Why: main drops a hidden pane's output and reveals a snapshot without the markers blocks are built from.
+export function useLiveOutputWhileHidden(transport: ShellEditorTransport, on: boolean): void {
+  const ptyId = on ? (transport?.getPtyId() ?? null) : null
+  useEffect(() => (ptyId ? acquirePtyDeliveryInterest(ptyId) : undefined), [ptyId])
 }
 
 /** The text field has the caret, so the terminal's own cursor is hidden while the box is up. */

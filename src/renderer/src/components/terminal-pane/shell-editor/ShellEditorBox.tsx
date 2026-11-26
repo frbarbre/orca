@@ -26,6 +26,7 @@ import {
   useDiffStatPerPrompt,
   useHiddenTerminalCursor,
   useReservePaneBottomSpace,
+  useLiveOutputWhileHidden,
   useResyncWhenShown,
   useShellHistory,
   type ShellEditorTransport
@@ -54,6 +55,7 @@ export function ShellEditorBox({
 }: ShellEditorBoxProps): React.JSX.Element | null {
   const snapshot = useSyncExternalStore(session.subscribe, session.getSnapshot)
   useResyncWhenShown(session, transport, isShown, snapshot.phase === 'off')
+  useLiveOutputWhileHidden(transport, snapshot.phase !== 'off')
   useHiddenTerminalCursor(terminal, snapshot.phase === 'starting' || snapshot.phase === 'prompt')
   const diffStat = useDiffStatPerPrompt(terminal, snapshot.cwd, snapshot.promptCount)
   const rootRef = useRef<HTMLDivElement>(null)

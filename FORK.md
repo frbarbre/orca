@@ -2190,6 +2190,10 @@ Warp-style command blocks for shell-editor terminals.
   session that the user typed; otherwise a sole fresh pane is kept for diagnostics. It also marks
   the exit as deliberate, so a nonzero status left by the last command (or `.zshrc`) does not show
   the "Terminal exited" card. Sending anything else clears the mark.
+- **Hidden output.** Main drops a hidden pane's output and shows a snapshot on reveal, which
+  carries no OSC 133 markers, so a quick command rerun in an idle background tab drew no block.
+  While the box is on, `useLiveOutputWhileHidden` holds the pty's delivery interest, so the hidden
+  xterm keeps parsing the markers. A parked tab still rebuilds and restores its blocks by content.
 - **Lost markers.** A terminal can also drop its markers while keeping the rows (seen after a
   brief tab switch with a long-running command, once its output scrolled). The tracker keeps such
   blocks out of the snapshot but remembers them (`lostBlockIds`); on the next write or paint the

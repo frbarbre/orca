@@ -557,6 +557,53 @@ test.describe('shell editor', () => {
     })
   }
 
+  test('draws a block for a quick command run again in its idle tab in the background', async ({
+    orcaPage
+  }, testInfo) => {
+    await expect(orcaPage.locator(FIELD)).toBeVisible({ timeout: 30_000 })
+    const worktreeId = await waitForActiveWorktree(orcaPage)
+    const runTabId = await orcaPage.evaluate((id) => {
+      const state = window.__store!.getState()
+      const tab = state.createTab(id, undefined, undefined, {
+        quickCommandLabel: 'Run',
+        pendingStartup: { command: 'echo first-run' }
+      })
+      state.activateTab(tab.id)
+      return tab.id
+    }, worktreeId)
+    await waitForOutputLine(orcaPage, 'first-run')
+    const runBlocks = (): Promise<number> =>
+      orcaPage.evaluate((id) => {
+        const manager = window.__paneManagers?.get(id)
+        const pane = manager?.getActivePane?.() ?? manager?.getPanes?.()[0]
+        return pane?.container.querySelectorAll('[data-shell-block]').length ?? 0
+      }, runTabId)
+    await expect.poll(runBlocks).toBe(1)
+    const field = orcaPage.locator(`${FIELD}:visible`)
+    await field.fill('clear')
+    await field.press('Enter')
+    await expect.poll(runBlocks).toBe(0)
+
+    await orcaPage.evaluate((id) => {
+      const state = window.__store!.getState()
+      const other = state.createTab(id, undefined, undefined, { activate: true })
+      state.setActiveTab(other.id)
+    }, worktreeId)
+    await expect.poll(() => getActiveTabId(orcaPage)).not.toBe(runTabId)
+    // Why the pty directly: this is how a quick command reruns in an idle tab of its worktree.
+    await orcaPage.evaluate((id) => {
+      const layout = window.__store!.getState().terminalLayoutsByTabId[id]
+      const ptyId = layout?.activeLeafId ? layout.ptyIdsByLeafId?.[layout.activeLeafId] : undefined
+      window.api.pty.write(ptyId!, 'echo second-run\r', 'driving')
+    }, runTabId)
+    await orcaPage.evaluate((id) => window.__store?.getState().setActiveTab(id), runTabId)
+    await waitForActiveTerminalManager(orcaPage, 30_000)
+    await waitForOutputLine(orcaPage, 'second-run')
+
+    await testInfo.attach('rerun', { body: await orcaPage.screenshot(), contentType: 'image/png' })
+    await expect.poll(runBlocks).toBe(1)
+  })
+
   test('copies a block’s output from its menu', async ({ electronApp, orcaPage }) => {
     const field = orcaPage.locator(FIELD)
     await expect(field).toBeVisible({ timeout: 30_000 })

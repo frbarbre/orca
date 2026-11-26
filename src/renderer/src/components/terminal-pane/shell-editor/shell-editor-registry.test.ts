@@ -25,6 +25,7 @@ function fakeTerminal(rows: string[] = []) {
       writeListeners.add(listener)
       return { dispose: () => writeListeners.delete(listener) }
     },
+    onRender: () => ({ dispose: () => {} }),
     buffer: {
       active: {
         get length() {
@@ -142,7 +143,7 @@ describe('shell editor registry', () => {
     first.setCursor(4)
     observeShellEditorOsc133(first.terminal, 'D;1')
     expect(getShellBlockTracker(first.terminal)?.getBlocks()[0].command).toBe('false')
-    attached.dispose()
+    void attached
 
     const rebuiltRows: string[] = []
     const rebuilt = fakeTerminal(rebuiltRows)
@@ -154,6 +155,25 @@ describe('shell editor registry', () => {
 
     expect(getShellBlockTracker(rebuilt.terminal)?.getBlocks()).toEqual([
       expect.objectContaining({ command: 'false', headerLine: 1, exitCode: 1, cwd: '/repo' })
+    ])
+  })
+
+  it('finds the blocks at once when the rebuilt terminal already holds the restored rows', () => {
+    const first = fakeTerminal(['', '', 'ls', '', 'a', ''])
+    requestShellEditor('tab:leaf-k')
+    attachShellEditorSession(first.terminal, 'tab:leaf-k')
+    observeShellEditorOsc133(first.terminal, 'A')
+    first.osc(777, 'orca-shell-editor2;main;;;/repo')
+    first.setCursor(3)
+    observeShellEditorOsc133(first.terminal, 'C')
+    first.setCursor(5)
+    observeShellEditorOsc133(first.terminal, 'D;0')
+
+    const rebuilt = fakeTerminal(['', '', 'ls', '', 'a', ''])
+    rebuilt.setCursor(5)
+    attachShellEditorSession(rebuilt.terminal, 'tab:leaf-k')
+    expect(getShellBlockTracker(rebuilt.terminal)?.getBlocks()).toEqual([
+      expect.objectContaining({ command: 'ls', headerLine: 0 })
     ])
   })
 

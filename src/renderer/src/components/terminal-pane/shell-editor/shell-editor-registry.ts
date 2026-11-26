@@ -89,7 +89,7 @@ function carryBlocksIntoTerminal(
     if (found.length > 0) {
       blocks.restore(found, (line) => markerAt(terminal, line))
     } else {
-      blocks.refresh()
+      blocks.forgetLost()
     }
   }
   const onTerminalUpdate = (): void => {
@@ -97,7 +97,8 @@ function carryBlocksIntoTerminal(
     recoverLost()
   }
   const unsubscribe = blocks.subscribe(() => {
-    if (!awaiting) {
+    // Why not while blocks are lost: saving now would forget the copies recoverLost reads.
+    if (!awaiting && blocks.lostBlockIds().length === 0) {
       savedBlocks.save(paneKey, blocks.getBlocks())
     }
   })

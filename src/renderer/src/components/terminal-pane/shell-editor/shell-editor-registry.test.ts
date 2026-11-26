@@ -190,6 +190,8 @@ describe('shell editor registry', () => {
     expect(commandsOf(terminal)).toEqual(['mise run fu'])
 
     disposeMarkers()
+    // Why refresh first: the overlay re-reads rows on scroll, before the write listener runs.
+    getShellBlockTracker(terminal)?.refresh()
     wrote()
     expect(getShellBlockTracker(terminal)?.getBlocks()).toEqual([
       expect.objectContaining({ command: 'mise run fu', headerLine: 0, endLine: null, cwd: '/repo' })

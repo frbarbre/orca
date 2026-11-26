@@ -50,19 +50,26 @@ export function createShellBlockTracker(options: { maxBlocks?: number } = {}) {
   let snapshot: ShellBlock[] = []
   const listeners = new Set<() => void>()
 
+  let lostAtSnapshot = 0
+  const lostCount = (): number => tracked.filter((block) => block.header.isDisposed).length
+
+  // Why lost blocks stay tracked: the registry may find their rows again (`lostBlockIds`, `forgetLost`).
   function recompute(): void {
-    tracked = tracked.filter((block) => !block.header.isDisposed).slice(-maxBlocks)
-    snapshot = tracked.map((block) => ({
-      id: block.id,
-      headerLine: block.header.line,
-      outputLine: block.output.line,
-      endLine: block.end && !block.end.isDisposed ? block.end.line : null,
-      exitCode: block.exitCode,
-      startedAt: block.startedAt,
-      endedAt: block.endedAt,
-      command: block.command,
-      ...block.context
-    }))
+    tracked = tracked.slice(-maxBlocks)
+    lostAtSnapshot = lostCount()
+    snapshot = tracked
+      .filter((block) => !block.header.isDisposed)
+      .map((block) => ({
+        id: block.id,
+        headerLine: block.header.line,
+        outputLine: block.output.line,
+        endLine: block.end && !block.end.isDisposed ? block.end.line : null,
+        exitCode: block.exitCode,
+        startedAt: block.startedAt,
+        endedAt: block.endedAt,
+        command: block.command,
+        ...block.context
+      }))
   }
 
   function publish(): void {
@@ -140,6 +147,11 @@ export function createShellBlockTracker(options: { maxBlocks?: number } = {}) {
     /** Ids of blocks whose rows the terminal no longer marks, e.g. after its buffer was replaced. */
     lostBlockIds: (): number[] =>
       tracked.filter((block) => block.header.isDisposed).map((block) => block.id),
+    /** Drops lost blocks whose rows could not be found again. */
+    forgetLost(): void {
+      tracked = tracked.filter((block) => !block.header.isDisposed)
+      publish()
+    },
     commandFinished(end: BlockMarker, exitCode: number | null, now: number): void {
       const open = tracked.at(-1)
       if (!open || open.end) {
@@ -154,7 +166,7 @@ export function createShellBlockTracker(options: { maxBlocks?: number } = {}) {
     refresh: publish,
     // Why no notify here: React reads this while rendering.
     getBlocks: (): ShellBlock[] => {
-      if (tracked.some((block) => block.header.isDisposed)) {
+      if (lostCount() !== lostAtSnapshot) {
         recompute()
       }
       return snapshot

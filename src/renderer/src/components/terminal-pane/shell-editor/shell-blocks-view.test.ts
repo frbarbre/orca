@@ -193,8 +193,19 @@ describe('bottomAnchorRows', () => {
     expect(bottomAnchorRows({ baseY: 0, rows: 20, cursorY: 7, atPrompt: false })).toBe(12)
   })
 
-  it('leaves a full or scrolled terminal alone', () => {
-    expect(bottomAnchorRows({ baseY: 3, rows: 20, cursorY: 19, atPrompt: true })).toBe(0)
+  it('hides the next prompt’s blank rows under the input once output fills the screen', () => {
+    expect(
+      bottomAnchorRows({ baseY: 30, viewportY: 30, rows: 20, cursorY: 19, atPrompt: true })
+    ).toBe(3)
+  })
+
+  it('leaves a running command, or a terminal scrolled up, alone', () => {
+    expect(
+      bottomAnchorRows({ baseY: 30, viewportY: 30, rows: 20, cursorY: 19, atPrompt: false })
+    ).toBe(0)
+    expect(
+      bottomAnchorRows({ baseY: 30, viewportY: 12, rows: 20, cursorY: 19, atPrompt: true })
+    ).toBe(0)
     expect(bottomAnchorRows({ baseY: 0, rows: 20, cursorY: 19, atPrompt: false })).toBe(0)
   })
 })

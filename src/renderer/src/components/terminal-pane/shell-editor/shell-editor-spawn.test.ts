@@ -20,12 +20,20 @@ describe('shellEditorSpawnEnv', () => {
     })
   })
 
+  it('keeps the editor for a shell started with a command, like a quick command', () => {
+    expect(shellEditorSpawnEnv({ ...plainShell, command: 'mise run fu' })).toEqual({
+      FOO: 'bar',
+      ORCA_SHELL_EDITOR: '1'
+    })
+  })
+
   it('leaves every other spawn alone', () => {
     for (const other of [
       { enabled: false },
       { isWindows: true },
       { connectionId: 'ssh-1' },
       { command: 'claude' },
+      { command: 'codex --yolo' },
       { launchAgent: 'codex' },
       { launchConfig: {} },
       { admittedSessionId: 'session-1' }

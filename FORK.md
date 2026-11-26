@@ -2193,6 +2193,10 @@ Warp-style command blocks for shell-editor terminals.
 - Not yet: Warp's download/filter buttons.
 - Tests: `shell-blocks-*.test.ts`, `git-diff-stat.test.ts`, e2e in `tests/e2e/shell-editor.spec.ts`
   and `tests/e2e/shell-editor-restart.spec.ts`.
+- **Quick commands.** A tab started with a command (a quick command, a setup script) keeps the
+  editor: main types the command into the login zsh once it is ready, so it becomes the first block.
+  Commands that launch an agent stay plain (`shellEditorSpawnEnv`,
+  `recognizeAgentProcessFromCommandLine`).
 
 ### 89. Shell editor suggestions
 

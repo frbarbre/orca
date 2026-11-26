@@ -638,6 +638,12 @@
   padding-right: 12px;
 }
 
+/* Warp's blocks and separators run edge to edge; the inset above already pads the text. */
+.pane[data-shell-editor] .xterm-container {
+  width: 100%;
+  margin-left: 0;
+}
+
 .shell-block-header {
   position: absolute;
   left: 0;

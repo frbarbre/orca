@@ -156,6 +156,7 @@ export function ShellBlocksOverlay({
     const rows = normalBuffer
       ? bottomAnchorRows({
           baseY: buffer.baseY,
+          viewportY: buffer.viewportY,
           rows: terminal.rows,
           cursorY: buffer.cursorY,
           atPrompt

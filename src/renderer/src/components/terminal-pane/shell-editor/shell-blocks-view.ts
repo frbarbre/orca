@@ -163,11 +163,13 @@ export function layoutVisibleBlocks(input: {
  */
 export function bottomAnchorRows(input: {
   baseY: number
+  viewportY?: number
   rows: number
   cursorY: number
   atPrompt: boolean
 }): number {
-  if (input.baseY > 0) {
+  const scrolledUp = (input.viewportY ?? input.baseY) < input.baseY
+  if (input.baseY > 0 && (!input.atPrompt || scrolledUp)) {
     return 0
   }
   const lastRow = input.atPrompt ? input.cursorY - COMMAND_ROW_OFFSET - 1 : input.cursorY

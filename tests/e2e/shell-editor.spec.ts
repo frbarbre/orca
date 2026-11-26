@@ -61,6 +61,71 @@ test.describe('shell editor', () => {
     await expect(field).toHaveValue('echo suggest-alpha')
   })
 
+  test('runs a quick command’s new tab as its first block, then docks', async ({
+    orcaPage
+  }, testInfo) => {
+    await expect(orcaPage.locator(FIELD)).toBeVisible({ timeout: 30_000 })
+    await orcaPage.evaluate(() => {
+      const state = window.__store!.getState()
+      const tab = state.createTab(state.activeWorktreeId!, undefined, undefined, {
+        quickCommandLabel: 'Run',
+        pendingStartup: { command: 'echo quick-command-$((40 + 2))' }
+      })
+      state.activateTab(tab.id)
+    })
+    await waitForOutputLine(orcaPage, 'quick-command-42')
+
+    await expect(orcaPage.locator(FIELD).filter({ visible: true })).toHaveCount(1, {
+      timeout: 15_000
+    })
+    await expect(
+      orcaPage
+        .locator('.shell-block-header', { hasText: /\(\d+\.\d{3}s\)/ })
+        .filter({ visible: true })
+    ).toHaveCount(1)
+    const screen = await readActiveTerminal(orcaPage)
+    expect(screen.lines.filter((line) => line.startsWith('echo quick-command'))).toHaveLength(1)
+    await testInfo.attach('quick-command-tab', {
+      body: await orcaPage.screenshot(),
+      contentType: 'image/png'
+    })
+  })
+
+  test('keeps the newest block on the input once output fills the screen', async ({
+    orcaPage
+  }) => {
+    const field = orcaPage.locator(FIELD)
+    await expect(field).toBeVisible({ timeout: 30_000 })
+    await field.fill('seq 1 300')
+    await field.press('Enter')
+    await waitForOutputLine(orcaPage, '300')
+    for (const word of ['after-one', 'after-two']) {
+      await expect(field).toBeVisible({ timeout: 15_000 })
+      await field.fill(`echo ${word}`)
+      await field.press('Enter')
+      await waitForOutputLine(orcaPage, word)
+    }
+    await expect(field).toBeVisible({ timeout: 15_000 })
+
+    await expect
+      .poll(() =>
+        orcaPage.evaluate(() => {
+          const pane = document.querySelector('.pane:not([hidden])')
+          const frames = [...(pane?.querySelectorAll('.shell-block-frame') ?? [])]
+          const box = pane?.querySelector('[data-shell-editor-root]')
+          const last = frames.at(-1)?.getBoundingClientRect()
+          if (!pane || !last || !box) {
+            return null
+          }
+          return {
+            gapAboveInput: Math.round(box.getBoundingClientRect().top - last.bottom) < 10,
+            gapBeforeSidebar: Math.round(last.left - pane.getBoundingClientRect().left)
+          }
+        })
+      )
+      .toEqual({ gapAboveInput: true, gapBeforeSidebar: 0 })
+  })
+
   test('keeps commands and their output together, with no terminal cursor', async ({
     orcaPage
   }) => {

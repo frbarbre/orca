@@ -1,4 +1,4 @@
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
@@ -28,7 +28,10 @@ describe('sanitizeCompletionInput', () => {
   })
 })
 
-describe.skipIf(process.platform === 'win32')('createZshCompletionWorker', () => {
+// Why: CI's Linux runners have no zsh; the worker falls back to /bin/zsh.
+const hasZsh = process.platform !== 'win32' && existsSync('/bin/zsh')
+
+describe.skipIf(!hasZsh)('createZshCompletionWorker', () => {
   let dir = ''
   let worker: ZshCompletionWorker
 

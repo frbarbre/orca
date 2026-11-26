@@ -216,7 +216,7 @@ describePosix('zsh launch config', () => {
 
     const output = await runZshUntil(
       { env: { ...env, ...config.env }, cwd: repo },
-      'print -r -- "P=<${(V)PROMPT}|$RPROMPT|${+ORCA_SHELL_EDITOR}|$zle_highlight>"',
+      'print -r -- "P=<${(V)PROMPT}|$RPROMPT|${+ORCA_SHELL_EDITOR}|$zle_highlight|${preexec_functions[-1]}>"',
       /P=<[^$>\n]*>/
     )
 
@@ -228,7 +228,10 @@ describePosix('zsh launch config', () => {
       new RegExp(`^v\\d+\\.\\d+\\.\\d+;${repo.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`)
     )
     // Why a newline: it leaves a blank row above each command for the block's header.
-    expect(/P=<([^$\n]*?)>/.exec(output)?.[1]).toBe('\\n||0|default:bold')
+    // Why two newlines and a gap hook: they give each block a padding row, a header row and a gap.
+    expect(/P=<([^$\n]*?)>/.exec(output)?.[1]).toBe(
+      '\\n\\n||0|default:bold|__orca_shell_editor_preexec'
+    )
   })
 
   it('publishes exactly the selected features, whatever process.env holds', async () => {

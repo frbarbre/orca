@@ -35,8 +35,8 @@ __orca_osc133_precmd() {
 }
 # Fork: the shell editor draws the prompt, so zsh's is blanked after every other hook set it.
 __orca_shell_editor_precmd() {
-  # A lone newline leaves a blank row above each command for its block header.
-  PROMPT=$'\n' RPROMPT=''
+  # Two newlines leave a padding row and a header row above each command for its block.
+  PROMPT=$'\n\n' RPROMPT=''
   builtin typeset -ga zle_highlight
   zle_highlight=(default:bold)
   if [[ "$PWD|$PATH" != "${__orca_node_key-}" ]]; then
@@ -49,9 +49,13 @@ __orca_shell_editor_precmd() {
 # zsh runs a copy of the hook list, so hooks after Orca's can still set the first prompt.
 __orca_shell_editor_first_line() {
   add-zle-hook-widget -d line-init __orca_shell_editor_first_line
-  [[ "$PROMPT" == $'\n' && -z "$RPROMPT" ]] && return 0
-  PROMPT=$'\n' RPROMPT=''
+  [[ "$PROMPT" == $'\n\n' && -z "$RPROMPT" ]] && return 0
+  PROMPT=$'\n\n' RPROMPT=''
   zle reset-prompt
+}
+# A blank row between a block's command and its output, as in Warp.
+__orca_shell_editor_preexec() {
+  builtin print
 }
 __orca_osc133_preexec() {
   builtin printf "\033]133;C\007"
@@ -219,6 +223,7 @@ __orca_deferred_init() {
   fi
   if __orca_has_feature editor; then
     precmd_functions+=(__orca_shell_editor_precmd)
+    preexec_functions+=(__orca_shell_editor_preexec)
     __orca_shell_editor_precmd
     builtin autoload -Uz add-zle-hook-widget && add-zle-hook-widget line-init __orca_shell_editor_first_line
   fi

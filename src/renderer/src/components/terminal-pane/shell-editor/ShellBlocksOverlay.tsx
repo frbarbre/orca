@@ -188,35 +188,44 @@ export function ShellBlocksOverlay({
       className="shell-blocks-overlay"
       style={{
         fontFamily: terminal.options.fontFamily,
-        fontSize: (terminal.options.fontSize ?? 13) * 0.85,
+        fontSize: (terminal.options.fontSize ?? 13) * 0.92,
         color: `color-mix(in srgb, ${foreground} 55%, transparent)`
       }}
     >
-      {visible.map(({ block, headerRow, endRow, sticky }) => {
+      {visible.map(({ block, topRow, labelRow, endRow, sticky }) => {
         const failed = block.exitCode !== null && block.exitCode !== 0
-        const bodyRows = Math.min(endRow, terminal.rows) - headerRow
+        // Why half rows: a block runs from the middle of its padding row to the middle of the next's.
+        const blockTop = geometry.top + Math.max(-0.5, topRow + 0.5) * geometry.cellHeight
+        const blockBottom =
+          geometry.top + Math.min(endRow + 0.5, terminal.rows + 1) * geometry.cellHeight
         return (
           <div key={block.id} data-shell-block={block.id} data-failed={failed || undefined}>
-            {failed ? (
-              <div
-                className="shell-block-failure"
-                style={{
-                  top: geometry.top + headerRow * geometry.cellHeight,
-                  height: bodyRows * geometry.cellHeight,
-                  background: `color-mix(in srgb, ${failure} 9%, transparent)`,
-                  borderLeftColor: failure
-                }}
-              />
-            ) : null}
+            <div
+              className="shell-block-frame"
+              data-failed={failed || undefined}
+              style={{
+                top: blockTop,
+                height: blockBottom - blockTop,
+                borderTopColor: `color-mix(in srgb, ${foreground} 12%, transparent)`,
+                ...(failed
+                  ? {
+                      background: `color-mix(in srgb, ${failure} 9%, transparent)`,
+                      borderLeftColor: failure
+                    }
+                  : {})
+              }}
+            />
             <div
               className="shell-block-header"
               data-sticky={sticky || undefined}
               style={{
-                top: geometry.top + headerRow * geometry.cellHeight,
+                top: geometry.top + labelRow * geometry.cellHeight,
                 height: geometry.cellHeight,
                 paddingLeft: geometry.left,
-                borderTopColor: `color-mix(in srgb, ${foreground} 14%, transparent)`,
-                background: sticky ? theme.background : undefined
+                background: sticky ? theme.background : undefined,
+                borderBottomColor: sticky
+                  ? `color-mix(in srgb, ${foreground} 12%, transparent)`
+                  : undefined
               }}
             >
               <span className="shell-block-label">{shellBlockHeaderLabel(block, now)}</span>

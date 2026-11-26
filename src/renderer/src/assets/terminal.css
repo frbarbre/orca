@@ -609,6 +609,12 @@
   pointer-events: none;
 }
 
+/* Warp's inset: editor terminals keep their text off the block's edge and failure bar. */
+.pane[data-shell-editor] .xterm {
+  padding-left: 16px;
+  padding-right: 12px;
+}
+
 .shell-block-header {
   position: absolute;
   left: 0;
@@ -617,14 +623,26 @@
   align-items: center;
   gap: 8px;
   box-sizing: border-box;
-  padding-right: 8px;
-  border-top: 1px solid;
+  padding-right: 12px;
   white-space: nowrap;
 }
 
 .shell-block-header[data-sticky] {
   z-index: 1;
-  box-shadow: 0 1px 0 color-mix(in srgb, currentColor 18%, transparent);
+  border-bottom: 1px solid;
+}
+
+/* A block from separator to separator; it carries the failure tint and bar. */
+.shell-block-frame {
+  position: absolute;
+  left: 0;
+  right: 0;
+  box-sizing: border-box;
+  border-top: 1px solid;
+}
+
+.shell-block-frame[data-failed] {
+  border-left: 4px solid;
 }
 
 .shell-block-label {
@@ -657,13 +675,6 @@
 .shell-block-menu-button svg {
   width: 14px;
   height: 14px;
-}
-
-.shell-block-failure {
-  position: absolute;
-  left: 0;
-  right: 0;
-  border-left: 3px solid;
 }
 
 /* Ghostty-style URL hover: glued to the pane's true bottom-left corner. */

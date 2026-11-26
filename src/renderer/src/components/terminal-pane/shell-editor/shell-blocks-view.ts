@@ -28,11 +28,21 @@ function readRows(buffer: BlockBuffer, from: number, toExclusive: number): strin
   while (lines.length > 0 && lines.at(-1)!.trim() === '') {
     lines.pop()
   }
+  while (lines.length > 0 && lines[0].trim() === '') {
+    lines.shift()
+  }
   return lines.join('\n')
 }
 
+/**
+ * A block's rows, as zsh prints them for the editor: a padding row and a header row (the prompt's
+ * two newlines), the command, then a gap row and the output.
+ */
+const HEADER_ROW_OFFSET = 1
+const COMMAND_ROW_OFFSET = 2
+
 export function blockCommandText(buffer: BlockBuffer, block: ShellBlock): string {
-  return readRows(buffer, block.headerLine + 1, block.outputLine)
+  return readRows(buffer, block.headerLine + COMMAND_ROW_OFFSET, block.outputLine)
 }
 
 export function blockOutputText(buffer: BlockBuffer, block: ShellBlock): string {
@@ -43,7 +53,8 @@ export function blockOutputText(buffer: BlockBuffer, block: ShellBlock): string 
 export function isBlockIntact(buffer: BlockBuffer, block: ShellBlock): boolean {
   return (
     rowText(buffer, block.headerLine).trim() === '' &&
-    rowText(buffer, block.headerLine + 1).trim() !== ''
+    rowText(buffer, block.headerLine + HEADER_ROW_OFFSET).trim() === '' &&
+    rowText(buffer, block.headerLine + COMMAND_ROW_OFFSET).trim() !== ''
   )
 }
 
@@ -73,8 +84,10 @@ export function shellBlockHeaderLabel(block: ShellBlock, now: number): string {
 
 export type VisibleBlock = {
   block: ShellBlock
-  /** Viewport row of the header; 0 while pinned. */
-  headerRow: number
+  /** Viewport row of the block's padding row, where its separator runs; may be above the viewport. */
+  topRow: number
+  /** Viewport row of the header text; 0 while pinned. */
+  labelRow: number
   /** Viewport row just past the block, possibly below the viewport. */
   endRow: number
   /** The header scrolled off while the block still fills the top of the viewport. */
@@ -94,14 +107,23 @@ export function layoutVisibleBlocks(input: {
     if (end <= top || block.headerLine >= bottom) {
       return []
     }
-    const headerRow = block.headerLine - top
-    return [{ block, headerRow: Math.max(0, headerRow), endRow: end - top, sticky: headerRow < 0 }]
+    const labelRow = block.headerLine + HEADER_ROW_OFFSET - top
+    return [
+      {
+        block,
+        topRow: block.headerLine - top,
+        labelRow: Math.max(0, labelRow),
+        endRow: end - top,
+        sticky: labelRow < 0
+      }
+    ]
   })
 }
 
 /**
  * Rows to push the terminal down so its newest output sits on the input, as in Warp.
- * At a prompt zsh's cursor sits two rows below the last output: the next header's blank row and the command row.
+ * At a prompt zsh's cursor sits three rows below the last output: the next block's padding and
+ * header rows, then the command row.
  */
 export function bottomAnchorRows(input: {
   baseY: number
@@ -112,6 +134,6 @@ export function bottomAnchorRows(input: {
   if (input.baseY > 0) {
     return 0
   }
-  const lastRow = input.atPrompt ? input.cursorY - 2 : input.cursorY
+  const lastRow = input.atPrompt ? input.cursorY - COMMAND_ROW_OFFSET - 1 : input.cursorY
   return Math.max(0, input.rows - 1 - lastRow)
 }

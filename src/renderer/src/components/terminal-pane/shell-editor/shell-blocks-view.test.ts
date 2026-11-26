@@ -27,8 +27,8 @@ function bufferOf(rows: (string | [string, 'wrapped'])[]) {
 const block = (overrides: Partial<ShellBlock> = {}): ShellBlock => ({
   id: 1,
   headerLine: 0,
-  outputLine: 2,
-  endLine: 5,
+  outputLine: 3,
+  endLine: 7,
   exitCode: 0,
   startedAt: 0,
   endedAt: 107,
@@ -39,9 +39,12 @@ const block = (overrides: Partial<ShellBlock> = {}): ShellBlock => ({
 })
 
 describe('block text', () => {
+  // Padding row, header row, command, the gap zsh prints after it, then the output.
   const buffer = bufferOf([
     '',
+    '',
     'docker ps',
+    '',
     'failed to connect to the docker API at unix:///Users/me/.orb',
     ['stack/run/docker.sock', 'wrapped'],
     '',
@@ -63,7 +66,7 @@ describe('block text', () => {
   it('treats a block whose rows were wiped by clear as gone', () => {
     expect(isBlockIntact(buffer, block())).toBe(true)
     expect(isBlockIntact(bufferOf(['', '', '', '']), block())).toBe(false)
-    expect(isBlockIntact(bufferOf(['stale', 'docker ps']), block())).toBe(false)
+    expect(isBlockIntact(bufferOf(['', 'stale', 'docker ps']), block())).toBe(false)
   })
 })
 
@@ -101,32 +104,41 @@ describe('header label', () => {
 })
 
 describe('layoutVisibleBlocks', () => {
-  it('places headers in viewport rows and pins the header of a block scrolled past its top', () => {
+  it('places each block from its padding row and pins the header of one scrolled past its top', () => {
     const blocks = [
-      block({ id: 1, headerLine: 0, outputLine: 2, endLine: 4 }),
-      block({ id: 2, headerLine: 4, outputLine: 6, endLine: 30 }),
-      block({ id: 3, headerLine: 30, outputLine: 32, endLine: null })
+      block({ id: 1, headerLine: 0, outputLine: 3, endLine: 5 }),
+      block({ id: 2, headerLine: 5, outputLine: 8, endLine: 30 }),
+      block({ id: 3, headerLine: 30, outputLine: 33, endLine: null })
     ]
     expect(layoutVisibleBlocks({ blocks, viewportY: 10, rows: 15, bufferLength: 40 })).toEqual([
-      { block: blocks[1], headerRow: 0, endRow: 20, sticky: true }
+      { block: blocks[1], topRow: -5, labelRow: 0, endRow: 20, sticky: true }
     ])
     expect(
       layoutVisibleBlocks({ blocks, viewportY: 0, rows: 10, bufferLength: 40 }).map((item) => [
         item.block.id,
-        item.headerRow,
+        item.topRow,
+        item.labelRow,
         item.endRow,
         item.sticky
       ])
     ).toEqual([
-      [1, 0, 4, false],
-      [2, 4, 30, false]
+      [1, 0, 1, 5, false],
+      [2, 5, 6, 30, false]
+    ])
+  })
+
+  it('keeps the header in place while its own row is still on screen', () => {
+    const blocks = [block({ id: 1, headerLine: 9, outputLine: 12, endLine: 40 })]
+    expect(layoutVisibleBlocks({ blocks, viewportY: 10, rows: 15, bufferLength: 40 })).toEqual([
+      { block: blocks[0], topRow: -1, labelRow: 0, endRow: 30, sticky: false }
     ])
   })
 })
 
 describe('bottomAnchorRows', () => {
   it('pushes short output down so the newest block sits on the input', () => {
-    expect(bottomAnchorRows({ baseY: 0, rows: 20, cursorY: 7, atPrompt: true })).toBe(14)
+    // At a prompt the cursor sits below the next block's padding and header rows.
+    expect(bottomAnchorRows({ baseY: 0, rows: 20, cursorY: 7, atPrompt: true })).toBe(15)
     expect(bottomAnchorRows({ baseY: 0, rows: 20, cursorY: 7, atPrompt: false })).toBe(12)
   })
 

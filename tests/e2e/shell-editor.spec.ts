@@ -88,15 +88,20 @@ test.describe('shell editor', () => {
 
     const screen = await readActiveTerminal(orcaPage)
     const lines = screen.lines.slice(screen.lines.indexOf('echo one'))
-    // Why the blank rows: each one holds the next block's header.
-    expect(lines.slice(0, 8)).toEqual([
+    // Why the blank rows: the gap after each command, then the next block's padding and header rows.
+    expect(lines.slice(0, 13)).toEqual([
       'echo one',
+      '',
       'one',
       '',
+      '',
       'echo two',
+      '',
       'two',
       '',
+      '',
       'echo three',
+      '',
       'three'
     ])
     expect(screen.cursorHidden).toBe(true)

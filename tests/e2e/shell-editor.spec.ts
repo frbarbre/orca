@@ -270,9 +270,11 @@ test.describe('shell editor', () => {
     await expect(field).toBeVisible({ timeout: 30_000 })
     await field.fill(
       'mkdir -p completion-alpha completion-beta completion-nest/child-a completion-nest/child-b' +
-        ' && touch completion-solo.txt'
+        ' && touch completion-solo.txt && echo completion-ready'
     )
     await field.press('Enter')
+    // Why wait for its output: the field can still show before the command hides it.
+    await waitForOutputLine(orcaPage, 'completion-ready')
     await expect(field).toBeVisible({ timeout: 15_000 })
 
     await field.pressSequentially('cat completion-so')
@@ -467,7 +469,7 @@ test.describe('shell editor', () => {
         const tab = state.createTab(id, undefined, undefined, {
           quickCommandLabel: 'Run',
           pendingStartup: {
-            command: 'for i in $(seq 1 600); do echo running-$i; sleep 0.1; done'
+            command: 'for i in $(seq 1 600); do echo running-$i; sleep 0.05; done'
           }
         })
         state.activateTab(tab.id)

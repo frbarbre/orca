@@ -27,8 +27,11 @@ function describe(entry: ShellCompletion): string | null {
       return translate('terminal.shellEditor.completion.directory', 'Directory')
     case 'file':
       return translate('terminal.shellEditor.completion.file', 'File')
+    case 'command':
+    case 'option':
+    case 'other':
+      return null
   }
-  return null
 }
 
 export function ShellEditorCompletionMenu({

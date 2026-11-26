@@ -176,7 +176,7 @@ export type PreloadApi = {
     complete: (args: {
       cwd: string
       line: string
-    }) => Promise<{ value: string; description: string | null }[]>
+    }) => Promise<{ value: string; description: string | null; tag: string | null }[]>
     warmCompletion: () => Promise<void>
   }
   languageServer: LanguageServerApi

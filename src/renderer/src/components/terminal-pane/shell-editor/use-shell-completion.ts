@@ -4,6 +4,7 @@ import {
   filterCompletionMenu,
   moveCompletionSelection,
   openCompletionMenu,
+  previewCompletion,
   resolveCompletionMenuKey,
   type CompletionMenu,
   type ShellCompletion
@@ -25,19 +26,28 @@ export type ShellCompletionControls = {
 /** Warp-style Tab completion: zsh's candidates in a menu over the input. */
 export function useShellCompletion(
   fieldRef: React.RefObject<HTMLTextAreaElement | null>,
-  cwd: string | null
+  cwd: string | null,
+  setText: (text: string) => void
 ): ShellCompletionControls {
   const [menu, setMenu] = useState<CompletionMenu | null>(null)
   const requestId = useRef(0)
   const warmed = useRef(false)
 
+  const showLine = (line: { text: string; caret: number }): void => {
+    setText(line.text)
+    requestAnimationFrame(() => fieldRef.current?.setSelectionRange(line.caret, line.caret))
+  }
+
   const accept = (entry: ShellCompletion): void => {
     const field = fieldRef.current
+    const base = menu?.original
     setMenu(null)
     if (!field) {
       return
     }
-    const next = applyCompletion(field.value, field.selectionEnd, entry.value)
+    const next = base
+      ? applyCompletion(base.text, base.caret, entry.value)
+      : applyCompletion(field.value, field.selectionEnd, entry.value)
     replaceShellEditorText(field, next.text)
     field.setSelectionRange(next.caret, next.caret)
   }
@@ -69,13 +79,26 @@ export function useShellCompletion(
     if (!action) {
       return false
     }
+    if (action === 'accept' && menu.selected === -1) {
+      // Why: with nothing picked, Enter runs the line as typed, as in Warp.
+      setMenu(null)
+      return false
+    }
     event.preventDefault()
     if (action === 'accept') {
       accept(menu.visible[menu.selected])
     } else if (action === 'close') {
       setMenu(null)
+      if (menu.selected !== -1) {
+        showLine(menu.original)
+      }
     } else {
-      setMenu(moveCompletionSelection(menu, action === 'next' ? 1 : -1))
+      const moved = moveCompletionSelection(menu, action === 'next' ? 1 : -1)
+      setMenu(moved)
+      const preview = previewCompletion(moved)
+      if (preview) {
+        showLine(preview)
+      }
     }
     return true
   }

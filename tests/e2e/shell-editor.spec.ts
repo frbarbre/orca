@@ -214,7 +214,10 @@ test.describe('shell editor', () => {
   test('completes with Tab from a menu over the input, as Warp does', async ({ orcaPage }) => {
     const field = orcaPage.locator(FIELD)
     await expect(field).toBeVisible({ timeout: 30_000 })
-    await field.fill('mkdir -p completion-alpha completion-beta && touch completion-solo.txt')
+    await field.fill(
+      'mkdir -p completion-alpha completion-beta completion-nest/child-a completion-nest/child-b' +
+        ' && touch completion-solo.txt'
+    )
     await field.press('Enter')
     await expect(field).toBeVisible({ timeout: 15_000 })
 
@@ -227,25 +230,47 @@ test.describe('shell editor', () => {
     await field.pressSequentially('ls completion-')
     await field.press('Tab')
     const options = orcaPage.locator('[data-shell-editor-completion] [role="option"]')
-    await expect(options).toHaveText([
-      'completion-alpha/',
-      'completion-beta/',
-      'completion-solo.txt'
-    ])
+    const values = (): Promise<(string | null)[]> =>
+      options.evaluateAll((rows) => rows.map((row) => row.getAttribute('data-completion-value')))
+    await expect
+      .poll(values)
+      .toEqual(['completion-alpha/', 'completion-beta/', 'completion-nest/', 'completion-solo.txt'])
+    await expect(options.first()).toContainText('Directory')
+    await expect(options.first().locator('svg')).toHaveCount(1)
+    await expect(
+      orcaPage.locator('[data-shell-editor-completion] [aria-selected="true"]')
+    ).toHaveCount(0)
     await expect(field).toBeFocused()
 
     await field.press('ArrowDown')
+    await expect(field).toHaveValue('ls completion-alpha/')
+    await field.press('ArrowDown')
     await expect(options.nth(1)).toHaveAttribute('aria-selected', 'true')
+    await expect(field).toHaveValue('ls completion-beta/')
     await field.press('Enter')
     await expect(field).toHaveValue('ls completion-beta/')
     await expect(options).toHaveCount(0)
 
+    await field.fill('ls completion-nest/')
+    await field.press('End')
+    await field.press('Tab')
+    await expect.poll(values).toEqual(['completion-nest/child-a/', 'completion-nest/child-b/'])
+    await expect(options.first()).toContainText('child-a/')
+    await expect(options.first()).not.toContainText('completion-nest/child-a/')
+    await field.press('ArrowDown')
+    await expect(orcaPage.locator('.shell-editor-completion-detail')).toContainText(
+      'completion-nest/child-a/'
+    )
+    await field.press('Escape')
+    await expect(options).toHaveCount(0)
+    await expect(field).toHaveValue('ls completion-nest/')
+
     await field.fill('cd completion-')
     await field.press('End')
     await field.press('Tab')
-    await expect(options).toHaveText(['completion-alpha/', 'completion-beta/'])
+    await expect.poll(values).toEqual(['completion-alpha/', 'completion-beta/', 'completion-nest/'])
     await field.pressSequentially('a')
-    await expect(options).toHaveText(['completion-alpha/'])
+    await expect.poll(values).toEqual(['completion-alpha/'])
     await field.press('Escape')
     await expect(options).toHaveCount(0)
     await expect(field).toHaveValue('cd completion-a')

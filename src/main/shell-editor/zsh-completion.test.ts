@@ -10,14 +10,16 @@ import {
 } from './zsh-completion'
 
 describe('parseZshCompletions', () => {
-  it('reads each candidate and its description once, in zsh’s order', () => {
+  it('reads each candidate, its description and zsh’s tag for it once, in zsh’s order', () => {
     expect(
       parseZshCompletions(
-        'checkout\u001fswitch branches\ncherry\u001f\ncheckout\u001fswitch branches\n\n'
+        'checkout\u001fswitch branches\u001fmain-porcelain-commands\ncherry\u001f\u001f\n' +
+          'checkout\u001fswitch branches\u001fmain-porcelain-commands\nold\u001fno tag\n\n'
       )
     ).toEqual([
-      { value: 'checkout', description: 'switch branches' },
-      { value: 'cherry', description: null }
+      { value: 'checkout', description: 'switch branches', tag: 'main-porcelain-commands' },
+      { value: 'cherry', description: null, tag: null },
+      { value: 'old', description: 'no tag', tag: null }
     ])
   })
 })
@@ -54,30 +56,36 @@ describe.skipIf(!hasZsh)('createZshCompletionWorker', () => {
 
   // Why the long timeout: the first request starts the hidden zsh and runs compinit.
   it('lists files and folders for the word being typed, with a slash after folders', async () => {
-    await expect(worker.complete({ cwd: dir, line: 'ls menu-' })).resolves.toEqual([
+    await expect(worker.complete({ cwd: dir, line: 'ls menu-' })).resolves.toMatchObject([
       { value: 'menu-alpha/', description: null },
       { value: 'menu-beta/', description: null },
-      { value: 'menu-file.txt', description: null }
+      { value: 'menu-file.txt', description: null, tag: expect.stringMatching(/files/) }
     ])
   }, 20_000)
 
   it('keeps answering, from whichever folder is asked', async () => {
-    await expect(worker.complete({ cwd: dir, line: 'ls nested/in' })).resolves.toEqual([
+    await expect(worker.complete({ cwd: dir, line: 'ls nested/in' })).resolves.toMatchObject([
       { value: 'nested/inner/', description: null }
     ])
-    await expect(worker.complete({ cwd: join(dir, 'nested'), line: 'cd in' })).resolves.toEqual([
-      { value: 'inner/', description: null }
+    await expect(
+      worker.complete({ cwd: join(dir, 'nested'), line: 'cd in' })
+    ).resolves.toMatchObject([
+      { value: 'inner/', description: null, tag: expect.stringMatching(/directories/) }
     ])
   })
 
   it('describes subcommands the way zsh does', async () => {
     const items = await worker.complete({ cwd: dir, line: 'git checko' })
-    expect(items[0]).toEqual({ value: 'checkout', description: expect.stringMatching(/\S/) })
+    expect(items[0]).toEqual({
+      value: 'checkout',
+      description: expect.stringMatching(/\S/),
+      tag: expect.stringMatching(/commands$/)
+    })
   })
 
   it('escapes a name the way zsh would insert it', async () => {
     writeFileSync(join(dir, 'spaced name.txt'), '')
-    await expect(worker.complete({ cwd: dir, line: 'cat spa' })).resolves.toEqual([
+    await expect(worker.complete({ cwd: dir, line: 'cat spa' })).resolves.toMatchObject([
       { value: 'spaced\\ name.txt', description: null }
     ])
   })

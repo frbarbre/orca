@@ -607,7 +607,8 @@
 /* Fork: Warp-style Tab completion menu, opening upward from the input. */
 .shell-editor-completion {
   position: absolute;
-  left: 12px;
+  left: 0;
+  margin-left: 12px;
   bottom: calc(100% - 4px);
   display: flex;
   align-items: flex-start;
@@ -628,10 +629,25 @@
 
 .shell-editor-completion-item {
   display: flex;
-  align-items: baseline;
-  gap: 12px;
-  padding: 0.3em 12px;
+  align-items: center;
+  gap: 10px;
+  padding: 0.3em 12px 0.3em 8px;
   white-space: nowrap;
+}
+
+.shell-editor-completion-icon {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 1.4em;
+  height: 1.4em;
+  border-radius: 4px;
+}
+
+.shell-editor-completion-icon svg {
+  width: 0.95em;
+  height: 0.95em;
 }
 
 .shell-editor-completion-description {

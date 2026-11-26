@@ -63,6 +63,18 @@ export function replaceShellEditorText(field: HTMLTextAreaElement, text: string)
   field.setSelectionRange(text.length, text.length)
 }
 
+let measureContext: CanvasRenderingContext2D | null = null
+
+/** Width of one line of text in the field's font, for placing the completion menu under a word. */
+export function measureShellEditorText(text: string, font: string): number {
+  measureContext ??= document.createElement('canvas').getContext('2d')
+  if (!measureContext) {
+    return 0
+  }
+  measureContext.font = font
+  return measureContext.measureText(text).width
+}
+
 /** Shortens the home folder to ~ the way zsh's prompt does. */
 export function displayShellEditorCwd(cwd: string): string {
   return cwd.replace(/^\/(?:Users|home)\/[^/]+(?=\/|$)/, '~')

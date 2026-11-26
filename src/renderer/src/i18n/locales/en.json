@@ -19919,6 +19919,10 @@
   },
   "terminal": {
     "shellEditor": {
+      "completion": {
+        "directory": "Directory",
+        "file": "File"
+      },
       "label": "Command",
       "queued": "Runs when zsh is ready",
       "starting": "Starting zsh"

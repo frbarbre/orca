@@ -55,7 +55,7 @@ compadd() {
   for __i in {1..$#__hits}; do
     (( __dirsuffix )) && [[ -d \${~:-\${__hpre[-p]}$__hits[$__i]} ]] && __dsuf=/ || __dsuf=
     (( $#__dscr >= __i )) && __d=\${\${\${__dscr[$__i]}##$__hits[$__i] #}##-- #} || __d=
-    builtin print -rn -- "$IPREFIX$__apre$__hpre$__hits[$__i]$__dsuf$__hsuf$__asuf"$'\\x1f'"$__d"$'\\n'
+    builtin print -rn -- "$IPREFIX$__apre$__hpre$__hits[$__i]$__dsuf$__hsuf$__asuf"$'\\x1f'"$__d"$'\\x1f'"$curtag"$'\\n'
   done
 }
 `

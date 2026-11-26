@@ -15,6 +15,7 @@ import {
   appendShellEditorText,
   displayShellEditorCwd,
   isInsideShellEditor,
+  measureShellEditorText,
   readShellEditorCaret,
   replaceShellEditorText,
   SHELL_EDITOR_ROOT_ATTRIBUTE
@@ -57,7 +58,7 @@ export function ShellEditorBox({
   const fieldRef = useRef<HTMLTextAreaElement>(null)
   const [text, setText] = useState('')
   const { history, reload: reloadHistory } = useShellHistory(snapshot.histfile)
-  const completion = useShellCompletion(fieldRef, snapshot.cwd)
+  const completion = useShellCompletion(fieldRef, snapshot.cwd, setText)
   const visible = snapshot.phase === 'starting' || snapshot.phase === 'prompt'
   useReservePaneBottomSpace(rootRef, paneContainer, visible)
 
@@ -319,13 +320,20 @@ export function ShellEditorBox({
       {completion.menu ? (
         <ShellEditorCompletionMenu
           menu={completion.menu}
-          typed={text.slice(completion.menu.wordStart).split(/\s/)[0]}
+          typed={completion.menu.original.text.slice(
+            completion.menu.wordStart,
+            completion.menu.original.caret
+          )}
+          left={measureShellEditorText(
+            completion.menu.original.text.slice(0, completion.menu.wordStart),
+            `${terminal.options.fontSize ?? 13}px ${terminal.options.fontFamily ?? 'monospace'}`
+          )}
           theme={theme}
           onAccept={completion.accept}
         />
       ) : null}
       <div className="shell-editor-input">
-        {suggestion && !completion.menu ? (
+        {suggestion && (!completion.menu || completion.menu.selected === -1) ? (
           <div className="shell-editor-suggestion" aria-hidden="true">
             <span className="shell-editor-suggestion-typed">{text}</span>
             <span data-shell-editor-suggestion="" style={{ color: muted }}>

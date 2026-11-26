@@ -4,7 +4,8 @@ import { spawnProcess } from '@orca/process-host'
 import type { PipedChildProcess } from '@orca/process-host/process-spec'
 import { ZSH_COMPLETION_DRIVER, ZSH_COMPLETION_INIT } from './zsh-completion-scripts'
 
-export type ZshCompletion = { value: string; description: string | null }
+/** `tag` is zsh's completion tag for the candidate, such as `local-directories` or `commands`. */
+export type ZshCompletion = { value: string; description: string | null; tag: string | null }
 
 export type ZshCompletionWorker = {
   complete: (request: { cwd: string; line: string }) => Promise<ZshCompletion[]>
@@ -22,17 +23,18 @@ export function parseZshCompletions(text: string): ZshCompletion[] {
   const seen = new Set<string>()
   const items: ZshCompletion[] = []
   for (const row of text.split('\n')) {
-    const at = row.indexOf(FIELD_SEPARATOR)
-    if (at <= 0) {
+    const [rawValue, rawDescription, rawTag, ...rest] = row.split(FIELD_SEPARATOR)
+    if (rawDescription === undefined || rest.length > 0) {
       continue
     }
-    const value = sanitizeCompletionInput(row.slice(0, at))
-    const description = sanitizeCompletionInput(row.slice(at + 1)).trim()
+    const value = sanitizeCompletionInput(rawValue)
+    const description = sanitizeCompletionInput(rawDescription).trim()
+    const tag = sanitizeCompletionInput(rawTag ?? '').trim()
     if (!value || seen.has(value)) {
       continue
     }
     seen.add(value)
-    items.push({ value, description: description || null })
+    items.push({ value, description: description || null, tag: tag || null })
     if (items.length >= MAX_CANDIDATES) {
       break
     }

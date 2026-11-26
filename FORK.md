@@ -2225,10 +2225,13 @@ Warp-style Tab completion in the shell editor box, with zsh's own candidates.
   Control characters are stripped so a request can never run anything. A request that does not
   answer in time restarts the worker.
 - **Menu** (`shell-editor-completion.ts`, `use-shell-completion.ts`, `ShellEditorCompletionMenu.tsx`).
-  One candidate is inserted straight away. Several open a menu above the input with the typed part
-  bold, the pick highlighted and a detail card for its description. ↑/↓ and Tab/⇧Tab move, Enter
-  takes the pick, Escape closes, and typing narrows the list. A pick replaces the word before the
-  caret and adds a space unless it is a folder.
+  One candidate is inserted straight away. Several open Warp's menu under the word: sorted, nothing
+  picked yet, each row an icon for its kind (folder, file, command, option, from zsh's `$curtag`),
+  the last part of its path with the typed part bold, and its description ("Directory"/"File" when
+  zsh has none). ↑/↓ and Tab/⇧Tab move and preview the pick in the line, with a detail card holding
+  the whole value. Enter takes the pick (or runs the line when nothing is picked), Escape closes and
+  puts the typed line back, and typing narrows the list. A pick replaces the word before the caret
+  and adds a space unless it is a folder.
 - Tests: `zsh-completion.test.ts` (live zsh), `shell-editor-completion.test.ts`, e2e in
   `tests/e2e/shell-editor.spec.ts`.
 

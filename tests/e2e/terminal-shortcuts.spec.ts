@@ -294,11 +294,28 @@ async function pressAndExpectWrite(
     .toBeGreaterThanOrEqual(repetitions)
 }
 
-// Fork: at an idle zsh prompt the shell editor's field takes keys like Shift+Enter, so terminal
-// key encoding is checked while a program reads instead.
-async function holdTerminalWithRead(page: Page, ptyId: string, command: string): Promise<void> {
-  await execInTerminal(page, ptyId, command)
-  await expect(page.locator('.pane:not([hidden]) [data-shell-editor-root]')).toHaveCount(0)
+// Fork: these specs check xterm's own key encoding, and at an idle prompt the shell editor's field
+// takes the keys instead. The setting applies to new terminals, so swap the first tab for one.
+async function useTerminalWithoutShellEditor(page: Page): Promise<void> {
+  const swapped = await page.evaluate(async () => {
+    const store = window.__store!
+    if (!store.getState().settings?.terminalShellEditor) {
+      return false
+    }
+    await store.getState().updateSettings({ terminalShellEditor: false })
+    const { activeWorktreeId, activeTabId } = store.getState()
+    const tab = store.getState().createTab(activeWorktreeId!)
+    store.getState().activateTab(tab.id)
+    if (activeTabId) {
+      store.getState().closeTab(activeTabId)
+    }
+    return true
+  })
+  if (swapped) {
+    await waitForActiveTerminalManager(page, 30_000)
+    await waitForPaneCount(page, 1, 30_000)
+    await waitForActivePanePtyId(page)
+  }
 }
 
 const isMac = process.platform === 'darwin'
@@ -350,25 +367,21 @@ test.describe('Terminal Shortcuts', () => {
       'Electron automation in this environment never mounts the live TerminalPane manager.'
     )
     await waitForPaneCount(orcaPage, 1, 30_000)
+    await useTerminalWithoutShellEditor(orcaPage)
   })
 
   test('Shift+Enter follows the pane Kitty keyboard state', async ({ orcaPage, electronApp }) => {
     await installMainProcessPtyWriteSpy(electronApp)
     const ptyId = await waitForActivePanePtyId(orcaPage)
 
+    await pressAndExpectWrite(orcaPage, electronApp, 'Shift+Enter', '\x1b\r')
     if (process.platform === 'win32') {
-      await pressAndExpectWrite(orcaPage, electronApp, 'Shift+Enter', '\x1b\r')
       return
     }
 
     // Drive the production PTY-output mirror that shortcut policy reads, not renderer-local flags.
     // Disarm before exit because host grounding clears flags left armed.
-    await holdTerminalWithRead(
-      orcaPage,
-      ptyId,
-      "read -r _; printf '\\033[>1u'; read -r _; printf '\\033[<u'; read -r _"
-    )
-    await pressAndExpectWrite(orcaPage, electronApp, 'Shift+Enter', '\x1b\r')
+    await execInTerminal(orcaPage, ptyId, "printf '\\033[>1u'; read -r _; printf '\\033[<u'")
     await expect.poll(() => getKittyKeyboardFlags(orcaPage)).toBe(1)
     await pressAndExpectWrite(orcaPage, electronApp, 'Shift+Enter', '\x1b[13;2u')
 
@@ -461,7 +474,6 @@ test.describe('Terminal Shortcuts', () => {
 
     await sendToTerminal(orcaPage, ptyId, '\r')
     await expect.poll(async () => await getKittyKeyboardFlags(orcaPage)).toBe(0)
-    await holdTerminalWithRead(orcaPage, ptyId, 'read -r _')
     await pressAndExpectWrite(orcaPage, electronApp, 'Shift+Enter', '\x1b\r')
   })
 

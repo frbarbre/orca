@@ -2244,9 +2244,12 @@ Warp-style Tab completion in the shell editor box, with zsh's own candidates.
 - The field also counts as the terminal's input when telling main what has focus
   (`setTerminalInputFocused` in `use-terminal-pane-global-listeners.ts`), so main matches ⌘W as
   closing the pane, not the tab.
+- The field also gets the `terminal` keybinding context (`getKeybindingContext` in
+  `terminal-workspace-model.ts` and `app-command-handlers.ts`), so ⌘W from it is the pane close, not
+  `tab.close`.
 - Upstream e2e adjusted for the editor: `terminal-close-pane-focus.spec.ts` accepts focus in the
-  neighbor's field, and `terminal-shortcuts.spec.ts` checks Shift+Enter while `read` holds the
-  terminal, since at an idle prompt the field takes it as a new line.
+  neighbor's field. `terminal-shortcuts.spec.ts` checks xterm's own key encoding, so its
+  `beforeEach` turns the editor off and swaps in a fresh tab (`useTerminalWithoutShellEditor`).
 - Tests: `shell-editor-model.test.ts`, e2e in `tests/e2e/shell-editor.spec.ts`.
 
 ## Verify

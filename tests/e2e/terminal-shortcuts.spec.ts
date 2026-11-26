@@ -294,6 +294,13 @@ async function pressAndExpectWrite(
     .toBeGreaterThanOrEqual(repetitions)
 }
 
+// Fork: at an idle zsh prompt the shell editor's field takes keys like Shift+Enter, so terminal
+// key encoding is checked while a program reads instead.
+async function holdTerminalWithRead(page: Page, ptyId: string, command: string): Promise<void> {
+  await execInTerminal(page, ptyId, command)
+  await expect(page.locator('.pane:not([hidden]) [data-shell-editor-root]')).toHaveCount(0)
+}
+
 const isMac = process.platform === 'darwin'
 const mod = isMac ? 'Meta' : 'Control'
 
@@ -354,15 +361,13 @@ test.describe('Terminal Shortcuts', () => {
       return
     }
 
-    // Fork: at an idle zsh prompt the shell editor's field takes Shift+Enter as a new line, so the
-    // encoding is checked while a program reads. Drive the production PTY-output mirror that shortcut
-    // policy reads, not renderer-local flags; disarm before exit because host grounding clears flags.
-    await execInTerminal(
+    // Drive the production PTY-output mirror that shortcut policy reads, not renderer-local flags.
+    // Disarm before exit because host grounding clears flags left armed.
+    await holdTerminalWithRead(
       orcaPage,
       ptyId,
       "read -r _; printf '\\033[>1u'; read -r _; printf '\\033[<u'; read -r _"
     )
-    await expect(orcaPage.locator('.pane:not([hidden]) [data-shell-editor-root]')).toHaveCount(0)
     await pressAndExpectWrite(orcaPage, electronApp, 'Shift+Enter', '\x1b\r')
     await expect.poll(() => getKittyKeyboardFlags(orcaPage)).toBe(1)
     await pressAndExpectWrite(orcaPage, electronApp, 'Shift+Enter', '\x1b[13;2u')
@@ -456,6 +461,7 @@ test.describe('Terminal Shortcuts', () => {
 
     await sendToTerminal(orcaPage, ptyId, '\r')
     await expect.poll(async () => await getKittyKeyboardFlags(orcaPage)).toBe(0)
+    await holdTerminalWithRead(orcaPage, ptyId, 'read -r _')
     await pressAndExpectWrite(orcaPage, electronApp, 'Shift+Enter', '\x1b\r')
   })
 

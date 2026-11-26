@@ -26,6 +26,7 @@ import type {
   PhysicalModifierToken
 } from '../../../shared/keybindings'
 import { shortcutPlatform } from './app-window-chrome'
+import { isShellEditorField } from '@/components/terminal-pane/shell-editor/shell-editor-dom'
 
 type AppStoreState = ReturnType<typeof useAppStore.getState>
 
@@ -79,7 +80,8 @@ export function useAppShortcutActions() {
 }
 
 export function getKeybindingContext(target: EventTarget | null): KeybindingContext {
-  return target instanceof HTMLElement && target.classList.contains('xterm-helper-textarea')
+  return (target instanceof HTMLElement && target.classList.contains('xterm-helper-textarea')) ||
+    isShellEditorField(target)
     ? 'terminal'
     : 'app'
 }

@@ -24,6 +24,7 @@ test.skip(process.platform === 'win32', 'the shell editor is zsh only')
 
 test('keeps shell blocks across a quit and relaunch', async (// oxlint-disable-next-line no-empty-pattern -- this test owns both Electron launches.
 {}, testInfo) => {
+  // Why: two full app launches, with a daemon handover and a restored session between them.
   test.setTimeout(240_000)
   const session = createRestartSession(testInfo)
   let firstApp: ElectronApplication | null = null

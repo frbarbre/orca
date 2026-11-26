@@ -332,6 +332,27 @@ test.describe('shell editor', () => {
     await expect(field).toHaveValue('cd completion-a')
   })
 
+  test('draws an empty block for each empty line run, as Warp does', async ({ orcaPage }) => {
+    const field = orcaPage.locator(FIELD)
+    await expect(field).toBeVisible({ timeout: 30_000 })
+    await field.fill('echo before-empty')
+    await field.press('Enter')
+    await waitForOutputLine(orcaPage, 'before-empty')
+    await expect(field).toBeVisible({ timeout: 15_000 })
+
+    const labels = orcaPage.locator('.pane:not([hidden]) .shell-block-label')
+    await expect(labels).toHaveCount(1, { timeout: 15_000 })
+    for (const count of [2, 3, 4]) {
+      await field.press('Enter')
+      await expect(labels).toHaveCount(count, { timeout: 15_000 })
+    }
+    const texts = await labels.allTextContents()
+    expect(texts[0]).toMatch(/^v\d+/)
+    for (const text of texts.slice(1)) {
+      expect(text).toMatch(/^\/.* git:\(main\) \(\d+\.\d{3}s\)$/)
+    }
+  })
+
   test('keeps commands and their output together, with no terminal cursor', async ({
     orcaPage
   }) => {

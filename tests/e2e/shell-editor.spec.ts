@@ -135,6 +135,39 @@ test.describe('shell editor', () => {
     await testInfo.attach('blocks', { body: await orcaPage.screenshot(), contentType: 'image/png' })
   })
 
+  for (const away of [{ label: 'briefly', parked: false }, { label: 'until parked', parked: true }]) {
+    test(`keeps its blocks after switching to another tab ${away.label}`, async ({ orcaPage }) => {
+      const field = orcaPage.locator(FIELD)
+      await expect(field).toBeVisible({ timeout: 30_000 })
+      for (const command of ['echo kept-one', 'false']) {
+        await field.fill(command)
+        await field.press('Enter')
+        await expect(field).toBeVisible({ timeout: 15_000 })
+      }
+      const blocks = orcaPage.locator('.pane:not([hidden]) [data-shell-block]')
+      await expect(blocks).toHaveCount(2, { timeout: 15_000 })
+
+      const worktreeId = await waitForActiveWorktree(orcaPage)
+      const tabId = await getActiveTabId(orcaPage)
+      if (away.parked) {
+        await parkHiddenTabBehindDecoy(orcaPage, worktreeId, tabId!, { parkDelayMs: PARK_DELAY_MS })
+      } else {
+        await orcaPage.evaluate((id) => {
+          const state = window.__store!.getState()
+          const other = state.createTab(id, undefined, undefined, { activate: true })
+          state.setActiveTab(other.id)
+        }, worktreeId)
+        await expect.poll(() => getActiveTabId(orcaPage)).not.toBe(tabId)
+      }
+      await orcaPage.evaluate((id) => window.__store?.getState().setActiveTab(id), tabId!)
+      await waitForActiveTerminalManager(orcaPage, 30_000)
+
+      await expect(blocks).toHaveCount(2, { timeout: 15_000 })
+      await expect(blocks.nth(1)).toHaveAttribute('data-failed', 'true')
+      await expect(blocks.nth(0).locator('.shell-block-label')).toContainText('git:(')
+    })
+  }
+
   test('copies a block’s output from its menu', async ({ electronApp, orcaPage }) => {
     const field = orcaPage.locator(FIELD)
     await expect(field).toBeVisible({ timeout: 30_000 })

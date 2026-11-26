@@ -45,6 +45,7 @@ export function createShellBlockTracker(options: { maxBlocks?: number } = {}) {
   const maxBlocks = options.maxBlocks ?? DEFAULT_MAX_BLOCKS
   let tracked: TrackedBlock[] = []
   let pendingHeader: BlockMarker | null = null
+  let emptySubmittedAt: number | null = null
   let context: ShellBlockContext = { cwd: null, branch: null, node: null }
   let nextId = 1
   let snapshot: ShellBlock[] = []
@@ -80,8 +81,30 @@ export function createShellBlockTracker(options: { maxBlocks?: number } = {}) {
   }
 
   return {
-    promptStart(header: BlockMarker): void {
+    promptStart(header: BlockMarker, now = Date.now()): void {
+      if (pendingHeader && emptySubmittedAt !== null) {
+        tracked.push({
+          id: nextId++,
+          header: pendingHeader,
+          output: header,
+          end: header,
+          context,
+          exitCode: 0,
+          startedAt: emptySubmittedAt,
+          endedAt: now,
+          command: ''
+        })
+        emptySubmittedAt = null
+        pendingHeader = header
+        publish()
+        return
+      }
+      emptySubmittedAt = null
       pendingHeader = header
+    },
+    /** The editor ran an empty line; zsh's next prompt closes it as an empty block, as in Warp. */
+    emptyCommandSubmitted(now: number): void {
+      emptySubmittedAt = now
     },
     /** Row of the prompt the next command starts from, or null when there is none. */
     pendingHeaderLine: (): number | null =>

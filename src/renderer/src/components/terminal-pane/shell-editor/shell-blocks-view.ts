@@ -54,10 +54,11 @@ export function blockOutputText(buffer: BlockBuffer, block: ShellBlock): string 
 
 /** False once `clear` or a redraw wiped the rows the block was drawn over. */
 export function isBlockIntact(buffer: BlockBuffer, block: ShellBlock): boolean {
+  const commandRow = rowText(buffer, block.headerLine + COMMAND_ROW_OFFSET).trim()
   return (
     rowText(buffer, block.headerLine).trim() === '' &&
     rowText(buffer, block.headerLine + HEADER_ROW_OFFSET).trim() === '' &&
-    rowText(buffer, block.headerLine + COMMAND_ROW_OFFSET).trim() !== ''
+    (block.command === '' ? commandRow === '' : commandRow !== '')
   )
 }
 
@@ -105,11 +106,13 @@ export function formatBlockDuration(ms: number, options: { running?: boolean } =
 export function shellBlockHeaderLabel(block: ShellBlock, now: number): string {
   const running = block.endedAt === null
   const duration = formatBlockDuration((block.endedAt ?? now) - block.startedAt, { running })
+  // Why: Warp's header for an empty line only says where it ran and how long it took.
+  const empty = block.command === ''
   return [
-    block.node,
+    empty ? null : block.node,
     block.cwd ? displayShellEditorCwd(block.cwd) : null,
     block.branch ? `git:(${block.branch})` : null,
-    block.diffStat?.files
+    !empty && block.diffStat?.files
       ? `${block.diffStat.files} • +${block.diffStat.insertions} -${block.diffStat.deletions}`
       : null,
     `(${duration})`

@@ -65,6 +65,21 @@ describe('block text', () => {
     expect(blockOutputText(buffer, block({ endLine: null }))).toContain('next')
   })
 
+  it('keeps an empty block, whose command row is blank', () => {
+    expect(
+      isBlockIntact(
+        bufferOf(['', '', '', '', '']),
+        block({ headerLine: 0, outputLine: 3, endLine: 3, command: '' })
+      )
+    ).toBe(true)
+    expect(
+      isBlockIntact(
+        bufferOf(['', 'stale', '', '']),
+        block({ headerLine: 0, outputLine: 3, endLine: 3, command: '' })
+      )
+    ).toBe(false)
+  })
+
   it('treats a block whose rows were wiped by clear as gone', () => {
     expect(isBlockIntact(buffer, block())).toBe(true)
     expect(isBlockIntact(bufferOf(['', '', '', '']), block())).toBe(false)
@@ -122,6 +137,15 @@ describe('relocateShellBlocks', () => {
 })
 
 describe('header label', () => {
+  it('leaves node and changes off an empty block’s header, as Warp does', () => {
+    expect(
+      shellBlockHeaderLabel(
+        block({ command: '', diffStat: { files: 1, insertions: 2, deletions: 0 }, endedAt: 43 }),
+        0
+      )
+    ).toBe('~/Documents/github/flowbase git:(main) (0.043s)')
+  })
+
   it('reads like Warp’s: node, folder, branch and duration', () => {
     expect(shellBlockHeaderLabel(block(), 0)).toBe(
       'v24.14.0 ~/Documents/github/flowbase git:(main) (0.107s)'

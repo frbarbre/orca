@@ -9,6 +9,7 @@ import {
   resolveShellEditorKey
 } from './shell-editor-model'
 import type { ShellEditorSession } from './shell-editor-session'
+import { getShellBlockTracker } from './shell-editor-registry'
 import { ShellEditorCompletionMenu } from './ShellEditorCompletionMenu'
 import { useShellCompletion } from './use-shell-completion'
 import {
@@ -210,6 +211,9 @@ export function ShellEditorBox({
             setText('')
           }
           return
+        }
+        if (!text.trim()) {
+          getShellBlockTracker(terminal)?.emptyCommandSubmitted(Date.now())
         }
         if (send(encodeShellEditorCommand(text))) {
           if (text.trim()) {

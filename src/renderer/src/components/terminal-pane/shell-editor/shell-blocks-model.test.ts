@@ -32,6 +32,35 @@ describe('shell block tracker', () => {
     expect(tracker.getBlocks()[0]).toMatchObject({ endLine: 9, exitCode: 1, endedAt: 3500 })
   })
 
+  it('turns an empty line run from the editor into an empty block, as Warp does', () => {
+    const tracker = createShellBlockTracker()
+    tracker.promptStart(marker(4))
+    tracker.promptInfo(INFO)
+    tracker.emptyCommandSubmitted(1000)
+    tracker.promptStart(marker(7), 1043)
+
+    expect(tracker.getBlocks()).toEqual([
+      expect.objectContaining({
+        headerLine: 4,
+        outputLine: 7,
+        endLine: 7,
+        exitCode: 0,
+        startedAt: 1000,
+        endedAt: 1043,
+        command: '',
+        cwd: '/repo'
+      })
+    ])
+  })
+
+  it('makes no empty block for a new prompt nobody submitted, like a resync', () => {
+    const tracker = createShellBlockTracker()
+    tracker.promptStart(marker(4))
+    tracker.promptInfo(INFO)
+    tracker.promptStart(marker(7), 1043)
+    expect(tracker.getBlocks()).toEqual([])
+  })
+
   it('takes each block’s folder and branch from the prompt it was typed at', () => {
     const tracker = createShellBlockTracker()
     tracker.promptStart(marker(0))

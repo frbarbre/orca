@@ -2181,6 +2181,10 @@ Warp-style command blocks for shell-editor terminals.
   terminal first. Each block records its command as echoed. The rebuilt terminal finds them again
   by content: two blank rows, then the command, newest first (`relocateShellBlocks`). This runs at
   attach, then on writes or paints until it matches, and the blocks keep their timing and result.
+- **Empty lines.** As in Warp, an empty (or blank) line run from the box leaves an empty block whose
+  header has only folder, branch and duration. zsh runs no preexec for it, so the box tells the
+  tracker (`emptyCommandSubmitted`) and zsh's next prompt closes the block; a prompt nobody
+  submitted (a resync nudge) makes none.
 - **Lost markers.** A terminal can also drop its markers while keeping the rows (seen after a
   brief tab switch with a long-running command, once its output scrolled). The tracker keeps such
   blocks out of the snapshot but remembers them (`lostBlockIds`); on the next write or paint the

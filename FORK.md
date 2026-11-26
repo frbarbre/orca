@@ -2174,8 +2174,12 @@ Warp-style command blocks for shell-editor terminals.
   dropped (`isBlockIntact`). Short output is pushed down so the newest block sits on the input
   (`bottomAnchorRows`, a transform on xterm's root that the overlay shares). The box also shows node
   and diff-stat chips.
-- Not yet: Warp's download/filter buttons. Blocks of a parked tab are lost, since its markers die
-  with the terminal.
+- **Parked tabs.** A parked tab rebuilds its terminal, and its markers die with the old one. The
+  registry keeps each pane's latest blocks on every change, since parking need not dispose the old
+  terminal first. Each block records its command as echoed. The rebuilt terminal finds them again
+  by content: two blank rows, then the command, newest first (`relocateShellBlocks`). This runs at
+  attach, then on writes or paints until it matches, and the blocks keep their timing and result.
+- Not yet: Warp's download/filter buttons.
 - Tests: `shell-blocks-*.test.ts`, `git-diff-stat.test.ts`, e2e in `tests/e2e/shell-editor.spec.ts`.
 
 ## Verify

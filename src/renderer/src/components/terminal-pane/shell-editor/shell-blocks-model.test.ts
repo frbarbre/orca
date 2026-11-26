@@ -53,6 +53,17 @@ describe('shell block tracker', () => {
     ])
   })
 
+  it('gives an empty block the last command’s result, which $? still holds', () => {
+    const tracker = createShellBlockTracker()
+    tracker.promptStart(marker(0))
+    tracker.commandStart(marker(3), 0, 'docker ps')
+    tracker.commandFinished(marker(5), 1, 70)
+    tracker.promptStart(marker(5))
+    tracker.emptyCommandSubmitted(100)
+    tracker.promptStart(marker(8), 143)
+    expect(tracker.getBlocks().map((block) => block.exitCode)).toEqual([1, 1])
+  })
+
   it('makes no empty block for a new prompt nobody submitted, like a resync', () => {
     const tracker = createShellBlockTracker()
     tracker.promptStart(marker(4))

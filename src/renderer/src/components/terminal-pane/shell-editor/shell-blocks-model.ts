@@ -89,7 +89,8 @@ export function createShellBlockTracker(options: { maxBlocks?: number } = {}) {
           output: header,
           end: header,
           context,
-          exitCode: 0,
+          // Why: an empty line runs nothing, so $? and Warp's failure tint carry over from the last command.
+          exitCode: tracked.at(-1)?.exitCode ?? 0,
           startedAt: emptySubmittedAt,
           endedAt: now,
           command: ''

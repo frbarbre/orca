@@ -25,6 +25,7 @@ import { TRANSPORT_CONNECT_SETTLE_GRACE_MS } from './pty-connect-limits'
 import { buildPaneTransportOptions } from './pane-transport-options'
 import { createUnservedSshRowTransport } from './unserved-ssh-pane-connect'
 import { createLegacyRelayBridgeTransport } from '../legacy-relay-bridge-transport'
+import { onShellEditorTypedInput } from '../shell-editor/shell-editor-typed-input'
 import { legacyRelayBridgePtyIdForPane } from '../legacy-relay-bridge-panes'
 
 import type { ConnectPanePtySession } from './connect-pane-pty-session'
@@ -39,6 +40,8 @@ export function installPtyInputRecovery(session: ConnectPanePtySession): void {
     session.markTerminalInputSent()
     session.recordTerminalInputForHibernationFallback()
   }
+  // Fork: the shell editor writes past xterm, so an exit typed there must still count as typing.
+  onShellEditorTypedInput(session.pane.terminal, session.markAcceptedTerminalInputSent)
   session.terminalTheme = session.pane.terminal.options.theme
   session.terminalColorQueryReplies = session.terminalTheme
     ? { foreground: session.terminalTheme.foreground, background: session.terminalTheme.background }

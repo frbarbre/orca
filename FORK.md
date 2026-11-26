@@ -2185,6 +2185,11 @@ Warp-style command blocks for shell-editor terminals.
   header has only folder, branch and duration. zsh runs no preexec for it, so the box tells the
   tracker (`emptyCommandSubmitted`) and zsh's next prompt closes the block; a prompt nobody
   submitted (a resync nudge) makes none.
+- **exit.** As in Warp, `exit`, `exit N`, `logout` or Ctrl+D from the box closes the pane, and the
+  tab with its last pane. The box writes past xterm, so `shell-editor-typed-input.ts` tells the pty
+  session that the user typed; otherwise a sole fresh pane is kept for diagnostics. It also marks
+  the exit as deliberate, so a nonzero status left by the last command (or `.zshrc`) does not show
+  the "Terminal exited" card. Sending anything else clears the mark.
 - **Lost markers.** A terminal can also drop its markers while keeping the rows (seen after a
   brief tab switch with a long-running command, once its output scrolled). The tracker keeps such
   blocks out of the snapshot but remembers them (`lostBlockIds`); on the next write or paint the

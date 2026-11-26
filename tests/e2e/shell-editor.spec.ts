@@ -332,6 +332,34 @@ test.describe('shell editor', () => {
     await expect(field).toHaveValue('cd completion-a')
   })
 
+  test('closes its tab when exit is typed, as Warp does', async ({ orcaPage }) => {
+    const worktreeId = await waitForActiveWorktree(orcaPage)
+    const tabId = await orcaPage.evaluate((id) => {
+      const state = window.__store!.getState()
+      const tab = state.createTab(id, undefined, undefined, { activate: true })
+      state.setActiveTab(tab.id)
+      return tab.id
+    }, worktreeId)
+    await waitForActiveTerminalManager(orcaPage, 30_000)
+    const field = orcaPage.locator(`${FIELD}:visible`)
+    await expect(field).toBeVisible({ timeout: 30_000 })
+
+    await field.fill('exit')
+    await field.press('Enter')
+
+    await expect
+      .poll(
+        () =>
+          orcaPage.evaluate(
+            ({ id, tab }) =>
+              window.__store!.getState().tabsByWorktree[id]?.some((entry) => entry.id === tab),
+            { id: worktreeId, tab: tabId }
+          ),
+        { timeout: 15_000 }
+      )
+      .toBe(false)
+  })
+
   test('draws an empty block for each empty line run, as Warp does', async ({ orcaPage }) => {
     const field = orcaPage.locator(FIELD)
     await expect(field).toBeVisible({ timeout: 30_000 })

@@ -10,6 +10,7 @@ import {
 } from './shell-editor-model'
 import type { ShellEditorSession } from './shell-editor-session'
 import { getShellBlockTracker } from './shell-editor-registry'
+import { noteShellEditorTypedInput } from './shell-editor-typed-input'
 import { ShellEditorCompletionMenu } from './ShellEditorCompletionMenu'
 import { useShellCompletion } from './use-shell-completion'
 import {
@@ -63,12 +64,18 @@ export function ShellEditorBox({
   const visible = snapshot.phase === 'starting' || snapshot.phase === 'prompt'
   useReservePaneBottomSpace(rootRef, paneContainer, visible)
 
-  const send = (data: string): boolean => transport?.sendInput(data, 'driving') ?? false
+  const send = (data: string, command = ''): boolean => {
+    const sent = transport?.sendInput(data, 'driving') ?? false
+    if (sent) {
+      noteShellEditorTypedInput(terminal, command)
+    }
+    return sent
+  }
 
   useEffect(() => {
     const queued = session.takeQueued()
     if (queued !== null) {
-      send(encodeShellEditorCommand(queued))
+      send(encodeShellEditorCommand(queued), queued)
     }
   })
 
@@ -215,7 +222,7 @@ export function ShellEditorBox({
         if (!text.trim()) {
           getShellBlockTracker(terminal)?.emptyCommandSubmitted(Date.now())
         }
-        if (send(encodeShellEditorCommand(text))) {
+        if (send(encodeShellEditorCommand(text), text)) {
           if (text.trim()) {
             history.record(text)
           }
@@ -240,7 +247,7 @@ export function ShellEditorBox({
         replaceText('')
         return
       case 'eof':
-        send('\u0004')
+        send('\u0004', '\u0004')
         return
       case 'clearScreen':
         send('\u000c')

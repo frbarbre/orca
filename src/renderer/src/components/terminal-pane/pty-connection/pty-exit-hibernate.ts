@@ -22,6 +22,7 @@ import { isPtyExitReplacedByRestart } from '../pty-exit-delivery'
 import { armRestartReplacement } from './restart-replacement-on-show'
 import { noteHiddenAgentResumePtyEnded } from './hidden-agent-resume-deferral'
 import { expectExitedSplitPaneClose } from './exited-split-pane-close'
+import { takeShellEditorExit } from '../shell-editor/shell-editor-typed-input'
 import { ORCA_LAYOUT_OWNER_IS_MAIN } from '../../../../../shared/layout-owner-switch'
 
 // Why live+done arms too: kept from #16308's wake-sweep widening; hibernation itself only writes worktree-sleep notes.
@@ -256,7 +257,11 @@ export function installPtyExitHibernate(session: ConnectPanePtySession): void {
       return
     }
     session.manager.setPaneGpuRendering(session.pane.id, true)
-    const failedLocalProcess = session.runtimeEnvironmentId === null && exitCode !== 0
+    // Fork: an exit typed in the shell editor is deliberate whatever status the shell last held.
+    const failedLocalProcess =
+      session.runtimeEnvironmentId === null &&
+      exitCode !== 0 &&
+      !takeShellEditorExit(session.pane.terminal)
     if (failedLocalProcess && session.deps.onPaneProcessDied) {
       const gitBashConsoleCapacityFailure = processExitState.detector.detected()
       session.deps.onPaneProcessDied({

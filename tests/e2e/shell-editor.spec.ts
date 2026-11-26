@@ -37,6 +37,58 @@ test.describe('shell editor', () => {
     await expect(field).toHaveValue('')
   })
 
+  test('takes focus back when the output is clicked, but not when text is selected', async ({
+    orcaPage
+  }) => {
+    const field = orcaPage.locator(FIELD)
+    await expect(field).toBeVisible({ timeout: 30_000 })
+    await field.fill('echo select-me-please')
+    await field.press('Enter')
+    await waitForOutputLine(orcaPage, 'select-me-please')
+    await expect(field).toBeVisible({ timeout: 15_000 })
+
+    const screen = orcaPage.locator('.pane:not([hidden]) .xterm-screen').first()
+    await screen.click({ position: { x: 200, y: 20 } })
+    await expect(field).toBeFocused()
+
+    const box = (await screen.boundingBox())!
+    const tabId = await getActiveTabId(orcaPage)
+    const y = await orcaPage.evaluate((id) => {
+      const terminal = window.__paneManagers?.get(id ?? '')?.getActivePane?.()?.terminal as
+        | {
+            rows: number
+            element?: HTMLElement
+            buffer: {
+              active: {
+                viewportY: number
+                length: number
+                getLine: (
+                  row: number
+                ) => { translateToString: (trim: boolean) => string } | undefined
+              }
+            }
+          }
+        | undefined
+      const screenElement = terminal?.element?.querySelector('.xterm-screen')
+      if (!terminal || !screenElement) {
+        return 0
+      }
+      const buffer = terminal.buffer.active
+      let line = buffer.length - 1
+      while (line >= 0 && buffer.getLine(line)?.translateToString(true) !== 'select-me-please') {
+        line--
+      }
+      const rect = screenElement.getBoundingClientRect()
+      const cell = rect.height / terminal.rows
+      return rect.top + cell * (line - buffer.viewportY + 0.5)
+    }, tabId)
+    await orcaPage.mouse.move(box.x + 2, y)
+    await orcaPage.mouse.down()
+    await orcaPage.mouse.move(box.x + 120, y, { steps: 8 })
+    await orcaPage.mouse.up()
+    await expect(field).not.toBeFocused()
+  })
+
   test('suggests the rest of an earlier command and takes it with →', async ({ orcaPage }) => {
     const field = orcaPage.locator(FIELD)
     await expect(field).toBeVisible({ timeout: 30_000 })

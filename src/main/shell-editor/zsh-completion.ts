@@ -1,6 +1,7 @@
 import { mkdirSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { spawnProcess } from '@orca/process-host'
+import type { PipedChildProcess } from '@orca/process-host/process-spec'
 import { ZSH_COMPLETION_DRIVER, ZSH_COMPLETION_INIT } from './zsh-completion-scripts'
 
 export type ZshCompletion = { value: string; description: string | null }
@@ -59,7 +60,7 @@ export function createZshCompletionWorker(options: {
   scriptDir: string
   zshArgs?: string[]
 }): ZshCompletionWorker {
-  let child: ReturnType<typeof spawnProcess> | null = null
+  let child: PipedChildProcess | null = null
   let output = ''
   let ready = false
   let pending: Pending[] = []
@@ -96,7 +97,7 @@ export function createZshCompletionWorker(options: {
     }
   }
 
-  const start = (): NonNullable<typeof child> => {
+  const start = (): PipedChildProcess => {
     if (child) {
       return child
     }

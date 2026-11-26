@@ -1,3 +1,5 @@
+import { recognizeAgentProcessFromCommandLine } from '../../../../../shared/agent-process-recognition'
+
 /** Mirrors main's SHELL_EDITOR_REQUEST_ENV; main turns it into the zsh wrapper's `editor` feature. */
 const SHELL_EDITOR_REQUEST_ENV = 'ORCA_SHELL_EDITOR'
 
@@ -16,7 +18,7 @@ export function shellEditorSpawnEnv(input: {
     !input.enabled ||
     input.isWindows ||
     input.connectionId ||
-    input.command ||
+    recognizeAgentProcessFromCommandLine(input.command) ||
     input.launchAgent ||
     input.launchConfig ||
     input.admittedSessionId

@@ -21,6 +21,8 @@ export type ShellBlock = ShellBlockContext & {
   exitCode: number | null
   startedAt: number
   endedAt: number | null
+  /** As echoed when it started; finds the block again after its terminal is rebuilt. */
+  command: string
 }
 
 type TrackedBlock = {
@@ -32,6 +34,7 @@ type TrackedBlock = {
   exitCode: number | null
   startedAt: number
   endedAt: number | null
+  command: string
 }
 
 const DEFAULT_MAX_BLOCKS = 500
@@ -57,6 +60,7 @@ export function createShellBlockTracker(options: { maxBlocks?: number } = {}) {
       exitCode: block.exitCode,
       startedAt: block.startedAt,
       endedAt: block.endedAt,
+      command: block.command,
       ...block.context
     }))
   }
@@ -72,6 +76,9 @@ export function createShellBlockTracker(options: { maxBlocks?: number } = {}) {
     promptStart(header: BlockMarker): void {
       pendingHeader = header
     },
+    /** Row of the prompt the next command starts from, or null when there is none. */
+    pendingHeaderLine: (): number | null =>
+      pendingHeader && !pendingHeader.isDisposed ? pendingHeader.line : null,
     promptInfo(info: ShellBlockContext & { histfile?: string | null }): void {
       context = { cwd: info.cwd, branch: info.branch, node: info.node, diffStat: null }
     },
@@ -79,7 +86,7 @@ export function createShellBlockTracker(options: { maxBlocks?: number } = {}) {
     setDiffStat(diffStat: ShellDiffStat | null): void {
       context = { ...context, diffStat }
     },
-    commandStart(output: BlockMarker, now: number): void {
+    commandStart(output: BlockMarker, now: number, command = ''): void {
       if (!pendingHeader) {
         return
       }
@@ -91,9 +98,41 @@ export function createShellBlockTracker(options: { maxBlocks?: number } = {}) {
         context,
         exitCode: null,
         startedAt: now,
-        endedAt: null
+        endedAt: null,
+        command
       })
       pendingHeader = null
+      publish()
+    },
+    /** Re-anchors blocks of a rebuilt terminal at the rows they were found on, ahead of newer blocks. */
+    restore(
+      found: readonly { block: ShellBlock; headerLine: number }[],
+      markerAt: (line: number) => BlockMarker | undefined
+    ): void {
+      const restored = found.flatMap(({ block, headerLine }): TrackedBlock[] => {
+        const header = markerAt(headerLine)
+        const output = markerAt(headerLine + block.outputLine - block.headerLine)
+        const end =
+          block.endLine === null ? null : markerAt(headerLine + block.endLine - block.headerLine)
+        if (!header || !output || end === undefined) {
+          return []
+        }
+        const { cwd, branch, node, diffStat } = block
+        return [
+          {
+            id: nextId++,
+            header,
+            output,
+            end,
+            context: { cwd, branch, node, diffStat },
+            exitCode: block.exitCode,
+            startedAt: block.startedAt,
+            endedAt: block.endedAt,
+            command: block.command
+          }
+        ]
+      })
+      tracked = [...restored, ...tracked]
       publish()
     },
     commandFinished(end: BlockMarker, exitCode: number | null, now: number): void {

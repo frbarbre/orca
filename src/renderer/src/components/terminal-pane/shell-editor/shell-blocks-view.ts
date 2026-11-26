@@ -41,7 +41,10 @@ function readRows(buffer: BlockBuffer, from: number, toExclusive: number): strin
 const HEADER_ROW_OFFSET = 1
 const COMMAND_ROW_OFFSET = 2
 
-export function blockCommandText(buffer: BlockBuffer, block: ShellBlock): string {
+export function blockCommandText(
+  buffer: BlockBuffer,
+  block: Pick<ShellBlock, 'headerLine' | 'outputLine'>
+): string {
   return readRows(buffer, block.headerLine + COMMAND_ROW_OFFSET, block.outputLine)
 }
 
@@ -56,6 +59,39 @@ export function isBlockIntact(buffer: BlockBuffer, block: ShellBlock): boolean {
     rowText(buffer, block.headerLine + HEADER_ROW_OFFSET).trim() === '' &&
     rowText(buffer, block.headerLine + COMMAND_ROW_OFFSET).trim() !== ''
   )
+}
+
+function startsBlockFor(buffer: BlockBuffer, row: number, command: string): boolean {
+  const commandRow = rowText(buffer, row + COMMAND_ROW_OFFSET).trimEnd()
+  return (
+    commandRow !== '' &&
+    command.startsWith(commandRow) &&
+    rowText(buffer, row).trim() === '' &&
+    rowText(buffer, row + HEADER_ROW_OFFSET).trim() === ''
+  )
+}
+
+/**
+ * Finds blocks again in a rebuilt terminal, whose restored rows may sit at other lines than before.
+ * Matches newest first from the bottom, so a repeated command lands on its latest run.
+ */
+export function relocateShellBlocks(
+  buffer: BlockBuffer,
+  blocks: readonly ShellBlock[]
+): { block: ShellBlock; headerLine: number }[] {
+  const found: { block: ShellBlock; headerLine: number }[] = []
+  let searchFrom = buffer.length - 1 - COMMAND_ROW_OFFSET
+  for (let index = blocks.length - 1; index >= 0; index--) {
+    const block = blocks[index]
+    for (let row = searchFrom; row >= 0; row--) {
+      if (block.command && startsBlockFor(buffer, row, block.command)) {
+        found.unshift({ block, headerLine: row })
+        searchFrom = row - 1
+        break
+      }
+    }
+  }
+  return found
 }
 
 export function formatBlockDuration(ms: number, options: { running?: boolean } = {}): string {

@@ -135,7 +135,10 @@ test.describe('shell editor', () => {
     await testInfo.attach('blocks', { body: await orcaPage.screenshot(), contentType: 'image/png' })
   })
 
-  for (const away of [{ label: 'briefly', parked: false }, { label: 'until parked', parked: true }]) {
+  for (const away of [
+    { label: 'briefly', parked: false },
+    { label: 'until parked', parked: true }
+  ]) {
     test(`keeps its blocks after switching to another tab ${away.label}`, async ({ orcaPage }) => {
       const field = orcaPage.locator(FIELD)
       await expect(field).toBeVisible({ timeout: 30_000 })

@@ -57,6 +57,48 @@ describe('shell block tracker', () => {
     expect(tracker.getBlocks()[0].diffStat).toEqual({ files: 1, insertions: 106_367, deletions: 0 })
   })
 
+  it('keeps the command it was given', () => {
+    const tracker = createShellBlockTracker()
+    tracker.promptStart(marker(0))
+    tracker.promptInfo(INFO)
+    tracker.commandStart(marker(3), 1, 'docker ps')
+    expect(tracker.getBlocks()[0].command).toBe('docker ps')
+  })
+
+  it('restores blocks of a rebuilt terminal ahead of new ones, keeping their timing and result', () => {
+    const tracker = createShellBlockTracker()
+    tracker.promptStart(marker(20))
+    tracker.promptInfo(INFO)
+    tracker.commandStart(marker(23), 50, 'ls')
+    const saved = {
+      id: 9,
+      headerLine: 100,
+      outputLine: 103,
+      endLine: 110,
+      exitCode: 2,
+      startedAt: 1,
+      endedAt: 4,
+      cwd: '/old',
+      branch: 'b',
+      node: null,
+      command: 'false'
+    }
+    tracker.restore([{ block: saved, headerLine: 5 }], (line) => marker(line))
+
+    expect(tracker.getBlocks().map((block) => [block.command, block.headerLine])).toEqual([
+      ['false', 5],
+      ['ls', 20]
+    ])
+    expect(tracker.getBlocks()[0]).toMatchObject({
+      outputLine: 8,
+      endLine: 15,
+      exitCode: 2,
+      startedAt: 1,
+      endedAt: 4,
+      cwd: '/old'
+    })
+  })
+
   it('ignores a command start with no prompt before it, and a finish with no open block', () => {
     const tracker = createShellBlockTracker()
     tracker.commandStart(marker(3), 1)

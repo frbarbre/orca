@@ -7,6 +7,7 @@ import {
   formatBlockDuration,
   isBlockIntact,
   layoutVisibleBlocks,
+  relocateShellBlocks,
   shellBlockHeaderLabel
 } from './shell-blocks-view'
 
@@ -35,6 +36,7 @@ const block = (overrides: Partial<ShellBlock> = {}): ShellBlock => ({
   cwd: '/Users/me/Documents/github/flowbase',
   branch: 'main',
   node: 'v24.14.0',
+  command: 'docker ps',
   ...overrides
 })
 
@@ -67,6 +69,55 @@ describe('block text', () => {
     expect(isBlockIntact(buffer, block())).toBe(true)
     expect(isBlockIntact(bufferOf(['', '', '', '']), block())).toBe(false)
     expect(isBlockIntact(bufferOf(['', 'stale', 'docker ps']), block())).toBe(false)
+  })
+})
+
+describe('relocateShellBlocks', () => {
+  it('finds blocks again by their padding, header and command rows, wherever the rows moved', () => {
+    const restored = bufferOf([
+      'older output',
+      '',
+      '',
+      'ls',
+      '',
+      'a b',
+      '',
+      '',
+      'docker ps',
+      '',
+      'failed',
+      '',
+      '',
+      ''
+    ])
+    const saved = [
+      block({ id: 1, headerLine: 40, outputLine: 43, endLine: 45, command: 'ls' }),
+      block({ id: 2, headerLine: 45, outputLine: 48, endLine: 50, command: 'docker ps' })
+    ]
+    expect(relocateShellBlocks(restored, saved)).toEqual([
+      { block: saved[0], headerLine: 1 },
+      { block: saved[1], headerLine: 6 }
+    ])
+  })
+
+  it('takes the newest match for a repeated command and drops blocks that are gone', () => {
+    const restored = bufferOf(['', '', 'ls', '', 'x', '', '', 'ls', '', 'y'])
+    const saved = [
+      block({ id: 1, command: 'gone' }),
+      block({ id: 2, command: 'ls' }),
+      block({ id: 3, command: 'ls' })
+    ]
+    expect(
+      relocateShellBlocks(restored, saved).map((item) => [item.block.id, item.headerLine])
+    ).toEqual([
+      [2, 0],
+      [3, 5]
+    ])
+  })
+
+  it('matches a long command by the part on its first row', () => {
+    const restored = bufferOf(['', '', 'echo aaaaaaaa', ['bbbb', 'wrapped']])
+    expect(relocateShellBlocks(restored, [block({ command: 'echo aaaaaaaabbbb' })])).toHaveLength(1)
   })
 })
 

@@ -9,8 +9,9 @@ import {
   requestShellEditor
 } from './shell-editor-registry'
 
-function fakeTerminal() {
+function fakeTerminal(rows: string[] = []) {
   const handlers = new Map<number, (data: string) => boolean>()
+  const writeListeners = new Set<() => void>()
   let cursorLine = 0
   const terminal = {
     parser: {
@@ -19,13 +20,37 @@ function fakeTerminal() {
         return { dispose: () => handlers.delete(id) }
       }
     },
-    registerMarker: (offset = 0) => ({ line: cursorLine + offset, isDisposed: false })
+    registerMarker: (offset = 0) => ({ line: cursorLine + offset, isDisposed: false }),
+    onWriteParsed: (listener: () => void) => {
+      writeListeners.add(listener)
+      return { dispose: () => writeListeners.delete(listener) }
+    },
+    buffer: {
+      active: {
+        get length() {
+          return rows.length
+        },
+        baseY: 0,
+        get cursorY() {
+          return cursorLine
+        },
+        getLine: (index: number) =>
+          index < rows.length
+            ? { isWrapped: false, translateToString: () => rows[index] }
+            : undefined
+      }
+    }
   } as unknown as Terminal
   return {
     terminal,
     osc: (id: number, data: string) => handlers.get(id)?.(data) ?? false,
     setCursor: (line: number) => {
       cursorLine = line
+    },
+    wrote: () => {
+      for (const listener of writeListeners) {
+        listener()
+      }
     }
   }
 }
@@ -103,6 +128,33 @@ describe('shell editor registry', () => {
     observeShellEditorOsc133(terminal, 'A')
     observeShellEditorOsc133(terminal, 'C')
     expect(getShellBlockTracker(terminal)?.getBlocks()).toEqual([])
+  })
+
+  it('finds the blocks again once a rebuilt terminal has written its restored rows', () => {
+    const first = fakeTerminal(['', '', 'false', '', '', '', ''])
+    requestShellEditor('tab:leaf-j')
+    const attached = attachShellEditorSession(first.terminal, 'tab:leaf-j')
+    first.setCursor(0)
+    observeShellEditorOsc133(first.terminal, 'A')
+    first.osc(777, 'orca-shell-editor2;main;;;/repo')
+    first.setCursor(3)
+    observeShellEditorOsc133(first.terminal, 'C')
+    first.setCursor(4)
+    observeShellEditorOsc133(first.terminal, 'D;1')
+    expect(getShellBlockTracker(first.terminal)?.getBlocks()[0].command).toBe('false')
+    attached.dispose()
+
+    const rebuiltRows: string[] = []
+    const rebuilt = fakeTerminal(rebuiltRows)
+    attachShellEditorSession(rebuilt.terminal, 'tab:leaf-j')
+    expect(getShellBlockTracker(rebuilt.terminal)?.getBlocks()).toEqual([])
+    rebuiltRows.push('older', '', '', 'false', '', '', '')
+    rebuilt.setCursor(6)
+    rebuilt.wrote()
+
+    expect(getShellBlockTracker(rebuilt.terminal)?.getBlocks()).toEqual([
+      expect.objectContaining({ command: 'false', headerLine: 1, exitCode: 1, cwd: '/repo' })
+    ])
   })
 
   it('keeps the pane’s state when its terminal is rebuilt after parking', () => {

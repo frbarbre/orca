@@ -37,6 +37,38 @@ test.describe('shell editor', () => {
     await expect(field).toHaveValue('')
   })
 
+  test('leaves a quick command’s new tab to the plain terminal, which shows its output', async ({
+    orcaPage
+  }, testInfo) => {
+    await expect(orcaPage.locator(FIELD)).toBeVisible({ timeout: 30_000 })
+    await orcaPage.evaluate(() => {
+      const state = window.__store!.getState()
+      const tab = state.createTab(state.activeWorktreeId!, undefined, undefined, {
+        quickCommandLabel: 'Run',
+        pendingStartup: { command: 'echo quick-command-$((40 + 2))' }
+      })
+      state.activateTab(tab.id)
+    })
+    await waitForOutputLine(orcaPage, 'quick-command-42')
+
+    const pane = await orcaPage.evaluate(() => {
+      const element = document.querySelector<HTMLElement>('.pane:not([hidden]) .xterm')
+      const rect = element?.getBoundingClientRect()
+      return {
+        editor: document.querySelector('.pane:not([hidden])')?.hasAttribute('data-shell-editor'),
+        transform: element?.style.transform ?? null,
+        height: rect?.height ?? 0
+      }
+    })
+    await testInfo.attach('quick-command-tab', {
+      body: await orcaPage.screenshot(),
+      contentType: 'image/png'
+    })
+    expect(pane).toEqual({ editor: false, transform: '', height: expect.any(Number) })
+    expect(pane.height).toBeGreaterThan(100)
+    await expect(orcaPage.locator('.pane:not([hidden]) [data-shell-editor-root]')).toHaveCount(0)
+  })
+
   test('keeps commands and their output together, with no terminal cursor', async ({
     orcaPage
   }) => {

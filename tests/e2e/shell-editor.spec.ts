@@ -51,11 +51,14 @@ test.describe('shell editor', () => {
     })
     await waitForOutputLine(orcaPage, 'quick-command-42')
 
-    const field = orcaPage.locator('.pane:not([hidden]) [data-shell-editor-root] textarea')
-    await expect(field).toBeVisible({ timeout: 15_000 })
+    await expect(orcaPage.locator(FIELD).filter({ visible: true })).toHaveCount(1, {
+      timeout: 15_000
+    })
     await expect(
-      orcaPage.locator('.shell-block-header', { hasText: /\(\d+\.\d{3}s\)/ }).last()
-    ).toBeVisible()
+      orcaPage
+        .locator('.shell-block-header', { hasText: /\(\d+\.\d{3}s\)/ })
+        .filter({ visible: true })
+    ).toHaveCount(1)
     const screen = await readActiveTerminal(orcaPage)
     expect(screen.lines.filter((line) => line.startsWith('echo quick-command'))).toHaveLength(1)
     await testInfo.attach('quick-command-tab', {

@@ -13,6 +13,7 @@ import {
   setRegularTerminalInputFocusAttribute
 } from './regular-terminal-focus-ownership'
 import { refreshTerminalImeInputContext } from './terminal-ime-input-context-refresh'
+import { isShellEditorField } from './shell-editor/shell-editor-dom'
 import type { TerminalPaneCloseController } from './use-terminal-pane-close-actions'
 
 export function useTerminalPaneGlobalListeners(controller: TerminalPaneCloseController): void {
@@ -174,6 +175,10 @@ export function useTerminalPaneGlobalListeners(controller: TerminalPaneCloseCont
       window.api.ui.setTerminalInputFocused?.(focused)
     }
     const onFocusIn = (event: FocusEvent): void => {
+      if (isShellEditorField(event.target)) {
+        syncFocused(true)
+        return
+      }
       if (!isXtermHelperTextarea(event.target)) {
         return
       }
@@ -188,10 +193,14 @@ export function useTerminalPaneGlobalListeners(controller: TerminalPaneCloseCont
       }
     }
     const onFocusOut = (event: FocusEvent): void => {
-      if (!isXtermHelperTextarea(event.target)) {
+      if (!isXtermHelperTextarea(event.target) && !isShellEditorField(event.target)) {
         return
       }
-      if (isXtermHelperTextarea(event.relatedTarget) || refreshingImeInputContext) {
+      if (
+        isXtermHelperTextarea(event.relatedTarget) ||
+        isShellEditorField(event.relatedTarget) ||
+        refreshingImeInputContext
+      ) {
         return
       }
       syncFocused(false)

@@ -31,11 +31,14 @@ async function waitThreeFrames(page: Page): Promise<void> {
   )
 }
 
-/** The leaf whose xterm input holds DOM focus, or null when focus is anywhere else. */
+/** The leaf whose terminal input holds DOM focus (xterm's, or the shell editor's field), else null. */
 async function readFocusedTerminalLeafId(page: Page, tabId: string): Promise<string | null> {
   return page.evaluate((tabId) => {
     const active = document.activeElement
-    if (!active?.classList.contains('xterm-helper-textarea')) {
+    if (
+      !active?.classList.contains('xterm-helper-textarea') &&
+      !(active instanceof HTMLTextAreaElement && active.closest('[data-shell-editor-root]'))
+    ) {
       return null
     }
     const panes = window.__paneManagers?.get(tabId)?.getPanes() ?? []

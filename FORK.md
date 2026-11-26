@@ -2241,6 +2241,12 @@ Warp-style Tab completion in the shell editor box, with zsh's own candidates.
   stay with the field. The new pane's field takes focus like any shown pane.
 - With more than one pane in a tab, the focused one gets Warp's blue triangle in its top-left
   corner (`.pane-focus-indicator`, rendered from `TerminalPaneShellEditorPortals.tsx`).
+- The field also counts as the terminal's input when telling main what has focus
+  (`setTerminalInputFocused` in `use-terminal-pane-global-listeners.ts`), so main matches ⌘W as
+  closing the pane, not the tab.
+- Upstream e2e adjusted for the editor: `terminal-close-pane-focus.spec.ts` accepts focus in the
+  neighbor's field, and `terminal-shortcuts.spec.ts` checks Shift+Enter while `read` holds the
+  terminal, since at an idle prompt the field takes it as a new line.
 - Tests: `shell-editor-model.test.ts`, e2e in `tests/e2e/shell-editor.spec.ts`.
 
 ## Verify

@@ -349,14 +349,21 @@ test.describe('Terminal Shortcuts', () => {
     await installMainProcessPtyWriteSpy(electronApp)
     const ptyId = await waitForActivePanePtyId(orcaPage)
 
-    await pressAndExpectWrite(orcaPage, electronApp, 'Shift+Enter', '\x1b\r')
     if (process.platform === 'win32') {
+      await pressAndExpectWrite(orcaPage, electronApp, 'Shift+Enter', '\x1b\r')
       return
     }
 
-    // Drive the production PTY-output mirror that shortcut policy reads, not renderer-local flags.
-    // Disarm before exit because host grounding clears flags left armed.
-    await execInTerminal(orcaPage, ptyId, "printf '\\033[>1u'; read -r _; printf '\\033[<u'")
+    // Fork: at an idle zsh prompt the shell editor's field takes Shift+Enter as a new line, so the
+    // encoding is checked while a program reads. Drive the production PTY-output mirror that shortcut
+    // policy reads, not renderer-local flags; disarm before exit because host grounding clears flags.
+    await execInTerminal(
+      orcaPage,
+      ptyId,
+      "read -r _; printf '\\033[>1u'; read -r _; printf '\\033[<u'; read -r _"
+    )
+    await expect(orcaPage.locator('.pane:not([hidden]) [data-shell-editor-root]')).toHaveCount(0)
+    await pressAndExpectWrite(orcaPage, electronApp, 'Shift+Enter', '\x1b\r')
     await expect.poll(() => getKittyKeyboardFlags(orcaPage)).toBe(1)
     await pressAndExpectWrite(orcaPage, electronApp, 'Shift+Enter', '\x1b[13;2u')
 

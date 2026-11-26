@@ -7,6 +7,11 @@ export function isInsideShellEditor(target: EventTarget | null): boolean {
   return target instanceof Element && target.closest(`[${SHELL_EDITOR_ROOT_ATTRIBUTE}]`) !== null
 }
 
+/** The editor's field counts as the terminal's input, so main routes ⌘W and co. as for a terminal. */
+export function isShellEditorField(target: EventTarget | null): boolean {
+  return target instanceof HTMLTextAreaElement && isInsideShellEditor(target)
+}
+
 /** The editor's field stands in for the terminal, so pane shortcuts still work from it. */
 export function isShellEditorPaneShortcutEvent(
   target: EventTarget | null,

@@ -27,6 +27,8 @@ const MAX_ROWS = 8
 const HISTORY_RELOAD_MS = 5000
 /** Focus this soon after a click in the output belongs to that click, e.g. to select text. */
 const CLICK_FOCUS_WINDOW_MS = 400
+const RESYNC_RETRY_MS = 250
+const RESYNC_MAX_TRIES = 40
 
 type ShellEditorBoxProps = {
   session: ShellEditorSession
@@ -90,28 +92,47 @@ function useResyncWhenShown(
 ): void {
   const enabled = useAppStore((state) => state.settings?.terminalShellEditor ?? false)
   useEffect(() => {
-    const ptyId = transport?.getPtyId()
-    if (!isShown || !enabled || !ptyId) {
+    if (!isShown || !enabled) {
       return
     }
     let cancelled = false
-    void window.api.pty.getForegroundProcess(ptyId).then((foregroundProcess) => {
-      if (cancelled) {
+    let retry: ReturnType<typeof setTimeout> | undefined
+    // Why retry: after a relaunch the pane shows before it reattaches, so it has no pty or process yet.
+    const attempt = (tries: number): void => {
+      const again = (): void => {
+        if (!cancelled && tries < RESYNC_MAX_TRIES) {
+          retry = setTimeout(() => attempt(tries + 1), RESYNC_RETRY_MS)
+        }
+      }
+      const ptyId = transport?.getPtyId()
+      if (!ptyId) {
+        again()
         return
       }
-      const action = resolveShellEditorResync({
-        phase: session.getSnapshot().phase,
-        foregroundProcess,
-        nudged: session.wasNudged()
+      void window.api.pty.getForegroundProcess(ptyId).then((foregroundProcess) => {
+        if (cancelled) {
+          return
+        }
+        if (!foregroundProcess) {
+          again()
+          return
+        }
+        const action = resolveShellEditorResync({
+          phase: session.getSnapshot().phase,
+          foregroundProcess,
+          nudged: session.wasNudged()
+        })
+        if (action === 'running') {
+          session.commandStart()
+        } else if (action === 'nudge' && transport?.sendInput(SHELL_EDITOR_NUDGE, 'driving')) {
+          session.markNudged()
+        }
       })
-      if (action === 'running') {
-        session.commandStart()
-      } else if (action === 'nudge' && transport?.sendInput(SHELL_EDITOR_NUDGE, 'driving')) {
-        session.markNudged()
-      }
-    })
+    }
+    attempt(0)
     return () => {
       cancelled = true
+      clearTimeout(retry)
     }
   }, [session, transport, isShown, enabled, gaveUp])
 }

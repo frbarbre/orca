@@ -120,12 +120,14 @@ test.describe('shell editor', () => {
     test(`keeps its blocks after switching to another tab ${away.label}`, async ({ orcaPage }) => {
       const field = orcaPage.locator(FIELD)
       await expect(field).toBeVisible({ timeout: 30_000 })
-      for (const command of ['echo kept-one', 'false']) {
-        await field.fill(command)
-        await field.press('Enter')
-        await expect(field).toBeVisible({ timeout: 15_000 })
-      }
       const blocks = orcaPage.locator('.pane:not([hidden]) [data-shell-block]')
+      // Why wait per command: typing the next one while the last still runs is shell type-ahead.
+      await field.fill('echo kept-one')
+      await field.press('Enter')
+      await waitForOutputLine(orcaPage, 'kept-one')
+      await expect(blocks).toHaveCount(1, { timeout: 15_000 })
+      await field.fill('false')
+      await field.press('Enter')
       await expect(blocks).toHaveCount(2, { timeout: 15_000 })
 
       const worktreeId = await waitForActiveWorktree(orcaPage)

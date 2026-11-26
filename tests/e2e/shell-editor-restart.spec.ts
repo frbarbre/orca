@@ -37,11 +37,13 @@ test('keeps shell blocks across a quit and relaunch', async (// oxlint-disable-n
     await waitForActiveTerminalManager(first.page, 30_000)
     const field = first.page.locator(FIELD)
     await expect(field).toBeVisible({ timeout: 30_000 })
-    for (const command of ['echo restart-kept', 'false']) {
-      await field.fill(command)
-      await field.press('Enter')
-      await expect(field).toBeVisible({ timeout: 15_000 })
-    }
+    // Why wait per command: typing the next one while the last still runs is shell type-ahead.
+    await field.fill('echo restart-kept')
+    await field.press('Enter')
+    await waitForOutputLine(first.page, 'restart-kept')
+    await expect(first.page.locator(BLOCKS)).toHaveCount(1, { timeout: 15_000 })
+    await field.fill('false')
+    await field.press('Enter')
     await expect(first.page.locator(BLOCKS)).toHaveCount(2, { timeout: 15_000 })
 
     await session.close(firstApp)

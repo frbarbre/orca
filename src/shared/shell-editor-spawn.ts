@@ -1,4 +1,4 @@
-import { recognizeAgentProcessFromCommandLine } from '../../../../../shared/agent-process-recognition'
+import { recognizeAgentProcessFromCommandLine } from './agent-process-recognition'
 
 /** Mirrors main's SHELL_EDITOR_REQUEST_ENV; main turns it into the zsh wrapper's `editor` feature. */
 const SHELL_EDITOR_REQUEST_ENV = 'ORCA_SHELL_EDITOR'

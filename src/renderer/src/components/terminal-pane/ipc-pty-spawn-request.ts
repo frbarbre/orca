@@ -8,7 +8,7 @@ import { callRuntimeRpc } from '../../runtime/runtime-rpc-client'
 import { toRuntimeTerminalWorktreeSelector } from '../../runtime/runtime-worktree-selector'
 import { useAppStore } from '../../store'
 import { makePaneKey } from '../../../../shared/stable-pane-id'
-import { shellEditorSpawnEnv } from './shell-editor/shell-editor-spawn'
+import { shellEditorSpawnEnv } from '../../../../shared/shell-editor-spawn'
 import { requestShellEditor } from './shell-editor/shell-editor-registry'
 
 type PtyConnectOptions = Parameters<PtyTransport['connect']>[0]

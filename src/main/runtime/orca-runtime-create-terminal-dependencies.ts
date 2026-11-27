@@ -35,6 +35,7 @@ export { getRuntimeDesktopSurface } from './runtime-desktop-surface'
 export { newTabIn } from './runtime-terminal-spawn-placement'
 import type { PaneStartArgs } from './runtime-pane-admission'
 export { spawnInAdmittedPane } from './runtime-pane-admission'
+export { withShellEditorRequest } from './terminal/launch/main-shell-editor-env'
 export type PaneStartArgsOf = (opts: TerminalCreateOptions) => PaneStartArgs
 export type { IpcMainEvent } from 'electron'
 

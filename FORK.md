@@ -2115,7 +2115,9 @@ A Warp-style text field docked under a zsh terminal's output while zsh is at a p
 (Settings → Terminal → Shell Editor, `terminalShellEditor`, on by default, new terminals only).
 
 - **Request.** `ipc-pty-spawn-request.ts` adds `ORCA_SHELL_EDITOR=1` to a fresh local shell's spawn
-  (not agents, commands, SSH, reattach or Windows, `shell-editor-spawn.ts`). Main turns it into the
+  (not agents, SSH, reattach or Windows, `src/shared/shell-editor-spawn.ts`). Shells main starts
+  itself (`createTerminal`: a CLI-created worktree's Setup and first terminal, `orca terminal create`)
+  apply the same rule, since the renderer only attaches to those. Main turns it into the
   zsh wrapper's `editor` feature, which also turns on the command markers
   (`selectShellStartupFeatures`).
 - **zsh side** (`zsh-startup-wrapper-builder.ts`). `__orca_shell_editor_precmd` runs last at each

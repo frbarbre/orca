@@ -176,6 +176,39 @@ test.describe('shell editor', () => {
     await expect(field).not.toBeFocused()
   })
 
+  test('docks in a terminal the CLI creates', async ({ orcaPage }) => {
+    await expect(orcaPage.locator(FIELD)).toBeVisible({ timeout: 30_000 })
+    const reply = await orcaPage.evaluate(() =>
+      window.api.runtime.call({
+        method: 'terminal.create',
+        params: { worktree: `id:${window.__store!.getState().activeWorktreeId}` }
+      })
+    )
+    const tabId = (reply as { result?: { terminal?: { tabId?: string } } }).result?.terminal?.tabId
+    expect(tabId, JSON.stringify(reply).slice(0, 300)).toBeTruthy()
+    await expect
+      .poll(
+        () =>
+          orcaPage.evaluate((id) => {
+            const state = window.__store!.getState()
+            if (!state.tabsByWorktree[state.activeWorktreeId!]?.some((tab) => tab.id === id)) {
+              return false
+            }
+            state.activateTab(id)
+            return true
+          }, tabId!),
+        { timeout: 15_000 }
+      )
+      .toBe(true)
+    await expect.poll(() => getActiveTabId(orcaPage), { timeout: 15_000 }).toBe(tabId)
+    const field = orcaPage.locator(`.pane:visible ${FIELD}`)
+    await expect(field).toBeVisible({ timeout: 30_000 })
+
+    await field.fill('echo cli-terminal-$((40 + 2))')
+    await field.press('Enter')
+    await waitForTerminalOutput(orcaPage, 'cli-terminal-42', 15_000)
+  })
+
   test('suggests the rest of an earlier command and takes it with →', async ({ orcaPage }) => {
     const field = orcaPage.locator(FIELD)
     await expect(field).toBeVisible({ timeout: 30_000 })

@@ -85,6 +85,18 @@ describe('installClaudeWebGuestShortcuts', () => {
     ])
   })
 
+  it('hands the split shortcuts to the renderer with their direction', () => {
+    const { send, replayed } = install()
+
+    expect(send({ key: 'd', code: 'KeyD', meta: true })).toBe(true)
+    expect(send({ key: 'D', code: 'KeyD', meta: true, shift: true })).toBe(true)
+    expect(send({ key: 'd', code: 'KeyD', meta: true, isAutoRepeat: true })).toBe(true)
+    expect(replayed.map((key) => [key.type, key.code, key.split])).toEqual([
+      ['keydown', 'KeyD', 'right'],
+      ['keydown', 'KeyD', 'down']
+    ])
+  })
+
   it('runs window-level shortcuts like tab and workspace number jumps the way the main window does', () => {
     const { send, replayed, windowActions } = install()
 

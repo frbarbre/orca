@@ -37,7 +37,7 @@ function ClaudeWebPaneCover({
     <div
       ref={coverRef}
       tabIndex={-1}
-      {...{ [CLAUDE_WEB_COVER_ATTRIBUTE]: '' }}
+      {...{ [CLAUDE_WEB_COVER_ATTRIBUTE]: tabId }}
       // Why native-chat-pane-shell: it is the "terminal is covered" marker, so the hidden terminal's
       // paste/copy/focus handling stands aside and these chords reach the page. z-20 sits above chat.
       className="native-chat-pane-shell absolute inset-0 z-20 flex min-h-0 min-w-0 bg-background focus:outline-none"

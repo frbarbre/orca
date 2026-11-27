@@ -100,6 +100,19 @@ export function installClaudeWebGuestShortcuts(
       replayInRenderer(toReplayedKey(input, 'keydown'))
       return
     }
+    // Fork: the page covers a terminal pane, whose split chords only xterm's focused pane would run.
+    const split = keybindingMatchesAction('terminal.splitRight', input, platform, keybindings)
+      ? 'right'
+      : keybindingMatchesAction('terminal.splitDown', input, platform, keybindings)
+        ? 'down'
+        : null
+    if (split) {
+      event.preventDefault()
+      if (!input.isAutoRepeat) {
+        replayInRenderer({ ...toReplayedKey(input, 'keydown'), split })
+      }
+      return
+    }
     // Why: the main window runs these in main (number jumps never reach the renderer's DOM), so a replayed key would do nothing.
     const windowAction = resolveWindowShortcutAction(input, platform, keybindings)
     if (windowAction && windowAction.type !== 'dictationKeyDown') {

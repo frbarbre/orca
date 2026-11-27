@@ -13,4 +13,6 @@ export type ClaudeWebReplayedKey = {
   shiftKey: boolean
   /** Fork: the page kept this key; Orca only watches it for its held-modifier hints. */
   observed?: true
+  /** Fork: the key is one of the terminal split shortcuts, resolved with the user's rebinds. */
+  split?: 'right' | 'down'
 }

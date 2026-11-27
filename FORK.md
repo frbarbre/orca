@@ -831,6 +831,10 @@ chord, for hold-to-switch. Page editing keys (copy, paste, undo) are in neither 
 Window-level chords that the main window runs in main (`resolveWindowShortcutAction`: tab and
 workspace number jumps, sidebars, palettes) go through `sendResolvedWindowShortcutAction` instead,
 since a replayed key never reaches those handlers.
+The split chords (`terminal.splitRight` / `terminal.splitDown`, ⌘D / ⌘⇧D) are `terminal`-scoped,
+and only xterm's focused pane runs them, so a replayed key did nothing. Main sends them with a
+`split` direction, and the replay splits the tab whose cover holds focus (the cover's
+`data-claude-web-cover` carries its tab id) through `requestActiveTerminalPaneSplit`.
 
 Opening the web view (View submenu, or auto-open) asks for the claude.ai prompt to take focus:
 `claudeWebView.show(…, { focusPrompt: true })` queues a one-shot request, and on `dom-ready` a

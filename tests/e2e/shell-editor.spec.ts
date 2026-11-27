@@ -298,6 +298,25 @@ test.describe('shell editor', () => {
       .toEqual({ gapAboveInput: true, gapBeforeSidebar: 0 })
   })
 
+  test('pins the command under the header of a block taller than the screen, as Warp does', async ({
+    orcaPage
+  }, testInfo) => {
+    const field = orcaPage.locator(FIELD)
+    await expect(field).toBeVisible({ timeout: 30_000 })
+    await field.fill('seq 1 300')
+    await field.press('Enter')
+    await waitForOutputLine(orcaPage, '300')
+
+    const pinned = orcaPage.locator('.shell-block-header[data-sticky]').filter({ visible: true })
+    await expect(pinned).toHaveCount(1, { timeout: 15_000 })
+    await expect(pinned.locator('.shell-block-label')).toHaveText(/\(\d+\.\d{3}s\)$/)
+    await expect(pinned.locator('.shell-block-command')).toHaveText('seq 1 300')
+    await testInfo.attach('pinned-command', {
+      body: await orcaPage.screenshot(),
+      contentType: 'image/png'
+    })
+  })
+
   test('completes with Tab from a menu over the input, as Warp does', async ({ orcaPage }) => {
     const field = orcaPage.locator(FIELD)
     await expect(field).toBeVisible({ timeout: 30_000 })

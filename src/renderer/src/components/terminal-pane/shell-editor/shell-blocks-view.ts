@@ -131,6 +131,16 @@ export type VisibleBlock = {
   endRow: number
   /** The header scrolled off while the block still fills the top of the viewport. */
   sticky: boolean
+  /** The command shown on its own row under a pinned header; null when not pinned or empty. */
+  pinnedCommand: string | null
+}
+
+function pinnedCommandLine(command: string): string | null {
+  const [first, ...rest] = command.split('\n')
+  if (!first.trim()) {
+    return null
+  }
+  return rest.length > 0 ? `${first} …` : first
 }
 
 export function layoutVisibleBlocks(input: {
@@ -147,13 +157,15 @@ export function layoutVisibleBlocks(input: {
       return []
     }
     const labelRow = block.headerLine + HEADER_ROW_OFFSET - top
+    const sticky = labelRow < 0
     return [
       {
         block,
         topRow: block.headerLine - top,
         labelRow: Math.max(0, labelRow),
         endRow: end - top,
-        sticky: labelRow < 0
+        sticky,
+        pinnedCommand: sticky ? pinnedCommandLine(block.command) : null
       }
     ]
   })

@@ -204,7 +204,7 @@ export function ShellBlocksOverlay({
         color: `color-mix(in srgb, ${foreground} 55%, transparent)`
       }}
     >
-      {visible.map(({ block, topRow, labelRow, endRow, sticky }) => {
+      {visible.map(({ block, topRow, labelRow, endRow, sticky, pinnedCommand }) => {
         const failed = block.exitCode !== null && block.exitCode !== 0
         // Why half rows: a block runs from the middle of its padding row to the middle of the next's.
         const blockTop = geometry.top + Math.max(-0.5, topRow + 0.5) * geometry.cellHeight
@@ -232,7 +232,6 @@ export function ShellBlocksOverlay({
               data-sticky={sticky || undefined}
               style={{
                 top: geometry.top + labelRow * geometry.cellHeight,
-                height: geometry.cellHeight,
                 paddingLeft: geometry.left,
                 background: sticky ? theme.background : undefined,
                 borderBottomColor: sticky
@@ -240,8 +239,23 @@ export function ShellBlocksOverlay({
                   : undefined
               }}
             >
-              <span className="shell-block-label">{shellBlockHeaderLabel(block, now)}</span>
-              <BlockMenu block={block} buffer={buffer} />
+              <div className="shell-block-header-row" style={{ height: geometry.cellHeight }}>
+                <span className="shell-block-label">{shellBlockHeaderLabel(block, now)}</span>
+                <BlockMenu block={block} buffer={buffer} />
+              </div>
+              {pinnedCommand ? (
+                <div
+                  className="shell-block-command"
+                  style={{
+                    height: geometry.cellHeight,
+                    lineHeight: `${geometry.cellHeight}px`,
+                    fontSize: terminal.options.fontSize ?? 13,
+                    color: foreground
+                  }}
+                >
+                  {pinnedCommand}
+                </div>
+              ) : null}
             </div>
           </div>
         )

@@ -186,7 +186,14 @@ describe('layoutVisibleBlocks', () => {
       block({ id: 3, headerLine: 30, outputLine: 33, endLine: null })
     ]
     expect(layoutVisibleBlocks({ blocks, viewportY: 10, rows: 15, bufferLength: 40 })).toEqual([
-      { block: blocks[1], topRow: -5, labelRow: 0, endRow: 20, sticky: true }
+      {
+        block: blocks[1],
+        topRow: -5,
+        labelRow: 0,
+        endRow: 20,
+        sticky: true,
+        pinnedCommand: 'docker ps'
+      }
     ])
     expect(
       layoutVisibleBlocks({ blocks, viewportY: 0, rows: 10, bufferLength: 40 }).map((item) => [
@@ -205,8 +212,28 @@ describe('layoutVisibleBlocks', () => {
   it('keeps the header in place while its own row is still on screen', () => {
     const blocks = [block({ id: 1, headerLine: 9, outputLine: 12, endLine: 40 })]
     expect(layoutVisibleBlocks({ blocks, viewportY: 10, rows: 15, bufferLength: 40 })).toEqual([
-      { block: blocks[0], topRow: -1, labelRow: 0, endRow: 30, sticky: false }
+      {
+        block: blocks[0],
+        topRow: -1,
+        labelRow: 0,
+        endRow: 30,
+        sticky: false,
+        pinnedCommand: null
+      }
     ])
+  })
+
+  it('pins the command under the header, as Warp does, with only the first line of a long one', () => {
+    const at = (command: string) =>
+      layoutVisibleBlocks({
+        blocks: [block({ headerLine: 0, outputLine: 4, endLine: 40, command })],
+        viewportY: 10,
+        rows: 15,
+        bufferLength: 40
+      })[0].pinnedCommand
+    expect(at('mise run fu')).toBe('mise run fu')
+    expect(at('for f in *; do\n  echo $f\ndone')).toBe('for f in *; do …')
+    expect(at('')).toBeNull()
   })
 })
 

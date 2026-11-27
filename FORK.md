@@ -2171,7 +2171,8 @@ Warp-style command blocks for shell-editor terminals.
 - **Drawing** (`ShellBlocksOverlay.tsx`, inside xterm's root). A block runs from the middle of its
   padding row to the middle of the next block's, with a separator at its top. The header goes on its
   header row ("node ~/folder git:(branch) files • +ins -del (duration)", live while running) and is
-  pinned to the top when the block fills the top of the viewport. A failed block gets a red tint and
+  pinned to the top when the block fills the top of the viewport, with the command's first line
+  bold on a row under it (`pinnedCommand`), as in Warp. A failed block gets a red tint and
   a 4px left bar. Editor panes (`data-shell-editor`) pad xterm's root 16px on the left, as in Warp;
   the fit accounts for it. The ⋮ menu copies the command, the output, both, the folder or the branch
   (`shell-blocks-view.ts` reads them from the buffer). Blocks whose rows were wiped (`clear`) are

@@ -2299,6 +2299,21 @@ group-focus keys (`tabGroup.focus*`, ⌘⌥+arrow) move between them.
   ⌘D/⌘⇧D for groups.
 - Tests: `terminal-shortcut-policy-open-group.test.ts`, e2e in `tests/e2e/shell-editor.spec.ts`.
 
+### 93. Top bar and review prompts as agent skills
+
+So the prompts work from any agent session, including one driven from a phone, Orca writes them as
+skills into `~/.claude/skills` and `~/.agents/skills`: `orca-commit-and-push`, `orca-create-pr`,
+`orca-ready-for-review` (start a new agent in the current worktree with that prompt) and
+`orca-review-pr`, `orca-rereview-pr` (check out the pull request in a new worktree and start the
+review agent there). Each carries the prompt as edited under Automations, with Create PR's Source
+Control settings (global, not per-project) filled in, and launches the review inbox's agent.
+
+- `src/shared/workspace-action-skills.ts` (+ test) builds them; `use-workspace-action-skills-sync.ts`
+  rebuilds on every change and sends them over `review-status-rules:sync-action-skills`;
+  `src/main/workspace-action-skills/write-workspace-action-skills.ts` (+ test) writes them.
+- A skill folder is only written when absent or marked `.orca-generated`, so a folder of the same
+  name that you made yourself is left alone.
+
 ## Verify
 
 Verify runs on GitHub, not locally: `fork-verify.yml` runs it on every pull request against `main`,

@@ -23,6 +23,7 @@ import { useRemoteRuntimeRecoveryTriggers } from '../runtime/use-remote-runtime-
 import { useTerminalViewerColorPublication } from './use-terminal-viewer-color-publication'
 import { useBrowserIdentityMigrationNotice } from '../components/browser-pane/browser-user-agent-migration-notice'
 import { useWorkspaceStatusRulePoller } from '@/components/workspace-status-rules/use-workspace-status-rule-poller'
+import { useWorkspaceActionSkillsSync } from '@/components/workspace-status-rules/use-workspace-action-skills-sync'
 import { useBrowserClientHostedDownloadNotices } from '../components/browser-pane/browser-client-hosted-download-notices'
 import { useCodexTerminalServerIsolationNotice } from '../components/terminal-pane/codex-terminal-server-isolation-notice'
 import { useCodexSharedSettingsNotice } from '../components/terminal-pane/codex-shared-settings-notice'
@@ -55,6 +56,7 @@ export function useAppShellServices(): void {
   useTerminalViewerColorPublication()
   useAutomationDispatchEvents()
   useWorkspaceStatusRulePoller()
+  useWorkspaceActionSkillsSync()
   // Why: git polling lives at App level (RightSidebar unmounts when closed, stranding stale Rebasing/Merging badges); gate on workspaceSessionReady so it doesn't compete with first paint.
   useGitStatusPolling({ enabled: workspaceSessionReady })
   // Watch files above Explorer so editor changes still arrive on Source Control/Checks.

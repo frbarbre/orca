@@ -7,6 +7,8 @@ import { logStartupMilestone } from './startup-diagnostics'
 import { mainProcessState as state } from './main-process-state'
 import { loadCustomEditorThemes } from '../editor-theme/custom-editor-theme'
 import { getReviewStatusSnapshot } from '../github/review-status-snapshot'
+import { writeWorkspaceActionSkills } from '../workspace-action-skills/write-workspace-action-skills'
+import type { WorkspaceActionSkill } from '../../shared/workspace-action-skills'
 import { resolveReviewBase } from '../github/review-base'
 import type { ResolveReviewBaseRequest } from '../../shared/github/review-base'
 import { resolveRegisteredWorktreePath } from '../ipc/registered-worktree-roots-cache'
@@ -55,6 +57,15 @@ export function registerMainProcessIpcHandlers(): void {
 
   ipcMain.handle('review-status-rules:snapshot', (_event, request: ReviewStatusSnapshotRequest) =>
     getReviewStatusSnapshot(request)
+  )
+
+  ipcMain.handle(
+    'review-status-rules:sync-action-skills',
+    (_event, skills: WorkspaceActionSkill[]) =>
+      writeWorkspaceActionSkills(skills, [
+        join(app.getPath('home'), '.claude', 'skills'),
+        join(app.getPath('home'), '.agents', 'skills')
+      ])
   )
 
   registerSettingsTransferHandlers()

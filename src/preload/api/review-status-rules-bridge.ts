@@ -5,5 +5,6 @@ export const reviewStatusRulesApi: ReviewStatusRulesApi = {
   snapshot: (request) => ipcRenderer.invoke('review-status-rules:snapshot', request),
   syncReviewHead: (request) => ipcRenderer.invoke('review-status-rules:sync-review-head', request),
   runWorkspaceCommand: (request) =>
-    ipcRenderer.invoke('review-status-rules:run-workspace-command', request)
+    ipcRenderer.invoke('review-status-rules:run-workspace-command', request),
+  syncActionSkills: (skills) => ipcRenderer.invoke('review-status-rules:sync-action-skills', skills)
 }

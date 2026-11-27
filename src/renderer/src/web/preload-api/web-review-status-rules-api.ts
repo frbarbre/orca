@@ -16,7 +16,8 @@ export function createWebReviewStatusRulesApi(): Pick<PreloadApi, 'reviewStatusR
     reviewStatusRules: {
       snapshot: () => Promise.resolve({ ...EMPTY_SNAPSHOT, fetchedAt: Date.now() }),
       syncReviewHead: () => Promise.resolve({ kind: 'current' }),
-      runWorkspaceCommand: () => Promise.resolve({ success: true, output: '' })
+      runWorkspaceCommand: () => Promise.resolve({ success: true, output: '' }),
+      syncActionSkills: () => Promise.resolve()
     }
   }
 }

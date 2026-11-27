@@ -8,7 +8,7 @@ import { callRuntimeRpc } from '../../runtime/runtime-rpc-client'
 import { toRuntimeTerminalWorktreeSelector } from '../../runtime/runtime-worktree-selector'
 import { useAppStore } from '../../store'
 import { makePaneKey } from '../../../../shared/stable-pane-id'
-import { shellEditorSpawnEnv } from '../../../../shared/shell-editor-spawn'
+import { wantsShellEditor } from '../../../../shared/shell-editor-spawn'
 import { requestShellEditor } from './shell-editor/shell-editor-registry'
 
 type PtyConnectOptions = Parameters<PtyTransport['connect']>[0]
@@ -100,22 +100,22 @@ export async function spawnIpcPty(
     resumesAgent && !admittedSessionId ? connectOptions.resumeSpawnIntent : undefined
   // Why: a reattach under an admitted session id must never stop the PTY it is reattaching.
   const replacesPtyId = admittedSessionId ? null : (connectOptions.claimReplacedPtyId?.() ?? null)
-  const editorEnv = shellEditorSpawnEnv({
+  // Why only to expect the box: main applies the same rule to every shell it starts.
+  const wantsEditor = wantsShellEditor({
     enabled: useAppStore.getState().settings?.terminalShellEditor ?? false,
     isWindows: navigator.userAgent.includes('Windows'),
     connectionId,
     command: connectOptions.command ?? command,
     launchAgent: connectOptions.launchAgent ?? launchAgent,
     launchConfig: connectOptions.launchConfig ?? launchConfig,
-    admittedSessionId,
-    env: connectOptions.env ?? env
+    resumeProviderSession: connectOptions.resumeProviderSession ?? resumeProviderSession
   })
-  const editorPaneKey = editorEnv && tabId && leafId ? makePaneKey(tabId, leafId) : null
+  const editorPaneKey = wantsEditor && tabId && leafId ? makePaneKey(tabId, leafId) : null
   const spawned = await window.api.pty.spawn({
     cols: connectOptions.cols ?? 80,
     rows: connectOptions.rows ?? 24,
     cwd,
-    env: editorEnv ?? connectOptions.env ?? env,
+    env: connectOptions.env ?? env,
     ...((connectOptions.envToDelete ?? envToDelete)
       ? { envToDelete: connectOptions.envToDelete ?? envToDelete }
       : {}),

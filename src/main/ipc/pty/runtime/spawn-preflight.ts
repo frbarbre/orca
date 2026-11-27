@@ -133,6 +133,8 @@ export async function prepareRuntimePtySpawn(
     launchAgent: args.launchAgent,
     command: args.command,
     resumeProviderSession: args.resumeProviderSession,
+    connectionId: args.connectionId,
+    launchConfig: args.launchConfig,
     env: ctx.env,
     cwd: ctx.cwd,
     shellOverride: ctx.daemonShellOverride,

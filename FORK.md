@@ -2118,11 +2118,15 @@ them. Tests: `claude-web-guest-shortcuts.test.ts`, `claude-web-key-replay.test.t
 A Warp-style text field docked under a zsh terminal's output while zsh is at a prompt
 (Settings → Terminal → Shell Editor, `terminalShellEditor`, on by default, new terminals only).
 
-- **Request.** `ipc-pty-spawn-request.ts` adds `ORCA_SHELL_EDITOR=1` to a fresh local shell's spawn
-  (not agents, SSH, reattach or Windows, `src/shared/shell-editor-spawn.ts`). Shells main starts
-  itself (`createTerminal`: a CLI-created worktree's Setup and first terminal, `orca terminal create`)
-  apply the same rule, since the renderer only attaches to those. Main turns it into the
-  zsh wrapper's `editor` feature, which also turns on the command markers
+- **Request.** Main adds `ORCA_SHELL_EDITOR=1` in `resolvePtySpawnHostEnv`, which every local
+  shell launch passes through: window spawns, shells main starts itself (`createTerminal`: a
+  CLI-created worktree's Setup and first terminal, `orca terminal create`), and cold restores
+  under a saved session id (the daemon died or an update replaced it). The rule is
+  `wantsShellEditor` in `src/shared/shell-editor-spawn.ts` (not agents, resumed agents, SSH or
+  Windows). A reattach launches nothing, so the flag is ignored there. It used to be added per
+  caller, and restored session ids were excluded, so cold-restored terminals came back plain.
+  The renderer reads the same rule only to expect the box (`starting`). Main turns the flag into
+  the zsh wrapper's `editor` feature, which also turns on the command markers
   (`selectShellStartupFeatures`).
 - **zsh side** (`zsh-startup-wrapper-builder.ts`). `__orca_shell_editor_precmd` runs last at each
   prompt: it blanks `PROMPT`/`RPROMPT` and prints `OSC 777;orca-shell-editor;<branch>;<HISTFILE>;<PWD>`.
@@ -2153,7 +2157,9 @@ A Warp-style text field docked under a zsh terminal's output while zsh is at a p
   the line to zsh until the next prompt. History swaps are one undoable edit. The box reserves
   `--orca-pane-bottom-editor-height` so the terminal refits above it. Printable keys typed into the
   terminal move to the box. ⌘V is excluded from the terminal's paste listeners.
-- Tests: `shell-startup-feature-channel.test.ts` (live zsh), `zsh-history.test.ts`, `shell-editor-*.test.ts`.
+- Tests: `shell-startup-feature-channel.test.ts` (live zsh), `zsh-history.test.ts`, `shell-editor-*.test.ts`,
+  `spawn-host-env-shell-editor.test.ts`, e2e cold restore in `tests/e2e/shell-editor-restart.spec.ts`. `restart-restore-terminal-input.spec.ts`
+  turns the editor off, since its probes type into xterm itself.
 
 ### 88. Shell blocks
 

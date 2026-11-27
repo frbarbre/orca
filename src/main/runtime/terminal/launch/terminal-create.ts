@@ -127,7 +127,7 @@ export abstract class OrcaRuntimeWithCreateTerminal extends OrcaRuntimeWithTermi
             ...(launchToken ? { launchToken } : {}),
             commandDelivery: 'provider',
             startupCommandDelivery: launchOpts.startupCommandDelivery,
-            env: dependencies.withShellEditorRequest(this.store, workspace, launchOpts, env),
+            env,
             envToDelete: dependencies.mergeTerminalEnvDeletionKeys(
               launchOpts.envToDelete,
               agentTeamsPlan?.envToDelete

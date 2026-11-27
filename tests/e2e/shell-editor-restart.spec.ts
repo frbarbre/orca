@@ -6,6 +6,7 @@ import { ensureTerminalVisible, waitForSessionReady } from './helpers/store'
 import { waitForActiveTerminalManager } from './helpers/terminal'
 import { readActiveTerminal, waitForOutputLine } from './helpers/shell-editor'
 import { TEST_REPO_PATH_FILE } from './global-setup'
+import { readDaemonPid, terminateDaemonForColdRestart } from './helpers/daemon-cold-restart'
 
 const FIELD = '.pane:not([hidden]) [data-shell-editor-root] textarea'
 const BLOCKS = '.pane:not([hidden]) [data-shell-block]'
@@ -73,6 +74,43 @@ test('keeps shell blocks across a quit and relaunch', async (// oxlint-disable-n
     if (expected.includes('false')) {
       await expect(blocks.last()).toHaveAttribute('data-failed', 'true')
     }
+  } finally {
+    await session.dispose(secondApp ?? firstApp ?? undefined)
+  }
+})
+
+test('gives a cold-restored terminal the editor when the daemon died between launches', async (// oxlint-disable-next-line no-empty-pattern -- this test owns both Electron launches.
+{}, testInfo) => {
+  // Why: two full app launches with the daemon killed between them, as an update that replaces it does.
+  test.setTimeout(240_000)
+  const session = createRestartSession(testInfo)
+  let firstApp: ElectronApplication | null = null
+  let secondApp: ElectronApplication | null = null
+  try {
+    const first = await session.launch()
+    firstApp = first.app
+    await waitForSessionReady(first.page)
+    await attachRepoAndOpenTerminal(first.page, seededRepoPath())
+    await ensureTerminalVisible(first.page)
+    await waitForActiveTerminalManager(first.page, 30_000)
+    await expect(first.page.locator(FIELD)).toBeVisible({ timeout: 30_000 })
+    const daemonPid = readDaemonPid(session.userDataDir)
+
+    await session.close(firstApp)
+    firstApp = null
+    await terminateDaemonForColdRestart(daemonPid)
+
+    const second = await session.launch()
+    secondApp = second.app
+    await waitForSessionReady(second.page)
+    await ensureTerminalVisible(second.page)
+    await waitForActiveTerminalManager(second.page, 30_000)
+    const field = second.page.locator(FIELD)
+    await expect(field).toBeVisible({ timeout: 30_000 })
+    await field.fill('echo cold-restored')
+    await field.press('Enter')
+    await waitForOutputLine(second.page, 'cold-restored')
+    await expect(second.page.locator(BLOCKS)).toHaveCount(1, { timeout: 15_000 })
   } finally {
     await session.dispose(secondApp ?? firstApp ?? undefined)
   }

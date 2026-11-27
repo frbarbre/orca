@@ -7,6 +7,7 @@ import { SETUP_AGENT_SEQUENCE_SETUP_SCRIPT_ENV } from '../../../shared/setup-age
 import type { TuiAgent } from '../../../shared/tui-agent'
 import { isTuiAgent } from '../../../shared/tui-agent-config'
 import { addWslEnvKeys } from '../../../shared/wsl-env'
+import { shellEditorSpawnEnv } from '../../../shared/shell-editor-spawn'
 import { isAgentStatusHooksEnabled } from '../../agent-hooks/managed-agent-hook-controls'
 import { awaitExplicitAgentPluginGuestReadiness } from '../../agent-hooks/wsl-agent-plugin-readiness'
 import { ensureCodexStateDbBackfillRecoveryStarted } from '../../codex/codex-state-db-backfill-recovery'
@@ -68,6 +69,8 @@ type PtySpawnHostEnvArgs = {
   launchAgent: TuiAgent | undefined
   command: string | undefined
   resumeProviderSession: AgentProviderSessionMetadata | undefined
+  connectionId: string | null | undefined
+  launchConfig: unknown
   /** The lane's spawn env before Orca's host env. */
   env: Record<string, string> | undefined
   cwd: string | undefined
@@ -115,7 +118,20 @@ export async function resolvePtySpawnHostEnv(args: PtySpawnHostEnvArgs): Promise
   args.mark?.('codex_resume')
   const codexResumeHome = codexResumeLaunch.codexResumeHome
   const launchCommand = codexResumeLaunch.command
-  const baseEnv = deps.stripSequencedStartupResumeArgv(args.env, codexResumeLaunch)
+  const launchEnv = deps.stripSequencedStartupResumeArgv(args.env, codexResumeLaunch)
+  // Fork: every shell launch passes here, so restored and main-started shells get the editor alike.
+  const baseEnv = args.preAdopted
+    ? launchEnv
+    : shellEditorSpawnEnv({
+        enabled: deps.getSettings?.()?.terminalShellEditor ?? false,
+        isWindows: process.platform === 'win32',
+        connectionId: args.connectionId,
+        command: args.command,
+        launchAgent: args.launchAgent,
+        launchConfig: args.launchConfig,
+        resumeProviderSession: args.resumeProviderSession,
+        env: launchEnv
+      })
   const launchesCodex = args.launchAgent === 'codex'
   const selectLaunchCodexHome = async (): Promise<string | null> =>
     (await deps.getSelectedCodexHomePath?.(target, baseEnv, { launchesCodex })) ?? null

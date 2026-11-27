@@ -1,9 +1,7 @@
 // #2836: restored scrollback can paint before deferred reattach, leaving a live-looking input-dead pane.
 // Require input after clean daemon-preserving restart, stalled-daemon recovery and daemon-killed cold spawn; content-only checks miss all three.
 
-import { execFileSync } from 'node:child_process'
 import { existsSync, readFileSync } from 'node:fs'
-import path from 'node:path'
 import type { ElectronApplication, Page } from '@stablyai/playwright-test'
 import { test, expect } from './helpers/orca-app'
 import { TEST_REPO_PATH_FILE } from './global-setup'
@@ -25,68 +23,11 @@ import {
   probeOwnershipRebuildRevival
 } from './helpers/terminal-input-probes'
 import { waitForRestoredTerminalInputReady } from './helpers/restored-terminal-input-readiness'
-import { PROTOCOL_VERSION } from '../../src/main/daemon/types'
 import { PTY_SESSION_ID_SEPARATOR } from '../../src/shared/pty-session-id-format'
+import { readDaemonPid, terminateDaemonForColdRestart } from './helpers/daemon-cold-restart'
 
 const REQUIRE_WINDOWS_TERMINAL_RESTART_E2E =
   process.env.ORCA_REQUIRE_WINDOWS_TERMINAL_RESTART_E2E === '1'
-
-function readDaemonPid(userDataDir: string): number {
-  const raw = readFileSync(
-    path.join(userDataDir, 'daemon', `daemon-v${PROTOCOL_VERSION}.pid`),
-    'utf8'
-  )
-  const parsed = JSON.parse(raw) as { pid?: unknown }
-  if (typeof parsed.pid !== 'number') {
-    throw new Error(`Daemon pid file did not contain a numeric pid: ${raw}`)
-  }
-  return parsed.pid
-}
-
-function isProcessAlive(pid: number): boolean {
-  try {
-    process.kill(pid, 0)
-    return true
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === 'ESRCH') {
-      return false
-    }
-    throw error
-  }
-}
-
-async function terminateDaemonForColdRestart(pid: number): Promise<void> {
-  if (!isProcessAlive(pid)) {
-    return
-  }
-  if (process.platform === 'win32') {
-    try {
-      execFileSync('taskkill.exe', ['/PID', String(pid), '/T', '/F'], {
-        stdio: 'pipe',
-        timeout: 10_000
-      })
-    } catch (error) {
-      if (isProcessAlive(pid)) {
-        throw error
-      }
-    }
-  } else {
-    try {
-      process.kill(pid, 'SIGKILL')
-    } catch (error) {
-      // Tolerate ESRCH if the daemon exits between liveness check and signal, matching Windows revalidation.
-      if ((error as NodeJS.ErrnoException).code !== 'ESRCH') {
-        throw error
-      }
-    }
-  }
-  await expect
-    .poll(() => isProcessAlive(pid), {
-      timeout: 10_000,
-      message: `daemon ${pid} remained alive after forced termination`
-    })
-    .toBe(false)
-}
 
 function seededRepoPathOrSkip(): string {
   const repoPath = existsSync(TEST_REPO_PATH_FILE)
@@ -104,6 +45,10 @@ async function bootstrapFirstLaunch(
   page: Page,
   repoPath: string
 ): Promise<{ ptyId: string; marker: string }> {
+  // Fork: these probes click and type into xterm itself, which the shell editor's field covers.
+  await page.evaluate(() =>
+    window.__store!.getState().updateSettings({ terminalShellEditor: false })
+  )
   await attachRepoAndOpenTerminal(page, repoPath)
   await waitForSessionReady(page)
   await waitForActiveWorktree(page)

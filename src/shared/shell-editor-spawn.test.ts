@@ -8,7 +8,7 @@ const plainShell = {
   command: undefined,
   launchAgent: undefined,
   launchConfig: undefined,
-  admittedSessionId: undefined,
+  resumeProviderSession: undefined,
   env: { FOO: 'bar' }
 }
 
@@ -36,9 +36,9 @@ describe('shellEditorSpawnEnv', () => {
       { command: 'codex --yolo' },
       { launchAgent: 'codex' },
       { launchConfig: {} },
-      { admittedSessionId: 'session-1' }
+      { resumeProviderSession: { provider: 'claude' } }
     ]) {
-      expect(shellEditorSpawnEnv({ ...plainShell, ...other })).toBeNull()
+      expect(shellEditorSpawnEnv({ ...plainShell, ...other })).toEqual({ FOO: 'bar' })
     }
   })
 })
